@@ -149,7 +149,7 @@ export function PortalActiveFlow({
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center px-4 py-8 sm:py-12">
+    <div className="flex min-h-screen flex-col items-center px-4 py-8 md:py-12">
       <div className="w-full max-w-lg space-y-6">
         <PortalHeader
           customerName={customerName}

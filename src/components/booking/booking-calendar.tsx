@@ -495,7 +495,7 @@ export function BookingCalendar({
 
       <div className="h-7" />
 
-      <div className="flex flex-wrap items-center justify-between gap-2 px-3 sm:px-5 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 px-3 md:px-5 py-3">
         <div className="flex-1" />
         <CalendarLegend
           statuses={customCategories ? undefined : legendStatuses}

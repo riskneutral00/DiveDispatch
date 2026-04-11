@@ -108,7 +108,7 @@ export function ProfileOverlay({ open, onClose, initialTab = 'profile', roleSlug
       <div className="flex flex-col h-full">
 
         <div
-          className="flex gap-1 px-4 py-2 sm:px-6 flex-shrink-0 border-b border-glass-border overflow-x-auto sm:justify-center [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="flex gap-1 px-4 py-2 md:px-6 flex-shrink-0 border-b border-glass-border overflow-x-auto md:justify-center [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           role="tablist"
         >
           {visibleStaticTabs.map((tab) => (
@@ -154,7 +154,7 @@ export function ProfileOverlay({ open, onClose, initialTab = 'profile', roleSlug
           className="flex-1 overflow-y-auto overflow-x-hidden"
           role="tabpanel"
         >
-          <DashboardPageFrame className="px-4 pt-2 pb-28 md:pb-6 sm:px-6">
+          <DashboardPageFrame className="px-4 pt-2 pb-28 md:pb-6 md:px-6">
             {activeTab === 'profile' && <ProfileTab onClose={onClose} />}
             {activeTab === 'roles' && <ManageRolesConnected onNavigateToRole={(roleKey) => setActiveTab(`role:${roleKey}`)} />}
             {activeRoleKey && roleSectionTabs && roleSectionTabs.length > 0 && (

@@ -27,6 +27,20 @@ export interface ColorPalette {
   bgImage?: string;
   bgOverlay?: string;
   bgPosition?: string;
+  /** When set (and not using responsive bg), maps to `--bg-size`. */
+  bgSize?: string;
+  /** Natural pixel dimensions of `bgImage` asset (docs + future v2 logic). */
+  bgIntrinsicWidth?: number;
+  bgIntrinsicHeight?: number;
+  /**
+   * When set, viewport width (px) chooses between small vs large `background-size`.
+   * Below breakpoint → `bgSizeSmallScreens`; at/above → `bgSizeLargeScreens`.
+   */
+  bgResponsiveBreakpoint?: number;
+  /** CSS `background-size` when `viewportWidth < bgResponsiveBreakpoint` (default `cover`). */
+  bgSizeSmallScreens?: string;
+  /** CSS `background-size` when `viewportWidth >= bgResponsiveBreakpoint` (default `auto`). */
+  bgSizeLargeScreens?: string;
   bodyBg: string;
   luminanceClass: "dark" | "medium" | "bright";
   glassContainerBorder: string;
@@ -53,8 +67,12 @@ export interface ColorPalette {
 export interface ThemeConfig {
   id: string;
   name: string;
+  /** Matches Convex `themes.appearance` — skin-family filter bucket. */
+  appearance?: "light" | "dark";
 
   colors: {
+    /** Single-palette skins (v2): preferred for `themeToVars`. */
+    palette?: ColorPalette;
     light?: ColorPalette;
     dark: ColorPalette;
   };

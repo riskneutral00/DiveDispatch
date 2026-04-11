@@ -64,7 +64,7 @@ export function BookingDetail({ bookingId }: BookingDetailProps) {
   const canClearMedical = booking.medicalHardBlock && isOperator
 
   return (
-    <DashboardPageFrame className="min-h-screen p-4 sm:p-6 space-y-4">
+    <DashboardPageFrame className="min-h-screen p-4 md:p-6 space-y-4">
 
       <PageTitle
         title="Booking Details"

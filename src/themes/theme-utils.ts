@@ -1,4 +1,5 @@
-import { ColorPalette, ThemeConfig, ThemeMode } from "./theme-types";
+import { ColorPalette, ThemeConfig } from "./theme-types";
+import { BREAKPOINT_MD_PX } from "./breakpoints";
 
 function parseToRgb(
   color: string,
@@ -54,6 +55,43 @@ export function contrastRatio(colorA: string, colorB: string): number | null {
   return (lighter + 0.05) / (darker + 0.05);
 }
 
+/**
+ * Parses rgba() or hex; hex is treated as fully opaque. Used for contrast approximations.
+ */
+function parseRgbaOrHex(color: string): { r: number; g: number; b: number; a: number } | null {
+  const m =
+    /^rgba\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*([\d.]+)\s*\)/i.exec(
+      color,
+    );
+  if (m) {
+    return {
+      r: parseInt(m[1], 10),
+      g: parseInt(m[2], 10),
+      b: parseInt(m[3], 10),
+      a: parseFloat(m[4]),
+    };
+  }
+  const rgb = parseToRgb(color);
+  if (rgb) return { ...rgb, a: 1 };
+  return null;
+}
+
+/**
+ * Alpha-composites a foreground color over a solid background (sRGB, non-linear).
+ * Approximates how a semi-transparent `glassBg` reads on top of `bodyBg` when blur is ignored.
+ * Does not model photographs, gradients, or backdrop-filter.
+ */
+export function blendRgbaOverHex(fg: string, bgHex: string): string | null {
+  const top = parseRgbaOrHex(fg);
+  const bottom = parseToRgb(bgHex);
+  if (!top || !bottom) return null;
+  const a = Math.min(1, Math.max(0, top.a));
+  const r = Math.round(top.r * a + bottom.r * (1 - a));
+  const g = Math.round(top.g * a + bottom.g * (1 - a));
+  const b = Math.round(top.b * a + bottom.b * (1 - a));
+  return `#${[r, g, b].map((x) => x.toString(16).padStart(2, "0")).join("")}`;
+}
+
 export function meetsAA(foreground: string, background: string): boolean {
   const ratio = contrastRatio(foreground, background);
   return ratio === null ? true : ratio >= 4.5;
@@ -69,6 +107,43 @@ const TRANSITION_SPEED_MAP: Record<string, string> = {
   normal: "0.3s",
   slow: "0.5s",
 };
+
+/** Default viewport width threshold for `bgResponsiveBreakpoint` when omitted — matches Tailwind `md` and `--breakpoint-md`. */
+export const DEFAULT_RESPONSIVE_BREAKPOINT_PX = BREAKPOINT_MD_PX;
+
+/**
+ * Picks `background-size` for responsive hero skins. When `viewportWidth` is null
+ * (SSR / pre-measure), returns the small-screen value (default `cover`) to align
+ * with narrow-first SSR fallbacks.
+ */
+export function resolveResponsiveBgSize(
+  palette: ColorPalette,
+  viewportWidth: number | null,
+): string {
+  const small = palette.bgSizeSmallScreens ?? "cover";
+  const large = palette.bgSizeLargeScreens ?? "auto";
+  const bp =
+    palette.bgResponsiveBreakpoint ?? DEFAULT_RESPONSIVE_BREAKPOINT_PX;
+  if (viewportWidth == null) {
+    return small;
+  }
+  return viewportWidth < bp ? small : large;
+}
+
+function paletteUsesResponsiveBackgroundSize(palette: ColorPalette): boolean {
+  return typeof palette.bgResponsiveBreakpoint === "number";
+}
+
+/** Which palette to paint: single-palette skins use `colors.palette`; legacy uses branches. */
+export function resolveThemePalette(theme: ThemeConfig): ColorPalette {
+  if (theme.colors.palette) {
+    return theme.colors.palette;
+  }
+  if (theme.appearance === "light" && theme.colors.light) {
+    return theme.colors.light;
+  }
+  return theme.colors.dark;
+}
 
 export function paletteToVars(palette: ColorPalette): Record<string, string> {
   const vars: Record<string, string> = {
@@ -121,17 +196,28 @@ export function paletteToVars(palette: ColorPalette): Record<string, string> {
   if (palette.bgImage !== undefined) vars["--bg-image"] = palette.bgImage;
   if (palette.bgOverlay !== undefined) vars["--bg-overlay"] = palette.bgOverlay;
   if (palette.bgPosition !== undefined) vars["--bg-position"] = palette.bgPosition;
+  if (
+    !paletteUsesResponsiveBackgroundSize(palette) &&
+    palette.bgSize !== undefined
+  ) {
+    vars["--bg-size"] = palette.bgSize;
+  }
   return vars;
 }
 
-export function themeToVars(
+/** Injects `--bg-size` when the palette uses `bgResponsiveBreakpoint` (client-driven). */
+export function mergeResponsiveBackgroundSizeIntoVars(
+  vars: Record<string, string>,
   theme: ThemeConfig,
-  mode: ThemeMode,
-): Record<string, string> {
-  const palette =
-    mode === "light" && theme.colors.light
-      ? theme.colors.light
-      : theme.colors.dark;
+  viewportWidth: number | null,
+): void {
+  const palette = resolveThemePalette(theme);
+  if (!paletteUsesResponsiveBackgroundSize(palette)) return;
+  vars["--bg-size"] = resolveResponsiveBgSize(palette, viewportWidth);
+}
+
+export function themeToVars(theme: ThemeConfig): Record<string, string> {
+  const palette = resolveThemePalette(theme);
   const paletteVars = paletteToVars(palette);
   const vars: Record<string, string> = {
     ...paletteVars,

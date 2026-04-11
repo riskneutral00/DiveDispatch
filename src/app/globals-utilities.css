@@ -1,0 +1,180 @@
+/* ── Field width scale — @layer utilities required for Tailwind v4 ─────────
+   Parent container must be: grid grid-cols-6 gap-4
+   Mobile: fields span N of 6 columns. Desktop: fixed px width.
+   @layer utilities prevents Tailwind compiler from stripping these rules.
+   sm breakpoint — `@media (min-width: 640px)` (literal px; Lightning CSS rejects var() in @media). Must match `BREAKPOINT_SM_PX` in `src/themes/breakpoints.ts`.
+   ──────────────────────────────────────────────────────────────────────────── */
+
+@layer utilities {
+  .field-number {
+    grid-column: span 2;
+  }
+  .field-select-short {
+    grid-column: span 2;
+  }
+  .field-name {
+    grid-column: span 3;
+  }
+  .field-phone {
+    grid-column: span 3;
+  }
+  .field-text-short {
+    grid-column: span 3;
+  }
+  .field-date {
+    grid-column: span 3;
+  }
+  .field-email {
+    grid-column: span 6;
+  }
+  .field-select-long {
+    grid-column: span 6;
+  }
+  .field-location {
+    grid-column: span 6;
+  }
+  .field-text-long {
+    grid-column: span 6;
+  }
+
+  @media (min-width: 640px) {
+    .field-number,
+    .field-select-short,
+    .field-name,
+    .field-phone,
+    .field-text-short,
+    .field-date,
+    .field-email,
+    .field-select-long,
+    .field-location,
+    .field-text-long {
+      grid-column: auto;
+    }
+
+    .field-number {
+      width: 80px;
+    }
+    .field-select-short {
+      width: 112px;
+    }
+    .field-name {
+      width: 176px;
+    }
+    .field-phone {
+      width: 176px;
+    }
+    .field-text-short {
+      width: 176px;
+    }
+    .field-date {
+      width: 176px;
+    }
+    .field-email {
+      width: 256px;
+    }
+    .field-select-long {
+      width: 256px;
+    }
+    .field-location {
+      width: 256px;
+    }
+    .field-text-long {
+      width: 100%;
+    }
+  }
+
+  /* Portal + profile responsive field grid (mobile: 6-col; sm+: flex wrap) */
+  .form-grid-responsive {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    column-gap: 0.75rem;
+    row-gap: 1rem;
+  }
+  @media (min-width: 640px) {
+    .form-grid-responsive {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+  }
+
+  .text-float-label {
+    font-size: var(--font-size-float-label);
+  }
+
+  .calendar-weekday-header {
+    padding-top: 0.375rem;
+    padding-bottom: 0.375rem;
+    text-align: center;
+    font-size: var(--font-size-float-label);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  @media (min-width: 640px) {
+    .calendar-weekday-header {
+      font-size: var(--font-size-label);
+    }
+  }
+
+  /* Primary fill + on-primary ink — @theme excludes bg on --color-primary */
+  .bg-primary-solid {
+    background: var(--color-primary);
+    color: var(--color-text-on-primary);
+  }
+
+  .calendar-legend-pill {
+    font-size: clamp(9px, 1.8vw, 12px);
+  }
+
+  .notification-badge-count {
+    background: var(--color-status-urgent);
+    color: var(--color-text-on-primary);
+  }
+
+  .table-manifest-mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: var(--font-size-dense-meta);
+  }
+
+  .table-manifest-meta {
+    font-size: var(--font-size-dense-meta);
+  }
+
+  .table-manifest-header-row {
+    font-size: var(--font-size-float-label);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .dense-meta-text {
+    font-size: var(--font-size-dense-meta);
+  }
+
+  .nationality-code {
+    font-size: var(--font-size-float-label);
+  }
+
+  .accent-primary {
+    accent-color: var(--color-primary);
+  }
+
+  .caret-accent {
+    caret-color: var(--color-accent);
+  }
+
+  .glass-divider {
+    border-bottom: 1px solid var(--color-glass-border);
+  }
+
+  .dialog-fullscreen-panel {
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+
+  .label-float-in {
+    animation: label-float-in var(--transition-speed) ease;
+  }
+}

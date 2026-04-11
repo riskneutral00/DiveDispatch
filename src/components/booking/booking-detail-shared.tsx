@@ -283,7 +283,7 @@ function PortalLinkSection({
 
 export function BookingDetailSkeleton() {
   return (
-    <DashboardPageFrame className="min-h-screen p-4 sm:p-6 space-y-4">
+    <DashboardPageFrame className="min-h-screen p-4 md:p-6 space-y-4">
       {[1, 2, 3].map((i) => (
         <Card key={i} padding="md">
           <div className="space-y-3">
@@ -517,14 +517,14 @@ export function BookingDetailBody({
 
   return (
     <div className="flex flex-col h-full">
-      <div className="px-4 sm:px-6 pt-3 flex-shrink-0">
+      <div className="px-4 md:px-6 pt-3 flex-shrink-0">
         <SectionTabs
           active={activeSection}
           onChange={(id) => onSectionChange?.(id)}
         />
       </div>
 
-      <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-6 py-4 space-y-5">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 md:px-6 py-4 space-y-5">
         {activeSection === 'overview' && overviewSlot && (
           <>
             {overviewSlot}

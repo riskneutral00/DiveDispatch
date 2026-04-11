@@ -49,7 +49,7 @@ export function CalendarShell({
 
       {footer && (
         <div
-          className="flex flex-wrap items-center justify-between gap-2 px-3 sm:px-5 py-3 border-t border-glass-border"
+          className="flex flex-wrap items-center justify-between gap-2 px-3 md:px-5 py-3 border-t border-glass-border"
         >
           {footer}
         </div>

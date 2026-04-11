@@ -385,7 +385,7 @@ export function BookingWizard({
   }
 
   const Wrapper = isOverlay
-    ? ({ children: c }: { children: React.ReactNode }) => <div className="px-4 py-4 sm:px-6">{c}</div>
+    ? ({ children: c }: { children: React.ReactNode }) => <div className="px-4 py-4 md:px-6">{c}</div>
     : ({ children: c }: { children: React.ReactNode }) => <DashboardPageFrame className="px-4 py-8">{c}</DashboardPageFrame>;
 
   return (

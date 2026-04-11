@@ -133,7 +133,7 @@ export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps
         filterRoles={activeTreeFilter}
       />
 
-      <main className="dashboard-enter flex-1 min-w-0 pt-1 px-4 pb-8 sm:pt-2 sm:px-6 lg:pt-3 lg:px-8">{children}</main>
+      <main className="dashboard-enter flex-1 min-w-0 pt-1 px-4 pb-8 sm:pt-2 sm:px-6 md:pt-2 md:px-6 lg:pt-3 lg:px-8">{children}</main>
 
       <ProfileOverlay
         open={overlayOpen}

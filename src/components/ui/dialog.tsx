@@ -94,20 +94,20 @@ export function Dialog({
         style={{ border: "none" }}
       >
         <div
-          className="flex h-full items-center justify-center sm:p-4"
+          className="flex h-full items-center justify-center md:p-4"
           onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
         >
           <div /* design-ok */
             className={cn(
               "dialog-fullscreen-panel flex flex-col text-primary glass-dialog",
               "w-full h-full rounded-none", // design-ok
-              "sm:w-[90vw] sm:h-[90vh] sm:max-w-[800px] sm:rounded-[var(--border-radius,12px)]",
+              "md:w-[90vw] md:h-[90vh] md:max-w-[800px] md:rounded-[var(--border-radius,12px)]",
               "overflow-hidden",
               className,
             )}
           >
             <div
-              className="flex items-center justify-between gap-4 px-4 py-3 sm:px-6 sm:py-4 flex-shrink-0 border-b"
+              className="flex items-center justify-between gap-4 px-4 py-3 md:px-6 md:py-4 flex-shrink-0 border-b"
               style={{ borderColor: "var(--color-glass-border)" }}
             >
               <div className="flex-1 min-w-0">
@@ -163,7 +163,7 @@ export function Dialog({
         >
           {(title || description) && (
             <div
-              className="flex items-start justify-between gap-4 p-4 sm:p-6 border-b"
+              className="flex items-start justify-between gap-4 p-4 md:p-6 border-b"
               style={{ borderColor: "var(--color-glass-border)" }}
             >
               <div className="flex-1 min-w-0">
@@ -192,7 +192,7 @@ export function Dialog({
             </div>
           )}
 
-          <div className="p-4 sm:p-6">{children}</div>
+          <div className="p-4 md:p-6">{children}</div>
         </div>
       </div>
     </dialog>

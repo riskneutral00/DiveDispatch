@@ -1,0 +1,219 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   NAVIGATION — search for section banners (── … ──); line numbers drift.
+
+   Theme fallbacks (:root, [data-luminance]) · Semantic text utilities · Field
+   width @layer · Base/body/scrollbar · Background stack · Cookie-cutter title ·
+   Melt/dialog · Form divider · Glass utilities · Buttons · Glass-surface hover ·
+   Stat value · Dashboard enter · Field/slab ink (end of file, unlayered)
+
+   CASCADE CONTRACT
+   · @layer utilities — safe for field-width and similar where Tailwind order OK.
+   · Unlayered rules — glass composites, .field-text-black / .glass-slab ink;
+     must override Tailwind; do NOT move into @layer without re-auditing built
+     CSS order. See Architecture/design-system-invariants.md
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Theme fallbacks (Lagoon light — default skin, pre-hydration SSR safety) ─
+   ThemeProvider injects live values at runtime. These ensure the page renders
+   correctly before JS hydrates (SSR, no-JS, flash prevention).
+   Matches default `selectedThemeId` / Lagoon `appearance: light`.
+   ──────────────────────────────────────────────────────────────────────────── */
+:root {
+  /* Breakpoints — must match src/themes/breakpoints.ts and Tailwind `sm` / `md` */
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-below-sm: 639px;
+
+  /* Palette */
+  --color-primary: #0e7490;
+  --color-secondary: #0891b2;
+  --color-accent: #0d9488;
+  --color-text-primary: #0f3b50;
+  --color-text-secondary: #356174;
+  --color-text-on-primary: #ffffff;
+  --color-surface: #d5f3f7;
+  --color-surface-elevated: #ebfafc;
+  --color-success: #34d399;
+  --color-warning: #fbbf24;
+  --color-destructive: #dc2626;
+  --color-destructive-muted: color-mix(
+    in srgb,
+    var(--color-destructive) 15%,
+    transparent
+  );
+  --color-destructive-glow: color-mix(
+    in srgb,
+    var(--color-destructive) 30%,
+    transparent
+  );
+  --color-warning-muted: color-mix(
+    in srgb,
+    var(--color-warning) 15%,
+    transparent
+  );
+  --color-warning-bg: color-mix(in srgb, var(--color-warning) 12%, transparent);
+  --color-warning-border: color-mix(
+    in srgb,
+    var(--color-warning) 25%,
+    transparent
+  );
+  --color-warning-glow: color-mix(
+    in srgb,
+    var(--color-warning) 35%,
+    transparent
+  );
+  --color-primary-muted: color-mix(
+    in srgb,
+    var(--color-primary) 15%,
+    transparent
+  );
+  --color-primary-border: color-mix(
+    in srgb,
+    var(--color-primary) 40%,
+    transparent
+  );
+  --color-accent-muted: color-mix(
+    in srgb,
+    var(--color-accent) 15%,
+    transparent
+  );
+  --color-accent-border: color-mix(
+    in srgb,
+    var(--color-accent) 30%,
+    transparent
+  );
+  --color-accent-glow: color-mix(in srgb, var(--color-accent) 15%, transparent);
+
+  /* Glass */
+  --color-glass-bg: rgba(255, 255, 255, 0.12);
+  --color-glass-border: rgba(0, 0, 0, 0.08);
+  --glass-blur: 14px;
+  --color-primary-glow: rgba(14, 116, 144, 0.22);
+  --color-glass-bg-elevated: rgba(255, 255, 255, 0.2);
+  --color-glass-border-elevated: rgba(0, 0, 0, 0.18);
+  --glass-blur-elevated: 24px;
+  --color-glass-specular: rgba(255, 255, 255, 0.5);
+  --color-glass-specular-subtle: rgba(255, 255, 255, 0.3);
+  --color-glass-shadow: rgba(0, 0, 0, 0.06);
+  --color-glass-shadow-elevated: rgba(0, 0, 0, 0.1);
+
+  /* Glass hover — border glow, not fill */
+  --color-glass-bg-hover: rgba(255, 255, 255, 0.18);
+  --color-glass-border-hover: rgba(14, 116, 144, 0.24);
+  --glass-blur-hover: 18px;
+
+  /* Glass container — theme-driven readability surface */
+  --color-glass-container-border: rgba(0, 0, 0, 0.06);
+  --color-glass-container-bg: rgba(255, 255, 255, 0.06);
+
+  /* Canonical reading tint: .glass-slab + .field-underline resting fill (follows --color-text-primary) */
+  --color-reading-slab-fill: color-mix(
+    in srgb,
+    var(--color-text-primary) 68%,
+    transparent
+  );
+
+  /* Semantic opacity tokens — scale per luminance class */
+  --opacity-watermark: 0.55;
+  --opacity-subtle: 0.1;
+  --opacity-muted: 0.7;
+
+  /* Background — photo skin */
+  --bg-image: url("/backgrounds/lagoon.jpg");
+  /* Pre-hydration: small-screen branch (`cover`) — ThemeProvider sets large-screen `auto` when vw >= breakpoint */
+  --bg-size: cover;
+  /* Readability tint over photo — must stay in sync with theme `--bg-overlay` when set */
+  --bg-overlay: radial-gradient(
+    ellipse 92% 70% at 50% 50%,
+    rgba(221, 252, 255, 0.26) 0%,
+    rgba(195, 244, 250, 0.5) 62%,
+    rgba(171, 232, 241, 0.68) 100%
+  );
+  --body-bg: #d5f3f7;
+
+  /* Typography */
+  --font-heading: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  --border-radius: 16px;
+  /* Horizontal inset for reading slabs (.field-underline); aligns with floating labels */
+  --field-slab-inline-padding: 0.5rem;
+  /* Dense list rows (Card xs, ItemCard): match field slab inset */
+  --card-row-padding-inline: var(--field-slab-inline-padding);
+  --card-row-padding-block: var(--field-slab-inline-padding);
+  --border-radius-button: 4px;
+
+  /* Z-index scale */
+  --z-bg: 0;
+  --z-content: 2;
+  --z-sticky: 20;
+  --z-dropdown: 50;
+  --z-modal: 70;
+  --z-tooltip: 80;
+  --z-dev: 100;
+  --transition-speed: 0.3s;
+
+  /* Type scale */
+  --font-size-page-title: 28px;
+  --font-size-card-title: 16px;
+  --font-size-body: 14px;
+  --font-size-label: 12px;
+  --font-size-section-header: 11px;
+  /* Float labels, nationality codes — below text-section-header */
+  --font-size-float-label: 10px;
+  /* Dense tables (manifest, calendar meta) */
+  --font-size-dense-meta: 11px;
+  --letter-spacing-tight: -0.03em;
+  --letter-spacing-normal: -0.01em;
+  --letter-spacing-wide: 0.08em;
+
+  /* Tooltip — high contrast against void */
+  --color-tooltip-bg: rgba(255, 255, 255, 0.92);
+  --color-tooltip-text: #0f172a;
+  --color-field-underline: rgba(15, 59, 80, 0.35);
+
+  /* Glass dialog — higher opacity for content readability */
+  --color-glass-dialog-bg: rgba(255, 255, 255, 0.7);
+  --color-glass-dialog-border: rgba(0, 0, 0, 0.12);
+  --glass-dialog-blur: 28px;
+
+  /* Status colors — SSR fallbacks (Lagoon light).
+     Runtime values injected by ThemeProvider per luminance class.
+     Derived -bg / -border / badge / alert / calendar tokens: globals-status-derived.css (generated).
+     IMPORTANT: Do NOT add these bases to @theme inline. Tailwind's self-referential
+     var() resolution overwrites these values at build time. */
+  --color-status-active: #059669;
+  --color-active-fg: var(
+    --color-status-active
+  ); /* alias used by save-button and toast success */
+  --color-status-draft: #d97706;
+  --color-status-upcoming: #0e7490;
+  --color-status-completed: #7c3aed; /* violet */
+  --color-status-cancelled: #7c3aed; /* violet */
+  --color-status-warning: #d97706; /* amber — attention tier */
+  --color-status-success: #059669; /* green — info/success tier */
+  --color-status-urgent: #dc2626;
+  --color-status-multiday-border: rgba(0, 0, 0, 0.5);
+
+  /* Blocked — operational constraint, uses urgent color (icon differentiates) */
+  --color-blocked: #dc2626;
+}
+
+[data-luminance="bright"] {
+  --color-tooltip-bg: rgba(0, 0, 0, 0.85);
+  --color-tooltip-text: #f8fafc;
+}
+
+/* ── Semantic text color utilities ──────────────────────────────────────────
+   Map CSS custom properties to utility classes. These are the ONLY text-primary
+   and text-secondary definitions — no conflict with @theme since --color-primary
+   and --color-secondary are excluded from @theme inline.
+   ──────────────────────────────────────────────────────────────────────────── */
+.text-primary {
+  color: var(--color-text-primary);
+}
+.text-secondary {
+  color: var(--color-text-secondary);
+}
+.text-on-primary {
+  color: var(--color-text-on-primary);
+}

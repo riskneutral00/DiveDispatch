@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { parseConvexErrorI18n } from '@/lib/utils/convex-error'
+import { mapPortalMutationError, parseConvexErrorI18n } from '@/lib/utils/convex-error'
 
 type TranslateFn = (key: string, values?: Record<string, string>) => string
 
@@ -59,7 +59,7 @@ export function usePortalStep(t?: TranslateFn): UsePortalStepReturn {
     if (t) {
       setServerError(parseConvexErrorI18n(err, t))
     } else {
-      setServerError(parseConvexErrorI18n(err, (key) => key))
+      setServerError(mapPortalMutationError(err))
     }
   }, [t])
 

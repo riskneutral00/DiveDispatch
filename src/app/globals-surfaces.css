@@ -1,0 +1,699 @@
+/* ── Mobile-first input sizing — prevents iOS auto-zoom (requires ≥16px) ─ */
+input,
+textarea,
+select {
+  font-size: 16px;
+}
+@media (min-width: 640px) {
+  input,
+  textarea,
+  select {
+    font-size: 14px;
+  }
+}
+
+/* ── Urgent Draft pulse animation ────────────────────────────────────────── */
+@keyframes urgent-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+.urgent-pulse {
+  animation: urgent-pulse 2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .urgent-pulse {
+    animation: none;
+  }
+}
+
+/* ── Base styles ─────────────────────────────────────────────────────────────
+   All colors via CSS variables. Never hardcode.
+   ──────────────────────────────────────────────────────────────────────────── */
+html {
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-glass-border) transparent;
+}
+
+body {
+  background-color: var(--body-bg);
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+}
+
+/* ── Text selection ──────────────────────────────────────────────────────────*/
+::selection {
+  background: var(--color-primary-glow);
+  color: var(--color-text-primary);
+}
+
+/* ── Custom scrollbar ────────────────────────────────────────────────────────*/
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-glass-border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-glass-border-elevated);
+}
+
+/* ── Background stack ────────────────────────────────────────────────────────
+   3-layer stack: z-0 bg-image → z-1 bg-overlay → z-2 app-shell (MASTER)
+   ──────────────────────────────────────────────────────────────────────────── */
+.bg-image {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background-color: var(--body-bg);
+  background-image: var(--bg-image);
+  background-position: var(--bg-position, center);
+  background-size: var(--bg-size, cover);
+  background-repeat: no-repeat;
+}
+
+.bg-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: var(--bg-overlay);
+}
+
+.app-shell {
+  position: relative;
+  z-index: 2;
+  transition: opacity 0.25s ease;
+}
+
+
+/* Text clip — variant B: photo through glyphs (MASTER). Related: .stat-value */
+/* Experimental — see MASTER "Knockout / cookie-cutter lettering"
+   Aligns painted background with fixed .bg-image via background-attachment: fixed.
+   Use only when contrast is safe; otherwise use solid ink (hybrid fallback). */
+.cookie-cutter-title {
+  background-image: var(--bg-image);
+  background-position: var(--bg-position, center);
+  background-size: var(--bg-size, cover);
+  background-attachment: fixed;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Melt: fade page content when a dialog is open, revealing the brand background.
+   CSS-only: no JS required. Targets any open native <dialog> with data-melt attribute.
+   Dialog defaults melt=true, so all dialogs melt unless explicitly opted out. */
+html:has(dialog[open][data-melt]) .app-shell {
+  opacity: 0;
+}
+
+/* Scroll lock — for melt dialogs (prevents scroll-behind).
+   Non-melt dialogs (rare opt-out) leave body scrollable to prevent layout shake. */
+body:has(dialog[open][data-melt]) {
+  overflow: hidden;
+}
+
+/* Mobile menu — stronger fill so dropdown is readable over dense content */
+@media (max-width: 639px) {
+  [data-menu-melt] + .glass-elevated {
+    background-color: color-mix(
+      in srgb,
+      var(--color-surface-elevated) 90%,
+      transparent
+    );
+  }
+}
+
+/* Dialog native backdrop — activated when dialog.showModal() is open */
+dialog::backdrop {
+  background: transparent;
+}
+
+/* ── Form divider ────────────────────────────────────────────────────────────
+   Thin 1px line between form sections (Apple Settings style).
+   ──────────────────────────────────────────────────────────────────────────── */
+.form-divider {
+  border: none;
+  border-top: 1px solid var(--color-glass-border);
+  opacity: 0.5;
+  margin: 0;
+}
+
+/* ── Glass toast accents — unlayered (see Architecture/css-cascade-audit.md) ─
+   Left border accent for sonner toasts to match Glass Air design.
+   ──────────────────────────────────────────────────────────────────────────── */
+.glass-toast-success {
+  border-left: 3px solid var(--color-active-fg) !important;
+}
+.glass-toast-error {
+  border-left: 3px solid var(--color-destructive) !important;
+}
+
+/* Map crosshair shadow — visible on light roads, dark water, and satellite */
+.map-crosshair {
+  filter: drop-shadow(0 1px 2px var(--color-glass-shadow))
+    drop-shadow(0 0 4px var(--color-glass-shadow));
+}
+
+/* ── Glass utility classes ───────────────────────────────────────────────────
+   Fill + border + shadow (no backdrop blur — legibility from tint + tokens).
+   Components import these via cn().
+   ──────────────────────────────────────────────────────────────────────────── */
+.glass {
+  --glass-specular-edge-inset: 10%;
+  position: relative;
+  background-color: var(--color-glass-bg);
+  border: 1px solid var(--color-glass-border);
+  border-radius: var(--border-radius);
+  box-shadow:
+    0 4px 20px var(--color-glass-shadow),
+    inset 0 1px 0 var(--color-glass-specular-subtle);
+  transition:
+    background-color var(--transition-speed) ease,
+    box-shadow var(--transition-speed) ease,
+    border-color var(--transition-speed) ease,
+    transform var(--transition-speed) ease;
+}
+
+.glass-elevated {
+  --glass-specular-edge-inset: 8%;
+  position: relative;
+  background-color: var(--color-glass-bg-elevated);
+  border: 1px solid var(--color-glass-border-elevated);
+  border-radius: var(--border-radius);
+  box-shadow:
+    0 8px 32px var(--color-glass-shadow-elevated),
+    inset 0 1px 0 var(--color-glass-specular-subtle);
+  transition:
+    background-color var(--transition-speed) ease,
+    box-shadow var(--transition-speed) ease,
+    border-color var(--transition-speed) ease,
+    transform var(--transition-speed) ease;
+}
+
+/* User menu (Floating UI): never transition transform — positioning uses translate */
+.glass-elevated.user-menu-floating {
+  transition:
+    background-color var(--transition-speed) ease,
+    box-shadow var(--transition-speed) ease,
+    border-color var(--transition-speed) ease;
+}
+
+/* Specular top-edge highlight (shared geometry; inset via --glass-specular-edge-inset) */
+:is(.glass, .glass-elevated)::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: var(--glass-specular-edge-inset);
+  right: var(--glass-specular-edge-inset);
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--color-glass-specular),
+    transparent
+  );
+  border-radius: var(--border-radius) var(--border-radius) 0 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ── Glass container (perimeter only — no fill, no blur) ───────────────────*/
+.glass-container {
+  background-color: transparent;
+  border: 1px solid var(--color-glass-container-border);
+  border-radius: var(--border-radius);
+  box-shadow: none;
+}
+
+/* Beats .glass-container border-radius when both classes apply (e.g. Select shell). */
+.glass-container.rounded-none {
+  border-radius: 0;
+}
+
+/* Nested containers: lose border AND go transparent (avoid stacking tints) */
+.glass-container .glass-container {
+  border-color: transparent;
+  background-color: transparent;
+}
+
+/* ── Glass slab: tinted reading surface + black ink (prefer this over ad-hoc utilities) ─ */
+.glass-slab {
+  background-color: var(--color-reading-slab-fill);
+  border-radius: var(--border-radius);
+}
+
+.glass-container.glass-slab,
+.glass-container .glass-slab {
+  background-color: var(--color-reading-slab-fill);
+}
+
+/* Tinted reading surface — background only; does not apply slab ink (use .surface-reading-card for parity) */
+.reading-plane {
+  background-color: var(--color-reading-slab-fill);
+}
+
+/* Filled “card” surface: same slab fill + participates in slab ink rules (preference rows, profile tiles) */
+.surface-reading-card {
+  background-color: var(--color-reading-slab-fill);
+}
+
+.glass-container.surface-reading-card,
+.glass-container .surface-reading-card {
+  background-color: var(--color-reading-slab-fill);
+}
+
+/* ── Glass dialog (perimeter shell — no fill, no blur) ─────────────────────*/
+.glass-dialog {
+  background-color: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: 1px solid var(--color-glass-dialog-border);
+  border-radius: var(--border-radius);
+}
+
+/* ── Glass field (input focus ring) ──────────────────────────────────────────*/
+.glass-field {
+  transition:
+    border-color var(--transition-speed) ease,
+    box-shadow var(--transition-speed) ease;
+}
+
+.glass-field:focus {
+  outline: none;
+  border-color: var(--color-glass-border-elevated);
+  box-shadow:
+    0 0 0 3px var(--color-primary-glow),
+    0 4px 16px var(--color-glass-shadow);
+}
+
+/* ── Fullscreen dialog — transparent on mobile, glass from `md` (aligns with shell) ─ */
+@media (min-width: 768px) {
+  .dialog-fullscreen-panel {
+    background-color: transparent;
+    border: 1px solid var(--color-glass-container-border);
+    box-shadow: none;
+  }
+}
+
+/* ── Label float-in animation — mount effect for FieldLabel ────────────────*/
+@keyframes label-float-in {
+  from {
+    font-size: var(--font-size-body);
+    opacity: 0.5;
+  }
+}
+
+/* ── Field underline — unlayered like .glass/.glass-elevated so cascade wins ─*/
+.field-underline {
+  background-color: var(--color-reading-slab-fill);
+  border: none;
+  border-bottom: 1.5px solid var(--color-field-underline);
+  border-radius: var(--border-radius);
+  padding-inline: var(--field-slab-inline-padding);
+  outline: none;
+  transition: border-color var(--transition-speed) ease;
+}
+
+.field-underline:focus {
+  outline: none;
+  border-bottom-color: var(--color-accent);
+}
+
+.field-underline:hover {
+  border-bottom-color: var(--color-accent);
+}
+
+.glass-slab .field-underline,
+.surface-reading-card .field-underline {
+  background-color: transparent;
+}
+
+/* ── Button variants (CSS-only; hover wins base without !important) ──────────
+   .button-variant-* = default paint. .glass-btn-hover = lift/glow when
+   hoverEffect !== none. Badges may still use .glass-btn-ghost without
+   .button-variant-* (inline chroma); slab ink rules list both selectors.
+   ──────────────────────────────────────────────────────────────────────────── */
+.button-variant-primary {
+  background: var(--color-primary);
+  color: var(--color-text-on-primary);
+  border-color: var(--color-primary);
+}
+
+.button-variant-secondary {
+  background: var(--color-glass-bg);
+  color: var(--color-text-primary);
+  border-color: var(--color-glass-border);
+}
+
+.button-variant-ghost {
+  background: transparent;
+  color: var(--color-text-primary);
+  border-color: transparent;
+}
+
+.button-variant-destructive {
+  background: var(--color-destructive);
+  color: var(--color-text-on-primary);
+  border-color: var(--color-destructive);
+}
+
+.button-variant-destructive-ghost {
+  background: transparent;
+  color: var(--color-text-secondary);
+  border-color: transparent;
+}
+
+.glass-btn {
+  will-change: transform;
+}
+
+.glass-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--color-primary-glow);
+}
+
+.glass-btn-hover.button-variant-primary:not(:disabled):hover {
+  box-shadow:
+    0 0 24px var(--color-primary-glow),
+    0 4px 16px var(--color-glass-shadow);
+  transform: translateY(-1px);
+}
+
+.glass-btn-hover.button-variant-secondary:not(:disabled):hover {
+  background: var(--color-glass-bg-elevated);
+  border-color: var(--color-glass-border-elevated);
+  box-shadow: 0 4px 16px var(--color-glass-shadow);
+  transform: translateY(-1px);
+}
+
+.glass-btn-hover.button-variant-ghost:not(:disabled):hover {
+  background: var(--color-glass-bg);
+  border-color: var(--color-glass-border);
+}
+
+.glass-btn-hover.button-variant-destructive:not(:disabled):hover {
+  box-shadow:
+    0 0 24px var(--color-destructive-glow),
+    0 4px 16px var(--color-glass-shadow);
+  transform: translateY(-1px);
+}
+
+.glass-btn-hover.button-variant-destructive-ghost:not(:disabled):hover {
+  color: var(--color-destructive);
+  box-shadow: 0 0 12px var(--color-destructive-glow);
+}
+
+/* IconButton: color comes from text-secondary utility; surface only sets bg/border */
+.icon-button-glass-surface {
+  background: var(--color-glass-bg);
+  border: 1px solid var(--color-glass-border);
+}
+
+.glass-btn-hover.icon-button-glass-surface:not(:disabled):hover {
+  background: var(--color-glass-bg-elevated);
+  border-color: var(--color-glass-border-elevated);
+  box-shadow: 0 4px 16px var(--color-glass-shadow);
+  transform: translateY(-1px);
+}
+
+.icon-button-ghost {
+  background: transparent;
+  border: 1px solid transparent;
+}
+
+/* IconButton ghost + glow: text-secondary; hover fill matches glass ghost */
+.glass-btn-hover.icon-button-ghost:not(:disabled):hover {
+  background: var(--color-glass-bg);
+  border-color: var(--color-glass-border);
+}
+
+.glass-btn:not(:disabled):active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* Text clip — variant A: gradient on glyphs (stats). Related: .cookie-cutter-title */
+/* ── Stat value gradient text ─────────────────────────────────────────────── */
+.stat-value {
+  background: linear-gradient(
+    135deg,
+    var(--color-primary),
+    var(--color-accent)
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Glass hover — border glow effect ────────────────────────────────────────
+   Desktop: border glows with primary color, fill barely changes,
+   background stays visible through glass. No color/text inversion.
+   Always active — canonical hover for all glass surfaces.
+   ──────────────────────────────────────────────────────────────────────────── */
+.glass-surface:hover {
+  background-color: var(--color-glass-bg-hover);
+  border-color: var(--color-glass-border-hover);
+  box-shadow:
+    0 0 20px var(--color-primary-glow),
+    0 8px 32px var(--color-glass-shadow-elevated),
+    inset 0 1px 0 var(--color-glass-specular);
+}
+
+/* Mobile: slightly brighter border at rest, primary glow flash on tap */
+@media (hover: none) {
+  .glass-surface {
+    border-color: var(--color-glass-container-border);
+  }
+
+  .glass-surface:active {
+    border-color: var(--color-glass-border-hover);
+    box-shadow: 0 0 20px var(--color-primary-glow);
+  }
+}
+
+/* Theme switch: suppress ALL transitions so variable swap is instant (no jitter) */
+.theme-switching,
+.theme-switching * {
+  transition-duration: 0s !important;
+}
+
+/* Reduced motion: disable all animations and transitions globally */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .glass,
+  .glass-elevated,
+  .glass-container,
+  .glass-surface {
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ── Stakeholder switch: fade-in on mount ──────────────────────────────────
+   DashboardShell re-mounts on every role switch, so a CSS animation on
+   <main> gives a natural crossfade with zero JS overhead.
+   ──────────────────────────────────────────────────────────────────────────── */
+@keyframes dashboard-fade-in {
+  from {
+    opacity: 0;
+    translate: 0 6px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+.dashboard-enter {
+  animation: dashboard-fade-in 220ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-enter {
+    animation: none;
+  }
+}
+
+/* ── Field black ink (end of file — must override Tailwind utilities + layers)
+   Unlayered + !important; counters, script tiles, borders were invisible when
+   this lived in @layer utilities (lost cascade to later utilities).
+   See Architecture/design-system-invariants.md (Tailwind v4 vs custom ink).
+   ──────────────────────────────────────────────────────────────────────────── */
+.field-text-black {
+  --field-text-ink: #000000;
+}
+
+.field-text-black :is(input, textarea, select, label) {
+  color: var(--field-text-ink) !important;
+  -webkit-text-fill-color: var(--field-text-ink) !important;
+}
+
+.field-text-black button[role="combobox"],
+.field-text-black button.field-underline {
+  color: var(--field-text-ink) !important;
+  -webkit-text-fill-color: var(--field-text-ink) !important;
+}
+
+.field-text-black .text-primary,
+.field-text-black .text-secondary {
+  color: var(--field-text-ink) !important;
+  -webkit-text-fill-color: var(--field-text-ink) !important;
+}
+
+.field-text-black span.text-secondary,
+.field-text-black p.text-secondary {
+  color: var(--field-text-ink) !important;
+  -webkit-text-fill-color: var(--field-text-ink) !important;
+}
+
+.field-text-black button.glass-field {
+  color: var(--field-text-ink) !important;
+  -webkit-text-fill-color: var(--field-text-ink) !important;
+  border-color: color-mix(
+    in srgb,
+    var(--field-text-ink) 55%,
+    transparent
+  ) !important;
+}
+
+.field-text-black button.glass-field[aria-pressed="true"] {
+  border-color: var(--color-destructive) !important;
+  background-color: transparent !important;
+}
+
+/* Required-field asterisks stay destructive red (semantic), not black slab ink. */
+.field-text-black label .text-destructive {
+  color: var(--color-destructive) !important;
+  -webkit-text-fill-color: var(--color-destructive) !important;
+}
+
+.field-text-black [role="alert"] {
+  color: var(--color-destructive) !important;
+  -webkit-text-fill-color: var(--color-destructive) !important;
+}
+
+.field-text-black input::placeholder,
+.field-text-black textarea::placeholder {
+  color: color-mix(in srgb, var(--field-text-ink) 55%, transparent) !important;
+}
+
+/* ── Glass ink: black text + icons on filled surfaces (apply .glass-slab, .surface-reading-card, or .glass-ink)
+   .glass-slab / .surface-reading-card = tinted slab + ink (cards / list rows; same token).
+   .glass-ink = ink only — use on a subtree that already has a fill, or put .glass-ink on the
+   same element as .bg-glass-bg / .bg-glass-bg-elevated / .bg-glass-border for lone chips.
+   NOT on bare .glass-container (transparent perimeter only).
+   Opt-out of ink on a descendant: class .glass-ink-off (restores primary body text on that node).
+   Same cascade as .field-text-black. Forms inside .field-text-black still win for inputs.
+   ──────────────────────────────────────────────────────────────────────────── */
+:is(.glass-ink, .glass-slab, .surface-reading-card) {
+  color: var(--color-text-on-primary);
+}
+
+:is(.glass-ink, .glass-slab, .surface-reading-card) svg {
+  color: var(--color-text-on-primary);
+  stroke: currentColor;
+}
+
+:is(.glass-ink, .glass-slab, .surface-reading-card) :is(.text-primary, .text-secondary, .text-body, .text-label) {
+  color: var(--color-text-on-primary) !important;
+  -webkit-text-fill-color: var(--color-text-on-primary) !important;
+}
+
+:is(.glass-ink, .glass-slab, .surface-reading-card) .glass-ink-off {
+  color: var(--color-text-primary) !important;
+  -webkit-text-fill-color: var(--color-text-primary) !important;
+}
+
+:is(.glass-ink, .glass-slab, .surface-reading-card) .glass-ink-off.text-secondary {
+  color: var(--color-text-secondary) !important;
+  -webkit-text-fill-color: var(--color-text-secondary) !important;
+}
+
+:is(.glass-ink, .glass-slab, .surface-reading-card) :is([role="alert"], .text-destructive) {
+  color: var(--color-destructive) !important;
+  -webkit-text-fill-color: var(--color-destructive) !important;
+}
+
+:is(.glass-ink, .glass-slab, .surface-reading-card)
+  :is(
+    .button-variant-secondary,
+    .button-variant-destructive-ghost,
+    .button-variant-ghost,
+    .icon-button-glass-surface,
+    .glass-btn-ghost
+  ) {
+  color: var(--color-text-on-primary) !important;
+  -webkit-text-fill-color: var(--color-text-on-primary) !important;
+}
+
+:is(.glass-ink, .glass-slab, .surface-reading-card) :is(.button-variant-primary, .button-variant-destructive) {
+  color: var(--color-text-on-primary) !important;
+  -webkit-text-fill-color: var(--color-text-on-primary) !important;
+}
+
+:is(.glass-ink, .glass-slab, .surface-reading-card) .glass-field {
+  border-color: var(--color-text-on-primary) !important;
+}
+
+:is(.glass-ink, .glass-slab, .surface-reading-card).border-glass-border {
+  border-color: var(--color-text-on-primary) !important;
+}
+
+:is([role="group"].glass-ink, [role="group"].glass-slab, [role="group"].surface-reading-card)
+  button {
+  border-color: var(--color-text-on-primary) !important;
+}
+
+/* Chips: only under glass-ink / glass-slab, or self when both classes on one node */
+:is(.glass-ink, .glass-slab, .surface-reading-card) :is(.bg-glass-bg, .bg-glass-bg-elevated),
+:is(.glass-ink, .glass-slab, .surface-reading-card):is(.bg-glass-bg, .bg-glass-bg-elevated) {
+  color: var(--color-text-on-primary);
+  border-color: var(--color-text-on-primary);
+}
+
+:is(.glass-ink, .glass-slab, .surface-reading-card) :is(.bg-glass-bg, .bg-glass-bg-elevated) svg,
+:is(.glass-ink, .glass-slab, .surface-reading-card):is(.bg-glass-bg, .bg-glass-bg-elevated) svg {
+  color: var(--color-text-on-primary);
+  stroke: currentColor;
+}
+
+:is(.glass-ink, .glass-slab, .surface-reading-card)
+  :is(.bg-glass-bg, .bg-glass-bg-elevated)
+  :is(.text-primary, .text-secondary, .text-body, .text-label),
+:is(.glass-ink, .glass-slab, .surface-reading-card):is(.bg-glass-bg, .bg-glass-bg-elevated)
+  :is(.text-primary, .text-secondary) {
+  color: var(--color-text-on-primary) !important;
+  -webkit-text-fill-color: var(--color-text-on-primary) !important;
+}
+
+:is(.glass-ink, .glass-slab, .surface-reading-card) .bg-glass-border,
+:is(.glass-ink, .glass-slab, .surface-reading-card).bg-glass-border {
+  color: var(--color-text-on-primary);
+  border-color: var(--color-text-on-primary);
+}
+
+:is(.glass-ink, .glass-slab, .surface-reading-card) .bg-glass-border :is(.text-primary, .text-secondary, .text-body, .text-label),
+:is(.glass-ink, .glass-slab, .surface-reading-card).bg-glass-border .text-primary {
+  color: var(--color-text-on-primary) !important;
+  -webkit-text-fill-color: var(--color-text-on-primary) !important;
+}

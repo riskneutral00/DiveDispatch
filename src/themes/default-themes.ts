@@ -174,4 +174,6 @@ export const OCEAN_DEFAULT: ThemeConfig = {
   motion: { ...MOTION },
 };
 
+export const LAGOON_DEFAULT = OCEAN_DEFAULT;
+
 export const DEFAULT_THEMES: ThemeConfig[] = [OCEAN_DEFAULT];
