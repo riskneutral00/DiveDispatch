@@ -32,6 +32,8 @@ export default defineSchema({
     dateOfBirth: v.optional(v.string()),
     isSeeded: v.boolean(),
     selectedThemeId: v.optional(v.id('themes')),
+    /** Starter + optional catalog skins available to this account (palette cycles within this list). */
+    savedThemeIds: v.optional(v.array(v.id('themes'))),
     onboardingComplete: v.optional(v.boolean()),
     defaultLocation: v.optional(v.string()),
   })
@@ -45,12 +47,17 @@ export default defineSchema({
     config: v.string(),
     isActive: v.boolean(),
     createdAt: v.number(),
+    /** Which palette cycle list this skin belongs to (dark vs light); moon/sun mode picks the matching list. */
+    appearance: v.optional(
+      v.union(v.literal('dark'), v.literal('light')),
+    ),
     tier: v.optional(v.union(v.literal('free'), v.literal('premium'), v.literal('exclusive'))),
     price: v.optional(v.number()),
     previewUrl: v.optional(v.string()),
   })
     .index('by_slug', ['slug'])
-    .index('by_isActive', ['isActive']),
+    .index('by_isActive', ['isActive'])
+    .index('by_isActive_appearance', ['isActive', 'appearance']),
 
   bookingResources: defineTable({
     bookingId: v.id('bookings'),

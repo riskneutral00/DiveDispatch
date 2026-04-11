@@ -51,6 +51,7 @@ const GLASS_BRIGHT = {
 export const OCEAN_THEME_CONFIG = {
   id: "ocean",
   name: "Ocean",
+  appearance: "dark" as const,
   colors: {
     dark: {
       primary: "#60a5fa",
@@ -133,3 +134,6 @@ export const OCEAN_THEME_CONFIG = {
     ambientAnimation: "none" as const,
   },
 }
+
+export const OCEAN_DEFAULT = OCEAN_THEME_CONFIG
+export const DEFAULT_THEMES = [OCEAN_THEME_CONFIG]

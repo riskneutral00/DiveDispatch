@@ -71,6 +71,10 @@ export const sendAlert = internalMutation({
       runAt: Date.now(),
     })
 
+    if (process.env.NODE_ENV === 'test') {
+      return
+    }
+
     if (args.status === 'failure' && args.error) {
       log.error('Cron job failed', { jobName: args.jobName, error: args.error })
 

@@ -8,7 +8,7 @@ import type { OperatorType } from './shared/operatorTypes'
 import { queryDynamicTable, deleteDynamic } from './lib/typedDb'
 import { ALL_STAKEHOLDERS, SeedStakeholder, StakeholderRole, UNOWNED_DIVE_SITES, type SeedInventoryLine } from './seedData'
 import { insertLiveaboard, insertDiveResort } from './sketchTableGuards'
-import { OCEAN_THEME_CONFIG } from './lib/defaultThemes'
+import { OCEAN_DEFAULT, DEFAULT_THEMES as STARTER_THEME_CONFIGS_IN_ORDER } from './lib/defaultThemes'
 import { ALL_INSTRUCTORS } from './seedInstructorData'
 import {
   ALL_GEAR_SIZING,
@@ -611,18 +611,90 @@ export const patchTokenIdentifiers = internalMutation({
 export const seedDefaultTheme = internalMutation({
   args: {},
   handler: async (ctx) => {
-    const themeId = await ctx.db.insert('themes', {
-      name: OCEAN_THEME_CONFIG.name,
-      slug: 'ocean',
-      config: JSON.stringify(OCEAN_THEME_CONFIG),
-      isActive: true,
-      createdAt: Date.now(),
-      tier: 'free',
-    })
+    // 1. Upsert the four starter skins
+    for (const config of STARTER_THEME_CONFIGS_IN_ORDER) {
+      const slug = config.id
+      const existing = await ctx.db
+        .query('themes')
+        .withIndex('by_slug', (q) => q.eq('slug', slug))
+        .unique()
+      const row = {
+        name: config.name,
+        slug,
+        config: JSON.stringify(config),
+        isActive: true,
+        appearance: config.appearance as 'dark' | 'light',
+        tier: 'free' as const,
+      }
+      if (existing) {
+        await ctx.db.patch(existing._id, row)
+      } else {
+        await ctx.db.insert('themes', {
+          ...row,
+          createdAt: Date.now(),
+        })
+      }
+    }
 
-    const allUsers = await ctx.db.query('users').collect()
+    // 2. Delete all ocean rows (handles duplicates)
+    const oceanRows = await ctx.db
+      .query('themes')
+      .withIndex('by_isActive', (q) => q.eq('isActive', true))
+      .take(100)
+    for (const row of oceanRows) {
+      if (row.slug === 'ocean') {
+        await ctx.db.delete(row._id)
+      }
+    }
+
+    // 3. Resolve starter theme IDs for savedThemeIds
+    const lagoon = await ctx.db
+      .query('themes')
+      .withIndex('by_slug', (q) => q.eq('slug', 'lagoon'))
+      .unique()
+    if (!lagoon) {
+      throw new Error('seedDefaultTheme: lagoon theme missing after upsert')
+    }
+
+    const orderedIds = await Promise.all(
+      STARTER_THEME_CONFIGS_IN_ORDER.map(async (c) => {
+        const t = await ctx.db
+          .query('themes')
+          .withIndex('by_slug', (q) => q.eq('slug', c.id))
+          .unique()
+        if (!t) throw new Error(`seedDefaultTheme: missing ${c.id}`)
+        return t._id
+      }),
+    )
+
+    // 4. Patch all users: set savedThemeIds and migrate ocean → lagoon
+    const allUsers = await ctx.db.query('users').take(5000)
     for (const user of allUsers) {
-      await ctx.db.patch(user._id, { selectedThemeId: themeId }) // batch-exempt
+      let selected = user.selectedThemeId
+      // If selected theme is missing or was an ocean row, default to lagoon
+      if (!selected) {
+        selected = lagoon._id
+      } else {
+        const selectedTheme = await ctx.db.get(selected)
+        if (!selectedTheme) {
+          selected = lagoon._id
+        }
+      }
+      await ctx.db.patch(user._id, {
+        savedThemeIds: orderedIds,
+        selectedThemeId: selected,
+      })
+    }
+  },
+})
+
+/** Dev-only: wipe all theme rows to reset from scratch. */
+export const clearAllThemes = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const all = await ctx.db.query('themes').collect()
+    for (const row of all) {
+      await ctx.db.delete(row._id)
     }
   },
 })

@@ -1,9 +1,10 @@
 import { ConvexError, v } from 'convex/values'
-import { mutation, query } from './_generated/server'
+import { internalMutation, mutation, query } from './_generated/server'
 import { sanitizeFields, THEME_FIELDS } from './lib/sanitize'
 import { authorize } from './lib/auth'
 import { requireAuth } from './lib/auth'
 import { ErrorCode } from './lib/errorCodes'
+import { CANONICAL_SKIN_ORDER, STARTER_SLUGS } from './lib/themeStarters'
 
 export const listActive = query({
   args: {},
@@ -26,9 +27,92 @@ export const listStore = query({
       _id: t._id,
       name: t.name,
       slug: t.slug,
+      appearance: t.appearance,
       tier: t.tier ?? 'free' as const,
       price: t.price ?? 0,
       previewUrl: t.previewUrl,
+    }))
+  },
+})
+
+export const listStoreByAppearance = query({
+  args: { appearance: v.union(v.literal('dark'), v.literal('light')) },
+  handler: async (ctx, args) => {
+    const themes = await ctx.db
+      .query('themes')
+      .withIndex('by_isActive_appearance', (q) =>
+        q.eq('isActive', true).eq('appearance', args.appearance),
+      )
+      .take(100)
+
+    const orderMap = new Map(CANONICAL_SKIN_ORDER.map((slug, i) => [slug, i]))
+    themes.sort((a, b) => {
+      const ai = orderMap.get(a.slug) ?? 999
+      const bi = orderMap.get(b.slug) ?? 999
+      return ai - bi
+    })
+
+    return themes.map((t) => ({
+      _id: t._id,
+      name: t.name,
+      slug: t.slug,
+      appearance: t.appearance,
+      tier: t.tier ?? 'free' as const,
+      price: t.price ?? 0,
+      previewUrl: t.previewUrl,
+    }))
+  },
+})
+
+/** Returns the authenticated user's saved skins, ordered by canonical slug order. */
+export const listMySkins = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity()
+    if (!identity) return []
+
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_tokenIdentifier', (q) =>
+        q.eq('tokenIdentifier', identity.tokenIdentifier),
+      )
+      .unique()
+    if (!user) return []
+
+    let themeIds = user.savedThemeIds
+    // Fallback: if no savedThemeIds, look up starters by slug
+    if (!themeIds || themeIds.length === 0) {
+      const starterThemes = await Promise.all(
+        STARTER_SLUGS.map(async (slug) =>
+          ctx.db
+            .query('themes')
+            .withIndex('by_slug', (q) => q.eq('slug', slug))
+            .unique(),
+        ),
+      )
+      themeIds = starterThemes.filter(Boolean).map((t) => t!._id)
+    }
+
+    const themes = await Promise.all(
+      themeIds.map(async (id) => ctx.db.get(id)),
+    )
+    const active = themes.filter(
+      (t): t is NonNullable<typeof t> => t !== null && t.isActive,
+    )
+
+    // Sort by canonical skin order
+    const orderMap = new Map(CANONICAL_SKIN_ORDER.map((slug, i) => [slug, i]))
+    active.sort((a, b) => {
+      const ai = orderMap.get(a.slug) ?? 999
+      const bi = orderMap.get(b.slug) ?? 999
+      return ai - bi
+    })
+
+    return active.map((t) => ({
+      _id: t._id,
+      name: t.name,
+      slug: t.slug,
+      appearance: t.appearance,
     }))
   },
 })
@@ -108,5 +192,21 @@ export const upsert = mutation({
       isActive: args.isActive,
       createdAt: Date.now(),
     })
+  },
+})
+
+/** Dev-only: backfill missing appearance on theme rows. */
+export const backfillMissingAppearance = internalMutation({
+  args: { defaultAppearance: v.union(v.literal('dark'), v.literal('light')) },
+  handler: async (ctx, { defaultAppearance }) => {
+    const all = await ctx.db
+      .query('themes')
+      .withIndex('by_isActive', (q) => q.eq('isActive', true))
+      .take(100)
+    for (const t of all) {
+      if (!t.appearance) {
+        await ctx.db.patch(t._id, { appearance: defaultAppearance })
+      }
+    }
   },
 })

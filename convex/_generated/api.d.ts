@@ -67,6 +67,7 @@ import type * as lib_requiredFields from "../lib/requiredFields.js";
 import type * as lib_rolePrecedence from "../lib/rolePrecedence.js";
 import type * as lib_sanitize from "../lib/sanitize.js";
 import type * as lib_seedUtils from "../lib/seedUtils.js";
+import type * as lib_themeStarters from "../lib/themeStarters.js";
 import type * as lib_timeConstants from "../lib/timeConstants.js";
 import type * as lib_typedDb from "../lib/typedDb.js";
 import type * as lib_types from "../lib/types.js";
@@ -176,6 +177,7 @@ declare const fullApi: ApiFromModules<{
   "lib/rolePrecedence": typeof lib_rolePrecedence;
   "lib/sanitize": typeof lib_sanitize;
   "lib/seedUtils": typeof lib_seedUtils;
+  "lib/themeStarters": typeof lib_themeStarters;
   "lib/timeConstants": typeof lib_timeConstants;
   "lib/typedDb": typeof lib_typedDb;
   "lib/types": typeof lib_types;
