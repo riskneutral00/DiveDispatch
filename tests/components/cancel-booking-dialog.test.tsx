@@ -77,9 +77,7 @@ describe('CancelBookingDialog', () => {
 
   it('renders the reason textarea', () => {
     renderDialog()
-    expect(
-      screen.getByPlaceholderText(/customer requested cancellation/i),
-    ).toBeInTheDocument()
+    expect(screen.getByLabelText(/Reason/i)).toBeInTheDocument()
   })
 
   it('calls the cancelBooking mutation with the bookingId on confirm', async () => {

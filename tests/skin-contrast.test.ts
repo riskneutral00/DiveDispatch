@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { DEFAULT_THEMES } from '../src/themes/default-themes'
-import { contrastRatio } from '../src/themes/theme-utils'
+import { blendRgbaOverHex, contrastRatio } from '../src/themes/theme-utils'
 import type { ColorPalette } from '../src/themes/theme-types'
 
 function assertContrast(
@@ -103,6 +103,62 @@ describe('Skin opacity tokens & readability surface', () => {
 
         it('luminanceClass matches expected glass tier', () => {
           expect(['dark', 'medium', 'bright']).toContain(palette.luminanceClass)
+        })
+      })
+    }
+  }
+})
+
+/**
+ * Tier 2 reference stack: alpha-blended glass tint over `bodyBg` (solid canvas fallback).
+ * Does not model `--bg-overlay` gradients, photographs, or backdrop-filter — see MASTER.md
+ * "Contrast validation reference stacks".
+ */
+describe('Glass tint over body (approximate leaf readability)', () => {
+  for (const skin of DEFAULT_THEMES) {
+    const modes: Array<{ name: string; palette: ColorPalette | undefined }> = [
+      { name: 'dark', palette: skin.colors.dark },
+      { name: 'light', palette: skin.colors.light },
+    ]
+
+    for (const { name, palette } of modes) {
+      if (!palette) continue
+
+      describe(`${skin.name} / ${name}`, () => {
+        it('textPrimary vs blended glassBg on bodyBg meets minimum ratio (3:1)', () => {
+          const blended = blendRgbaOverHex(palette.glassBg, palette.bodyBg)
+          expect(blended, 'blendRgbaOverHex').toBeTruthy()
+          assertContrast(
+            'textPrimary / glassBg over bodyBg',
+            palette.textPrimary,
+            blended!,
+            3.0,
+          )
+        })
+
+        it('textPrimary vs blended glassBgElevated on bodyBg meets minimum ratio (3:1)', () => {
+          const blended = blendRgbaOverHex(
+            palette.glassBgElevated,
+            palette.bodyBg,
+          )
+          expect(blended, 'blendRgbaOverHex elevated').toBeTruthy()
+          assertContrast(
+            'textPrimary / glassBgElevated over bodyBg',
+            palette.textPrimary,
+            blended!,
+            3.0,
+          )
+        })
+
+        it('textSecondary vs blended glassBg on bodyBg meets minimum ratio (3:1)', () => {
+          const blended = blendRgbaOverHex(palette.glassBg, palette.bodyBg)
+          expect(blended, 'blendRgbaOverHex').toBeTruthy()
+          assertContrast(
+            'textSecondary / glassBg over bodyBg',
+            palette.textSecondary,
+            blended!,
+            3.0,
+          )
         })
       })
     }

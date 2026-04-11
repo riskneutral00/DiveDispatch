@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import * as fs from 'fs'
 import * as path from 'path'
+import { readGlobalsCssBundle } from './helpers/globals-css-bundle'
 
 /**
  * Inline Color Style Compliance (DD-181)
@@ -103,9 +104,8 @@ describe('Inline color style compliance (DD-181)', () => {
     }
   })
 
-  it('utility classes text-primary and text-secondary are defined in globals.css', () => {
-    const globalsPath = path.resolve(__dirname, '../src/app/globals.css')
-    const globals = fs.readFileSync(globalsPath, 'utf-8')
+  it('utility classes text-primary and text-secondary are defined in globals bundle', () => {
+    const globals = readGlobalsCssBundle()
 
     expect(globals).toContain('.text-primary')
     expect(globals).toContain('color: var(--color-text-primary)')

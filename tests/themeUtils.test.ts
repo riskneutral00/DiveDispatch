@@ -1,5 +1,16 @@
 import { describe, it, expect } from 'vitest'
-import { contrastRatio, meetsAA, meetsAAA, paletteToVars, themeToVars } from '../src/themes/theme-utils'
+import {
+  blendRgbaOverHex,
+  contrastRatio,
+  DEFAULT_RESPONSIVE_BREAKPOINT_PX,
+  meetsAA,
+  meetsAAA,
+  mergeResponsiveBackgroundSizeIntoVars,
+  paletteToVars,
+  resolveThemePalette,
+  resolveResponsiveBgSize,
+  themeToVars,
+} from '../src/themes/theme-utils'
 import type { ColorPalette, ThemeConfig } from '../src/themes/theme-types'
 
 const palette: ColorPalette = {
@@ -82,6 +93,18 @@ describe('contrastRatio', () => {
   })
 })
 
+describe('blendRgbaOverHex', () => {
+  it('composites semi-transparent white over dark body', () => {
+    expect(blendRgbaOverHex('rgba(255, 255, 255, 0.08)', '#000000')).toBe(
+      '#141414',
+    )
+  })
+
+  it('returns null when foreground is unparseable', () => {
+    expect(blendRgbaOverHex('oklch(50% 0.2 240)', '#000000')).toBeNull()
+  })
+})
+
 describe('meetsAA', () => {
   it('returns true for black on white (21:1)', () => {
     expect(meetsAA('#000000', '#ffffff')).toBe(true)
@@ -130,6 +153,22 @@ describe('paletteToVars', () => {
     expect(vars['--bg-image']).toBe('url(/bg.jpg)')
   })
 
+  it('includes bgSize when present', () => {
+    const withSize = { ...palette, bgSize: 'auto' }
+    const vars = paletteToVars(withSize)
+    expect(vars['--bg-size']).toBe('auto')
+  })
+
+  it('omits --bg-size when bgResponsiveBreakpoint is set (client merges)', () => {
+    const responsive = {
+      ...palette,
+      bgResponsiveBreakpoint: 768,
+      bgSize: 'auto',
+    }
+    const vars = paletteToVars(responsive)
+    expect(vars['--bg-size']).toBeUndefined()
+  })
+
   it('omits bgImage when undefined', () => {
     const vars = paletteToVars(palette)
     expect(vars['--bg-image']).toBeUndefined()
@@ -157,6 +196,82 @@ describe('paletteToVars', () => {
     const darkVars = paletteToVars(darkPalette)
     const brightVars = paletteToVars(brightPalette)
     expect(darkVars['--color-tooltip-bg']).not.toBe(brightVars['--color-tooltip-bg'])
+  })
+})
+
+describe('resolveResponsiveBgSize', () => {
+  const base: ColorPalette = {
+    ...palette,
+    bgResponsiveBreakpoint: 768,
+    bgSizeSmallScreens: 'cover',
+    bgSizeLargeScreens: 'auto',
+  }
+
+  it('returns cover below breakpoint', () => {
+    expect(resolveResponsiveBgSize(base, 767)).toBe('cover')
+  })
+
+  it('returns auto at and above breakpoint', () => {
+    expect(resolveResponsiveBgSize(base, 768)).toBe('auto')
+    expect(resolveResponsiveBgSize(base, 1920)).toBe('auto')
+  })
+
+  it('uses DEFAULT_RESPONSIVE_BREAKPOINT_PX when breakpoint omitted but fields need fallback', () => {
+    const p = {
+      ...palette,
+      bgSizeSmallScreens: 'cover',
+      bgSizeLargeScreens: 'auto',
+    } as ColorPalette
+    expect(resolveResponsiveBgSize(p, DEFAULT_RESPONSIVE_BREAKPOINT_PX - 1)).toBe(
+      'cover',
+    )
+  })
+
+  it('returns small-screen value when viewportWidth is null', () => {
+    expect(resolveResponsiveBgSize(base, null)).toBe('cover')
+  })
+})
+
+describe('mergeResponsiveBackgroundSizeIntoVars', () => {
+  it('sets --bg-size from viewport for responsive palettes', () => {
+    const lagoonPalette = {
+      ...palette,
+      bgResponsiveBreakpoint: 768,
+      bgSizeSmallScreens: 'cover',
+      bgSizeLargeScreens: 'auto',
+    }
+    const theme: ThemeConfig = {
+      id: 'lagoon',
+      name: 'Lagoon',
+      appearance: 'light',
+      colors: {
+        palette: lagoonPalette,
+        dark: palette,
+      },
+      typography: {
+        fontHeading: 'Inter',
+        fontBody: 'Inter',
+        headingWeight: 700,
+        bodyWeight: 400,
+      },
+      backgrounds: {},
+      shape: {
+        borderRadius: '12px',
+        borderRadiusButton: '999px',
+        buttonStyle: 'pill',
+        dividerStyle: 'line',
+        iconStyle: 'outlined',
+      },
+      motion: {
+        transitionSpeed: 'fast',
+        hoverEffect: 'glow',
+        pageTransition: 'fade',
+        ambientAnimation: 'none',
+      },
+    }
+    const vars = { ...paletteToVars(resolveThemePalette(theme)) }
+    mergeResponsiveBackgroundSizeIntoVars(vars, theme, 1920)
+    expect(vars['--bg-size']).toBe('auto')
   })
 })
 
@@ -189,19 +304,19 @@ describe('themeToVars', () => {
   }
 
   it('includes typography vars', () => {
-    const vars = themeToVars(theme, 'dark')
+    const vars = themeToVars(theme)
     expect(vars['--font-heading']).toBe('Inter')
     expect(vars['--font-body']).toBe('Inter')
     expect(vars['--font-accent']).toBe('Playfair Display')
   })
 
   it('includes shape vars', () => {
-    const vars = themeToVars(theme, 'dark')
+    const vars = themeToVars(theme)
     expect(vars['--border-radius']).toBe('12px')
   })
 
   it('maps fast transition speed to 0.15s', () => {
-    const vars = themeToVars(theme, 'dark')
+    const vars = themeToVars(theme)
     expect(vars['--transition-speed']).toBe('0.15s')
   })
 
@@ -210,7 +325,7 @@ describe('themeToVars', () => {
       ...theme,
       motion: { ...theme.motion, transitionSpeed: 'normal' as const },
     }
-    const vars = themeToVars(normalTheme, 'dark')
+    const vars = themeToVars(normalTheme)
     expect(vars['--transition-speed']).toBe('0.3s')
   })
 
@@ -219,22 +334,34 @@ describe('themeToVars', () => {
       ...theme,
       motion: { ...theme.motion, transitionSpeed: 'slow' as const },
     }
-    const vars = themeToVars(slowTheme, 'dark')
+    const vars = themeToVars(slowTheme)
     expect(vars['--transition-speed']).toBe('0.5s')
   })
 
-  it('uses light palette when mode is light and light palette exists', () => {
-    const lightPalette = { ...palette, primary: '#ff0000' }
-    const themeWithLight: ThemeConfig = {
+  it('uses palette when colors.palette is set', () => {
+    const palettePrimary = { ...palette, primary: '#ff0000' }
+    const themeWithPalette: ThemeConfig = {
       ...theme,
-      colors: { dark: palette, light: lightPalette },
+      appearance: 'light',
+      colors: { dark: palette, palette: palettePrimary },
     }
-    const vars = themeToVars(themeWithLight, 'light')
+    const vars = themeToVars(themeWithPalette)
     expect(vars['--color-primary']).toBe('#ff0000')
   })
 
-  it('falls back to dark palette when mode is light but no light palette', () => {
-    const vars = themeToVars(theme, 'light')
+  it('uses light branch when appearance is light and colors.light exists (no palette)', () => {
+    const lightPalette = { ...palette, primary: '#00ff00' }
+    const themeWithLight: ThemeConfig = {
+      ...theme,
+      appearance: 'light',
+      colors: { dark: palette, light: lightPalette },
+    }
+    const vars = themeToVars(themeWithLight)
+    expect(vars['--color-primary']).toBe('#00ff00')
+  })
+
+  it('falls back to dark palette when no palette and no matching light branch', () => {
+    const vars = themeToVars(theme)
     expect(vars['--color-primary']).toBe('#0891b2')
   })
 })

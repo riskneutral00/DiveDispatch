@@ -10,8 +10,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '../helpers/render'
-import fs from 'fs'
-import path from 'path'
+import { readGlobalsCssBundle } from '../helpers/globals-css-bundle'
 
 // ── Mocks ────────────────────────────────────────────────────────────────────
 
@@ -149,8 +148,7 @@ describe('DD-262: Equipment step validation error aria-live', () => {
 
 describe('DD-262: globals.css prefers-reduced-motion universal override', () => {
   it('includes universal prefers-reduced-motion media query for all animations', () => {
-    const cssPath = path.resolve(__dirname, '../../src/app/globals.css')
-    const css = fs.readFileSync(cssPath, 'utf8')
+    const css = readGlobalsCssBundle()
 
     // Should contain a universal reduced-motion block that targets all elements
     expect(css).toContain('@media (prefers-reduced-motion: reduce)')
@@ -158,13 +156,13 @@ describe('DD-262: globals.css prefers-reduced-motion universal override', () => 
     expect(css).toContain('animation-duration: 0.01ms !important')
     expect(css).toContain('transition-duration: 0.01ms !important')
     expect(css).toContain('animation-iteration-count: 1 !important')
-    // Verify the universal selector is used (not just class-specific)
-    expect(css).toContain('*, *::before, *::after')
+    // Verify the universal selector is used (not just class-specific; may be formatted multi-line)
+    expect(css).toContain('*::before')
+    expect(css).toContain('*::after')
   })
 
   it('preserves existing glass-specific reduced motion rule', () => {
-    const cssPath = path.resolve(__dirname, '../../src/app/globals.css')
-    const css = fs.readFileSync(cssPath, 'utf8')
+    const css = readGlobalsCssBundle()
 
     // The existing glass-specific rule should still be present
     expect(css).toContain('.glass,')
@@ -172,8 +170,7 @@ describe('DD-262: globals.css prefers-reduced-motion universal override', () => 
   })
 
   it('preserves dashboard-enter reduced motion rule', () => {
-    const cssPath = path.resolve(__dirname, '../../src/app/globals.css')
-    const css = fs.readFileSync(cssPath, 'utf8')
+    const css = readGlobalsCssBundle()
 
     expect(css).toContain('.dashboard-enter')
     expect(css).toContain('animation: none')
