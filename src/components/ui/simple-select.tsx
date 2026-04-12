@@ -20,7 +20,6 @@ interface SimpleSelectProps {
   placeholder?: string;
   required?: boolean;
   disabled?: boolean;
-  /** When false, skips field-underline (gray fill + bottom border); use for one-off plain selects. */
   underline?: boolean;
   className?: string;
   "aria-label"?: string;
@@ -44,13 +43,15 @@ export function SimpleSelect({
   const generatedId = useId();
   const id = generatedId;
   const [focused, setFocused] = useState(false);
-  const { floated } = useFloatingLabel({ value, focused });
 
   const hasExplicitEmptyOption = options.some((opt) =>
     typeof opt === "string" ? opt === "" : opt.value === "",
   );
   const showLeadingPlaceholder =
     value === "" && !hasExplicitEmptyOption;
+
+  const { floated: baseFloated } = useFloatingLabel({ value, focused });
+  const floated = baseFloated || hasExplicitEmptyOption;
 
   return (
     <div

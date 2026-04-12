@@ -100,6 +100,17 @@ Non-obvious rules:
 - Default `holdTTL`: **12 hours (43200000 ms)**. Once Upcoming, TTL never applies.
 - Medical block, auto-advance conditions → `Vaults/DiveDispatch/Architecture/Architecture.md`
 
+## Venue & Activity Rules
+
+- **Venue OR boat is required on every booking.** No booking can exist without at least one.
+- **Venue types:** `pool` or `dive-site`. Boat is NOT a venue type — it's transport.
+- **Pool restriction:** pool may only host the confined portion of an Open Water (OW) course. No other activity may use a pool.
+- **DSD never uses a pool.** DSD must use a dive-site or boat.
+- **OW confined is a portion of a booking, not a whole booking.** The venue-or-boat-required rule applies to the booking as a whole.
+- **Confined sessions:** only appear for OW and O+A (bundles containing OW), only on Day 1. Never on AOW, Rescue, DSD, Try Dive, DM, FD, Refresh, Specialty.
+- **Confined is optional.** Customer may be a referral who completed confined elsewhere. Skipping confined (selecting OW dives 1,2,3,4 with no confined) must trigger the "Customer is a referral?" warning (`detectReferralWarnings` in `src/lib/booking/course-validation.ts`).
+- **Date validation:** end date ≥ start date everywhere (form input, calendar picker, submit gate, backend accept). Same-day activity is valid (counts as 1 day). Start date must not be in the past.
+
 ## Obsidian Vaults
 
 DiveDispatch vault: `~/Desktop/RiskNeutral/Vaults/DiveDispatch/`
