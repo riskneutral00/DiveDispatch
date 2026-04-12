@@ -11,7 +11,8 @@ export function DashboardGroupLayout({
   return (
     <DevSwitchProvider>
       <div className="min-h-screen">
-        <div className="bg-image" />
+        <div className="bg-base" />
+        <div className="bg-overlay" aria-hidden />
         <div className="app-shell flex flex-col min-h-screen">
           {children}
         </div>

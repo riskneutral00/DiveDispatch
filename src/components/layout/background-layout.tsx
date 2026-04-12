@@ -9,7 +9,8 @@ interface BackgroundLayoutProps {
 export function BackgroundLayout({ children, className }: BackgroundLayoutProps) {
   return (
     <div className="min-h-screen relative">
-      <div className="bg-image" />
+      <div className="bg-base" />
+      <div className="bg-overlay" aria-hidden />
       <main className={cn('app-shell min-h-screen flex flex-col relative', className)}>
         {children}
       </main>

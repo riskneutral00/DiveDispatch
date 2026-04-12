@@ -27,7 +27,7 @@ export default async function RootLayout({
   const messages = await getMessages()
 
   return (
-    <html lang={locale} data-theme="skin-light-0" data-mode="light">
+    <html lang={locale} data-theme="skin-light-4" data-mode="light">
       <body className={inter.className}>
         <ClerkProvider
           signInUrl="/sign-in"

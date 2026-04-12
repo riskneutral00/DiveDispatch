@@ -22,7 +22,7 @@ Tone: calm, authoritative. Not an onboarding form. A professional's record.
 ### 1. Profile Page (dedicated route)
 
 ```
-DashboardShell (bg-image + bg-overlay already handled by shell)
+DashboardShell (`.bg-base` full-bleed skin + vignette, `.bg-overlay`, `.app-shell`; calendar `.dashboard-calendar-backdrop` = elevation shadow)
 └── page container  max-w-3xl mx-auto px-4 pt-6 pb-28 (mobile) / pb-10 (desktop)
     ├── Page title          "Profile"  — 28px / 700 / -0.03em
     ├── Page subtitle       Role label (e.g. "Dive Center") — 13px / secondary text

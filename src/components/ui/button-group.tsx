@@ -89,7 +89,7 @@ export function ButtonGroup({
           )}
           style={{
             background:
-              value === v ? "var(--color-accent)" : "var(--color-glass-bg)",
+              value === v ? "var(--color-accent)" : "transparent",
             color:
               value === v
                 ? "var(--color-text-on-primary)"

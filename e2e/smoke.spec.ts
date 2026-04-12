@@ -68,11 +68,16 @@ test.describe('smoke: auth redirects', () => {
   test('dashboard has background layers', async ({ page }) => {
     await signInAs(page, NICOLE.email)
     await expect(page).toHaveURL(new RegExp(NICOLE.dashboardPath))
-    // Every authenticated page must have the 3-layer background stack
-    const bgImage = await page.locator('.bg-image').count()
+    // Base + overlay + shell; skin art is .dashboard-calendar-backdrop (dashboard only)
+    const bgBase = await page.locator('.bg-base').count()
     const bgOverlay = await page.locator('.bg-overlay').count()
-    expect(bgImage, 'Missing .bg-image layer — glass needs a background').toBeGreaterThan(0)
+    const calendarSkin = await page.locator('.dashboard-calendar-backdrop').count()
+    expect(bgBase, 'Missing .bg-base layer — glass needs a full-screen base').toBeGreaterThan(0)
     expect(bgOverlay, 'Missing .bg-overlay layer — glass needs an overlay').toBeGreaterThan(0)
+    expect(
+      calendarSkin,
+      'Missing .dashboard-calendar-backdrop — dashboard skin art',
+    ).toBeGreaterThan(0)
   })
 
   test.skip(!process.env.E2E_CLERK_AUTH, 'Clerk auth not configured — set E2E_CLERK_AUTH=1')

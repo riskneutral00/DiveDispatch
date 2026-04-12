@@ -113,8 +113,9 @@ Then run DOM/layout checks on the rendered page via Playwright evaluation:
 
 ```js
 const results = {
-  bgImageCount: document.querySelectorAll('.bg-image').length,
+  bgBaseCount: document.querySelectorAll('.bg-base').length,
   bgOverlayCount: document.querySelectorAll('.bg-overlay').length,
+  dashboardCalendarBackdropCount: document.querySelectorAll('.dashboard-calendar-backdrop').length,
   mainEl: (() => {
     const main = document.querySelector('main');
     if (!main) return null;

@@ -5,7 +5,8 @@ export default function PortalGroupLayout({
 }) {
   return (
     <div className="min-h-screen">
-      <div className="bg-image" />
+      <div className="bg-base" />
+      <div className="bg-overlay" aria-hidden />
       <div className="app-shell min-h-screen">{children}</div>
     </div>
   )

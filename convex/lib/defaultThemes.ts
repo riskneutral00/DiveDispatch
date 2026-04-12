@@ -196,13 +196,25 @@ export const SEED_THEME_SPECS: readonly SeedThemeRowSpec[] = [
     lightSurface: "#ffedd5",
     lightSurfaceElevated: "#fff7ed",
   },
+  {
+    slug: "skin-light-4",
+    name: "Lavender",
+    sortOrder: 8,
+    appearance: "light",
+    darkAccent: "#a78bfa",
+    lightAccent: "#9333ea",
+    darkSurface: "#1c1638",
+    darkSurfaceElevated: "#2d1f4e",
+    lightSurface: "#f5f3ff",
+    lightSurfaceElevated: "#faf5ff",
+  },
 ]
 
 // Must match src/themes/background-gradients.ts (BG_GRADIENT_DARK / BG_GRADIENT_LIGHT)
 const DARK_BG =
-  "linear-gradient(to bottom, #081220 0%, #061018 30%, #040a14 50%, #010306 65%, #000000 80%, #000000 100%)"
+  "linear-gradient(to bottom, #081220 0%, #081220 100%)"
 const LIGHT_BG =
-  "linear-gradient(to bottom, #ecfeff 0%, #e0f7fa 25%, #d5f3f7 55%, #c4eef5 85%, #b8e8f2 100%)"
+  "linear-gradient(to bottom, #000000 0%, #000000 100%)"
 
 export function themeConfigForSeedSpec(spec: SeedThemeRowSpec) {
   const d = spec.darkAccent
@@ -236,8 +248,7 @@ export function themeConfigForSeedSpec(spec: SeedThemeRowSpec) {
         surface: spec.darkSurface,
         surfaceElevated: spec.darkSurfaceElevated,
         bgImage: DARK_BG,
-        bgOverlay:
-          "radial-gradient(ellipse 80% 60% at 50% 40%, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.6) 60%, rgba(0, 0, 0, 0.8) 100%)",
+        bgOverlay: "rgba(0, 0, 0, 0.18)",
         bodyBg: "#000000",
         luminanceClass: "dark" as const,
       },
@@ -281,5 +292,5 @@ export function themeConfigForSeedSpec(spec: SeedThemeRowSpec) {
 /** Full configs in seed order (for tests / tooling that need the JSON shape). */
 export const DEFAULT_THEMES = SEED_THEME_SPECS.map(themeConfigForSeedSpec)
 
-/** Default selection aligns with client SSR bootstrap (`skin-light-0` / app light). */
-export const DEFAULT_SELECTED_THEME_SLUG = "skin-light-0" as const
+/** Default selection aligns with client SSR bootstrap (`skin-light-4` Lavender / app light). */
+export const DEFAULT_SELECTED_THEME_SLUG = "skin-light-4" as const

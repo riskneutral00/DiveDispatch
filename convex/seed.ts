@@ -14,6 +14,7 @@ import {
   SEED_THEME_SPECS,
   themeConfigForSeedSpec,
 } from './lib/defaultThemes'
+import { stakeholderPreferenceIdsToDelete } from './lib/stakeholderPreferencesDedupe'
 import { ALL_INSTRUCTORS } from './seedInstructorData'
 import {
   ALL_GEAR_SIZING,
@@ -441,9 +442,28 @@ export const seedResourceInventory = internalMutation({
   },
 })
 
+/** Removes duplicate stakeholderPreferences rows (keeps oldest `_creationTime` per `stakeholderId`). */
+async function dedupeStakeholderPreferencesTable(ctx: MutationCtx): Promise<{ deleted: number }> {
+  const all = await ctx.db.query('stakeholderPreferences').collect()
+  const ids = stakeholderPreferenceIdsToDelete(all)
+  for (const id of ids) {
+    await ctx.db.delete(id)
+  }
+  return { deleted: ids.length }
+}
+
+export const dedupeStakeholderPreferences = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    return await dedupeStakeholderPreferencesTable(ctx)
+  },
+})
+
 export const seedStakeholderPreferences = internalMutation({
   args: {},
   handler: async (ctx) => {
+    await dedupeStakeholderPreferencesTable(ctx)
+
     const OPERATOR_PREFERRED: Record<string, { instructors?: string[]; boats?: string[]; venues?: string[]; compressors?: string[]; equipment?: string[] }> = {
       'n7rq5j': { // Hug Ocean — zh-CN, zh-TW, th, en — owns boat, pool, gear
         instructors: ['wei-chen', 'nicole-tam', 'mike-chen', 'xiao-lei', 'zhen-liu'],
@@ -545,6 +565,14 @@ export const seedStakeholderPreferences = internalMutation({
     ]
 
     for (const { slug, role } of allStakeholders) {
+      const existing = await ctx.db
+        .query('stakeholderPreferences')
+        .withIndex('by_stakeholderId', (q) => q.eq('stakeholderId', slug))
+        .collect()
+      for (const row of existing) {
+        await ctx.db.delete(row._id)
+      }
+
       await ctx.db.insert('stakeholderPreferences', { // batch-exempt
         stakeholderId: slug,
         stakeholderType: role,

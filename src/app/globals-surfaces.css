@@ -72,17 +72,52 @@ body {
 }
 
 /* ── Background stack ────────────────────────────────────────────────────────
-   3-layer stack: z-0 bg-image → z-1 bg-overlay → z-2 app-shell (MASTER)
+   z-0 bg-base (body + full-bleed skin + edge vignette) → z-1 bg-overlay → z-2 app-shell.
+   Top layer: radial vignette to --body-bg at edges; bottom: var(--bg-image) (flat or future url).
    ──────────────────────────────────────────────────────────────────────────── */
-.bg-image {
+.bg-base {
   position: fixed;
   inset: 0;
   z-index: 0;
   background-color: var(--body-bg);
-  background-image: var(--bg-image);
+  background-image:
+    radial-gradient(
+      ellipse 108% 100% at 50% 44%,
+      transparent 0%,
+      transparent 36%,
+      rgba(0, 0, 0, 0.35) 68%,
+      var(--body-bg) 100%
+    ),
+    var(--bg-image, none);
+  background-size: cover, cover;
+  background-position: center, center;
+  background-repeat: no-repeat, no-repeat;
+}
+
+html[data-luminance="bright"] .bg-base {
+  background-image:
+    radial-gradient(
+      ellipse 110% 100% at 50% 44%,
+      transparent 0%,
+      transparent 38%,
+      color-mix(in srgb, var(--body-bg) 40%, transparent) 74%,
+      var(--body-bg) 100%
+    ),
+    var(--bg-image, none);
+}
+
+/* Dashboard: elevation ring only; skin paints on .bg-base (re-enable bg-image when theme uses url()) */
+.dashboard-calendar-backdrop {
+  background-image: none;
   background-position: var(--bg-position, center);
   background-size: var(--bg-size, cover);
   background-repeat: no-repeat;
+  /* Outward bleed into --body-bg (flat dark panel uses #081220 family) */
+  box-shadow: 0 0 32px 20px rgba(8, 18, 32, 0.35);
+}
+
+html[data-luminance="bright"] .dashboard-calendar-backdrop {
+  box-shadow: 0 0 28px 18px color-mix(in srgb, var(--color-primary) 26%, transparent);
 }
 
 .bg-overlay {
@@ -102,7 +137,7 @@ body {
 
 /* Text clip — variant B: photo through glyphs (MASTER). Related: .stat-value */
 /* Experimental — see MASTER "Knockout / cookie-cutter lettering"
-   Aligns painted background with fixed .bg-image via background-attachment: fixed.
+   Uses `--bg-image` (full-bleed on .bg-base); dashboard calendar adds shadow only.
    Use only when contrast is safe; otherwise use solid ink (hybrid fallback). */
 .cookie-cutter-title {
   background-image: var(--bg-image);

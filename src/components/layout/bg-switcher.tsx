@@ -10,7 +10,8 @@ export function BgSwitcher() {
   const { selectTheme, theme, mode } = useTheme()
   const mySkins = useQuery(api.themes.listMySkins)
 
-  // Filter skins by the current mode's appearance bucket
+  // Palette cycles within the current sun/moon bucket only (e.g. five light skins vs four dark).
+  // Sun/moon switches buckets so users can reach the other appearance family.
   const availableSkins = mySkins?.filter((t) => t.appearance === mode) || []
   const isLoaded = availableSkins.length > 0
 

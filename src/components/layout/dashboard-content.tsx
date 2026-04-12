@@ -15,6 +15,7 @@ import { useBookingDnd, BOOKING_DND_SENSORS } from '@/lib/hooks/use-booking-dnd'
 import { BookingCalendar, type CustomCategories } from '@/components/booking/booking-calendar'
 import { BookingQuickDetail } from '@/components/booking/booking-quick-detail'
 import { BookingOverlay } from '@/components/booking/booking-overlay'
+import { DashboardCalendarBackdrop } from '@/components/layout/dashboard-calendar-backdrop'
 import { DashboardPageFrame } from '@/components/layout/dashboard-page-frame'
 import { QuickBookRail } from '@/components/booking/quick-book-rail'
 import { CancelBookingDialog } from '@/components/booking/cancel-booking-dialog'
@@ -221,6 +222,10 @@ function DashboardContentInner({ roleConfig, slug, roleSlug }: DashboardContentI
     </>
   )
 
+  const calendarWithSkin = (
+    <DashboardCalendarBackdrop>{calendarAndRail}</DashboardCalendarBackdrop>
+  )
+
   return (
     <DashboardPageFrame
       maxWidth="4xl"
@@ -233,7 +238,7 @@ function DashboardContentInner({ roleConfig, slug, roleSlug }: DashboardContentI
           onDragStart={dnd.handleDragStart}
           onDragEnd={dnd.handleDragEnd}
         >
-          {calendarAndRail}
+          {calendarWithSkin}
           <DragOverlay>
             {dnd.activeTemplate && (
               <DragOverlayPill label={dnd.activeTemplate.label} />
@@ -241,7 +246,7 @@ function DashboardContentInner({ roleConfig, slug, roleSlug }: DashboardContentI
           </DragOverlay>
         </DragDropProvider>
       ) : (
-        calendarAndRail
+        calendarWithSkin
       )}
 
       {isResourceOnly && (

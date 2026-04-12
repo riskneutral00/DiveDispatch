@@ -70,7 +70,7 @@ These inline styles have Tailwind equivalents. Never copy them. Migrate on conta
 
 ## Glass System Rules
 
-1. **Glass needs a background.** Glass without a background image is a bordered box. Every page must render the full background layer stack (`.bg-image` → `.app-shell`).
+1. **Glass needs a background.** Glass without a visible backdrop is a bordered box. Every page must render the full background layer stack (`.bg-base` → `.bg-overlay` → `.app-shell`). Full-bleed skin (`--bg-image`) and edge vignette paint on `.bg-base`; `.dashboard-calendar-backdrop` is elevation (shadow) unless a photo is scoped to the calendar only.
 
 2. **Container bodies disappear.** `.glass-container` communicates bounds first. Its body should not create a second visual slab between user and background.
 

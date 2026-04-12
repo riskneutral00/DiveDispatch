@@ -10,7 +10,7 @@
 
 **Calm authority.** The aesthetic of someone who knows the ocean intimately and doesn't need to prove it.
 
-**The background is the product.** Glass panels are lenses — barely-there containers that let users see through to the background. Backgrounds are sellable skins (CSS gradients today; optional photo assets later). Without a background layer (`--bg-image`), glass is just a bordered box.
+**The background is the product.** Glass panels are lenses — barely-there containers that let users see through to the background. `.bg-base` stacks `--body-bg`, theme `--bg-image` (full viewport), and an edge vignette toward `--body-bg`; `.bg-overlay` tints for readability. The dashboard calendar adds `.dashboard-calendar-backdrop` for elevation (shadow); optional future photo `url()` may target that layer only.
 
 **Two modes.** Dark and Light. Each skin provides distinct palettes and backgrounds per mode. Glass stays transparent in both so the background is always visible.
 
@@ -114,12 +114,14 @@ Four glass classes remain, but the perception target changed on 2026-04-09: the 
 Three layers. The background is architecture, not decoration.
 
 ```
-z-0  .bg-image     — fixed, full-bleed, cover (the skin's background)
-z-1  .bg-overlay   — fixed, gradient tint (readability layer, pointer-events: none)
+z-0  .bg-base      — fixed, full-bleed: `background-color: --body-bg`, layered `--bg-image` (skin), radial vignette to `--body-bg` at viewport edges (see `globals-surfaces.css`)
+z-1  .bg-overlay   — fixed, readability tint (dark: uniform `rgba`; light: may stay radial), pointer-events: none
 z-2  .app-shell    — relative, all UI content (fades to 0 on scrim dialog open)
 ```
 
-**Rule:** Every page MUST render both `.bg-image` and `.bg-overlay`. Glass without the background stack is broken.
+**Dashboard:** `.dashboard-calendar-backdrop` adds an elevation ring (`box-shadow`) around the calendar; full-page skin paints on `.bg-base`. Re-enable `background-image` on that node only if a skin uses a photo `url()` behind the calendar only.
+
+**Rule:** Every page MUST render `.bg-base`, `.bg-overlay`, and `.app-shell`. Glass without the background stack is broken.
 
 ### Glass Formula Tiers (luminance class system)
 
@@ -543,8 +545,8 @@ A skin bundles:
 |-------|-----------|-------------|
 | Palette | Yes | `primary`, `secondary`, `accent`, `primaryGlow`, status colors |
 | Luminance class | Yes | `"dark"`, `"medium"`, or `"bright"` — selects glass tier |
-| Background image | Yes | `--bg-image` (CSS gradient or `url()`) |
-| Overlay gradient | Yes | `--bg-overlay` (mandatory readability layer) |
+| Background image | Yes | `--bg-image` (CSS gradient or `url()`), full-bleed on `.bg-base` under a vignette |
+| Overlay | Yes | `--bg-overlay` (readability tint; dark seed uses uniform `rgba`) |
 | Body fallback | Yes | `--body-bg` |
 | Glass formula | **Per-tier** | Selected by `luminanceClass`, constant within tier |
 | Typography | **Constant** | Inter everywhere |
