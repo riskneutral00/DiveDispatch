@@ -1,8 +1,9 @@
 import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import { internal } from './_generated/api'
-import { authorize, getAuthUser, HOLD_TTL_MS } from './lib/auth'
+import { authorize, authorizeWithRole, getAuthUser, getRequiredUserBySlug, HOLD_TTL_MS } from './lib/auth'
 import { profileByUserId } from './lib/profileHelpers'
+import { getAllUserRoles } from './lib/userRoleHelpers'
 import { checkHasRole, checkHasAnyOperatorRole, requireActiveRole, requireRoleReadiness } from './userRoles'
 import { OPERATOR_ROLE_SET } from './lib/auth'
 import { releaseBookingReservations, assertNoPastDates } from './bookings/_shared'
@@ -25,11 +26,8 @@ export const createDraftShell = mutation({
     endDate: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<string> => {
-    const { user } = await authorize(ctx, null, 'booking:manage', { type: 'booking' })
-    await requireActiveRole(ctx, user._id, args.activeRole)
     if (!OPERATOR_ROLE_SET.has(args.activeRole)) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
-
-    await requireRoleReadiness(ctx, user._id, args.activeRole)
+    const { user } = await authorizeWithRole(ctx, 'booking:manage', args.activeRole, { type: 'booking' }, { requireReadiness: true })
 
     if (args.startDate) {
       assertNoPastDates([{ date: args.startDate }])
@@ -115,16 +113,9 @@ export const createReferralDraftShell = mutation({
     const { user } = await authorize(ctx, null, 'booking:manage', { type: 'booking' })
     if (!await checkHasRole(ctx, user._id, 'Agent')) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
 
-    const dcUser = await ctx.db
-      .query('users')
-      .withIndex('by_slug', (q) => q.eq('slug', args.referralDcSlug))
-      .unique()
-    if (!dcUser) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
+    const dcUser = await getRequiredUserBySlug(ctx, args.referralDcSlug)
 
-    const dcRoles = await ctx.db
-      .query('userRoles')
-      .withIndex('by_userId', (q) => q.eq('userId', dcUser._id))
-      .collect() // bounded: per-booking scope
+    const dcRoles = await getAllUserRoles(ctx, dcUser._id)
     const dcOperatorRole = dcRoles.find((r) => OPERATOR_ROLE_SET.has(r.role))
     if (!dcOperatorRole) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
 

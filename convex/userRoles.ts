@@ -1,6 +1,7 @@
 import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import { getAuthUser, OPERATOR_ROLE_SET, authorize } from './lib/auth'
+import { getAllUserRoles } from './lib/userRoleHelpers'
 import type { QueryCtx, MutationCtx } from './_generated/server'
 import type { Id, Doc } from './_generated/dataModel'
 import { stakeholderTypeValidator as stakeholderType, effectiveResourceType } from './lib/validators'
@@ -10,6 +11,8 @@ import { batchGet, batchDelete } from './lib/batch'
 import { ROLE_TABLE_MAP } from './lib/profileHelpers'
 import { queryDynamicTable, deleteDynamic } from './lib/typedDb'
 import { checkProfileCompleteness } from './lib/profileCompleteness'
+
+export { getAllUserRoles } from './lib/userRoleHelpers'
 
 type RoleReadiness = {
   percentage: number
@@ -59,10 +62,7 @@ export async function checkHasAnyOperatorRole(
   ctx: QueryCtx | MutationCtx,
   userId: Id<'users'>,
 ): Promise<boolean> {
-  const roles = await ctx.db
-    .query('userRoles')
-    .withIndex('by_userId', (q) => q.eq('userId', userId))
-    .collect() // bounded: per-user roles, max ~12
+  const roles = await getAllUserRoles(ctx, userId)
   return roles.some((r) => OPERATOR_ROLE_SET.has(r.role))
 }
 
@@ -81,10 +81,7 @@ export const myRoles = query({
   handler: async (ctx) => {
     const user = await getAuthUser(ctx)
     if (!user) return []
-    const rows = await ctx.db
-      .query('userRoles')
-      .withIndex('by_userId', (q) => q.eq('userId', user._id))
-      .collect() // bounded: per-user roles, max ~12
+    const rows = await getAllUserRoles(ctx, user._id)
     return sortUserRolesByGrantOrder(rows)
   },
 })
@@ -112,10 +109,7 @@ export const primaryRole = query({
   handler: async (ctx) => {
     const user = await getAuthUser(ctx)
     if (!user) return null
-    const roles = await ctx.db
-      .query('userRoles')
-      .withIndex('by_userId', (q) => q.eq('userId', user._id))
-      .collect() // bounded: per-user roles, max ~12
+    const roles = await getAllUserRoles(ctx, user._id)
     if (roles.length === 0) return null
     const primaryRoleStr = deriveDefaultRole(roles.map((r) => r.role))
     return roles.find((r) => r.role === primaryRoleStr) ?? null
@@ -183,10 +177,7 @@ export const bookingCountsForMyRoles = query({
     const user = await getAuthUser(ctx)
     if (!user) return {} satisfies Record<string, number>
 
-    const roles = await ctx.db
-      .query('userRoles')
-      .withIndex('by_userId', (q) => q.eq('userId', user._id))
-      .collect() // bounded: per-user roles, max ~12
+    const roles = await getAllUserRoles(ctx, user._id)
 
     const entries = await Promise.all(
       roles.map(async (role): Promise<[string, number]> => {
@@ -229,10 +220,7 @@ export const deleteRole = mutation({
     if (!roleRow) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
     if (roleRow.userId !== user._id) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
 
-    const allRoles = await ctx.db
-      .query('userRoles')
-      .withIndex('by_userId', (q) => q.eq('userId', user._id))
-      .collect() // bounded: per-user roles, max ~12
+    const allRoles = await getAllUserRoles(ctx, user._id)
     if (allRoles.length <= 1) throw new ConvexError({ code: ErrorCode.LAST_ROLE })
 
     const resourceType = effectiveResourceType(roleRow.role)

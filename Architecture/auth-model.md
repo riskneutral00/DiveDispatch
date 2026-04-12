@@ -1,7 +1,7 @@
 # Auth Model
 
 > Canonical rules for authentication and authorization. Referenced by CLAUDE.md and skills.
-> Last updated: 2026-04-06
+> Last updated: 2026-04-12
 
 ## Architecture
 
@@ -25,6 +25,19 @@ Every auth design must handle both:
 1. **All authorization goes through `authorize(ctx, actor, action, resource, orgId?)`.** No mutation assembles its own auth checks from `requireAuth` + `assertOwnership` + `checkHasRole`. One function, one place to audit, one place to test.
    - Enforced by: `/gate` blocks mutations without `authorize()` as first operation. `/review-backend-auth` flags direct use of `requireAuth`, `assertOwnership`, `checkHasRole`, `checkHasAnyOperatorRole`.
    - Violation history: 5 write mutations used nullable `getAuthUser` + manual throw instead of `requireAuth`. `themes.upsert` used `checkHasAnyOperatorRole` — any dive center, agent, or liveaboard could modify global themes. 8 profile table `byUserId` queries had zero auth check.
+
+1a. **Use `authorizeWithRole` for the common "authorize + activeRole + readiness" composite.** When a mutation requires `authorize()` plus `requireActiveRole()` (and optionally `requireRoleReadiness()`), call `authorizeWithRole(ctx, action, activeRole, resource, { requireReadiness? })` instead of chaining the three calls. `authorize` alone is for resource ownership; `authorizeWithRole` adds role assertion.
+   - Canonical: `convex/lib/auth.ts`
+   - Used by: `createDraftShell`, `bookingTemplates.create`, other operator-scoped mutations.
+
+1b. **Use `getRequiredUserBySlug(ctx, slug)` for required-user lookups.** Replaces the `.query('users').withIndex('by_slug').unique()` + NOT_FOUND throw pattern. Returns `Promise<Doc<'users'>>`. For batch lookups that tolerate missing users, keep the raw query + `.unique()` returning null.
+   - Canonical: `convex/lib/auth.ts`
+
+1c. **Use `getAllUserRoles(ctx, userId)` for per-user role collection.** Encapsulates the bounded `.withIndex('by_userId').collect()` pattern.
+   - Canonical: `convex/lib/userRoleHelpers.ts`
+
+1d. **Use `requireProfile(ctx, userId, tableName)` for required profile lookups** (vs `profileByUserId` which returns null).
+   - Canonical: `convex/lib/profileHelpers.ts`
 
 2. **Two credential models. No mixing.** Stakeholders authenticate via Clerk JWT. Customers authenticate via UUID portal token. No mutation accepts both. No mutation accepts neither (except explicitly public queries like theme metadata for store browsing).
    - Enforced by: `/review-backend-auth`

@@ -1,7 +1,7 @@
 import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import type { Doc } from './_generated/dataModel'
-import { authorize, getAuthUser, OPERATOR_ROLE_SET } from './lib/auth'
+import { authorize, authorizeWithRole, getAuthUser, OPERATOR_ROLE_SET } from './lib/auth'
 import { requireActiveRole } from './userRoles'
 import { courseCodeValidator as courseCode } from './shared/courseCodes'
 import { ErrorCode } from './lib/errorCodes'
@@ -42,12 +42,10 @@ export const create = mutation({
     ),
   },
   handler: async (ctx, args) => {
-    const { user } = await authorize(ctx, null, 'booking:create', { type: 'resource' })
-
-    await requireActiveRole(ctx, user._id, args.activeRole)
     if (!OPERATOR_ROLE_SET.has(args.activeRole)) {
       throw new ConvexError({ code: ErrorCode.FORBIDDEN, reason: 'Only organizer roles can create booking templates.' })
     }
+    const { user } = await authorizeWithRole(ctx, 'booking:create', args.activeRole, { type: 'resource' })
 
     const sanitized = sanitizeFields(args, BOOKING_TEMPLATE_FIELDS)
     return ctx.db.insert('bookingTemplates', {

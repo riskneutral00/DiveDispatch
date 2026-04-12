@@ -373,7 +373,7 @@ describe('markBagPickedUp', () => {
     )
   })
 
-  it('throws INVALID_STATE when bag is InUse (not Assigned)', async () => {
+  it('throws INVALID_STATUS when bag is InUse (not Assigned)', async () => {
     const { bagId, emToken } = await seedEmWithBag(t, { bagStatus: 'InUse' })
 
     await expectConvexError(
@@ -381,11 +381,11 @@ describe('markBagPickedUp', () => {
         api.equipmentWidget.markBagPickedUp,
         { bagId },
       ),
-      'INVALID_STATE',
+      'INVALID_STATUS',
     )
   })
 
-  it('throws INVALID_STATE when bag is Returned (not Assigned)', async () => {
+  it('throws INVALID_STATUS when bag is Returned (not Assigned)', async () => {
     const { bagId, emToken } = await seedEmWithBag(t, { bagStatus: 'Returned' })
 
     await expectConvexError(
@@ -393,7 +393,7 @@ describe('markBagPickedUp', () => {
         api.equipmentWidget.markBagPickedUp,
         { bagId },
       ),
-      'INVALID_STATE',
+      'INVALID_STATUS',
     )
   })
 
@@ -464,7 +464,7 @@ describe('markBagReturned', () => {
     )
   })
 
-  it('throws INVALID_STATE when bag is Assigned (not InUse)', async () => {
+  it('throws INVALID_STATUS when bag is Assigned (not InUse)', async () => {
     const { bagId, emToken } = await seedEmWithBag(t, { bagStatus: 'Assigned' })
 
     await expectConvexError(
@@ -472,11 +472,11 @@ describe('markBagReturned', () => {
         api.equipmentWidget.markBagReturned,
         { bagId },
       ),
-      'INVALID_STATE',
+      'INVALID_STATUS',
     )
   })
 
-  it('throws INVALID_STATE when bag is already Returned', async () => {
+  it('throws INVALID_STATUS when bag is already Returned', async () => {
     const { bagId, emToken } = await seedEmWithBag(t, { bagStatus: 'Returned' })
 
     await expectConvexError(
@@ -484,7 +484,7 @@ describe('markBagReturned', () => {
         api.equipmentWidget.markBagReturned,
         { bagId },
       ),
-      'INVALID_STATE',
+      'INVALID_STATUS',
     )
   })
 

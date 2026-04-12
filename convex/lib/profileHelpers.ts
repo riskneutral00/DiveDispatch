@@ -45,6 +45,16 @@ export async function profileByUserId<T extends TableNames>(
   return doc as Doc<T> | null
 }
 
+export async function requireProfile<T extends TableNames>(
+  ctx: QueryCtx,
+  userId: Id<'users'>,
+  tableName: T,
+): Promise<Doc<T>> {
+  const profile = await profileByUserId(ctx, userId, tableName)
+  if (!profile) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
+  return profile
+}
+
 export async function profileBySlug(
   ctx: QueryCtx,
   slug: string,

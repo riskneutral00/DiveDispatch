@@ -2,9 +2,13 @@ import { ConvexError, v } from 'convex/values'
 import { type CourseCode, courseCodeValidator } from '../shared/courseCodes'
 import { ErrorCode } from '../lib/errorCodes'
 import { MEDICAL_TTL_MS } from '../lib/timeConstants'
-import { type VacatedReason, type BookingStatus, type ReservationStatus, BOOKING_STATUS, RESERVATION_STATUS } from '../shared/statuses'
+import { type VacatedReason, type BookingStatus, type ReservationStatus, type BagStatus, BOOKING_STATUS, RESERVATION_STATUS, BAG_STATUS } from '../shared/statuses'
 export { type CourseCode, courseCodeValidator } from '../shared/courseCodes'
 export { type VacatedReason } from '../shared/statuses'
+
+export type BookingAction = 'confirm' | 'edit' | 'cancel' | 'complete' | 'decline_cascade' | 'expire' | 'archive'
+export type ReservationAction = 'accept' | 'vacate' | 'mark_noshow' | 'revert_noshow'
+export type BagAction = 'pick_up' | 'return'
 
 export type BookingRoleType = 'Instructor' | 'DiveMaster'
 
@@ -116,7 +120,7 @@ export const bookingDataValidator = v.object({
 
 export function canBookingTransition(
   currentStatus: BookingStatus,
-  action: 'confirm' | 'edit' | 'cancel' | 'complete' | 'decline_cascade' | 'expire' | 'archive',
+  action: BookingAction,
 ): boolean {
   if (currentStatus === BOOKING_STATUS.Cancelled || currentStatus === BOOKING_STATUS.Archived) {
     return false
@@ -144,7 +148,7 @@ export function canBookingTransition(
 
 export function canReservationTransition(
   currentStatus: ReservationStatus,
-  action: 'accept' | 'vacate' | 'mark_noshow' | 'revert_noshow',
+  action: ReservationAction,
 ): boolean {
   switch (action) {
     case 'accept':
@@ -155,6 +159,20 @@ export function canReservationTransition(
       return currentStatus === RESERVATION_STATUS.Confirmed
     case 'revert_noshow':
       return currentStatus === RESERVATION_STATUS.NoShow
+    default:
+      return false
+  }
+}
+
+export function canBagTransition(
+  currentStatus: BagStatus,
+  action: BagAction,
+): boolean {
+  switch (action) {
+    case 'pick_up':
+      return currentStatus === BAG_STATUS.Assigned
+    case 'return':
+      return currentStatus === BAG_STATUS.InUse
     default:
       return false
   }

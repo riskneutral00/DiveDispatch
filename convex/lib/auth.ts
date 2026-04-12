@@ -4,6 +4,8 @@ import type { Doc, Id } from '../_generated/dataModel'
 import type { UserIdentity } from 'convex/server'
 import { ErrorCode } from './errorCodes'
 import { OPERATOR_TYPES } from '../shared/operatorTypes'
+import { getAllUserRoles } from './userRoleHelpers'
+import { requireActiveRole, requireRoleReadiness } from '../userRoles'
 
 export function assertOwnership(
   resource: { ownerId: string },
@@ -138,11 +140,17 @@ function extractOrgPermissions(identity: UserIdentity): string[] | null {
 }
 
 async function hasAnyOperatorRole(ctx: MutationCtx, userId: Id<'users'>): Promise<boolean> {
-  const roles = await ctx.db
-    .query('userRoles')
-    .withIndex('by_userId', (q) => q.eq('userId', userId))
-    .collect() // bounded: per-user roles, max ~12
+  const roles = await getAllUserRoles(ctx, userId)
   return roles.some((r) => OPERATOR_ROLE_SET.has(r.role))
+}
+
+export async function getRequiredUserBySlug(ctx: DbCtx, slug: string): Promise<Doc<'users'>> {
+  const user = await ctx.db
+    .query('users')
+    .withIndex('by_slug', (q) => q.eq('slug', slug))
+    .unique()
+  if (!user) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
+  return user
 }
 
 async function hasRole(
@@ -229,4 +237,19 @@ export async function authorize(
   }
 
   throw new ConvexError({ code: ErrorCode.FORBIDDEN })
+}
+
+export async function authorizeWithRole(
+  ctx: MutationCtx,
+  action: Action,
+  activeRole: string,
+  resource: AuthResource,
+  opts?: { requireReadiness?: boolean },
+): Promise<{ user: Doc<'users'>; identity: UserIdentity }> {
+  const resolved = await authorize(ctx, null, action, resource)
+  await requireActiveRole(ctx, resolved.user._id, activeRole)
+  if (opts?.requireReadiness) {
+    await requireRoleReadiness(ctx, resolved.user._id, activeRole)
+  }
+  return resolved
 }

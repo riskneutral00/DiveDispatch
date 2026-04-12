@@ -6,6 +6,7 @@ import { profileByUserId } from './lib/profileHelpers'
 import { getBookingIdsForResourceType } from './bookingResources'
 import { ErrorCode } from './lib/errorCodes'
 import { BAG_STATUS, type BagStatus } from './shared/statuses'
+import { assertBagTransition } from './lib/fsm'
 import { batchGet } from './lib/batch'
 
 export type RentalChecklist = {
@@ -240,10 +241,8 @@ export const markBagPickedUp = mutation({
     const bag = await ctx.db.get(args.bagId)
     if (!bag) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
     await authorize(ctx, null, 'resource:manage', { type: 'resource', ownerId: bag.equipmentManagerId })
-    if (bag.status !== BAG_STATUS.Assigned) {
-      throw new ConvexError({ code: ErrorCode.INVALID_STATE, reason: 'Bag must be Assigned to mark as picked up' })
-    }
-    await ctx.db.patch(args.bagId, { status: BAG_STATUS.InUse })
+    assertBagTransition(bag.status, 'pick_up')
+    await ctx.db.patch(args.bagId, { status: BAG_STATUS.InUse }) // fsm-ok: guarded above
   },
 })
 
@@ -253,9 +252,7 @@ export const markBagReturned = mutation({
     const bag = await ctx.db.get(args.bagId)
     if (!bag) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
     await authorize(ctx, null, 'resource:manage', { type: 'resource', ownerId: bag.equipmentManagerId })
-    if (bag.status !== BAG_STATUS.InUse) {
-      throw new ConvexError({ code: ErrorCode.INVALID_STATE, reason: 'Bag must be InUse to mark as returned' })
-    }
-    await ctx.db.patch(args.bagId, { status: BAG_STATUS.Returned, returnedAt: Date.now() })
+    assertBagTransition(bag.status, 'return')
+    await ctx.db.patch(args.bagId, { status: BAG_STATUS.Returned, returnedAt: Date.now() }) // fsm-ok: guarded above
   },
 })
