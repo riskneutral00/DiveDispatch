@@ -4,6 +4,7 @@ import { Clock, MapPin, Lock, Waves, Anchor, Footprints } from 'lucide-react'
 import { Card, Badge, Input, SimpleSelect } from '@/components/ui'
 import type { ScheduledSession, Venue } from '@/lib/booking/session-builder'
 import { VenueToggle } from './venue-toggle'
+import { formatDateShort } from '@/lib/utils/date'
 
 interface DayScheduleProps {
   date: string
@@ -30,15 +31,6 @@ const TIMEZONES = [
   { value: 'Pacific/Honolulu', label: 'HST (UTC-10)' },
 ]
 
-function formatDisplayDate(dateStr: string): string {
-  const [year, month, day] = dateStr.split('-').map(Number)
-  return new Date(year, month - 1, day).toLocaleDateString(undefined, {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-  })
-}
-
 export function DaySchedule({ date, dayNumber, sessions, onUpdate, onVenueChange }: DayScheduleProps) {
   return (
     <div className="mb-5">
@@ -51,7 +43,7 @@ export function DaySchedule({ date, dayNumber, sessions, onUpdate, onVenueChange
         <span
           className="text-body text-secondary"
         >
-          {formatDisplayDate(date)}
+          {formatDateShort(date)}
         </span>
         {sessions.some(s => s.isConfinedDay) && (
           <Badge variant="info" size="sm" dot>

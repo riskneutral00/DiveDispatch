@@ -9,6 +9,7 @@ import type { Dispatch } from 'react'
 import { getCourseByCode } from '@/lib/constants/course-catalog'
 import type { CourseCode } from '@/lib/constants/course-catalog'
 import { languageFlagText } from '@/components/profiles/language-flags'
+import { formatDateShort } from '@/lib/utils/date'
 
 interface ResourceOption {
   id: string
@@ -33,21 +34,6 @@ interface DayRowProps {
   courseCodes?: string[]
   customerLanguages?: string[]
 }
-
-function formatDate(dateStr: string): string {
-  const [year, month, day] = dateStr.split('-').map(Number)
-  return new Date(year, month - 1, day).toLocaleDateString(undefined, {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-  })
-}
-
-function deriveDayLabel(): string {
-  return 'Dive Day'
-}
-
-const DAY_LABEL_CLASS = 'glass-container'
 
 const VENUE_ICONS = {
   boat: Anchor,
@@ -138,12 +124,10 @@ export function DayRow({
             Day {dayNumber}
           </span>
           <span className="text-label text-secondary">
-            {formatDate(day.date)}
+            {formatDateShort(day.date)}
           </span>
-          <span
-            className={`text-label px-1.5 py-0.5 rounded-full text-secondary ${DAY_LABEL_CLASS}`}
-          >
-            {deriveDayLabel()}
+          <span className="text-label px-1.5 py-0.5 rounded-full text-secondary glass-container">
+            Dive Day
           </span>
           {day.isAutoAppended && (
             <span

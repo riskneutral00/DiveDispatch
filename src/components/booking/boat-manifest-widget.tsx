@@ -16,6 +16,7 @@ import type {
   ManifestDiver,
 } from '../../../convex/boatWidget'
 import { countryCodeToEmoji } from '@/components/ui/flag-emoji'
+import { isPassportExpiringSoon } from '@/lib/constants/activity-rules'
 
 function formatDate(iso: string): string {
   const d = new Date(iso + 'T00:00:00')
@@ -27,17 +28,10 @@ function formatDate(iso: string): string {
   })
 }
 
-function isPassportExpiringSoon(expirationDate?: string): boolean {
-  if (!expirationDate) return false
-  const sixMonths = new Date()
-  sixMonths.setMonth(sixMonths.getMonth() + 6)
-  return new Date(expirationDate) < sixMonths
-}
-
 type GroupByMode = 'operator' | 'activity'
 
 function DiverDetailRow({ diver }: { diver: ManifestDiver }) {
-  const passportExpiring = isPassportExpiringSoon(diver.passportExpirationDate)
+  const passportExpiring = isPassportExpiringSoon(diver.passportExpirationDate ?? '')
 
   return (
     <tr className="border-t border-white/5 text-label">
