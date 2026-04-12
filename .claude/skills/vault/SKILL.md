@@ -38,6 +38,8 @@ If no untracked files, skip Round 0. If no git changes after Round 2, skip Round
 
 ## Instructions
 
+Every `/vault` close runs these in order. No skipping. The Karpathy sub-commands (`compile`, `lint`) run automatically near the end — Matt should never need to type `/vault compile` or `/vault lint` himself.
+
 ### Pre-flight: Quality Gate (auto-gates if needed)
 
 Before anything else, check if `/gate` has been run and is still current:
@@ -417,6 +419,37 @@ CRITICAL FORMAT RULES — you MUST preserve these in every skill file you modify
 ### Job 5: Clean Up Post-Spec Artifacts
 
 Run **after** all other jobs complete. If `.post-spec/` exists, clean up working files (keep `plan.md` and `review-findings.md` for inspection). Remove stale sentinels.
+
+---
+
+### Job 6: /vault compile (auto-fires — Matt never types it)
+
+After all commits land, run the Karpathy LLM-writes-wiki compile step. This is the whole point of the vault pattern — observations become reusable entity pages automatically.
+
+1. Read today's `log.md` entries (since the last compile marker).
+2. Read `raw/Sessions/YYYY-MM-DD.md` just written in Job 2.
+3. Read `git log --since "YYYY-MM-DD"` (last compile date, or last 24h if none).
+4. **Identify concepts touched.** For each:
+   - Look for existing entity in `wiki/Architecture/entities/<concept>.md`.
+   - If exists: update with new insight, bump `updated:`, add `[[wiki-links]]` to code paths just modified.
+   - If not: create new `wiki/Architecture/entities/<slug>.md` with frontmatter (`type: entity`, `tier: semantic`, `decay: 90d`, `source: /vault`).
+5. If this session touched topics with existing drafts (`status: draft`) in entities/, promote or merge — don't leave drafts rotting.
+6. Append marker to `log.md`: `YYYY-MM-DD HH:MM compile → {n} entities created, {m} updated, {k} drafts promoted`.
+
+Do not touch `raw/*` content (immutable after write). Do not delete entries from `log.md`.
+
+---
+
+### Job 7: /vault lint (auto-fires — Matt never types it)
+
+Run the mechanical lint for drift detection. Output goes to `raw/Lint/YYYY-MM-DD.md`.
+
+1. Execute `bash scripts/vault-lint.sh`. Capture exit code.
+2. If CRITICAL > 0: print a short summary to terminal (e.g. "5 stale refs, 3 missing-frontmatter — see raw/Lint/YYYY-MM-DD-mechanical.md").
+3. If HIGH > 0 and includes stale references to deleted symbols in code just committed: offer to auto-fix (sed replace vault refs).
+4. If the lint report differs materially from yesterday's (new stale refs appeared): flag in terminal.
+
+Never block `/vault` close on lint findings. Lint is informational; `/gate` is enforcement.
 
 ---
 

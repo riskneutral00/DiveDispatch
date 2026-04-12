@@ -4,6 +4,28 @@ Multi-stakeholder booking platform for scuba diving. Operator stakeholder create
 
 > **Scope:** Permanent architectural decisions, non-obvious business logic invariants, and project constraints only. Workflow how-tos, skill pointers, dev commands, and process steps do NOT belong here — put those in skills.
 
+## Vault-First Discipline (READ THIS — it governs every session)
+
+The DiveDispatch vault (`~/Desktop/RiskNeutral/Vaults/DiveDispatch/`) is the compiled knowledge base for this project. It follows Karpathy's LLM-Wiki three-layer pattern: `raw/` (sources), `wiki/` (compiled entities), `Schema/` (governance). `index.md` at vault root is the LLM entry point.
+
+**Before entering plan mode or proposing any non-trivial approach, you MUST:**
+
+1. **Read `Vaults/DiveDispatch/index.md`.** This is the catalog — always start here.
+2. **Grep `wiki/Architecture/entities/` for tags matching the domain** you're about to work in. These entities record what was learned from past sessions — they tell you what to follow, what to avoid, what's already been tried.
+3. **Check `wiki/Plans/` for unresolved followups in the area.** Files matching `*-followups.md` list deferred work from past plans. Do not re-derive what's already queued.
+4. **Scan `raw/Failures/` (last 30 days) for incidents in this area.** Failures record concrete pitfalls. Proposing a pattern that recently failed is an error.
+5. **Check `wiki/PatternLibrary/` for applicable patterns.** Each pattern declares its enforcement (hook/rule/lint/none). Patterns with `enforcement: none` AND many backlinks are strong advisory signals — don't just bypass them.
+
+**When answering questions** (even casual "how does X work?"):
+- Read `index.md` → drill into the 2–3 most relevant entities. Cite them in your answer.
+- If no entity exists for the question, and the answer is non-trivial, invoke `/ask <question>` so the answer persists as a new entity. This is how the wiki compounds.
+
+**Avoid patterns that contradict** `wiki/Architecture/invariants/*` and `.claude/rules/*` — these are hook-enforced. See Schema Imports section below for the full list.
+
+**Do not plan in a vacuum.** A plan with zero citations from `wiki/` or `raw/Failures/` is a red flag — either you skipped the read, or the vault needs more entities in that area (trigger `/ingest` or `/vault compile` to fill the gap).
+
+Matt ("extremely lazy" by his own admission) runs `/vault` at session close and expects everything else to surface itself. Your job is to pull the vault into every decision automatically. He should never need to type `/ask` or `/ingest` — you should do it when appropriate.
+
 ## Architecture Invariants (LAW — do not deviate)
 
 These are settled architectural decisions. Do not re-litigate. Do not propose alternatives.
