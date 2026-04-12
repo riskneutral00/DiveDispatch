@@ -21,6 +21,49 @@ Read the relevant file BEFORE modifying code in that domain.
 
 Full decision record + implementation checklist: `~/Desktop/RiskNeutral/Vaults/DiveDispatch/wiki/Architecture/Industry-Alignment-Decisions.md`
 
+## Schema Imports (governance — single source)
+
+Every rule and invariant file must be declared below. `schema-imports-guard.sh` (PreToolUse:Write on this file + launchd daily) diffs this list against the filesystem and fails on drift. Adding or removing a file without updating this section is blocked.
+
+**Rules** (`.claude/rules/*.md` — path-scoped enforcement):
+- `.claude/rules/browser-headed.md`
+- `.claude/rules/code-style-nav.md`
+- `.claude/rules/communication-ux.md`
+- `.claude/rules/design-change-routing.md`
+- `.claude/rules/dry-first.md`
+- `.claude/rules/form-field-consistency.md`
+- `.claude/rules/i18n.md`
+- `.claude/rules/inline-style-migration.md`
+- `.claude/rules/language-picker.md`
+- `.claude/rules/layout-stability.md`
+- `.claude/rules/mobile-first.md`
+- `.claude/rules/paired-column-density.md`
+- `.claude/rules/provider-order.md`
+- `.claude/rules/proxy-middleware.md`
+- `.claude/rules/seed-guard.md`
+- `.claude/rules/signin-flow.md`
+- `.claude/rules/spacing-tokens.md`
+- `.claude/rules/test-execution.md`
+- `.claude/rules/testing-rules.md`
+- `.claude/rules/workflow-skills.md`
+
+**Invariants** (`Architecture/*-invariants.md` + `auth-model.md` — architectural laws):
+- `Architecture/auth-model.md`
+- `Architecture/component-invariants.md`
+- `Architecture/design-system-invariants.md`
+- `Architecture/enterprise-invariants.md`
+- `Architecture/error-invariants.md`
+- `Architecture/fsm-invariants.md`
+- `Architecture/query-invariants.md`
+- `Architecture/schema-invariants.md`
+- `Architecture/testing-invariants.md`
+
+**Vault governance** (`Vaults/DiveDispatch/Schema/*.md`):
+- `Vaults/DiveDispatch/Schema/frontmatter-schema.md`
+- `Vaults/DiveDispatch/Schema/memory-tiers.md`
+- `Vaults/DiveDispatch/Schema/ingest-contract.md`
+- `Vaults/DiveDispatch/Schema/pattern-contract.md`
+
 ## Interactive Element Rule
 
 Every `<button>`, `<a>` action, tab, menu item, and interactive control outside `src/components/ui/` must use a component from the UI library:
@@ -148,6 +191,17 @@ Vault topology follows Karpathy's LLM-Wiki three-layer pattern (see `Vaults/Dive
 | Founder insight/background | `Vaults/RiskNeutral/Founder/Matt.md` (update) |
 | Matrix-GitHub analysis | `Vaults/Matrix-GitHub/Integrations.md` |
 | Matrix-YouTube analysis | `Vaults/Matrix-YouTube/Index.md` |
+| Cross-vault meta-index | `Vaults/shared/index.md` |
+
+### Cross-vault linking
+
+When a DiveDispatch entity references a page in a sibling vault, use the `vault:` prefix:
+
+```markdown
+See also: [[vault:RiskNeutral/Founder/Matt]]
+```
+
+`scripts/vault-lint.sh` validates cross-vault links. Full convention + per-vault topology in `Vaults/shared/index.md`.
 
 ## Matrix Config
 

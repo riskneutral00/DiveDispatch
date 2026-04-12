@@ -98,6 +98,12 @@
             "command": "bash .claude/hooks/app-component-blocker.sh",
             "timeout": 5,
             "statusMessage": "Checking app/ component placement…"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/frontmatter-guard.sh",
+            "timeout": 3,
+            "statusMessage": "Checking vault frontmatter…"
           }
         ]
       },
@@ -127,6 +133,12 @@
             "command": "bash .claude/hooks/css-file-blocker.sh",
             "timeout": 5,
             "statusMessage": "Checking CSS file creation…"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/frontmatter-guard.sh",
+            "timeout": 3,
+            "statusMessage": "Checking vault frontmatter…"
           }
         ]
       }

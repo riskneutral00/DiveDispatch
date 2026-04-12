@@ -23,6 +23,29 @@ All symlinks point to live project files via relative paths. They auto-update �
 | `design-system/` | `design-system/` | MASTER.md + page overrides |
 | `CLAUDE.md` | `CLAUDE.md` | Project invariants |
 
+## Return-Path Convention (PR body template)
+
+When the cloud `/ultraplan` session produces a PR, structure its description with these H2 sections so the local `.git/hooks/post-merge` (`scripts/vault-pr-scrape.sh`) routes findings into the vault automatically:
+
+```markdown
+## Summary
+<what was done>
+
+## Lessons
+- <insight to carry forward — appended to Vaults/DiveDispatch/log.md>
+
+## Findings
+- <bug, gap, or concern uncovered — written to Vaults/DiveDispatch/raw/Failures/YYYY-MM-DD.md>
+
+## Followups
+- <deferred work — written to Vaults/DiveDispatch/wiki/Plans/<topic>-followups.md>
+
+## Test plan
+- ...
+```
+
+Only `## Lessons`, `## Findings`, `## Followups` are parsed. Other sections (Summary, Test plan) are ignored by the hook. The scrape runs on any merge (not just cloud PRs) — any PR author can use this to feed the vault.
+
 ## Execution Prompts
 
 Each `.md` file (except this README) is a self-contained execution brief for an `/ultraplan` session.
