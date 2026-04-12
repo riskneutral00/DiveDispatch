@@ -417,3 +417,59 @@ CRITICAL FORMAT RULES — you MUST preserve these in every skill file you modify
 ### Job 5: Clean Up Post-Spec Artifacts
 
 Run **after** all other jobs complete. If `.post-spec/` exists, clean up working files (keep `plan.md` and `review-findings.md` for inspection). Remove stale sentinels.
+
+---
+
+## Sub-Commands (Karpathy LLM-Wiki pattern)
+
+The base `/vault` command (described above) is the session-close closer. Three sub-commands extend it for the Karpathy wiki pattern. Contracts live at `Vaults/DiveDispatch/Schema/`.
+
+### `/vault compile`
+
+LLM-writes-the-wiki flip. Runs automatically at the end of `/vault` close; can also be invoked standalone.
+
+1. Read `Vaults/DiveDispatch/log.md` tail (entries since last compile marker).
+2. Read most-recent `raw/Sessions/*.md` and `raw/Failures/*.md` (last 7 days).
+3. Read `git log --since="last /vault compile"` for code context.
+4. Identify concepts touched. For each, **update or create** an entity page in `wiki/Architecture/entities/<concept>.md`:
+   - Frontmatter: `type: entity, tier: semantic, decay: 90d, source: /vault`.
+   - Body: synthesis + `[[wiki-links]]` back to raw sources, code paths, hooks, rules.
+5. If any pair of entities contradicts, propose `supersedes:` / `superseded_by:` diff for Matt approval (see `/vault lint`).
+6. Update `index.md` only if a new `type` appears (Obsidian Bases auto-refresh otherwise).
+7. Write a compile-marker line to `log.md`: `YYYY-MM-DD HH:MM compile → {n} entities created, {m} updated`.
+
+Do **not** delete or rewrite existing raw content. `raw/` is immutable after write.
+
+### `/vault lint`
+
+Daily health check. Scheduled via launchd; also invocable on demand. Output goes to `raw/Lint/YYYY-MM-DD.md`. `/gate` reads the latest report.
+
+Checks:
+- **Frontmatter validation** against `Schema/frontmatter-schema.md`. Missing `type`/`tier` → CRITICAL; unknown values → HIGH.
+- **Stale references.** Grep vault for symbols deleted in code (parse `git log --diff-filter=D` since last lint run). Example known stale refs: `content-island`, `HOLD_TTL_MS`, `error-messages.ts`.
+- **Orphan pages.** `type: entity, tier: semantic` pages with zero inbound `[[wiki-links]]` → HIGH.
+- **Supersession detection.** Find entity pairs with overlapping `tags` where newer `updated` asserts a claim the older contradicts. Propose resolution by (a) most recent `updated`, (b) highest `confidence`, (c) most inbound backlinks. Emit diff: old page gets `status: superseded` + `superseded_by: [[new]]`; new page gets `supersedes: [[old]]`. Requires Matt approval before applying.
+- **Decay enforcement.** Pages with `updated` past `decay` TTL flagged. If the surrounding domain has no recent code activity, auto-move to `raw/archive/<original-path>.md` and rewrite inbound links. `decay: never` pages never age.
+- **Contradictions.** Cross-check `wiki/Architecture/invariants/*.md` against `.claude/rules/*.md` + repo-root `Architecture/*-invariants.md`. Same topic with different rules → CRITICAL.
+- **Pattern contract.** Each `wiki/PatternLibrary/*.md` must satisfy `Schema/pattern-contract.md` (Problem, Pattern, Evidence, Enforcement sections; dangling `enforced_by` path → CRITICAL).
+- **Self-heal** where safe: rewrite stale paths to new vault topology, stamp missing `updated`, add `tier` if inferrable from folder.
+
+Report format:
+```
+# Lint Report — YYYY-MM-DD
+
+CRITICAL (n): ...
+HIGH (n): ...
+MEDIUM (n): ...
+Self-healed (n): ...
+```
+
+### `/vault capture`
+
+Mid-session observation capture (without session close). Appends to `log.md` with a `tag` prefix.
+
+- `/vault capture observation: <text>` → `YYYY-MM-DD HH:MM observation <text>`
+- `/vault capture failure: <text>` → also writes a stub to `raw/Failures/YYYY-MM-DD.md`
+- `/vault capture lesson: <text>` → flags for next `/vault compile` as entity candidate
+
+Intended for times when Matt wants to record something without triggering the full close flow.
