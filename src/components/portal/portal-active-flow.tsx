@@ -73,7 +73,9 @@ export function PortalActiveFlow({
     (data: EquipmentData) => {
       if (equipmentTimerRef.current) clearTimeout(equipmentTimerRef.current)
       equipmentTimerRef.current = setTimeout(() => {
-        saveEquipment({ token, ...data }).catch(() => {})
+        saveEquipment({ token, ...data }).catch((err) => {
+          console.error('[portal-active-flow] saveEquipment failed:', err)
+        })
       }, 600)
     },
     [saveEquipment, token],

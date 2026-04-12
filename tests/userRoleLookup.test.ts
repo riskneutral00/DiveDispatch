@@ -92,7 +92,8 @@ describe('users.upsertFromWebhook', () => {
       lastName: 'User',
     })
 
-    expect(userId).toBeTruthy()
+    expect(typeof userId).toBe('string')
+    expect(userId.length).toBeGreaterThan(0)
 
     await t.run(async (ctx) => {
       const user = await ctx.db.get(userId)

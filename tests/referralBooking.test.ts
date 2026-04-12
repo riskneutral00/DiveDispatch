@@ -95,7 +95,8 @@ describe('createReferralDraftShell', () => {
         referralDcSlug: 'target-dc',
       })
 
-    expect(bookingId).toBeTruthy()
+    expect(typeof bookingId).toBe('string')
+    expect(bookingId.length).toBeGreaterThan(0)
 
     // Verify ownership fields
     await t.run(async (ctx) => {

@@ -28,7 +28,8 @@ export function useBookingWithExpiry(bookingId: Id<'bookings'>): {
     if (!booking || hasTriggeredRef.current) return
     if (isExpiredBooking(booking)) {
       hasTriggeredRef.current = true
-      checkAndExpire({ bookingId }).catch(() => {
+      checkAndExpire({ bookingId }).catch((err) => {
+        console.error('[useBookingWithExpiry] checkAndExpire failed:', err)
       })
     }
   }, [booking, bookingId, checkAndExpire])
