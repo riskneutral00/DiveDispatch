@@ -80,6 +80,33 @@ These inline styles have Tailwind equivalents. Never copy them. Migrate on conta
 
 5. **Melt is the default.** `data-melt` on dialogs fades `.app-shell` to reveal the brand background. Opt out with `melt={false}`, never by removing the CSS rule.
 
+## UI Library — interactive elements
+
+Every `<button>`, `<a>` action, tab, menu item, and interactive control outside `src/components/ui/` must use one of these primitives:
+
+| Primitive | Purpose |
+|---|---|
+| **Button** | Standard actions — primary, secondary, ghost, destructive |
+| **IconButton** | Icon-only actions — glass or ghost variant |
+| **MenuButton** | Navigation items, tabs, dropdown entries — pill or flush variant |
+| **ActionLink** | Inline hyperlink-style actions |
+| **SaveButton** | Form save/submit with loading/saved states |
+
+Raw `<button>` is only allowed inside compound controls (custom pickers, ARIA listbox internals, DnD handles) with `{/* design-ok */}`. Hook `raw-button-blocker.sh` enforces this.
+
+## Two Hover Tiers
+
+Interactive elements use exactly two hover treatments. Mixing them or inventing a third is an error.
+
+| Tier | Treatment | Applied to |
+|---|---|---|
+| **glass-btn glow** | Border glow via `.glass-btn-*` variants | Buttons, cards, primary interactive surfaces |
+| **opacity fade** | `hover:opacity-<N>` | Nav items, menu items, secondary touch targets |
+
+**Never use brightness+scale** (`hover:brightness-110 hover:scale-105` or similar). Scale transforms cause layout reflow on hover and break `position: sticky` parents. Brightness shifts bypass the token system.
+
+Hook `design-token-enforcement.sh` blocks brightness+scale combinations at edit time.
+
 ## Enforcement Matrix
 
 | Concern | Hook (agents) | ESLint (all editors) | CI |
