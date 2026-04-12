@@ -89,15 +89,15 @@ export function buildDiveSequence(courseCodes: string[]): DiveSlotDef[] {
 
 function getDiveCount(entry: CourseCatalogEntry): number {
   switch (entry.code) {
-    case 'OW': return 5   // 1 confined + 4 open-water
-    case 'AOW': return 5  // 5 adventure dives
-    case 'DSD': return 1  // 1 confined
+    case 'OW': return 5
+    case 'AOW': return 5
+    case 'DSD': return 1
     case 'TRY_DIVE': return 1
     case 'RESCUE': return 4
     case 'DM': return 6
     case 'SPECIALTY': return 2
     case 'REFRESH': return 1
-    case 'FD': return 0   // No mandated sequence
+    case 'FD': return 0
     default: return 0
   }
 }
@@ -517,6 +517,8 @@ export function getAvailableDives(
     if (assigned !== undefined && assigned !== dayIndex) return false
 
     if (slotIdx <= highwater) return false
+
+    if (slot.isConfined && dayIndex !== 0) return false
 
     return true
   })
