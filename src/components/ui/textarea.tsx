@@ -1,6 +1,7 @@
 import React, { useId, useState } from "react";
 import { cn } from "@/lib/utils/cn";
 import { FieldError } from "@/components/ui/field-shell";
+import { RequiredAsterisk } from "@/components/ui/required-asterisk";
 import { useFloatingLabel } from "@/lib/hooks/use-floating-label";
 
 interface TextareaProps
@@ -65,7 +66,8 @@ export function Textarea({
           )}
           /* design-ok */
         >
-          {label}{required && <span className="text-destructive"> *</span>}
+          {label}
+          {required && <RequiredAsterisk />}
         </label>
       )}
 

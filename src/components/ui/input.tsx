@@ -2,6 +2,7 @@
 
 import React, { useId, useState } from 'react'
 import { FieldError } from '@/components/ui/field-shell'
+import { RequiredAsterisk } from '@/components/ui/required-asterisk'
 import { useFloatingLabel } from '@/lib/hooks/use-floating-label'
 import { cn } from '@/lib/utils/cn'
 
@@ -86,7 +87,8 @@ export function Input({
               : 'top-3 text-body text-secondary',
           )} /* design-ok */
         >
-          {label}{props.required && <span className="text-destructive"> *</span>}
+          {label}
+          {props.required && <RequiredAsterisk />}
         </label>
       )}
 

@@ -376,6 +376,12 @@
           },
           {
             "type": "command",
+            "command": "bash .claude/hooks/primitive-asterisk-guard.sh",
+            "timeout": 5,
+            "statusMessage": "Checking required-asterisk primitive usage…"
+          },
+          {
+            "type": "command",
             "command": "bash .claude/hooks/anyctx-guard.sh",
             "timeout": 5,
             "statusMessage": "Checking for AnyCtx / as any…"

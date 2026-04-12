@@ -11,10 +11,7 @@ export function EmptyState({ message, icon: Icon, className }: EmptyStateProps) 
   return (
     <div className={cn('flex flex-col items-center justify-center py-8 gap-2', className)}>
       {Icon && (
-        <Icon className="text-secondary"
-          size={24}
-          style={{ opacity: 0.6 }}
-        />
+        <Icon className="text-secondary opacity-60" size={24} />
       )}
       <p className="text-body text-center text-secondary">
         {message}

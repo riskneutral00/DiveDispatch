@@ -1,9 +1,14 @@
 'use client'
 
-import { useTranslations } from 'next-intl'
-import { Spinner } from '@/components/ui/spinner'
+import { LoadingState, type LoadingStateVariant } from '@/components/ui/loading-state'
 
 export type ProfileFormLoadingVariant = 'spinner' | 'pulse-text' | 'plain'
+
+const VARIANT_MAP: Record<ProfileFormLoadingVariant, LoadingStateVariant> = {
+  spinner: 'spinner',
+  'pulse-text': 'pulse',
+  plain: 'pulse',
+}
 
 interface ProfileFormLoadingProps {
   variant?: ProfileFormLoadingVariant
@@ -18,28 +23,12 @@ export function ProfileFormLoading({
   className = '',
   paddingClassName = 'py-16',
 }: ProfileFormLoadingProps) {
-  const t = useTranslations('common')
-  if (variant === 'plain') {
-    return (
-      <p className={`text-body text-secondary ${className}`.trim()}>{message ?? t('loading')}</p>
-    )
-  }
-
-  if (variant === 'pulse-text') {
-    return (
-      <div className={`flex items-center justify-center ${paddingClassName} ${className}`.trim()}>
-        <span className="text-body animate-pulse text-secondary">
-          {message ?? t('loading')}
-        </span>
-      </div>
-    )
-  }
-
   return (
-    <div
-      className={`flex items-center justify-center ${paddingClassName} text-primary ${className}`.trim()}
-    >
-      <Spinner size="lg" />
-    </div>
+    <LoadingState
+      variant={VARIANT_MAP[variant]}
+      scope="inline"
+      message={message}
+      className={`${paddingClassName} ${className}`.trim()}
+    />
   )
 }

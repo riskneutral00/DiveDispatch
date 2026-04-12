@@ -11,6 +11,7 @@ import {
 } from "react";
 import { ChevronDown, ChevronRight, Check } from "lucide-react";
 import { FieldShell } from "@/components/ui/field-shell";
+import { RequiredAsterisk } from "@/components/ui/required-asterisk";
 import { useFloatingLabel } from "@/lib/hooks/use-floating-label";
 import { cn } from "@/lib/utils/cn";
 import { LanguageFlags } from "@/components/profiles/language-flags";
@@ -382,7 +383,7 @@ export function Select({
             )} /* design-ok */
           >
             {label}
-            {required && <span className="text-destructive"> *</span>}
+            {required && <RequiredAsterisk />}
           </label>
         )}
 

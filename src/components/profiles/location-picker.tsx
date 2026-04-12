@@ -8,6 +8,7 @@ import { MapPin, X, Locate, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils/cn'
 import { Dialog } from '@/components/ui/dialog'
+import { RequiredAsterisk } from '@/components/ui/required-asterisk'
 import { autocompleteKeyboardReducer, INITIAL_STATE } from '@/components/ui/autocomplete-keyboard'
 
 import type { LocationValue } from '@/lib/schemas/location'
@@ -464,7 +465,8 @@ function LocationPickerTrigger({ value, onOpen, onClear, error, label, required,
               : 'top-3 text-body text-secondary',
           )}
         >
-          {label}{required && <span className="text-destructive"> *</span>}
+          {label}
+          {required && <RequiredAsterisk />}
         </label>
       )}
       {error && (

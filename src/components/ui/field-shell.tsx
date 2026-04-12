@@ -1,4 +1,5 @@
 import type { CSSProperties, ReactNode } from "react";
+import { RequiredAsterisk } from "@/components/ui/required-asterisk";
 import { cn } from "@/lib/utils/cn";
 
 interface FieldLabelProps {
@@ -26,7 +27,7 @@ export function FieldLabel({
       style={style}
     >
       {children}
-      {required && <span className="text-destructive"> *</span>}
+      {required && <RequiredAsterisk />}
     </label>
   );
 }

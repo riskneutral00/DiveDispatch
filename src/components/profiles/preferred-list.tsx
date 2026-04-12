@@ -18,6 +18,7 @@ import { Tooltip } from '@/components/ui/tooltip'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import { EmptyState } from '@/components/ui/empty-state'
+import { RequiredAsterisk } from '@/components/ui/required-asterisk'
 import { LanguagePicker, type Language } from '@/components/profiles/language-picker'
 import { InstructorCardContent } from '@/components/profiles/instructor-card'
 import { ALL_LANGUAGES } from '@/lib/constants/dive-languages'
@@ -90,7 +91,7 @@ function InstructorFilterBar({
         })}
         <span className="ml-auto text-label text-secondary">
           {currentCount}/{MAX_PREFERRED_INSTRUCTORS}
-          {required && <span className="text-destructive"> *</span>}
+          {required && <RequiredAsterisk />}
         </span>
       </div>
 
@@ -386,7 +387,7 @@ export function PreferredInstructorList(props: ListProps) {
         </span>
         <span className="text-label text-secondary">
           {slugs.length}/{MAX_PREFERRED_INSTRUCTORS}
-          {props.required && <span className="text-destructive"> *</span>}
+          {props.required && <RequiredAsterisk />}
         </span>
       </div>
 
@@ -629,7 +630,7 @@ function PreferredOverlayList({
         </Button>
         <span className="text-label text-secondary">
           {slugs.length}/{maxItems}
-          {required && <span className="text-destructive"> *</span>}
+          {required && <RequiredAsterisk />}
         </span>
       </div>
 

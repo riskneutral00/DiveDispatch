@@ -2,6 +2,8 @@
 
 import { FieldLabel } from '@/components/ui/field-shell'
 import { InlineError } from '@/components/ui/inline-error'
+import { TOUCH_TARGET_CLASS } from '@/lib/constants/button-sizes'
+import { cn } from '@/lib/utils/cn'
 
 const DAYS = [
   { value: 1, label: 'Mon' },
@@ -21,7 +23,13 @@ interface DayToggleGroupProps {
   label?: string
 }
 
-export function DayToggleGroup({ selected, onChange, disabledDays = [], error, label }: DayToggleGroupProps) {
+export function DayToggleGroup({
+  selected,
+  onChange,
+  disabledDays = [],
+  error,
+  label,
+}: DayToggleGroupProps) {
   function toggle(day: number) {
     if (disabledDays.includes(day)) return
     onChange(
@@ -39,17 +47,30 @@ export function DayToggleGroup({ selected, onChange, disabledDays = [], error, l
           const active = selected.includes(d.value)
           const locked = disabledDays.includes(d.value)
           return (
-            <button
+            <button /* design-ok: active-state background uses --color-primary which is not wired via @theme inline */
               key={d.value}
               type="button"
               onClick={() => toggle(d.value)}
               disabled={locked}
-              className="px-2.5 py-1 text-label rounded-full font-medium transition-all duration-theme min-h-[44px] min-w-[44px] disabled:opacity-40 disabled:cursor-not-allowed"
-              style={{
-                background: active ? 'var(--color-primary)' : 'var(--color-surface-elevated)',
-                color: active ? 'var(--color-text-on-primary)' : locked ? 'var(--color-text-secondary)' : 'var(--color-text-primary)',
-                border: `1px solid ${active ? 'var(--color-primary)' : 'var(--color-glass-border)'}`,
-              }}
+              aria-pressed={active}
+              className={cn(
+                'px-3 py-1 text-label rounded-full font-medium transition-all duration-theme border',
+                TOUCH_TARGET_CLASS,
+                'disabled:opacity-40 disabled:cursor-not-allowed',
+                active
+                  ? 'text-on-primary'
+                  : locked
+                    ? 'bg-surface-elevated border-glass-border text-secondary'
+                    : 'bg-surface-elevated border-glass-border text-primary',
+              )}
+              style={
+                active
+                  ? {
+                      background: 'var(--color-primary)',
+                      borderColor: 'var(--color-primary)',
+                    }
+                  : undefined
+              }
             >
               {d.label}
             </button>
