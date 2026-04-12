@@ -43,6 +43,8 @@
     "errorContact": "發生錯誤，請聯絡您的潛水中心。",
     "actionFailed": "{action}失敗，請重試。",
     "fieldRequired": "{field}為必填。",
+    "dismiss": "關閉",
+    "discard": "捨棄",
     "sendLink": "傳送連結",
     "createProfile": "Create Profile",
     "addItem": "新增項目",
@@ -95,7 +97,10 @@
     "preferences": "偏好設定",
     "signIn": "登入",
     "signOut": "登出",
-    "roles": "角色"
+    "roles": "角色",
+    "account": "帳戶",
+    "addRoleTitle": "新增角色",
+    "addRoleDescription": "選擇要加入您帳戶的新角色。"
   },
   "auth": {
     "signUp": "註冊",
@@ -122,7 +127,33 @@
     },
     "emptyStates": {
       "noPendingRequests": "尚無待處理請求。",
-      "noResourcesAssigned": "尚未分配資源。"
+      "noResourcesAssigned": "尚未分配資源。",
+      "noCustomersAdded": "尚無客戶。",
+      "bookingNotFound": "找不到預約。",
+      "equipmentProfileNotSetUp": "尚未設定裝備資料。",
+      "noBookingsInRange": "此日期範圍內沒有預約。",
+      "noSessionsScheduled": "尚無已排定的課程。",
+      "noInstructorsMatch": "沒有符合篩選條件的教練。"
+    },
+    "dialogs": {
+      "cancelTitle": "取消預約",
+      "cancelBody": "這將釋放所有預約。此操作無法復原。",
+      "cancelConfirm": "取消",
+      "cancelKeep": "保留",
+      "cancelReasonLabel": "原因",
+      "cancelReasonPlaceholder": "例如：客戶要求取消",
+      "discardDraftTitle": "捨棄草稿？",
+      "discardDraftBody": "這將刪除草稿並釋放所有預約保留。",
+      "bookingTitle": "預約",
+      "newBookingTitle": "新增預約",
+      "addInstructorTitle": "新增教練",
+      "addCustomerTitle": "新增客戶",
+      "blockDateTitle": "封鎖此日期？",
+      "unblockDateTitle": "解除封鎖此日期？",
+      "blockDateBody": "封鎖 {date}？您將不會收到預約請求。",
+      "unblockDateBody": "解除封鎖 {date}？您將再次可接受預約。",
+      "blockConfirm": "封鎖",
+      "unblockConfirm": "解除封鎖"
     },
     "editConfirmTitle": "編輯預約？",
     "editConfirmBody": "將重設為草稿。資源方需重新確認。",

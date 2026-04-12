@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card'
 import { CardTitle } from '@/components/ui/card-title'
 import { InlineError } from '@/components/ui/inline-error'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { medicalAnswersSchema } from '@/lib/validation'
 import { usePortalStep } from '@/lib/hooks/use-portal-step'
 import { usePortalMedical } from '@/lib/hooks/use-portal-medical'
@@ -159,35 +160,22 @@ export function StepMedical({ token, onComplete }: StepMedicalProps) {
                 </p>
 
                 <div className="flex gap-6" role="group" aria-label={`Question ${idx + 1}`}>
-                  <label className="flex items-center gap-2 cursor-pointer select-none">
-                    <input /* design-ok: native radio for medical yes/no */
-                      type="radio"
-                      name={key}
-                      value="yes"
-                      checked={value === true}
-                      onChange={() => setAnswer(key, true)}
-                      className="w-4 h-4"
-                      style={{ accentColor: 'var(--color-primary)' }}
-                    />
-                    <span className="text-body text-primary">
-                      {tCommon('yes')}
-                    </span>
-                  </label>
-
-                  <label className="flex items-center gap-2 cursor-pointer select-none">
-                    <input /* design-ok: native radio for medical yes/no */
-                      type="radio"
-                      name={key}
-                      value="no"
-                      checked={value === false}
-                      onChange={() => setAnswer(key, false)}
-                      className="w-4 h-4"
-                      style={{ accentColor: 'var(--color-primary)' }}
-                    />
-                    <span className="text-body text-primary">
-                      {tCommon('no')}
-                    </span>
-                  </label>
+                  <Checkbox
+                    as="radio"
+                    name={key}
+                    value="yes"
+                    label={tCommon('yes')}
+                    checked={value === true}
+                    onChange={() => setAnswer(key, true)}
+                  />
+                  <Checkbox
+                    as="radio"
+                    name={key}
+                    value="no"
+                    label={tCommon('no')}
+                    checked={value === false}
+                    onChange={() => setAnswer(key, false)}
+                  />
                 </div>
 
                 <div aria-live="polite">

@@ -43,6 +43,8 @@
     "errorContact": "เกิดข้อผิดพลาด กรุณาติดต่อศูนย์ดำน้ำของคุณ",
     "actionFailed": "{action} ล้มเหลว กรุณาลองอีกครั้ง",
     "fieldRequired": "กรุณากรอก{field}",
+    "dismiss": "ปิด",
+    "discard": "ลบ",
     "sendLink": "ส่งลิงก์",
     "createProfile": "Create Profile",
     "addItem": "เพิ่มรายการ",
@@ -95,7 +97,10 @@
     "preferences": "การตั้งค่า",
     "signIn": "เข้าสู่ระบบ",
     "signOut": "ออกจากระบบ",
-    "roles": "บทบาท"
+    "roles": "บทบาท",
+    "account": "บัญชี",
+    "addRoleTitle": "เพิ่มบทบาท",
+    "addRoleDescription": "เลือกบทบาทใหม่เพื่อเพิ่มในบัญชีของคุณ"
   },
   "auth": {
     "signUp": "สมัครสมาชิก",
@@ -122,7 +127,33 @@
     },
     "emptyStates": {
       "noPendingRequests": "ยังไม่มีคำขอที่รอดำเนินการ",
-      "noResourcesAssigned": "ยังไม่มีทรัพยากรที่กำหนด"
+      "noResourcesAssigned": "ยังไม่มีทรัพยากรที่กำหนด",
+      "noCustomersAdded": "ยังไม่มีลูกค้า",
+      "bookingNotFound": "ไม่พบการจอง",
+      "equipmentProfileNotSetUp": "ยังไม่ได้ตั้งค่าโปรไฟล์อุปกรณ์",
+      "noBookingsInRange": "ไม่มีการจองในช่วงเวลานี้",
+      "noSessionsScheduled": "ยังไม่มีเซสชันที่กำหนด",
+      "noInstructorsMatch": "ไม่มีผู้ฝึกสอนที่ตรงกับตัวกรองนี้"
+    },
+    "dialogs": {
+      "cancelTitle": "ยกเลิกการจอง",
+      "cancelBody": "การจองทั้งหมดจะถูกปล่อย ไม่สามารถยกเลิกการดำเนินการนี้ได้",
+      "cancelConfirm": "ยกเลิก",
+      "cancelKeep": "เก็บไว้",
+      "cancelReasonLabel": "เหตุผล",
+      "cancelReasonPlaceholder": "เช่น ลูกค้าขอยกเลิก",
+      "discardDraftTitle": "ลบร่าง?",
+      "discardDraftBody": "จะลบร่างและปล่อยการจองทั้งหมด",
+      "bookingTitle": "การจอง",
+      "newBookingTitle": "การจองใหม่",
+      "addInstructorTitle": "เพิ่มผู้ฝึกสอน",
+      "addCustomerTitle": "เพิ่มลูกค้า",
+      "blockDateTitle": "บล็อกวันที่?",
+      "unblockDateTitle": "เลิกบล็อกวันที่?",
+      "blockDateBody": "บล็อก {date}? คุณจะไม่ได้รับคำขอจอง",
+      "unblockDateBody": "เลิกบล็อก {date}? คุณจะพร้อมรับการจองอีกครั้ง",
+      "blockConfirm": "บล็อก",
+      "unblockConfirm": "เลิกบล็อก"
     },
     "editConfirmTitle": "แก้ไขการจอง?",
     "editConfirmBody": "จะรีเซ็ตเป็นแบบร่าง ทรัพยากรต้องยืนยันใหม่",

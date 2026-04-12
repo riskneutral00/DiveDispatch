@@ -10,6 +10,7 @@ import { getCourseByCode } from '@/lib/constants/course-catalog'
 import type { CourseCode } from '@/lib/constants/course-catalog'
 import { languageFlagText } from '@/components/profiles/language-flags'
 import { formatDateShort } from '@/lib/utils/date'
+import { TOUCH_TARGET_CLASS } from '@/lib/constants/button-sizes'
 
 interface ResourceOption {
   id: string
@@ -328,7 +329,7 @@ export function DayRow({
                             key={vt}
                             type="button"
                             onClick={() => dispatch({ type: 'SET_DIVE_VENUE', dayIndex, diveIndex: diveIdx, venueType: vt })}
-                            className="flex items-center gap-1 min-h-[44px] px-2.5 py-1.5 rounded-[var(--border-radius-button)] text-[10px] font-medium transition-colors duration-theme border"
+                            className={`flex items-center gap-1 ${TOUCH_TARGET_CLASS} px-2.5 py-1.5 rounded-[var(--border-radius-button)] text-[10px] font-medium transition-colors duration-theme border`}
                             style={{
                               background: isVenueSelected ? 'var(--color-accent)' : 'var(--color-glass-bg)',
                               color: isVenueSelected ? 'var(--color-text-on-primary)' : 'var(--color-text-secondary)',

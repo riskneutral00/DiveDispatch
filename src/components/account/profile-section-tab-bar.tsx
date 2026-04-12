@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, type KeyboardEvent } from 'react'
+import { TOUCH_TARGET_CLASS } from '@/lib/constants/button-sizes'
 
 export interface TabItem {
   id: string
@@ -67,7 +68,7 @@ export function ProfileSectionTabBar({ tabs, activeTab, onChange }: ProfileSecti
             id={`tab-${tab.id}`}
             tabIndex={isActive ? 0 : -1}
             onClick={() => onChange(tab.id)}
-            className={`px-4 min-h-[44px] text-body whitespace-nowrap flex-shrink-0 bg-transparent cursor-pointer outline-none transition-all duration-theme ${isActive ? 'text-primary font-semibold' : 'text-secondary font-normal'}`}
+            className={`px-4 ${TOUCH_TARGET_CLASS} text-body whitespace-nowrap flex-shrink-0 bg-transparent cursor-pointer outline-none transition-all duration-theme ${isActive ? 'text-primary font-semibold' : 'text-secondary font-normal'}`}
             style={{
               borderBottom: `2px solid ${isActive ? 'var(--color-primary)' : 'transparent'}`,
               marginBottom: '-1px',

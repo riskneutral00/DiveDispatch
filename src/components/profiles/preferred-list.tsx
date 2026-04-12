@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useCallback, type ReactNode } from 'react'
 import { useQuery } from 'convex/react'
+import { useTranslations } from 'next-intl'
 import { ChevronLeft, ChevronRight, Trash2, Plus, GripVertical, Wind } from 'lucide-react'
 import { DragDropProvider } from '@dnd-kit/react'
 import { useSortable } from '@dnd-kit/react/sortable'
@@ -236,6 +237,8 @@ function SortableInstructorCard({
 
 export function PreferredInstructorList(props: ListProps) {
   const { slugs, onChange } = props
+  const tDialogs = useTranslations('booking.dialogs')
+  const tEmpty = useTranslations('booking.emptyStates')
 
   const entries = useQuery(api.directory.listByRole, { role: 'Instructor' as StakeholderRole })
   const diveCenterProfile = useQuery(api.diveCenters.mine)
@@ -435,7 +438,7 @@ export function PreferredInstructorList(props: ListProps) {
       <Dialog
         open={showOverlay}
         onClose={closeOverlay}
-        title="Add Instructor"
+        title={tDialogs('addInstructorTitle')}
         size="lg"
       >
         <div className="space-y-4">
@@ -480,7 +483,7 @@ export function PreferredInstructorList(props: ListProps) {
                   />
                 ))
               ) : (
-                <EmptyState message="No instructors match these filters." />
+                <EmptyState message={tEmpty('noInstructorsMatch')} />
               )}
             </div>
             {totalPages > 1 && (
@@ -536,9 +539,18 @@ function Chip({ label, active, onClick }: { label: string; active: boolean; onCl
 
 
 function VenueBadge({ entry }: { entry: DirectoryEntry }) {
+  const subtype = entry.diveSiteTypes?.[0]
+  const label =
+    entry.venueCategory === 'pool'
+      ? 'Pool'
+      : subtype
+        ? subtype.charAt(0).toUpperCase() + subtype.slice(1)
+        : entry.venueCategory === 'diveSite'
+          ? 'Dive Site'
+          : null
   return (
     <div className="flex flex-wrap items-center gap-1">
-      {entry.venueType && <Badge variant="muted" size="sm">{entry.venueType}</Badge>}
+      {label && <Badge variant="muted" size="sm">{label}</Badge>}
       {entry.maxDepth != null && <Badge variant="muted" size="sm">{entry.maxDepth}m</Badge>}
       {entry.maxCapacity != null && <Badge variant="muted" size="sm">{entry.maxCapacity} pax</Badge>}
       {entry.hasCompressor && <Wind size={12} className="text-secondary ml-1" />}

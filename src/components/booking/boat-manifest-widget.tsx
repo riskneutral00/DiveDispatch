@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useQuery } from 'convex/react'
+import { useTranslations } from 'next-intl'
 import { Ship, ChevronDown, ChevronRight, AlertTriangle, Heart } from 'lucide-react'
 import { api } from '@/lib/convex-generated'
 import { Card, EmptyState } from '@/components/ui'
@@ -17,16 +18,7 @@ import type {
 } from '../../../convex/boatWidget'
 import { countryCodeToEmoji } from '@/components/ui/flag-emoji'
 import { isPassportExpiringSoon } from '@/lib/constants/activity-rules'
-
-function formatDate(iso: string): string {
-  const d = new Date(iso + 'T00:00:00')
-  return d.toLocaleDateString(undefined, {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  })
-}
+import { formatDateLong } from '@/lib/utils/date'
 
 type GroupByMode = 'operator' | 'activity'
 
@@ -168,7 +160,7 @@ function DateSection({ entry, groupBy }: { entry: ManifestDateEntry; groupBy: Gr
     <div className="mb-4">
       <div className="flex items-center gap-2 mb-1.5">
         <h4 className="text-body font-semibold text-primary font-heading">
-          {formatDate(entry.date)}
+          {formatDateLong(entry.date)}
         </h4>
         <span className="text-label text-secondary">{entry.totalPax} pax</span>
       </div>
@@ -180,6 +172,7 @@ function DateSection({ entry, groupBy }: { entry: ManifestDateEntry; groupBy: Gr
 }
 
 function VesselSection({ vessel, groupBy }: { vessel: ManifestVessel; groupBy: GroupByMode }) {
+  const tBooking = useTranslations('booking')
   const totalPax = vessel.dates.reduce((sum, d) => sum + d.totalPax, 0)
 
   return (
@@ -192,11 +185,11 @@ function VesselSection({ vessel, groupBy }: { vessel: ManifestVessel; groupBy: G
         <span className="text-label text-secondary px-2 py-0.5 rounded-[var(--border-radius-button)] glass-surface">
           {vessel.boatType.replace('_', ' ')}
         </span>
-        <span className="text-label text-secondary ml-auto">{totalPax} pax total</span>
+        <span className="text-label text-secondary ml-auto">{tBooking('paxTotal', { count: totalPax })}</span>
       </div>
 
       {vessel.dates.length === 0 ? (
-        <EmptyState message="No bookings for this period." />
+        <EmptyState message={tBooking('noBookings')} />
       ) : (
         vessel.dates.map((dateEntry) => (
           <DateSection key={dateEntry.date} entry={dateEntry} groupBy={groupBy} />
@@ -234,6 +227,7 @@ interface BoatManifestWidgetProps {
 }
 
 export function BoatManifestWidget({ visibleRange }: BoatManifestWidgetProps) {
+  const tBooking = useTranslations('booking')
   const [groupBy, setGroupBy] = useState<GroupByMode>('operator')
 
   const data: ManifestData | null | undefined = useQuery(
@@ -248,7 +242,7 @@ export function BoatManifestWidget({ visibleRange }: BoatManifestWidgetProps) {
   }
 
   if (!data || data.vessels.every((v) => v.dates.length === 0)) {
-    return <EmptyState icon={Ship} message="No bookings for this period." />
+    return <EmptyState icon={Ship} message={tBooking('noBookings')} />
   }
 
   return (

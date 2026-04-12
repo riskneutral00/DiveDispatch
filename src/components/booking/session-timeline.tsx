@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useTranslations } from 'next-intl'
 import { Calendar, Clock, MapPin } from 'lucide-react'
 import type { BookingDetailSession } from '../../../convex/bookings'
 import { EmptyState } from '@/components/ui'
@@ -31,11 +32,12 @@ function groupByDate(sessions: BookingDetailSession[]): Map<string, BookingDetai
 }
 
 export function SessionTimeline({ sessions }: SessionTimelineProps) {
+  const tEmpty = useTranslations('booking.emptyStates')
   const byDate = useMemo(() => groupByDate(sessions), [sessions])
   const sortedDates = useMemo(() => [...byDate.keys()].sort(), [byDate])
 
   if (sessions.length === 0) {
-    return <EmptyState message="No sessions scheduled." />
+    return <EmptyState message={tEmpty('noSessionsScheduled')} />
   }
 
   return (

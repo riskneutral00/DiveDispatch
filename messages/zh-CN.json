@@ -43,6 +43,8 @@
     "errorContact": "发生错误，请联系您的潜水中心。",
     "actionFailed": "{action}失败，请重试。",
     "fieldRequired": "{field}为必填项。",
+    "dismiss": "关闭",
+    "discard": "舍弃",
     "sendLink": "发送链接",
     "createProfile": "Create Profile",
     "addItem": "添加项目",
@@ -95,7 +97,10 @@
     "preferences": "偏好设置",
     "signIn": "登录",
     "signOut": "退出登录",
-    "roles": "角色"
+    "roles": "角色",
+    "account": "账户",
+    "addRoleTitle": "添加角色",
+    "addRoleDescription": "选择要添加到账户的新角色。"
   },
   "auth": {
     "signUp": "注册",
@@ -122,7 +127,33 @@
     },
     "emptyStates": {
       "noPendingRequests": "暂无待处理请求。",
-      "noResourcesAssigned": "未分配资源。"
+      "noResourcesAssigned": "未分配资源。",
+      "noCustomersAdded": "暂无客户。",
+      "bookingNotFound": "未找到预订。",
+      "equipmentProfileNotSetUp": "未设置装备资料。",
+      "noBookingsInRange": "此日期范围内没有预订。",
+      "noSessionsScheduled": "暂无已安排的课程。",
+      "noInstructorsMatch": "没有符合筛选条件的教练。"
+    },
+    "dialogs": {
+      "cancelTitle": "取消预订",
+      "cancelBody": "这将释放所有预订。此操作无法撤消。",
+      "cancelConfirm": "取消",
+      "cancelKeep": "保留",
+      "cancelReasonLabel": "原因",
+      "cancelReasonPlaceholder": "例如：客户请求取消",
+      "discardDraftTitle": "舍弃草稿？",
+      "discardDraftBody": "这将删除草稿并释放所有预订保留。",
+      "bookingTitle": "预订",
+      "newBookingTitle": "新建预订",
+      "addInstructorTitle": "添加教练",
+      "addCustomerTitle": "添加客户",
+      "blockDateTitle": "屏蔽此日期？",
+      "unblockDateTitle": "解除屏蔽此日期？",
+      "blockDateBody": "屏蔽 {date}？您将不会收到预订请求。",
+      "unblockDateBody": "解除屏蔽 {date}？您将再次可接受预订。",
+      "blockConfirm": "屏蔽",
+      "unblockConfirm": "解除屏蔽"
     },
     "editConfirmTitle": "编辑预订？",
     "editConfirmBody": "将重置为草稿状态，资源方需重新确认。",

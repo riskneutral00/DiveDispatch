@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl'
 import { CheckCircle2, Circle, AlertCircle } from 'lucide-react'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
+import { formatDateShort, toISODateString } from '@/lib/utils/date'
 import type { BookingDetailCustomerProfile } from '../../../convex/bookings'
 
 interface PortalProgressCardProps {
@@ -100,7 +101,7 @@ export function PortalProgressCard({
                   <span className="text-primary">{tPortal('diver', { number: String(i + 1) })}</span>
                   <span className="text-label text-secondary">
                     {submitted
-                      ? tPortal('submittedOn', { date: new Date(profile.submittedAt!).toLocaleDateString() })
+                      ? tPortal('submittedOn', { date: formatDateShort(toISODateString(new Date(profile.submittedAt!))) })
                       : profile.waiverSignedAt
                         ? tPortal('waiverSigned')
                         : tCommon('pending')}

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { Dialog, Button, Input, ButtonGroup } from '@/components/ui'
 import type { ButtonGroupOption } from '@/components/ui'
 import { LanguageField } from '@/components/profiles/language-field'
@@ -20,6 +21,7 @@ export function AddCustomerDialog({
   onClose,
   onAdd,
 }: AddCustomerDialogProps) {
+  const tDialogs = useTranslations('booking.dialogs')
   const [name, setName] = useState('')
   const [contactType, setContactType] = useState<ContactType>('email')
   const [contactValue, setContactValue] = useState('')
@@ -60,7 +62,7 @@ export function AddCustomerDialog({
   const canSubmit = name.trim().length > 0
 
   return (
-    <Dialog open={open} onClose={handleClose} title="Add Customer" size="sm">
+    <Dialog open={open} onClose={handleClose} title={tDialogs('addCustomerTitle')} size="sm">
       <div className="flex flex-col gap-4">
         <div className="flex flex-wrap gap-4 w-full">
           <div className="flex flex-col gap-3 min-w-0">

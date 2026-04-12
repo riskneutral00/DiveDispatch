@@ -166,7 +166,7 @@ export function EquipmentInventoryTable({
       <Dialog
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
-        title="Remove Item"
+        title={tBooking('removeItem')}
         size="sm"
         melt={false}
       >
@@ -283,6 +283,7 @@ function AddItemDialog({
   onAdd: EquipmentInventoryTableProps['onAddItem']
 }) {
   const tCommon = useTranslations('common')
+  const tBooking = useTranslations('booking')
   const [gearType, setGearType] = useState('')
   const [manufacturer, setManufacturer] = useState('')
   const [size, setSize] = useState('')
@@ -338,7 +339,7 @@ function AddItemDialog({
   }
 
   return (
-    <Dialog open={open} onClose={handleClose} title="Add Inventory Item" size="sm" melt={false}>
+    <Dialog open={open} onClose={handleClose} title={tBooking('addInventoryItem')} size="sm" melt={false}>
       <div className="space-y-4">
         <SimpleSelect
           label="Gear Type"

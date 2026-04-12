@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { Dialog } from '@/components/ui'
 import { RoleTile } from '@/components/ui/role-tile'
 import { getAvailableRoles } from '@/lib/utils/available-roles'
@@ -22,14 +23,16 @@ export function AddRoleModal({
   loading,
   error,
 }: AddRoleModalProps) {
+  const tNav = useTranslations('nav')
+  const tErrors = useTranslations('errors')
   const availableRoles = getAvailableRoles(heldRoles)
 
   return (
     <Dialog
       open={open}
       onClose={onClose}
-      title="Add a Role"
-      description="Select a new role to add to your account."
+      title={tNav('addRoleTitle')}
+      description={tNav('addRoleDescription')}
       fullScreen
     >
       {error && (
@@ -45,7 +48,7 @@ export function AddRoleModal({
 
       {availableRoles.length === 0 ? (
         <p className="text-secondary text-center text-body py-6">
-          You already hold all roles.
+          {tErrors('duplicateRole')}
         </p>
       ) : (
         <div className="grid grid-cols-1 gap-2">

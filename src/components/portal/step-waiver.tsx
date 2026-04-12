@@ -213,25 +213,18 @@ export function StepWaiver({
           </p>
           <div className="flex gap-6">
             {(['yes', 'no'] as const).map((val) => (
-              <label key={val} className="flex items-center gap-2 cursor-pointer">
-                <input /* design-ok: Batch 5 will replace with RadioGroup */
-                  type="radio"
-                  name="hasInsurance"
-                  value={val}
-                  checked={hasInsurance === val}
-                  onChange={() => {
-                    setHasInsurance(val)
-                    clearError('hasInsurance')
-                  }}
-                  className="h-4 w-4 cursor-pointer"
-                  style={{ accentColor: 'var(--color-primary)' }}
-                />
-                <span
-                  className="text-body capitalize text-primary"
-                >
-                  {val === 'yes' ? tCommon('yes') : tCommon('no')}
-                </span>
-              </label>
+              <Checkbox
+                key={val}
+                as="radio"
+                name="hasInsurance"
+                value={val}
+                label={val === 'yes' ? tCommon('yes') : tCommon('no')}
+                checked={hasInsurance === val}
+                onChange={() => {
+                  setHasInsurance(val)
+                  clearError('hasInsurance')
+                }}
+              />
             ))}
           </div>
 

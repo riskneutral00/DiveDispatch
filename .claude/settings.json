@@ -382,6 +382,30 @@
           },
           {
             "type": "command",
+            "command": "bash .claude/hooks/touch-target-literal.sh",
+            "timeout": 5,
+            "statusMessage": "Checking touch-target literals…"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/throw-error-i18n.sh",
+            "timeout": 5,
+            "statusMessage": "Checking throw Error i18n…"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/spacing-ladder-guard.sh",
+            "timeout": 5,
+            "statusMessage": "Checking spacing ladder…"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/empty-state-i18n.sh",
+            "timeout": 5,
+            "statusMessage": "Checking EmptyState i18n…"
+          },
+          {
+            "type": "command",
             "command": "bash .claude/hooks/anyctx-guard.sh",
             "timeout": 5,
             "statusMessage": "Checking for AnyCtx / as any…"

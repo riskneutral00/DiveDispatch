@@ -2,9 +2,11 @@
 
 import { useState } from 'react'
 import { useQuery, useMutation } from 'convex/react'
+import { useTranslations } from 'next-intl'
 import { api } from '@/lib/convex-generated'
 import { Card, Badge, Button, EmptyState, ErrorAlert, FormSectionHeader } from '@/components/ui'
 import { parseConvexError } from '@/lib/utils/convex-error'
+import { TOUCH_TARGET_CLASS } from '@/lib/constants/button-sizes'
 import { Spinner } from '@/components/ui/spinner'
 import { LoadingCard } from '@/components/ui/loading-card'
 import {
@@ -321,7 +323,7 @@ function GearSizeRow({
                 setEditing(false)
                 setEditValue('')
               }}
-              className="text-label min-h-[44px] min-w-[44px] flex items-center justify-center rounded-[var(--border-radius-button)]"
+              className={`text-label ${TOUCH_TARGET_CLASS} flex items-center justify-center rounded-[var(--border-radius-button)]`}
               style={{
                 background: 'var(--color-primary)',
                 color: 'var(--color-text-on-primary)',
@@ -334,7 +336,7 @@ function GearSizeRow({
                 setEditing(false)
                 setEditValue('')
               }}
-              className="text-label min-h-[44px] min-w-[44px] flex items-center justify-center rounded-[var(--border-radius-button)] text-secondary bg-glass-bg border-glass-border border"
+              className={`text-label ${TOUCH_TARGET_CLASS} flex items-center justify-center rounded-[var(--border-radius-button)] text-secondary bg-glass-bg border-glass-border border`}
             >
               ✕
             </button>
@@ -348,7 +350,7 @@ function GearSizeRow({
                 setEditValue(isManualOverride ? overrideSize : '')
                 setEditing(true)
               }}
-              className="text-label text-secondary min-h-[44px] min-w-[44px] flex items-center justify-center"
+              className={`text-label text-secondary ${TOUCH_TARGET_CLASS} flex items-center justify-center`}
               title="Override size"
             >
               ✏
@@ -356,7 +358,7 @@ function GearSizeRow({
             {isManualOverride && (<>
               {/* design-ok */}<button
                 onClick={onClearOverride}
-                className="text-label text-secondary min-h-[44px] min-w-[44px] flex items-center justify-center"
+                className={`text-label text-secondary ${TOUCH_TARGET_CLASS} flex items-center justify-center`}
                 title="Clear override"
               >
                 ↺
@@ -374,6 +376,7 @@ export interface DiverEquipmentWidgetProps {
 }
 
 export function DiverEquipmentWidget({ visibleRange }: DiverEquipmentWidgetProps) {
+  const tEmpty = useTranslations('booking.emptyStates')
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null)
   const [isActing, setIsActing] = useState(false)
   const [mutationError, setMutationError] = useState<string | null>(null)
@@ -419,7 +422,7 @@ export function DiverEquipmentWidget({ visibleRange }: DiverEquipmentWidgetProps
   if (data === null) {
     return (
       <Card padding="md">
-        <EmptyState message="Equipment profile not set up." />
+        <EmptyState message={tEmpty('equipmentProfileNotSetUp')} />
       </Card>
     )
   }
@@ -427,7 +430,7 @@ export function DiverEquipmentWidget({ visibleRange }: DiverEquipmentWidgetProps
   if (data.bookings.length === 0) {
     return (
       <Card padding="md">
-        <EmptyState message="No bookings in this date range." />
+        <EmptyState message={tEmpty('noBookingsInRange')} />
       </Card>
     )
   }
@@ -455,7 +458,7 @@ export function DiverEquipmentWidget({ visibleRange }: DiverEquipmentWidgetProps
               <button /* design-ok */
                 key={b.bookingId}
                 onClick={() => setSelectedBookingId(b.bookingId)}
-                className="px-3 py-1 rounded-full text-label font-medium border transition-all duration-theme min-h-[44px]"
+                className={`px-3 py-1 rounded-full text-label font-medium border transition-all duration-theme ${TOUCH_TARGET_CLASS}`}
                 style={{
                   background: isActive ? 'var(--color-primary)' : 'var(--color-glass-bg)',
                   color: isActive

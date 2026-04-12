@@ -10,18 +10,19 @@ interface BlockDateDialogProps {
 
 export function BlockDateDialog({ pendingToggle, isToggling, onConfirm, onCancel }: BlockDateDialogProps) {
   const tCommon = useTranslations('common')
+  const tDialogs = useTranslations('booking.dialogs')
   const isBlock = pendingToggle.mode === 'block'
   return (
     <Dialog
       open
       onClose={onCancel}
-      title={isBlock ? 'Block date?' : 'Unblock date?'}
+      title={isBlock ? tDialogs('blockDateTitle') : tDialogs('unblockDateTitle')}
       size="sm"
     >
       <p className="text-body mb-4 text-secondary">
         {isBlock
-          ? `Block ${pendingToggle.date}? You won't receive booking requests.`
-          : `Unblock ${pendingToggle.date}? You'll be available for bookings again.`}
+          ? tDialogs('blockDateBody', { date: pendingToggle.date })
+          : tDialogs('unblockDateBody', { date: pendingToggle.date })}
       </p>
       <div className="flex justify-end gap-2">
         <Button size="sm" variant="secondary" onClick={onCancel} disabled={isToggling}>
@@ -33,7 +34,7 @@ export function BlockDateDialog({ pendingToggle, isToggling, onConfirm, onCancel
           onClick={onConfirm}
           loading={isToggling}
         >
-          {isBlock ? 'Block' : 'Unblock'}
+          {isBlock ? tDialogs('blockConfirm') : tDialogs('unblockConfirm')}
         </Button>
       </div>
     </Dialog>

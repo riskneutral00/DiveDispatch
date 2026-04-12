@@ -43,6 +43,8 @@
     "errorContact": "An error occurred. Contact your dive center.",
     "actionFailed": "{action} failed. Try again.",
     "fieldRequired": "{field} required.",
+    "dismiss": "Dismiss",
+    "discard": "Discard",
     "sendLink": "Send Link",
     "createProfile": "Create Profile",
     "addItem": "Add Item",
@@ -95,7 +97,10 @@
     "preferences": "Preferences",
     "signIn": "Sign In",
     "signOut": "Sign Out",
-    "roles": "Roles"
+    "roles": "Roles",
+    "account": "Account",
+    "addRoleTitle": "Add a Role",
+    "addRoleDescription": "Select a new role to add to your account."
   },
   "auth": {
     "signUp": "Sign Up",
@@ -122,7 +127,33 @@
     },
     "emptyStates": {
       "noPendingRequests": "No pending requests yet.",
-      "noResourcesAssigned": "No resources assigned."
+      "noResourcesAssigned": "No resources assigned.",
+      "noCustomersAdded": "No customers added.",
+      "bookingNotFound": "Booking not found.",
+      "equipmentProfileNotSetUp": "Equipment profile not set up.",
+      "noBookingsInRange": "No bookings in this date range.",
+      "noSessionsScheduled": "No sessions scheduled.",
+      "noInstructorsMatch": "No instructors match these filters."
+    },
+    "dialogs": {
+      "cancelTitle": "Cancel booking",
+      "cancelBody": "This will release all reservations. This cannot be undone.",
+      "cancelConfirm": "Cancel",
+      "cancelKeep": "Keep",
+      "cancelReasonLabel": "Reason",
+      "cancelReasonPlaceholder": "e.g. customer requested cancellation",
+      "discardDraftTitle": "Discard draft?",
+      "discardDraftBody": "This will delete the draft and release all holds.",
+      "bookingTitle": "Booking",
+      "newBookingTitle": "New Booking",
+      "addInstructorTitle": "Add Instructor",
+      "addCustomerTitle": "Add Customer",
+      "blockDateTitle": "Block date?",
+      "unblockDateTitle": "Unblock date?",
+      "blockDateBody": "Block {date}? You won't receive booking requests.",
+      "unblockDateBody": "Unblock {date}? You'll be available for bookings again.",
+      "blockConfirm": "Block",
+      "unblockConfirm": "Unblock"
     },
     "editConfirmTitle": "Edit booking?",
     "editConfirmBody": "Resets to Draft. Resources must re-confirm.",

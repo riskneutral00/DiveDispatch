@@ -43,6 +43,8 @@
     "errorContact": "Une erreur est survenue. Contactez votre centre de plongée.",
     "actionFailed": "{action} a échoué. Veuillez réessayer.",
     "fieldRequired": "{field} obligatoire.",
+    "dismiss": "Ignorer",
+    "discard": "Supprimer",
     "sendLink": "Envoyer le lien",
     "createProfile": "Create Profile",
     "addItem": "Ajouter un article",
@@ -95,7 +97,10 @@
     "preferences": "Préférences",
     "signIn": "Se connecter",
     "signOut": "Se déconnecter",
-    "roles": "Rôles"
+    "roles": "Rôles",
+    "account": "Compte",
+    "addRoleTitle": "Ajouter un rôle",
+    "addRoleDescription": "Sélectionnez un nouveau rôle à ajouter à votre compte."
   },
   "auth": {
     "signUp": "S'inscrire",
@@ -122,7 +127,33 @@
     },
     "emptyStates": {
       "noPendingRequests": "Aucune demande en attente.",
-      "noResourcesAssigned": "Aucune ressource affectée."
+      "noResourcesAssigned": "Aucune ressource affectée.",
+      "noCustomersAdded": "Aucun client ajouté.",
+      "bookingNotFound": "Réservation introuvable.",
+      "equipmentProfileNotSetUp": "Profil d'équipement non configuré.",
+      "noBookingsInRange": "Aucune réservation dans cette période.",
+      "noSessionsScheduled": "Aucune session planifiée.",
+      "noInstructorsMatch": "Aucun instructeur ne correspond à ces filtres."
+    },
+    "dialogs": {
+      "cancelTitle": "Annuler la réservation",
+      "cancelBody": "Cela libérera toutes les réservations. Cette action est irréversible.",
+      "cancelConfirm": "Annuler",
+      "cancelKeep": "Conserver",
+      "cancelReasonLabel": "Raison",
+      "cancelReasonPlaceholder": "p. ex. annulation à la demande du client",
+      "discardDraftTitle": "Supprimer le brouillon ?",
+      "discardDraftBody": "Cela supprimera le brouillon et libérera toutes les retenues.",
+      "bookingTitle": "Réservation",
+      "newBookingTitle": "Nouvelle réservation",
+      "addInstructorTitle": "Ajouter un instructeur",
+      "addCustomerTitle": "Ajouter un client",
+      "blockDateTitle": "Bloquer la date ?",
+      "unblockDateTitle": "Débloquer la date ?",
+      "blockDateBody": "Bloquer le {date} ? Vous ne recevrez pas de demandes de réservation.",
+      "unblockDateBody": "Débloquer le {date} ? Vous serez à nouveau disponible pour les réservations.",
+      "blockConfirm": "Bloquer",
+      "unblockConfirm": "Débloquer"
     },
     "editConfirmTitle": "Modifier la réservation ?",
     "editConfirmBody": "Réinitialise en Brouillon. Les ressources devront reconfirmer.",

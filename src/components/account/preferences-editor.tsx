@@ -14,6 +14,7 @@ import { BottomActionBar } from '@/components/ui/bottom-action-bar'
 import { SaveButton } from '@/components/ui/save-button'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
 import { Card } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import { SectionDivider } from '@/components/ui/section-divider'
 import {
@@ -167,6 +168,7 @@ interface PreferencesEditorProps {
 export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp, onClose }: PreferencesEditorProps) {
   const tCommon = useTranslations('common')
   const tBooking = useTranslations('booking')
+  const tErrors = useTranslations('errors')
   const params = useParams()
   const roleSlug = roleSlugProp ?? (params?.roleSlug as string | undefined)
   const activeRole = roleSlug ? ROLE_BY_KEY[roleSlug as RoleKey]?.clerkRole : undefined
@@ -181,7 +183,7 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp,
   const savePreferences = useCallback(
     async (payload: PrefsFormData) => {
       if (!activeRole) {
-        throw new Error('Unable to determine active role for saving preferences.')
+        throw new Error(tErrors('roleNotDetermined'))
       }
       await upsert({ ...payload, activeRole })
     },
@@ -232,7 +234,7 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp,
 
   const saveStakeholderPreferences = useCallback(async () => {
     if (!activeRole) {
-      throw new Error('Unable to determine active role for saving preferences.')
+      throw new Error(tErrors('roleNotDetermined'))
     }
     await upsert({
       activeRole,
@@ -315,37 +317,19 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp,
             <Card padding="sm" className="reading-plane">
               <FormSectionHeader className="mb-4" label={tBooking('acceptanceMode')} />
               <div className="space-y-2">
-                {ACCEPTANCE_MODES.map(({ value, label, description }) => {
-                  const checked = form.acceptanceMode === value
-                  return (
-                    <label
-                      key={value}
-                      className="flex items-start gap-3 cursor-pointer p-3 rounded-theme transition-colors duration-theme"
-                      style={{
-                        background: checked ? 'var(--color-glass-bg-elevated)' : 'transparent',
-                        border: `1px solid ${checked ? 'var(--color-primary)' : 'transparent'}`,
-                      }}
-                    >
-                      {/* design-ok */}<input
-                        type="radio"
-                        name="acceptanceMode"
-                        value={value}
-                        checked={checked}
-                        onChange={() => setField('acceptanceMode', value)}
-                        className="mt-0.5"
-                        style={{ accentColor: 'var(--color-primary)' }}
-                      />
-                      <div>
-                        <p className="text-body font-medium text-primary">
-                          {label}
-                        </p>
-                        <p className="text-label mt-0.5 text-secondary">
-                          {description}
-                        </p>
-                      </div>
-                    </label>
-                  )
-                })}
+                {ACCEPTANCE_MODES.map(({ value, label, description }) => (
+                  <Checkbox
+                    key={value}
+                    as="radio"
+                    variant="card"
+                    name="acceptanceMode"
+                    value={value}
+                    label={label}
+                    description={description}
+                    checked={form.acceptanceMode === value}
+                    onChange={() => setField('acceptanceMode', value)}
+                  />
+                ))}
               </div>
             </Card>
 
@@ -356,18 +340,11 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp,
                 <SectionDivider show />
                 <Card padding="sm" className="reading-plane">
                   <FormSectionHeader className="mb-4" label={tBooking('preferredResources')} />
-                  <label className="flex items-center gap-3 cursor-pointer select-none text-body text-primary">
-                    {/* design-ok */}<input
-                      type="checkbox"
-                      checked={form.autoAssignPreferred}
-                      onChange={(e) => setField('autoAssignPreferred', e.target.checked)}
-                      className="rounded-[var(--border-radius-button)]"
-                      style={{ accentColor: 'var(--color-primary)' }}
-                    />
-                    <span>
-                      {tBooking('autoAssignPreferred')}
-                    </span>
-                  </label>
+                  <Checkbox
+                    label={tBooking('autoAssignPreferred')}
+                    checked={form.autoAssignPreferred}
+                    onChange={(v) => setField('autoAssignPreferred', v)}
+                  />
                 </Card>
               </>
             )}
@@ -383,19 +360,12 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp,
                     { key: 'confirmOnDecline', label: tBooking('notifyOnDecline') },
                   ] as const
                 ).map(({ key, label }) => (
-                  <label
+                  <Checkbox
                     key={key}
-                    className="flex items-center gap-3 cursor-pointer select-none text-body text-primary"
-                  >
-                    {/* design-ok */}<input
-                      type="checkbox"
-                      checked={form[key]}
-                      onChange={(e) => setField(key, e.target.checked)}
-                      className="rounded-[var(--border-radius-button)]"
-                      style={{ accentColor: 'var(--color-primary)' }}
-                    />
-                    <span>{label}</span>
-                  </label>
+                    label={label}
+                    checked={form[key]}
+                    onChange={(v) => setField(key, v)}
+                  />
                 ))}
               </div>
             </Card>

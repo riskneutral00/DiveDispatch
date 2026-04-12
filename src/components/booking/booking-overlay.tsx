@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Dialog } from "@/components/ui";
 import { BookingWizard } from "./booking-wizard";
 import type { BookingPreFill } from "@/lib/booking/wizard-state";
@@ -19,11 +20,12 @@ export function BookingOverlay({
   initialPreFill,
   wizardKey = 0,
 }: BookingOverlayProps) {
+  const tDialogs = useTranslations("booking.dialogs");
   return (
     <Dialog
       open={open}
       onClose={onClose}
-      title="New Booking"
+      title={tDialogs("newBookingTitle")}
       fullScreen
       melt
     >

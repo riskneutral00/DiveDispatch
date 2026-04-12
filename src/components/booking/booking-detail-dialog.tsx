@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useQuery, useMutation } from 'convex/react'
 import { Edit2, Play, Trash2 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { getConvexErrorCode } from '@/lib/utils/convex-error'
+import { parseConvexErrorI18n } from '@/lib/utils/convex-error'
 import { api } from '@/lib/convex-generated'
 import type { Id } from '@/lib/convex-generated'
 import { Button, Dialog, EmptyState, StatusBadge } from '@/components/ui'
@@ -38,6 +38,8 @@ function DiscardDraftDialog({
   onSuccess: () => void
 }) {
   const tCommon = useTranslations('common')
+  const tDialogs = useTranslations('booking.dialogs')
+  const tErrors = useTranslations('errors')
   const discardDraft = useMutation(api.bookingDraftMutations.discardDraft)
 
   async function handleConfirm() {
@@ -46,8 +48,7 @@ function DiscardDraftDialog({
       onSuccess()
       onClose()
     } catch (err) {
-      const code = getConvexErrorCode(err)
-      throw new Error(code === 'INVALID_STATUS' ? 'This booking is no longer a draft.' : tCommon('actionFailed', { action: 'Discard' }))
+      throw new Error(parseConvexErrorI18n(err, tErrors))
     }
   }
 
@@ -55,10 +56,10 @@ function DiscardDraftDialog({
     <ConfirmActionDialog
       open={open}
       onClose={onClose}
-      title="Discard draft?"
-      description="This will delete the draft and release all holds."
-      confirmLabel="Discard"
-      cancelLabel="Keep"
+      title={tDialogs('discardDraftTitle')}
+      description={tDialogs('discardDraftBody')}
+      confirmLabel={tCommon('discard')}
+      cancelLabel={tDialogs('cancelKeep')}
       variant="destructive"
       onConfirm={handleConfirm}
     />
@@ -73,6 +74,7 @@ function BookingDetailContent({
   onClose: () => void
 }) {
   const router = useRouter()
+  const tEmpty = useTranslations('booking.emptyStates')
   const [showCancelDialog, setShowCancelDialog] = useState(false)
   const [showDiscardDialog, setShowDiscardDialog] = useState(false)
   const [activeSection, setActiveSection] = useState<SectionId>('overview')
@@ -92,7 +94,7 @@ function BookingDetailContent({
 
   if (booking === null) {
     return (
-      <EmptyState message="Booking not found." />
+      <EmptyState message={tEmpty('bookingNotFound')} />
     )
   }
 
@@ -209,11 +211,12 @@ function BookingDetailContent({
 }
 
 export function BookingDetailDialog({ bookingId, onClose }: BookingDetailDialogProps) {
+  const tDialogs = useTranslations('booking.dialogs')
   return (
     <Dialog
       open={bookingId !== null}
       onClose={onClose}
-      title="Booking"
+      title={tDialogs('bookingTitle')}
       fullScreen
       melt
     >

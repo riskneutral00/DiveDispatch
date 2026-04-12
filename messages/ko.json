@@ -43,6 +43,8 @@
     "errorContact": "오류가 발생했습니다. 다이브 센터에 문의해 주세요.",
     "actionFailed": "{action}에 실패했습니다. 다시 시도해 주세요.",
     "fieldRequired": "{field}은(는) 필수 항목입니다.",
+    "dismiss": "닫기",
+    "discard": "삭제",
     "sendLink": "링크 전송",
     "createProfile": "Create Profile",
     "addItem": "항목 추가",
@@ -95,7 +97,10 @@
     "preferences": "환경설정",
     "signIn": "로그인",
     "signOut": "로그아웃",
-    "roles": "역할"
+    "roles": "역할",
+    "account": "계정",
+    "addRoleTitle": "역할 추가",
+    "addRoleDescription": "계정에 추가할 새 역할을 선택하세요."
   },
   "auth": {
     "signUp": "회원가입",
@@ -122,7 +127,33 @@
     },
     "emptyStates": {
       "noPendingRequests": "대기 중인 요청이 없습니다.",
-      "noResourcesAssigned": "지정된 리소스가 없습니다."
+      "noResourcesAssigned": "지정된 리소스가 없습니다.",
+      "noCustomersAdded": "추가된 고객이 없습니다.",
+      "bookingNotFound": "예약을 찾을 수 없습니다.",
+      "equipmentProfileNotSetUp": "장비 프로필이 설정되지 않았습니다.",
+      "noBookingsInRange": "이 기간에는 예약이 없습니다.",
+      "noSessionsScheduled": "예정된 세션이 없습니다.",
+      "noInstructorsMatch": "이 필터와 일치하는 강사가 없습니다."
+    },
+    "dialogs": {
+      "cancelTitle": "예약 취소",
+      "cancelBody": "모든 예약이 해제됩니다. 이 작업은 되돌릴 수 없습니다.",
+      "cancelConfirm": "취소",
+      "cancelKeep": "유지",
+      "cancelReasonLabel": "사유",
+      "cancelReasonPlaceholder": "예: 고객 요청으로 취소",
+      "discardDraftTitle": "초안을 삭제하시겠습니까?",
+      "discardDraftBody": "초안이 삭제되고 모든 예약이 해제됩니다.",
+      "bookingTitle": "예약",
+      "newBookingTitle": "새 예약",
+      "addInstructorTitle": "강사 추가",
+      "addCustomerTitle": "고객 추가",
+      "blockDateTitle": "날짜를 차단하시겠습니까?",
+      "unblockDateTitle": "날짜 차단을 해제하시겠습니까?",
+      "blockDateBody": "{date}을(를) 차단하시겠습니까? 예약 요청을 받지 않게 됩니다.",
+      "unblockDateBody": "{date}의 차단을 해제하시겠습니까? 다시 예약 가능 상태가 됩니다.",
+      "blockConfirm": "차단",
+      "unblockConfirm": "차단 해제"
     },
     "editConfirmTitle": "예약을 편집하시겠습니까?",
     "editConfirmBody": "임시저장 상태로 초기화됩니다. 자원 담당자가 다시 확인해야 합니다.",

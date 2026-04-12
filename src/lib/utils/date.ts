@@ -31,6 +31,17 @@ export function formatDateShort(dateStr: string, locale?: string): string {
   })
 }
 
+export function formatDateLong(dateStr: string, locale?: string): string {
+  if (!dateStr) return ''
+  const [year, month, day] = dateStr.split('-').map(Number)
+  return new Date(year, month - 1, day).toLocaleDateString(locale, {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
+}
+
 export function formatDateRange(start: string, end: string): string {
   if (!start && !end) return '\u2013'
   if (start === end || !end) return start

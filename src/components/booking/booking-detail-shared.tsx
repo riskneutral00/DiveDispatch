@@ -99,8 +99,9 @@ function StakeholderList({
   stakeholders: BookingDetailStakeholder[]
   compact?: boolean
 }) {
+  const tEmpty = useTranslations('booking.emptyStates')
   if (stakeholders.length === 0) {
-    return <EmptyState message="No resources assigned." />
+    return <EmptyState message={tEmpty('noResourcesAssigned')} />
   }
 
   return (
@@ -333,11 +334,12 @@ function CustomersSection({
   booking: BookingDetail
   compact: boolean
 }) {
+  const tEmpty = useTranslations('booking.emptyStates')
   return (
     <>
       <FormSectionHeader label="Customers" />
       {booking.divers.length === 0 ? (
-        <EmptyState message="No customers added." />
+        <EmptyState message={tEmpty('noCustomersAdded')} />
       ) : (
         <CustomerTable booking={booking} compact={compact} />
       )}

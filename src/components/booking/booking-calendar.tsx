@@ -13,6 +13,7 @@ import {
   TODAY_CELL_BORDER_WIDTH_PX,
 } from '@/lib/constants/calendar-config'
 import { CalendarLegend } from '@/components/booking/calendar-legend'
+import { TOUCH_TARGET_CLASS } from '@/lib/constants/button-sizes'
 import { UrgentBookingStrip } from '@/components/booking/urgent-booking-strip'
 import { courseLabel } from '@/lib/constants/course-catalog'
 import { buildBarSubLabel } from '@/lib/utils/build-bar-sub-label'
@@ -295,7 +296,7 @@ export function BookingCalendar({
                         jumpToDate(new Date(pickerYear, i, 1))
                         setExpanded(false)
                       }}
-                      className={`glass-container glass-surface reading-plane transition rounded-[var(--border-radius-button)] py-1.5 text-body font-medium min-h-[44px]${isBeforeFloor ? ' opacity-30 cursor-not-allowed' : ''}`}
+                      className={`glass-container glass-surface reading-plane transition rounded-[var(--border-radius-button)] py-1.5 text-body font-medium ${TOUCH_TARGET_CLASS}${isBeforeFloor ? ' opacity-30 cursor-not-allowed' : ''}`}
                       style={{
                         color: isCurrentMonth ? 'var(--color-status-active)' : 'var(--color-text-primary)',
                         background: isCurrentMonth ? 'var(--color-status-active-bg)' : undefined,

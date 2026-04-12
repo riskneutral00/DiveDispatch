@@ -104,7 +104,7 @@ export function ProfileOverlay({ open, onClose, initialTab = 'profile', roleSlug
   }
 
   return (
-    <Dialog open={open} onClose={onClose} title="Account" fullScreen melt>
+    <Dialog open={open} onClose={onClose} title={tNav('account')} fullScreen melt>
       <div className="flex flex-col h-full">
 
         <div

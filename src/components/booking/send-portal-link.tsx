@@ -8,6 +8,7 @@ import type { Id } from '@/lib/convex-generated'
 import { Dialog, Button, ErrorAlert } from '@/components/ui'
 import { PORTAL_LINK_EXPIRY_MS } from '@/lib/constants/ui-timings'
 import { useCopyFeedback } from '@/lib/hooks/use-copy-feedback'
+import { formatDateLong, toISODateString } from '@/lib/utils/date'
 import { Link2, Mail, Copy, Check, MessageCircle, Send } from 'lucide-react'
 
 type Channel = 'email' | 'whatsapp' | 'line'
@@ -166,11 +167,7 @@ export function SendPortalLink({
 
   const expiryLabel = resolvedExpiry
     ? tBooking('linkExpires', {
-        date: new Date(resolvedExpiry).toLocaleDateString(undefined, {
-          month: 'long',
-          day: 'numeric',
-          year: 'numeric',
-        }),
+        date: formatDateLong(toISODateString(new Date(resolvedExpiry))),
       })
     : null
 

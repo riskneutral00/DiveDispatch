@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useQuery } from 'convex/react'
+import { TOUCH_TARGET_CLASS } from '@/lib/constants/button-sizes'
 import {
   PlusCircle,
   Send,
@@ -146,7 +147,7 @@ function DiffExpander({ diff }: { diff: string }) {
       {/* design-ok */}<button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-1 text-label transition-colors duration-theme text-secondary min-h-[44px]"
+        className={`flex items-center gap-1 text-label transition-colors duration-theme text-secondary ${TOUCH_TARGET_CLASS}`}
       >
         {open ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
         {open ? 'Hide changes' : `${entries.length} field${entries.length > 1 ? 's' : ''} changed`}
