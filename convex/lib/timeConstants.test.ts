@@ -5,7 +5,6 @@ import {
   BOOKING_LINK_TTL_MS,
   NOSHOW_REVERT_WINDOW_MS,
   MEDICAL_TTL_MS,
-  HOLD_TTL_MS,
 } from './timeConstants'
 
 describe('timeConstants — base units', () => {
@@ -19,10 +18,6 @@ describe('timeConstants — base units', () => {
 })
 
 describe('timeConstants — TTL values', () => {
-  it('HOLD_TTL_MS is 12 hours', () => {
-    expect(HOLD_TTL_MS).toBe(12 * HOUR_MS)
-  })
-
   it('BOOKING_LINK_TTL_MS is 30 days', () => {
     expect(BOOKING_LINK_TTL_MS).toBe(30 * DAY_MS)
   })
