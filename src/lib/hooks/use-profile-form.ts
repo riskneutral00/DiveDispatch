@@ -3,11 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { z } from 'zod'
 import { toast } from 'sonner'
-import {
-  FORM_SAVE_FAILED_TOAST,
-  FORM_SECONDARY_SAVE_WARNING_TITLE,
-  FORM_VALIDATION_WARNING_TOAST,
-} from '@/lib/profile-form/save-feedback'
+import { useTranslations } from 'next-intl'
 import { SAVE_FEEDBACK_MS } from '@/lib/constants/ui-timings'
 import { parseConvexError } from '@/lib/utils/convex-error'
 import { isDirtyComparedToSnapshot } from '@/lib/utils/form-baseline'
@@ -72,6 +68,7 @@ export function useProfileForm<
     afterSuccessfulSave,
   } = options
 
+  const t = useTranslations('common')
   const [form, setForm] = useState<TForm>(defaults)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [serverError, setServerError] = useState<string | null>(null)
@@ -130,7 +127,7 @@ export function useProfileForm<
     const result = schema.safeParse(form)
     if (!result.success) {
       setErrors(zodIssuesToFieldErrors(result.error.issues))
-      toast.warning(FORM_VALIDATION_WARNING_TOAST, { duration: 4000 })
+      toast.warning(t('fixHighlightedFields'), { duration: 4000 })
       return
     }
 
@@ -152,17 +149,17 @@ export function useProfileForm<
         try {
           await afterSuccessfulSave(form)
         } catch (secondaryErr: unknown) {
-          const message = parseConvexError(secondaryErr, 'Sync failed')
-          toast.warning(FORM_SECONDARY_SAVE_WARNING_TITLE, {
+          const message = parseConvexError(secondaryErr, t('actionFailed', { action: t('save') }))
+          toast.warning(t('profileSavedExtraStepFailed'), {
             description: message,
             duration: 6000,
           })
         }
       }
     } catch (err: unknown) {
-      const message = parseConvexError(err, 'Save failed')
+      const message = parseConvexError(err, t('actionFailed', { action: t('save') }))
       setServerError(message)
-      toast.error(FORM_SAVE_FAILED_TOAST, { description: message, duration: 5000 })
+      toast.error(t('actionFailed', { action: t('save') }), { description: message, duration: 5000 })
     } finally {
       setSaving(false)
     }

@@ -49,7 +49,10 @@
     "inventory": "장비 재고",
     "groupBy": "그룹 기준",
     "notifications": "알림",
-    "noNotifications": "알림이 없습니다."
+    "noNotifications": "알림이 없습니다.",
+    "profileSaved": "프로필이 저장되었습니다",
+    "profileSavedExtraStepFailed": "프로필이 저장되었지만 추가 단계가 실패했습니다",
+    "fixHighlightedFields": "강조 표시된 필드를 수정하세요"
   },
   "errors": {
     "unexpected": "문제가 발생했습니다. 다시 시도해 주세요.",

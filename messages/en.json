@@ -49,7 +49,10 @@
     "inventory": "Inventory",
     "groupBy": "Group by",
     "notifications": "Notifications",
-    "noNotifications": "No notifications."
+    "noNotifications": "No notifications.",
+    "profileSaved": "Profile saved",
+    "profileSavedExtraStepFailed": "Profile saved, but an extra step failed",
+    "fixHighlightedFields": "Fix the highlighted fields"
   },
   "errors": {
     "unexpected": "Something went wrong. Try again.",

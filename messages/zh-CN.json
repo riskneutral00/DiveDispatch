@@ -49,7 +49,10 @@
     "inventory": "库存",
     "groupBy": "分组方式",
     "notifications": "通知",
-    "noNotifications": "暂无通知。"
+    "noNotifications": "暂无通知。",
+    "profileSaved": "已保存资料",
+    "profileSavedExtraStepFailed": "已保存资料，但额外步骤失败",
+    "fixHighlightedFields": "请修正高亮字段"
   },
   "errors": {
     "unexpected": "出了点问题，请重试。",

@@ -49,7 +49,10 @@
     "inventory": "Inventaire",
     "groupBy": "Grouper par",
     "notifications": "Notifications",
-    "noNotifications": "Aucune notification."
+    "noNotifications": "Aucune notification.",
+    "profileSaved": "Profil enregistré",
+    "profileSavedExtraStepFailed": "Profil enregistré, mais une étape supplémentaire a échoué",
+    "fixHighlightedFields": "Corrigez les champs en surbrillance"
   },
   "errors": {
     "unexpected": "Un problème est survenu. Veuillez réessayer.",

@@ -49,7 +49,10 @@
     "inventory": "庫存",
     "groupBy": "分組依據",
     "notifications": "通知",
-    "noNotifications": "沒有通知。"
+    "noNotifications": "沒有通知。",
+    "profileSaved": "已儲存資料",
+    "profileSavedExtraStepFailed": "已儲存資料，但額外步驟失敗",
+    "fixHighlightedFields": "請修正高亮欄位"
   },
   "errors": {
     "unexpected": "發生錯誤，請重試。",

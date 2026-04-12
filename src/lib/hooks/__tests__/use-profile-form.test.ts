@@ -3,14 +3,17 @@ import { describe, it, expect, expectTypeOf, vi, beforeEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import { z } from 'zod'
 import { toast } from 'sonner'
-import {
-  FORM_SECONDARY_SAVE_WARNING_TITLE,
-  FORM_VALIDATION_WARNING_TOAST,
-} from '@/lib/profile-form/save-feedback'
 import { useProfileForm, type UseProfileFormOptions } from '../use-profile-form'
 
 vi.mock('sonner', () => ({
   toast: { success: vi.fn(), error: vi.fn(), warning: vi.fn() },
+}))
+
+vi.mock('next-intl', () => ({
+  useTranslations: () => (key: string, params?: Record<string, string>) => {
+    if (params?.action) return `${params.action} failed. Try again.`
+    return key
+  },
 }))
 
 function computeIsDirty<T>(current: T, baseline: T): boolean {
@@ -433,8 +436,8 @@ describe('useProfileForm optimistic save', () => {
 
     expect(result.current.isDirty).toBe(true)
     expect(result.current.saved).toBe(false)
-    expect(result.current.serverError).toBe('Save failed')
-    expect(result.current.footerErrorMessage).toBe('Save failed')
+    expect(result.current.serverError).toBe('save failed. Try again.')
+    expect(result.current.footerErrorMessage).toBe('save failed. Try again.')
   })
 
   it('toast.warning when validation fails', async () => {
@@ -453,7 +456,7 @@ describe('useProfileForm optimistic save', () => {
     })
 
     expect(updateFn).not.toHaveBeenCalled()
-    expect(toast.warning).toHaveBeenCalledWith(FORM_VALIDATION_WARNING_TOAST, { duration: 4000 })
+    expect(toast.warning).toHaveBeenCalledWith('fixHighlightedFields', { duration: 4000 })
   })
 
   it('toast.warning when primary save succeeds but afterSuccessfulSave fails', async () => {
@@ -470,7 +473,7 @@ describe('useProfileForm optimistic save', () => {
 
     expect(updateFn).toHaveBeenCalled()
     expect(toast.warning).toHaveBeenCalledWith(
-      FORM_SECONDARY_SAVE_WARNING_TITLE,
+      'profileSavedExtraStepFailed',
       expect.objectContaining({ duration: 6000 }),
     )
     expect(result.current.saved).toBe(true)

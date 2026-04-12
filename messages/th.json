@@ -49,7 +49,10 @@
     "inventory": "อุปกรณ์",
     "groupBy": "จัดกลุ่มตาม",
     "notifications": "การแจ้งเตือน",
-    "noNotifications": "ไม่มีการแจ้งเตือน"
+    "noNotifications": "ไม่มีการแจ้งเตือน",
+    "profileSaved": "บันทึกโปรไฟล์แล้ว",
+    "profileSavedExtraStepFailed": "บันทึกโปรไฟล์แล้ว แต่ขั้นตอนเสริมล้มเหลว",
+    "fixHighlightedFields": "แก้ไขฟิลด์ที่ไฮไลต์"
   },
   "errors": {
     "unexpected": "เกิดข้อผิดพลาด กรุณาลองอีกครั้ง",
