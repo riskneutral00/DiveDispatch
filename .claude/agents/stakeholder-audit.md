@@ -52,7 +52,7 @@ session_tickets = []    # tickets created this session
 2. Read in parallel:
    - `convex/schema.ts`
    - `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Product/Stakeholders.md`
-   - `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Architecture/Architecture.md`
+   - `~/Desktop/RiskNeutral/Vaults/DiveDispatch/wiki/Architecture/Architecture.md`
    - `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Product/CourseRules.md` (if role involves courses)
 3. Launch up to 3 Explore agents in parallel:
    - **Agent 1 — Backend:** Search `convex/` for all mutations, queries, and actions this role can call. Check schema tables the role owns or interacts with. Check inventory model (exclusive vs pooled). Map every capability to a file path.

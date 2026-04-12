@@ -25,11 +25,11 @@ Build the backend map:
 5. Read `convex/lib/auth.ts`, `convex/lib/portal.ts`, `convex/lib/validate.ts` — auth and validation patterns
 6. Read `convex/bookings/_shared.ts` — state machine guards, shared helpers
 7. Read `CLAUDE.md` — the "Three Non-Negotiable Invariants," dependency direction, auth boundary
-8. Read `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Architecture/Architecture.md` — state machines, transition rules, business constraints
+8. Read `~/Desktop/RiskNeutral/Vaults/DiveDispatch/wiki/Architecture/Architecture.md` — state machines, transition rules, business constraints
 9. Scan `.tickets/DD-*.md` — existing tickets (check for duplicate findings before escalating)
-10. Find most recent vault review: `ls ~/Desktop/RiskNeutral/Vaults/DiveDispatch/Reviews/review-backend-schema-*.md | sort | tail -1`
+10. Find most recent vault review: `ls ~/Desktop/RiskNeutral/Vaults/DiveDispatch/raw/Reviews/review-backend-schema-*.md | sort | tail -1`
     - If found: read it, extract the scoreboard values for delta comparison
-    - If not found: check `ls ~/Desktop/RiskNeutral/Vaults/DiveDispatch/Reviews/backend-*.md | sort | tail -1` for legacy review
+    - If not found: check `ls ~/Desktop/RiskNeutral/Vaults/DiveDispatch/raw/Reviews/backend-*.md | sort | tail -1` for legacy review
     - If neither found: note "baseline review, no delta"
 
 **Do not output anything yet.**
@@ -82,7 +82,7 @@ Search for:
 Compare vault documentation against code:
 
 1. Read key vault documents:
-   - `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Architecture/Architecture.md`
+   - `~/Desktop/RiskNeutral/Vaults/DiveDispatch/wiki/Architecture/Architecture.md`
    - `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Product/Stakeholders.md`
    - `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Product/CourseRules.md`
 
@@ -123,7 +123,7 @@ Assign each finding a tier:
 
 ### Write vault review
 
-Write to `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Reviews/review-backend-schema-YYYY-MM-DD.md`:
+Write to `~/Desktop/RiskNeutral/Vaults/DiveDispatch/raw/Reviews/review-backend-schema-YYYY-MM-DD.md`:
 
 ```markdown
 # Schema Review — YYYY-MM-DD
@@ -212,7 +212,7 @@ Include CRITICAL, HIGH, MEDIUM, LOW. `cannot_test: true` flags findings the call
 
 ## Phase 6: Update Audit Baseline
 
-1. Read `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Architecture/Lessons.md` — find the "Audit Baseline" table
+1. Read `~/Desktop/RiskNeutral/Vaults/DiveDispatch/wiki/Architecture/Lessons.md` — find the "Audit Baseline" table
 2. Check if any row's status has changed (e.g., DRY improved, new debt introduced)
 3. If changed: update the row. If unchanged: skip silently.
 

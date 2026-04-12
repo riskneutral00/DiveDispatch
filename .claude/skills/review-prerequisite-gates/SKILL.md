@@ -110,7 +110,7 @@ Flag any field in `ROLE_REQUIRED` that is NOT in the schema — this is dead con
 12. Read `src/components/profiles/profile-completion-pill.tsx`
 13. Grep for `createDraftShell` in `src/` — find the booking creation UI entry point
 14. Read `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Product/TODO.md` — existing H-specs (note highest H-number)
-15. Find most recent vault review: `ls ~/Desktop/RiskNeutral/Vaults/DiveDispatch/Reviews/review-prerequisite-gates-*.md | sort | tail -1`
+15. Find most recent vault review: `ls ~/Desktop/RiskNeutral/Vaults/DiveDispatch/raw/Reviews/review-prerequisite-gates-*.md | sort | tail -1`
 
 **Do not output anything yet.**
 
@@ -233,7 +233,7 @@ Any cell that is **S**, **M**, or **SHALLOW** is a finding.
 
 ### Write vault review
 
-Write to `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Reviews/review-prerequisite-gates-YYYY-MM-DD.md`:
+Write to `~/Desktop/RiskNeutral/Vaults/DiveDispatch/raw/Reviews/review-prerequisite-gates-YYYY-MM-DD.md`:
 
 ```markdown
 # Prerequisite Gate Review — YYYY-MM-DD
@@ -405,7 +405,7 @@ For each CRITICAL/HIGH, include a `test_spec` with this shape (the caller's `/es
 
 Write review to vault (done in Phase 4).
 
-Update `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Architecture/Lessons.md` audit baseline if applicable.
+Update `~/Desktop/RiskNeutral/Vaults/DiveDispatch/wiki/Architecture/Lessons.md` audit baseline if applicable.
 
 ---
 

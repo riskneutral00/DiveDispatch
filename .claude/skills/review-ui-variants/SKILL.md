@@ -38,7 +38,7 @@ Grep the ui/ component's source for `style={{ ... var(--color-*) ... }}` on the 
 
 ## Phase 4: Report
 
-Write markdown report to `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Reviews/review-ui-variants-<YYYY-MM-DD>.md`:
+Write markdown report to `~/Desktop/RiskNeutral/Vaults/DiveDispatch/raw/Reviews/review-ui-variants-<YYYY-MM-DD>.md`:
 
 ```
 # UI Variant Review — YYYY-MM-DD

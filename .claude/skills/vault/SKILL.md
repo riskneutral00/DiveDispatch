@@ -165,7 +165,7 @@ If ≥ 24 hours → generate summary. Gather data in Round 1 (parallel with Job 
 
 4. **AutoResearch & OpenSpace:** Read `~/Desktop/RiskNeutral/Vaults/DiveDispatch/AutoResearch/Index.md`. Read `.openspace/skill_usage.jsonl` if it exists.
 
-5. **Failures:** Read failure entries in `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Failures/` dated after last summary.
+5. **Failures:** Read failure entries in `~/Desktop/RiskNeutral/Vaults/DiveDispatch/raw/Failures/` dated after last summary.
 
 6. **Trajectory (Section 9):** Read `HappyPath.md` gap list. For each gap, check if the corresponding ticket changed status since last summary. Compute on-path ratio and drift indicator.
 

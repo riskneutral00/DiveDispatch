@@ -46,7 +46,7 @@ Run each check and collect findings with `{severity, file, line, summary, fix}`:
 
 ## Phase 3: Report
 
-Write markdown report to `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Reviews/review-frontend-dry-<YYYY-MM-DD>.md`:
+Write markdown report to `~/Desktop/RiskNeutral/Vaults/DiveDispatch/raw/Reviews/review-frontend-dry-<YYYY-MM-DD>.md`:
 
 ```
 # Frontend DRY Review — YYYY-MM-DD

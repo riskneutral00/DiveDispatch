@@ -412,7 +412,7 @@ The following features are identified but deferred beyond the initial build:
 
 ## Section 7: Architecture Decision Records
 
-Irreversible or expensive-to-reverse architectural decisions are documented as formal ADRs in the vault at `Vaults/DiveDispatch/Architecture/ADR-*.md`. Each entry follows the format: Problem / Decision / Consequences / Status.
+Irreversible or expensive-to-reverse architectural decisions are documented as formal ADRs in the vault at `Vaults/DiveDispatch/wiki/Architecture/ADR-*.md`. Each entry follows the format: Problem / Decision / Consequences / Status.
 
 | ADR | Title | Summary |
 |-----|-------|---------|
@@ -421,7 +421,7 @@ Irreversible or expensive-to-reverse architectural decisions are documented as f
 | ADR-003 | Core vs Adapters Boundary | `convex/` divided into core (booking lifecycle), adapters (notifications, email, equipment), and shared (utilities). Strict import direction. |
 | ADR-004 | Inventory/Availability Invariants | Three non-negotiable invariants enforced atomically: exclusive uniqueness, pooled decrement, and atomic snapshot+reservation writes. |
 
-Full ADR files: `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Architecture/`
+Full ADR files: `~/Desktop/RiskNeutral/Vaults/DiveDispatch/wiki/Architecture/`
 
 ---
 

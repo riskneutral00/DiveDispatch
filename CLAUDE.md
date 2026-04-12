@@ -19,7 +19,7 @@ Read the relevant file BEFORE modifying code in that domain.
 - Testing: `Architecture/testing-invariants.md`
 - Enterprise: `Architecture/enterprise-invariants.md`
 
-Full decision record + implementation checklist: `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Architecture/Industry-Alignment-Decisions.md`
+Full decision record + implementation checklist: `~/Desktop/RiskNeutral/Vaults/DiveDispatch/wiki/Architecture/Industry-Alignment-Decisions.md`
 
 ## Interactive Element Rule
 
@@ -100,7 +100,7 @@ Non-obvious rules:
 
 - **TTL is hybrid (lazy + cron)** — `checkAndExpireBooking` fires on client read via `useBookingWithExpiry`; `purgeExpiredDrafts` cron runs every 6h to catch abandoned drafts. Both paths: Draft + `expiresAt < now` → vacate reservations → set status to Cancelled.
 - Default `holdTTL`: **12 hours (43200000 ms)**. Once Upcoming, TTL never applies.
-- Medical block, auto-advance conditions → `Vaults/DiveDispatch/Architecture/Architecture.md`
+- Medical block, auto-advance conditions → `Vaults/DiveDispatch/wiki/Architecture/Architecture.md`
 
 ## Venue & Activity Rules
 
@@ -118,14 +118,31 @@ Non-obvious rules:
 DiveDispatch vault: `~/Desktop/RiskNeutral/Vaults/DiveDispatch/`
 RiskNeutral vault: `~/Desktop/RiskNeutral/Vaults/RiskNeutral/`
 
+Vault topology follows Karpathy's LLM-Wiki three-layer pattern (see `Vaults/DiveDispatch/index.md`):
+- **`Schema/`** — governance (frontmatter, memory tiers, ingest contract, pattern contract). Forkable.
+- **`raw/`** — immutable capture (Sessions, Failures, Reviews, Ingest, Lint, archive). Never hand-edited after write.
+- **`wiki/`** — LLM-compiled (Architecture entities + invariants, PatternLibrary, Plans, Tickets, Specs). All edits via `/vault compile`.
+- **`log.md`** (root) — working-tier chronological log. Promoted to episodic/semantic by `/vault compile`.
+- **`index.md`** (root) — LLM entry point. Read this first before drilling into folders.
+
 | What | Where |
 |---|---|
-| Reusable pattern | `Vaults/DiveDispatch/PatternLibrary/<slug>.md` |
-| Project architecture/schema | `Vaults/DiveDispatch/Architecture/*.md` (update) |
-| Lesson / mistake to avoid | `Vaults/DiveDispatch/Architecture/Lessons.md` |
-| Failure / structured mistake log | `Vaults/DiveDispatch/Failures/YYYY-MM-DD.md` (append) |
-| Session summary | `Vaults/DiveDispatch/Sessions/YYYY-MM-DD.md` |
-| Code review | `Vaults/DiveDispatch/Reviews/<slug>.md` |
+| Vault entry point | `Vaults/DiveDispatch/index.md` |
+| Chronological working log | `Vaults/DiveDispatch/log.md` (append) |
+| Governance / contracts | `Vaults/DiveDispatch/Schema/*.md` |
+| Reusable pattern | `Vaults/DiveDispatch/wiki/PatternLibrary/<slug>.md` |
+| Architecture entity (concept) | `Vaults/DiveDispatch/wiki/Architecture/entities/<slug>.md` |
+| Architecture invariant (law) | `Vaults/DiveDispatch/wiki/Architecture/invariants/<slug>.md` |
+| Architecture / domain doc | `Vaults/DiveDispatch/wiki/Architecture/*.md` |
+| Lesson / mistake to avoid | `Vaults/DiveDispatch/wiki/Architecture/Lessons.md` (splits into log + entities in Phase 6) |
+| Plan | `Vaults/DiveDispatch/wiki/Plans/<topic>.md` (canonical — mirrored from `.claude/plans/`, etc.) |
+| Ticket | `Vaults/DiveDispatch/wiki/Tickets/DD-*.md` (canonical — mirrored to `.tickets/`) |
+| Spec | `Vaults/DiveDispatch/wiki/Specs/<slug>.md` |
+| Failure / incident | `Vaults/DiveDispatch/raw/Failures/YYYY-MM-DD.md` (append) |
+| Session summary | `Vaults/DiveDispatch/raw/Sessions/YYYY-MM-DD.md` |
+| Code review | `Vaults/DiveDispatch/raw/Reviews/<slug>.md` |
+| Ingested external source | `Vaults/DiveDispatch/raw/Ingest/YYYY-MM-DD-<slug>.md` |
+| Lint report | `Vaults/DiveDispatch/raw/Lint/YYYY-MM-DD.md` |
 | New app idea | `Vaults/RiskNeutral/Ideas/Ideas.md` (append) |
 | Risk Neutral strategy/vision | `Vaults/RiskNeutral/Strategy/*.md` (update) |
 | Founder insight/background | `Vaults/RiskNeutral/Founder/Matt.md` (update) |

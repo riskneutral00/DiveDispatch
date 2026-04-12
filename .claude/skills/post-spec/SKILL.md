@@ -151,7 +151,7 @@ The review agent did NOT write the code — it has fresh context and no self-rev
 
 1. **Board sync:** Run `Skill("board", "sync")`
 2. **Test delta:** Compare test count now vs `.post-spec/test-baseline.json`
-3. **Vault observations:** Write session file to `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Sessions/{date}.md`:
+3. **Vault observations:** Write session file to `~/Desktop/RiskNeutral/Vaults/DiveDispatch/raw/Sessions/{date}.md`:
    - Tickets completed
    - Test delta (before/after)
    - Review findings summary

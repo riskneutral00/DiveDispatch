@@ -302,9 +302,9 @@ Present overlapping tickets from `.tickets/`. Recommend:
 ## Phase 3: Vault enrichment
 
 Before writing, search the full vault for relevant content:
-- `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Architecture/Lessons.md` — mistakes to avoid
-- `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Architecture/Architecture.md` — architectural decisions
-- `~/Desktop/RiskNeutral/Vaults/DiveDispatch/PatternLibrary/` — reusable patterns
+- `~/Desktop/RiskNeutral/Vaults/DiveDispatch/wiki/Architecture/Lessons.md` — mistakes to avoid
+- `~/Desktop/RiskNeutral/Vaults/DiveDispatch/wiki/Architecture/Architecture.md` — architectural decisions
+- `~/Desktop/RiskNeutral/Vaults/DiveDispatch/wiki/PatternLibrary/` — reusable patterns
 
 Add anything relevant to Implementation Notes.
 

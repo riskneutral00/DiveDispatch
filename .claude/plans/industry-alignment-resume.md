@@ -7,8 +7,8 @@ Paste this into a new Claude Code session opened from `~/Desktop/RiskNeutral/Div
 Read these files in order to catch up on the Industry Alignment work:
 
 1. `Architecture/fsm-invariants.md` — example of the invariant file format (shortest, most concrete)
-2. `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Architecture/Industry-Alignment-Decisions.md` — the full decision record. Read the "Current Status + Next Action" section first, then the Execution Order at the bottom. This is the master checklist.
-3. `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Sessions/2026-04-06-industry-alignment-invariants.md` — what was done in the last session and where to resume.
+2. `~/Desktop/RiskNeutral/Vaults/DiveDispatch/wiki/Architecture/Industry-Alignment-Decisions.md` — the full decision record. Read the "Current Status + Next Action" section first, then the Execution Order at the bottom. This is the master checklist.
+3. `~/Desktop/RiskNeutral/Vaults/DiveDispatch/raw/Sessions/2026-04-06-industry-alignment-invariants.md` — what was done in the last session and where to resume.
 
 Context: 7 canonical invariant files have been written to `Architecture/` and CLAUDE.md has been updated with pointers. 9 skill definitions have been updated with invariant file references. Phase 1 of the Industry Alignment plan is complete.
 

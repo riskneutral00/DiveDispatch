@@ -329,13 +329,13 @@ Structural Health
 ### Vault report
 
 Write the full report (same structure, with all findings listed per rule) to:
-`~/Desktop/RiskNeutral/Vaults/DiveDispatch/Reviews/test-health-{YYYY-MM-DD}.md`
+`~/Desktop/RiskNeutral/Vaults/DiveDispatch/raw/Reviews/test-health-{YYYY-MM-DD}.md`
 
 ### Delta tracking
 
 Check for a previous report:
 ```bash
-ls ~/Desktop/RiskNeutral/Vaults/DiveDispatch/Reviews/test-health-*.md | sort | tail -2
+ls ~/Desktop/RiskNeutral/Vaults/DiveDispatch/raw/Reviews/test-health-*.md | sort | tail -2
 ```
 
 If a previous report exists, compare quality score, finding counts by tier, and coverage. Append a `## Delta` section to the vault report showing changes since last scan.

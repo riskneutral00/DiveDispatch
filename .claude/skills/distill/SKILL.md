@@ -7,7 +7,7 @@ user-invocable: true
 
 # /distill — Failure Pattern Distillation
 
-Reads all structured failure entries from `Vaults/DiveDispatch/Failures/`, clusters by recurring pattern, and proposes tight CLAUDE.md rules for Matt to approve.
+Reads all structured failure entries from `Vaults/DiveDispatch/raw/Failures/`, clusters by recurring pattern, and proposes tight CLAUDE.md rules for Matt to approve.
 
 **Never auto-writes to CLAUDE.md.** Output is suggestions only.
 
@@ -18,7 +18,7 @@ Reads all structured failure entries from `Vaults/DiveDispatch/Failures/`, clust
 ### Step 1: Gather failure entries
 
 ```bash
-ls ~/Desktop/RiskNeutral/Vaults/DiveDispatch/Failures/*.md 2>/dev/null | grep -v template
+ls ~/Desktop/RiskNeutral/Vaults/DiveDispatch/raw/Failures/*.md 2>/dev/null | grep -v template
 ```
 
 If no entries exist: `No failure entries found. Failures are captured by /vault at session close.` Stop.
