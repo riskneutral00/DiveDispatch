@@ -4,16 +4,16 @@ import { useDraggable } from '@dnd-kit/react'
 import { useRef } from 'react'
 import type { QuickBookTemplate } from '@/lib/booking/quick-book-templates'
 import type { CourseCode } from '@/lib/constants/course-catalog'
-import { PILL_BASE, DISABLED_OVERLAY } from '@/components/booking/quick-book-rail'
+import { DISABLED_OVERLAY, QUICK_BOOK_PILL_CLASS } from '@/components/booking/quick-book-rail'
+import { PILL_BASE } from '@/lib/constants/pill-shell'
 
 interface DraggablePillProps {
   template: QuickBookTemplate
   canBook: boolean
   onSelect: (courses: CourseCode[]) => void
-  style?: React.CSSProperties
 }
 
-export function DraggablePill({ template, canBook, onSelect, style }: DraggablePillProps) {
+export function DraggablePill({ template, canBook, onSelect }: DraggablePillProps) {
   const elementRef = useRef<HTMLButtonElement | null>(null)
 
   const { isDragging, ref } = useDraggable({
@@ -24,7 +24,6 @@ export function DraggablePill({ template, canBook, onSelect, style }: DraggableP
   })
 
   const mergedStyle: React.CSSProperties = {
-    ...style,
     ...(isDragging ? { opacity: 0.4 } : {}),
     ...(!canBook ? DISABLED_OVERLAY : {}),
   }
@@ -37,7 +36,7 @@ export function DraggablePill({ template, canBook, onSelect, style }: DraggableP
       }}
       type="button"
       disabled={!canBook}
-      className={`${PILL_BASE} ${canBook ? 'cursor-grab transition-opacity hover:opacity-70' : ''} ${isDragging ? 'cursor-grabbing' : ''}`}
+      className={`${PILL_BASE} glass-surface glass-surface-elevated ${QUICK_BOOK_PILL_CLASS} ${canBook ? 'cursor-grab' : ''} ${isDragging ? 'cursor-grabbing' : ''}`}
       style={mergedStyle}
       onClick={canBook ? () => onSelect(template.courses) : undefined}
     >

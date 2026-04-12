@@ -11,18 +11,33 @@ import { UserMenu } from './user-menu'
 interface MobileTopNavProps {
   roleSlug: RoleKey
   slug: string
+  /** Shown once on the leading edge; desktop uses the dashboard header instead. */
+  businessName?: string | null
   onOpenOverlay?: (tab: ProfileOverlayTab) => void
   profileCompletion?: { percentage: number } | null
 }
 
-export function MobileTopNav({ roleSlug, slug, onOpenOverlay, profileCompletion }: MobileTopNavProps) {
+export function MobileTopNav({
+  roleSlug,
+  slug,
+  businessName,
+  onOpenOverlay,
+  profileCompletion,
+}: MobileTopNavProps) {
   return (
     <div
-      className="md:hidden sticky top-0 z-[var(--z-sticky)] flex items-center justify-end gap-2 px-4 py-2 bg-surface-elevated glass-divider"
+      className="md:hidden sticky top-0 z-[var(--z-sticky)] flex items-center gap-2 px-4 py-2 bg-surface-elevated glass-divider"
       style={{
         willChange: 'transform',
       }}
     >
+      {businessName ? (
+        <span className="flex-1 min-w-0 text-card-title font-semibold tracking-tight text-primary truncate">
+          {businessName}
+        </span>
+      ) : (
+        <div className="flex-1 min-w-0" />
+      )}
       {profileCompletion && profileCompletion.percentage < 100 && onOpenOverlay && (
         <ProfileCompletionPill
           percentage={profileCompletion.percentage}

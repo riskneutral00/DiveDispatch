@@ -1,14 +1,15 @@
 'use client'
 
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useQuery } from 'convex/react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useEffect } from 'react'
 import { api } from '@/lib/convex-generated'
 import { type RoleKey, type ClerkRole, ROLE_BY_KEY, ROLE_BY_CLERK_ROLE } from '@/lib/constants/roles'
-import { hasMultipleHierarchies, groupRolesByHierarchy } from '@/lib/utils/role-hierarchy'
+import { DASHBOARD_CONTENT_GUTTER_X } from '@/lib/constants/dashboard-layout'
 import { deriveDefaultRole } from '@/lib/utils/role'
+import { cn } from '@/lib/utils/cn'
 import { useCurrentUser } from '@/lib/hooks/use-current-user'
 import { FullPageSpinner } from '@/components/ui/full-page-spinner'
 import { ProfileCompletionPill } from '../profiles/profile-completion-pill'
@@ -16,7 +17,6 @@ import { ProfileOverlay, type ProfileOverlayTab } from '../profiles/profile-over
 import { BgSwitcher } from './bg-switcher'
 import { ThemeSwitcher } from './theme-switcher'
 import { HierarchySubBar } from './hierarchy-sub-bar'
-import { RoleSwitcher } from './role-switcher'
 import { MobileTopNav } from './mobile-top-nav'
 import { NotificationBell } from '../notifications/notification-bell'
 import { UserMenu } from './user-menu'
@@ -34,20 +34,6 @@ export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps
   const profileCompletion = useQuery(api.users.getProfileCompletionForRole, { role: clerkRole })
   const myRoles = useQuery(api.userRoles.myRoles)
   const router = useRouter()
-
-  const activeTreeFilter = useMemo(() => {
-    if (!myRoles) return undefined
-    const clerkRoles = myRoles.map((r) => r.role as ClerkRole)
-    if (!hasMultipleHierarchies(clerkRoles)) return undefined
-    const trees = groupRolesByHierarchy(clerkRoles)
-    const activeTree = trees.find((tree) =>
-      tree.some((r) => {
-        const cfg = ROLE_BY_CLERK_ROLE[r]
-        return cfg && cfg.key === roleSlug
-      }),
-    )
-    return activeTree ? new Set(activeTree as string[]) : undefined
-  }, [myRoles, roleSlug])
 
   const [overlayOpen, setOverlayOpen] = useState(false)
   const [overlayTab, setOverlayTab] = useState<ProfileOverlayTab>('profile')
@@ -121,19 +107,21 @@ export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps
       <MobileTopNav
         roleSlug={roleSlug}
         slug={slug}
+        businessName={user.businessName}
         onOpenOverlay={openProfileOverlay}
         profileCompletion={profileCompletion}
       />
 
-      <RoleSwitcher slug={slug} roleSlug={roleSlug} />
+      <HierarchySubBar slug={slug} roleSlug={roleSlug} />
 
-      <HierarchySubBar
-        slug={slug}
-        roleSlug={roleSlug}
-        filterRoles={activeTreeFilter}
-      />
-
-      <main className="dashboard-enter flex-1 min-w-0 pt-1 px-4 pb-8 sm:pt-2 sm:px-6 md:pt-2 md:px-6 lg:pt-3 lg:px-8">{children}</main>
+      <main
+        className={cn(
+          'dashboard-enter flex-1 min-w-0 pt-1 pb-8 sm:pt-2 md:pt-2 lg:pt-3',
+          DASHBOARD_CONTENT_GUTTER_X,
+        )}
+      >
+        {children}
+      </main>
 
       <ProfileOverlay
         open={overlayOpen}

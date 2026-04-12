@@ -236,10 +236,7 @@ function DashboardContentInner({ roleConfig, slug, roleSlug }: DashboardContentI
           {calendarAndRail}
           <DragOverlay>
             {dnd.activeTemplate && (
-              <DragOverlayPill
-                label={dnd.activeTemplate.label}
-                isAccent={dnd.activeTemplate.id === 'plus'}
-              />
+              <DragOverlayPill label={dnd.activeTemplate.label} />
             )}
           </DragOverlay>
         </DragDropProvider>

@@ -66,15 +66,26 @@ export async function checkHasAnyOperatorRole(
   return roles.some((r) => OPERATOR_ROLE_SET.has(r.role))
 }
 
+function sortUserRolesByGrantOrder<T extends { createdAt: number; role: string; _id: Id<'userRoles'> }>(
+  rows: T[],
+): T[] {
+  return [...rows].sort((a, b) => {
+    const d = a.createdAt - b.createdAt
+    if (d !== 0) return d
+    return a._id < b._id ? -1 : a._id > b._id ? 1 : 0
+  })
+}
+
 export const myRoles = query({
   args: {},
   handler: async (ctx) => {
     const user = await getAuthUser(ctx)
     if (!user) return []
-    return ctx.db
+    const rows = await ctx.db
       .query('userRoles')
       .withIndex('by_userId', (q) => q.eq('userId', user._id))
       .collect() // bounded: per-user roles, max ~12
+    return sortUserRolesByGrantOrder(rows)
   },
 })
 

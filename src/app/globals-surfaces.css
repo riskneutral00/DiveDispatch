@@ -462,9 +462,9 @@ dialog::backdrop {
 /* ── Glass hover — border glow effect ────────────────────────────────────────
    Desktop: border glows with primary color, fill barely changes,
    background stays visible through glass. No color/text inversion.
-   Always active — canonical hover for all glass surfaces.
+   Surfaces with .glass-surface-elevated use the elevated block instead (see below).
    ──────────────────────────────────────────────────────────────────────────── */
-.glass-surface:hover {
+.glass-surface:not(.glass-surface-elevated):hover {
   background-color: var(--color-glass-bg-hover);
   border-color: var(--color-glass-border-hover);
   box-shadow:
@@ -475,12 +475,128 @@ dialog::backdrop {
 
 /* Mobile: slightly brighter border at rest, primary glow flash on tap */
 @media (hover: none) {
-  .glass-surface {
+  /* Exclude Quick Book pills (.glass-surface-elevated) and elevated-only surfaces */
+  .glass-surface:not(.glass-surface-elevated) {
     border-color: var(--color-glass-container-border);
   }
 
-  .glass-surface:active {
+  .glass-surface:not(.glass-surface-elevated):active {
     border-color: var(--color-glass-border-hover);
+    box-shadow: 0 0 20px var(--color-primary-glow);
+  }
+
+  .glass-surface.glass-surface-elevated:active {
+    background-color: var(--color-glass-bg-hover);
+    border-color: var(--color-glass-border-hover);
+    box-shadow: 0 0 20px var(--color-primary-glow);
+  }
+
+  /* Quick Book inset tap — outer glow suppressed (pill-only) */
+  .glass-surface.glass-surface-elevated.quick-book-pill:active {
+    background-color: var(--color-glass-bg-hover);
+    border-color: var(--color-glass-border-hover);
+    box-shadow:
+      inset 0 1px 0 var(--color-glass-specular),
+      inset 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Role / hierarchy icon pills — same inset tap as Quick Book */
+  .glass-surface.glass-surface-elevated.role-pill--inactive:active,
+  .glass-surface.glass-surface-elevated.role-pill--active:active {
+    background-color: var(--color-glass-bg-hover);
+    border-color: var(--color-glass-border-hover);
+    box-shadow:
+      inset 0 1px 0 var(--color-glass-specular),
+      inset 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+}
+
+/* ── Quick Book pill — at-rest chrome (pair with .glass-surface + .glass-surface-elevated)
+   Do not set inline background or border on these elements or hover will not win.
+   ─────────────────────────────────────────────────────────────────────────── */
+.quick-book-pill {
+  font-size: var(--font-size-label);
+  color: var(--color-text-primary);
+  background-color: var(--color-primary-glow);
+  border: 2px solid var(--color-glass-border-hover);
+}
+
+/* Role switcher / hierarchy — icon pills (pair with .glass-surface + .glass-surface-elevated + PILL_BASE) */
+.role-pill {
+  font-size: var(--font-size-label);
+  box-sizing: border-box;
+}
+
+.role-pill--inactive {
+  color: var(--color-text-secondary);
+  background-color: transparent;
+  border: 2px solid var(--color-glass-border);
+}
+
+.role-pill--active {
+  color: var(--color-accent);
+  background-color: var(--color-accent-glow);
+  border: 2px solid var(--color-accent);
+}
+
+/* Glass surface elevated — interaction only (Quick Book–grade hover + touch active).
+   Same stack as default .glass-surface:hover plus backdrop blur on hover; pair with
+   .glass-surface. At-rest paint stays on .quick-book-pill or your own styles. */
+.glass-surface.glass-surface-elevated:hover {
+  background-color: var(--color-glass-bg-hover);
+  border-color: var(--color-glass-border-hover);
+  box-shadow:
+    0 0 20px var(--color-primary-glow),
+    0 8px 32px var(--color-glass-shadow-elevated),
+    inset 0 1px 0 var(--color-glass-specular);
+  backdrop-filter: blur(var(--glass-blur-hover));
+  -webkit-backdrop-filter: blur(var(--glass-blur-hover));
+}
+
+/* Quick Book — inset hover only (outer halo suppressed); backdrop blur unchanged */
+.glass-surface.glass-surface-elevated.quick-book-pill:hover {
+  background-color: var(--color-glass-bg-hover);
+  border-color: var(--color-glass-border-hover);
+  box-shadow:
+    inset 0 1px 0 var(--color-glass-specular),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.06),
+    inset 0 2px 10px rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(var(--glass-blur-hover));
+  -webkit-backdrop-filter: blur(var(--glass-blur-hover));
+}
+
+/* Role / hierarchy — inset hover parity with Quick Book */
+.glass-surface.glass-surface-elevated.role-pill--inactive:hover,
+.glass-surface.glass-surface-elevated.role-pill--active:hover {
+  background-color: var(--color-glass-bg-hover);
+  border-color: var(--color-glass-border-hover);
+  box-shadow:
+    inset 0 1px 0 var(--color-glass-specular),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.06),
+    inset 0 2px 10px rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(var(--glass-blur-hover));
+  -webkit-backdrop-filter: blur(var(--glass-blur-hover));
+}
+
+/* ── Dashboard hover glow — shadow only (legend chips, filters)
+   Same box-shadow stack as .glass-surface:hover; no bg/border change so
+   semantic fills and inline colors stay intact.
+   ─────────────────────────────────────────────────────────────────────────── */
+.dashboard-hover-glow {
+  transition:
+    box-shadow var(--transition-speed) ease,
+    border-color var(--transition-speed) ease;
+}
+
+.dashboard-hover-glow:hover {
+  box-shadow:
+    0 0 20px var(--color-primary-glow),
+    0 8px 32px var(--color-glass-shadow-elevated),
+    inset 0 1px 0 var(--color-glass-specular);
+}
+
+@media (hover: none) {
+  .dashboard-hover-glow:active {
     box-shadow: 0 0 20px var(--color-primary-glow);
   }
 }
@@ -504,7 +620,9 @@ dialog::backdrop {
   .glass,
   .glass-elevated,
   .glass-container,
-  .glass-surface {
+  .glass-surface,
+  .glass-surface-elevated,
+  .dashboard-hover-glow {
     transition-duration: 0.01ms !important;
   }
 }

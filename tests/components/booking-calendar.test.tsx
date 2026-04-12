@@ -84,6 +84,7 @@ vi.mock('convex/react', async () => {
 })
 
 // ── Import component AFTER mocks are registered ───────────────────────────────
+import { TODAY_CELL_BORDER_WIDTH_PX } from '@/lib/constants/calendar-config'
 import { BookingCalendar } from '@/components/booking/booking-calendar'
 
 describe('BookingCalendar — past vs today/future click behavior', () => {
@@ -116,6 +117,14 @@ describe('BookingCalendar — past vs today/future click behavior', () => {
     expect(cell.className).toContain('glass-surface')
     fireEvent.click(cell)
     expect(spy).toHaveBeenCalledWith(ANCHOR)
+  })
+
+  it('today uses thick status-active border instead of green fill', () => {
+    const { getByTestId } = render(<BookingCalendar onDateClick={vi.fn()} />)
+    const cell = getByTestId(`cell-${ANCHOR}`) as HTMLElement
+    expect(cell.style.borderColor).toBe('var(--color-status-active)')
+    expect(cell.style.borderWidth).toBe(`${TODAY_CELL_BORDER_WIDTH_PX}px`)
+    expect(cell.style.background).toBe('')
   })
 
   it('future date highlights and is clickable', () => {

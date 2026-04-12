@@ -1,10 +1,9 @@
 'use client'
 
-import { PILL_STYLE, ACCENT_PILL_STYLE } from '@/components/booking/quick-book-rail'
+import { QUICK_BOOK_PILL_CLASS } from '@/components/booking/quick-book-rail'
 
 interface DragOverlayPillProps {
   label: string
-  isAccent?: boolean
 }
 
 const OVERLAY_ENHANCEMENTS: React.CSSProperties = {
@@ -14,13 +13,11 @@ const OVERLAY_ENHANCEMENTS: React.CSSProperties = {
   pointerEvents: 'none',
 }
 
-export function DragOverlayPill({ label, isAccent }: DragOverlayPillProps) {
-  const baseStyle = isAccent ? ACCENT_PILL_STYLE : PILL_STYLE
-
+export function DragOverlayPill({ label }: DragOverlayPillProps) {
   return (
     <div
-      className="rounded-full px-3 py-1 font-medium select-none"
-      style={{ ...baseStyle, ...OVERLAY_ENHANCEMENTS }}
+      className={`rounded-full px-3 py-1 font-medium select-none glass-surface glass-surface-elevated ${QUICK_BOOK_PILL_CLASS}`}
+      style={OVERLAY_ENHANCEMENTS}
     >
       {label}
     </div>

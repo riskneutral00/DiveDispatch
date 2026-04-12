@@ -7,27 +7,18 @@ import { Tooltip } from '@/components/ui/tooltip'
 import { DraggablePill } from '@/components/booking/draggable-pill'
 import type { CourseCode } from '@/lib/constants/course-catalog'
 import { COURSE_TEMPLATES } from '@/lib/booking/quick-book-templates'
+import { PILL_BASE as PILL_BASE_SHELL } from '@/lib/constants/pill-shell'
 
-export const PILL_BASE = 'rounded-full px-3 py-1 font-medium select-none transition-all duration-theme focus:outline-none focus-visible:ring-2'
+export const PILL_BASE = PILL_BASE_SHELL
+
+/** At-rest surface — see `.quick-book-pill` in globals-surfaces.css (+ Booking matches course pills) */
+export const QUICK_BOOK_PILL_CLASS = 'quick-book-pill'
+
 export const DISABLED_OVERLAY: React.CSSProperties = { opacity: 0.4, cursor: 'not-allowed' }
 
 export interface QuickBookRailProps {
   onSelect: (courses: CourseCode[]) => void
   dragEnabled?: boolean
-}
-
-export const PILL_STYLE: React.CSSProperties = {
-  fontSize: 'var(--font-size-label)', /* design-ok: dense pill, uses label token */
-  color: 'var(--color-text-primary)',
-  background: 'var(--color-primary-glow)',
-  border: '2px solid var(--color-glass-border-hover)',
-}
-
-export const ACCENT_PILL_STYLE: React.CSSProperties = {
-  fontSize: 'var(--font-size-label)', /* design-ok: dense pill, uses label token */
-  color: 'var(--color-accent)',
-  background: 'var(--color-glass-bg)',
-  border: '1px solid var(--color-accent)',
 }
 
 const TOOLTIP_LABEL = 'Complete your profile to create bookings'
@@ -40,7 +31,7 @@ export function QuickBookRail({ onSelect, dragEnabled }: QuickBookRailProps) {
   const canBook = !isLoading && onboardingStatus?.percentage === 100
 
   return (
-    <div className="flex flex-wrap items-center justify-center md:justify-start gap-1.5">
+    <div className="flex flex-wrap items-center justify-start gap-1.5">
       {COURSE_TEMPLATES.map((template) => {
         if (dragEnabled) {
           const pill = (
@@ -49,7 +40,6 @@ export function QuickBookRail({ onSelect, dragEnabled }: QuickBookRailProps) {
               template={template}
               canBook={canBook}
               onSelect={onSelect}
-              style={PILL_STYLE}
             />
           )
 
@@ -65,12 +55,12 @@ export function QuickBookRail({ onSelect, dragEnabled }: QuickBookRailProps) {
         }
 
         const btn = (
-          <button /* design-ok: pill with shared PILL_BASE/PILL_STYLE */
+          <button /* design-ok: pill with PILL_BASE + quick-book-pill + glass-surface + glass-surface-elevated */
             key={template.id}
             type="button"
             disabled={!canBook}
-            className={`${PILL_BASE} ${canBook ? 'cursor-pointer transition-opacity hover:opacity-70' : ''}`}
-            style={canBook ? PILL_STYLE : { ...PILL_STYLE, ...DISABLED_OVERLAY }}
+            className={`${PILL_BASE} glass-surface glass-surface-elevated ${QUICK_BOOK_PILL_CLASS} ${canBook ? 'cursor-pointer' : ''}`}
+            style={canBook ? undefined : DISABLED_OVERLAY}
             onClick={canBook ? () => onSelect(template.courses) : undefined}
           >
             {template.label}
@@ -89,19 +79,17 @@ export function QuickBookRail({ onSelect, dragEnabled }: QuickBookRailProps) {
       })}
 
       {canBook ? (
-        <span className="hidden sm:inline-flex ml-auto">
+        <span className="inline-flex ml-auto">
           {dragEnabled ? (
             <DraggablePill
               template={PLUS_TEMPLATE}
               canBook={canBook}
               onSelect={onSelect}
-              style={ACCENT_PILL_STYLE}
             />
           ) : (
-            <button /* design-ok: pill with shared PILL_BASE/ACCENT_PILL_STYLE */
+            <button /* design-ok: same stack as course pills */
               type="button"
-              className={`${PILL_BASE} cursor-pointer transition-opacity hover:opacity-70`}
-              style={ACCENT_PILL_STYLE}
+              className={`${PILL_BASE} glass-surface glass-surface-elevated ${QUICK_BOOK_PILL_CLASS} cursor-pointer`}
               onClick={() => onSelect([] as CourseCode[])}
             >
               + Booking
@@ -110,11 +98,11 @@ export function QuickBookRail({ onSelect, dragEnabled }: QuickBookRailProps) {
         </span>
       ) : (
         <Tooltip label={TOOLTIP_LABEL} className="hidden md:inline-flex ml-auto">
-          <button /* design-ok: disabled pill variant */
+          <button /* design-ok: same stack as course pills */
             type="button"
             disabled
-            className={PILL_BASE}
-            style={{ ...ACCENT_PILL_STYLE, ...DISABLED_OVERLAY }}
+            className={`${PILL_BASE} glass-surface glass-surface-elevated ${QUICK_BOOK_PILL_CLASS}`}
+            style={DISABLED_OVERLAY}
           >
             + Booking
           </button>

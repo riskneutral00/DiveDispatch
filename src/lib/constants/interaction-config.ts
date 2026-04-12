@@ -1,6 +1,7 @@
 export type ButtonHoverEffect = 'glow-lift' | 'glow' | 'none'
 export type IconButtonHoverEffect = 'glow' | 'opacity' | 'none'
 export type CardHoverEffect = 'glass-glow' | 'opacity' | 'none'
+/** glass-glow on ColorBadge = .dashboard-hover-glow (shadow parity with glass-surface:hover). */
 export type BadgeHoverEffect = 'glass-glow' | 'opacity' | 'none'
 
 export const INTERACTION_DEFAULTS = {

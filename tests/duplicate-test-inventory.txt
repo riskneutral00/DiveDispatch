@@ -6,7 +6,7 @@ Quick vs full runs: package.json scripts `test:quick` (excludes @module-tag slow
 MERGED INTO src/**/__tests__/
 -----------------------------
 - booking-display, coverage-validation, bar-styles (see prior sessions)
-- Utils: shorten-operator-name, build-bar-sub-label, skyline-packer, signature-coverage, unit-conversion, available-roles, role-hierarchy, directory-filters
+- Utils: shorten-operator-name, build-bar-sub-label, skyline-packer, signature-coverage, unit-conversion, available-roles, directory-filters
 - Hooks (removed tests/hooks twins; colocated suites retained): use-blocked-date-toggle, use-booking-draft-auto-save, use-booking-actions, use-portal-step, use-locale-sync, use-operator-defaults
 - Hooks (new): use-calendar-range moved from tests/hooks to src/lib/hooks/__tests__/use-calendar-range.test.ts
 - Constants + booking: locales, status-colors, error-messages, countries, ui-timings, activity-rules, compute-date-range (removed tests/ copies; colocated retained)

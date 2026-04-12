@@ -36,23 +36,23 @@ describe('userRoles.myRoles', () => {
     let userId: any
     await t.run(async (ctx) => {
       userId = await seedUser(ctx, { skipUserRoles: true })
-      const now = Date.now()
+      const t0 = Date.now()
       await ctx.db.insert('userRoles', {
         userId,
         role: 'DiveCenter',
-        createdAt: now,
+        createdAt: t0,
         profileComplete: true,
       })
       await ctx.db.insert('userRoles', {
         userId,
         role: 'Boat',
-        createdAt: now,
+        createdAt: t0 + 1000,
         profileComplete: false,
       })
       await ctx.db.insert('userRoles', {
         userId,
         role: 'Equipment',
-        createdAt: now,
+        createdAt: t0 + 2000,
         profileComplete: false,
       })
     })
@@ -61,8 +61,7 @@ describe('userRoles.myRoles', () => {
       .withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter })
       .query(api.userRoles.myRoles, {})
     expect(roles).toHaveLength(3)
-    const roleNames = roles.map((r: any) => r.role).sort()
-    expect(roleNames).toEqual(['Boat', 'DiveCenter', 'Equipment'])
+    expect(roles.map((r: any) => r.role)).toEqual(['DiveCenter', 'Boat', 'Equipment'])
   })
 
   it('returns only the requesting user\'s roles, not other users\'', async () => {

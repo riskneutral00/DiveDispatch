@@ -27,7 +27,8 @@ export const ColorBadge = React.memo(function ColorBadge({
   const Tag = onClick ? 'button' : 'span'
 
   const HOVER_CLASS: Record<BadgeHoverEffect, string> = {
-    'glass-glow': 'glass-btn glass-btn-ghost',
+    /* Shadow stack matches .glass-surface:hover; keeps status fill via inline style */
+    'glass-glow': 'dashboard-hover-glow',
     opacity: 'transition-opacity duration-theme hover:opacity-70',
     none: '',
   }

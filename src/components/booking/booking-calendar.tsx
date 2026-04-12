@@ -7,7 +7,11 @@ import { Button } from '@/components/ui/button'
 import { CalendarNav } from '@/components/booking/calendar-nav'
 import { skylinePack, type BookingSpan } from '@/lib/utils/skyline-packer'
 import { DroppableDateCell } from '@/components/booking/droppable-date-cell'
-import { BAR_ROW_HEIGHT, DAY_CELL_PILLS_MAX_HEIGHT } from '@/lib/constants/calendar-config'
+import {
+  BAR_ROW_HEIGHT,
+  DAY_CELL_PILLS_MAX_HEIGHT,
+  TODAY_CELL_BORDER_WIDTH_PX,
+} from '@/lib/constants/calendar-config'
 import { CalendarLegend } from '@/components/booking/calendar-legend'
 import { UrgentBookingStrip } from '@/components/booking/urgent-booking-strip'
 import { courseLabel } from '@/lib/constants/course-catalog'
@@ -374,11 +378,14 @@ export function BookingCalendar({
                           : 'glass-surface cursor-pointer'
                     }`}
                     style={{
-                      background: isBlocked
-                        ? 'var(--color-blocked-bg)'
-                        : day.isToday
-                            ? 'var(--color-status-active-bg)'
-                            : undefined,
+                      background: isBlocked ? 'var(--color-blocked-bg)' : undefined,
+                      ...(day.isToday && !isBlocked
+                        ? {
+                            borderColor: 'var(--color-status-active)',
+                            borderWidth: TODAY_CELL_BORDER_WIDTH_PX,
+                            borderStyle: 'solid' as const,
+                          }
+                        : {}),
                     }}
                     onClick={isLocked || isPast ? undefined : () => onDateClick?.(day.dateString)}
                   >
