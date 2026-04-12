@@ -19,6 +19,29 @@ Extract structured knowledge from any YouTube video and map it to concrete proje
 
 ---
 
+## Project context
+
+When assessing a video against DiveDispatch, these files are ground truth:
+
+- **project:** DiveDispatch
+- **vault:** `~/Desktop/RiskNeutral/Vaults/DiveDispatch/`
+- **key_files:**
+  - `convex/schema.ts` — data model
+  - `package.json` — dependencies
+  - `convex/bookings/` — state machine, core mutations
+  - `convex/lib/` — shared utilities
+  - `src/lib/hooks/` — hook patterns
+  - `.claude/skills/` — existing skills
+  - `.claude/settings.json` — existing hooks
+  - `design-system/MASTER.md` — UI system
+  - `CLAUDE.md` — project invariants
+  - `Architecture/*-invariants.md` — architectural laws
+  - `Vaults/DiveDispatch/wiki/PatternLibrary/` — reusable patterns
+
+Techniques must be evaluated against current code, not generic best practices. Propose a technique only after grepping `convex/lib/` and `src/lib/` for existing implementations.
+
+---
+
 ## Usage
 
 ```

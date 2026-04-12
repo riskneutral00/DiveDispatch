@@ -400,6 +400,17 @@
           }
         ]
       }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/session-start-vault-context.sh",
+            "timeout": 5
+          }
+        ]
+      }
     ]
   }
 }

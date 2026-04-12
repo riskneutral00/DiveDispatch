@@ -40,3 +40,18 @@ Prefer `assertBookingTransition` / `assertReservationTransition` / `assertBagTra
 
 - `checkAndExpireBooking` (lazy TTL expiry) transitions Draft → Cancelled. This goes through the FSM — it is not an exception to Rule 1. It uses the `expire` action.
 - `purgeExpiredDrafts` (cron) does the same via `purgeOneDraft`. Also goes through the FSM.
+
+## Mutation Patterns
+
+**All-or-nothing.** Any single conflict aborts the entire mutation — zero partial holds, zero half-saved state. Decline releases inventory in the same mutation.
+
+Implementation: wrap multi-step writes in a single `ctx.db` transaction scope. Never pre-commit part of a booking and then `throw` halfway through.
+
+## State Transitions — non-obvious rules
+
+- **TTL is hybrid (lazy + cron):**
+  - Lazy: `checkAndExpireBooking` fires on client read via `useBookingWithExpiry`.
+  - Cron: `purgeExpiredDrafts` runs every 6h to catch abandoned drafts.
+  - Both paths: `Draft` + `expiresAt < now` → vacate reservations → set status to `Cancelled`.
+- **Default `holdTTL`: 12 hours (43 200 000 ms).** Once a booking reaches `Upcoming`, TTL never applies again.
+- **Medical block + auto-advance conditions:** see `Vaults/DiveDispatch/wiki/Architecture/Architecture.md`.

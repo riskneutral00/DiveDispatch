@@ -82,3 +82,14 @@ Full mapping: `Architecture/design-system-invariants.md` → Banned Patterns tab
 
 - `ui/` and `glass/` component internals MAY use `color-mix()` — they are the component-level variant definitions using CSS variables as inputs. Feature components may not.
 - `rounded-full` is permitted (MASTER.md sanctioned for pills/avatars).
+
+## Dependency Direction
+
+`convex/ ← lib/ ← components/ ← app/` — **never import upstream**.
+
+- `convex/` is the data layer. It imports nothing from `src/`.
+- `src/lib/` imports from `convex/_generated/` types only (not runtime code).
+- `src/components/` imports from `lib/` and `convex/_generated/`.
+- `src/app/` imports from `components/`, `lib/`, and `convex/_generated/`.
+
+A PostToolUse hook (`dependency-direction.sh`) blocks upstream imports at edit time. See `Architecture/adapter-invariants.md` for the core/adapter/shared split within `convex/`.

@@ -20,6 +20,29 @@ Deep-analyze any GitHub repository for integration into the current project. Pro
 
 ---
 
+## Project context
+
+When assessing a repo against DiveDispatch, these files are ground truth:
+
+- **project:** DiveDispatch
+- **vault:** `~/Desktop/RiskNeutral/Vaults/DiveDispatch/`
+- **key_files:**
+  - `convex/schema.ts` — data model
+  - `package.json` — dependencies
+  - `convex/bookings/` — state machine, core mutations
+  - `convex/lib/` — shared utilities
+  - `src/lib/hooks/` — hook patterns
+  - `.claude/skills/` — existing skills
+  - `.claude/settings.json` — existing hooks
+  - `design-system/MASTER.md` — UI system
+  - `CLAUDE.md` — project invariants
+  - `Architecture/*-invariants.md` — architectural laws
+  - `Vaults/DiveDispatch/wiki/PatternLibrary/` — reusable patterns
+
+Verdicts must cite these files. Proposing a pattern that duplicates an existing utility in `convex/lib/` or `src/lib/` is an error.
+
+---
+
 ## Usage
 
 ```
