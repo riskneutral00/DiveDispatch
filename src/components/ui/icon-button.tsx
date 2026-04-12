@@ -3,13 +3,9 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
 import { cn } from '@/lib/utils/cn'
 import { INTERACTION_DEFAULTS, type IconButtonHoverEffect } from '@/lib/constants/interaction-config'
+import { ICON_BUTTON_SIZE } from '@/lib/constants/button-sizes'
 
-const SIZE_CLASS = {
-  md: 'w-11 h-11',
-  sm: 'w-11 h-11', /* design-ok: 44px minimum touch target — no sub-44px sizes */
-} as const
-
-export type IconButtonSize = keyof typeof SIZE_CLASS
+export type IconButtonSize = 'sm' | 'md'
 export type IconButtonVariant = 'glass' | 'ghost'
 
 export interface IconButtonProps
@@ -29,19 +25,20 @@ const HOVER_CLASS: Record<IconButtonHoverEffect, string> = {
 export function IconButton({
   children,
   className = '',
-  size = 'md',
+  size: _size = 'md',
   variant = 'glass',
   hoverEffect = INTERACTION_DEFAULTS.iconButtonHover,
   type = 'button',
   ...rest
 }: IconButtonProps) {
+  void _size
   const isGlass = variant === 'glass'
   return (
     <button
       type={type}
       className={cn(
         'flex items-center justify-center cursor-pointer',
-        SIZE_CLASS[size],
+        ICON_BUTTON_SIZE,
         'rounded-full transition-all duration-theme text-secondary',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-glow)]',
         HOVER_CLASS[hoverEffect],

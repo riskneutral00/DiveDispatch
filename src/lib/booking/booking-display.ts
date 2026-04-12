@@ -1,8 +1,4 @@
-export function formatDateRange(start: string, end: string): string {
-  if (!start && !end) return '\u2013' // en-dash
-  if (start === end || !end) return start
-  return `${start} \u2013 ${end}`
-}
+export { formatDateRange } from '@/lib/utils/date'
 
 export type BadgeVariant = 'success' | 'info' | 'warning' | 'destructive' | 'default'
 

@@ -47,10 +47,7 @@ function deriveDayLabel(): string {
   return 'Dive Day'
 }
 
-const HEADER_BORDER_STYLE: React.CSSProperties = { borderColor: 'var(--color-glass-border)' }
 const DAY_LABEL_CLASS = 'glass-container'
-const AUTO_APPENDED_STYLE: React.CSSProperties = { background: 'var(--color-warning-muted)', color: 'var(--color-warning)' }
-const VENUE_SECTION_BORDER_STYLE: React.CSSProperties = { borderColor: 'var(--color-glass-border)' }
 
 const VENUE_ICONS = {
   boat: Anchor,
@@ -132,8 +129,7 @@ export function DayRow({
   return (
     <Card padding="sm">
       <div
-        className="flex items-center justify-between pb-2 mb-2 border-b"
-        style={HEADER_BORDER_STYLE}
+        className="flex items-center justify-between pb-2 mb-2 border-b border-glass-border"
       >
         <div className="flex items-center gap-2">
           <span
@@ -151,8 +147,7 @@ export function DayRow({
           </span>
           {day.isAutoAppended && (
             <span
-              className="text-[10px] px-1.5 py-0.5 rounded-full" /* design-ok: dense calendar auto-added badge */
-              style={AUTO_APPENDED_STYLE}
+              className="text-[10px] px-1.5 py-0.5 rounded-full bg-warning-muted text-warning" /* design-ok: dense calendar auto-added badge */
             >
               Auto-added
             </span>
@@ -320,8 +315,7 @@ export function DayRow({
 
         return (
           <div
-            className="flex flex-col gap-2 pt-3 border-t mt-1"
-            style={VENUE_SECTION_BORDER_STYLE}
+            className="flex flex-col gap-2 pt-3 border-t border-glass-border mt-1"
           >
             <span className="text-[10px] uppercase tracking-wide font-bold text-secondary font-heading">
               Venue Assignment

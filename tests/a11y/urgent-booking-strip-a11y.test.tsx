@@ -8,6 +8,8 @@ vi.mock('lucide-react', () => ({
 
 vi.mock('@/lib/utils/date', () => ({
   parseDateLocal: (s: string) => new Date(s + 'T00:00:00'),
+  formatDateRangeCompact: (start: string, end: string) =>
+    start === end ? start : `${start}–${end}`,
 }))
 
 import { UrgentBookingStrip } from '@/components/booking/urgent-booking-strip'

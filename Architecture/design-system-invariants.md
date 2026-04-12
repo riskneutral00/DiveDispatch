@@ -76,7 +76,7 @@ These inline styles have Tailwind equivalents. Never copy them. Migrate on conta
 
 3. **Glass-dialog is perimeter-first.** Dialogs use `.glass-dialog`, but default to perimeter and spacing, not opaque/blurred fills. Internal readability should come from fields before slabs.
 
-4. **Input fields always carry glass.** Subtle blur + fill at rest for readability — typed text must be readable against the background. Hover/focus may intensify. Transient overlays (menus, dropdowns, toasts) also keep `.glass-elevated` because they layer over other content. Tabs, chips, summary boxes, and chrome stay crisp.
+4. **Input fields rely on underline + typography contrast, not fill.** Typed text must be readable against the background via underline and typography weight. Focus states may add glow, but baseline fill to "patch" contrast is banned (see MASTER.md Anti-Patterns). Transient overlays (menus, dropdowns, toasts) still keep `.glass-elevated` because they layer over other content. Tabs, chips, summary boxes, and chrome stay crisp.
 
 5. **Melt is the default.** `data-melt` on dialogs fades `.app-shell` to reveal the brand background. Opt out with `melt={false}`, never by removing the CSS rule.
 

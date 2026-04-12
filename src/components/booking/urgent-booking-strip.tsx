@@ -1,7 +1,7 @@
 'use client'
 
 import { X } from 'lucide-react'
-import { parseDateLocal } from '@/lib/utils/date'
+import { formatDateRangeCompact } from '@/lib/utils/date'
 
 interface UrgentBooking {
   _id: string
@@ -13,18 +13,6 @@ interface UrgentBookingStripProps {
   bookings: UrgentBooking[]
   onBookingClick?: (id: string) => void
   onCancel: (id: string) => void
-}
-
-function formatDateRange(startDate: string, endDate: string): string {
-  const start = parseDateLocal(startDate)
-  const end = parseDateLocal(endDate)
-  const startLabel = start.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-  if (startDate === endDate) return startLabel
-  if (start.getMonth() === end.getMonth()) {
-    return `${startLabel}\u2013${end.getDate()}`
-  }
-  const endLabel = end.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-  return `${startLabel}\u2013${endLabel}`
 }
 
 export function UrgentBookingStrip({
@@ -53,7 +41,7 @@ export function UrgentBookingStrip({
             onClick={() => onBookingClick?.(b._id)}
             className="bg-transparent border-none p-0 font-inherit text-inherit cursor-pointer"
           >
-            {formatDateRange(b.startDate, b.endDate)}
+            {formatDateRangeCompact(b.startDate, b.endDate)}
           </button>
           <button /* design-ok: compact dismiss X in notification strip */
             type="button"

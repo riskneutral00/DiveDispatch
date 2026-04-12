@@ -2,9 +2,9 @@ import React from 'react'
 import { cn } from '@/lib/utils/cn'
 import { Spinner } from '@/components/ui/spinner'
 import { INTERACTION_DEFAULTS, type ButtonHoverEffect } from '@/lib/constants/interaction-config'
+import { BUTTON_SIZE_MAP, type ButtonSize } from '@/lib/constants/button-sizes'
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'destructive' | 'destructive-ghost'
-type ButtonSize = 'sm' | 'md' | 'lg' | 'icon'
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant
@@ -13,13 +13,6 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   loading?: boolean
   hoverEffect?: ButtonHoverEffect
   children: React.ReactNode
-}
-
-const sizeMap: Record<ButtonSize, string> = {
-  sm: 'px-3 py-1.5 text-body gap-1.5 min-h-[44px] min-w-[44px]',
-  md: 'px-4 py-2 text-body gap-2 min-h-[44px] min-w-[44px]',
-  lg: 'px-6 py-3 text-card-title gap-2 min-h-[44px] min-w-[44px]',
-  icon: 'p-2 text-body min-h-[44px] min-w-[44px]',
 }
 
 const variantStyles: Record<ButtonVariant, React.CSSProperties> = {
@@ -78,7 +71,7 @@ export function Button({
         hoverEffect !== 'none' && 'glass-btn',
         hoverEffect !== 'none' && `glass-btn-${variant}`,
         'disabled:opacity-50 disabled:cursor-not-allowed',
-        sizeMap[size],
+        BUTTON_SIZE_MAP[size],
         fullWidth && 'w-full',
         className,
       )}

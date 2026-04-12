@@ -2,20 +2,15 @@
 
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
 import { cn } from '@/lib/utils/cn'
+import { MENU_BUTTON_SIZE_MAP, type MenuButtonSize } from '@/lib/constants/button-sizes'
 
 type MenuButtonVariant = 'pill' | 'flush'
-type MenuButtonSize = 'sm' | 'md'
 
 interface MenuButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   active?: boolean
   size?: MenuButtonSize
   variant?: MenuButtonVariant
   children: ReactNode
-}
-
-const SIZE_MAP: Record<MenuButtonSize, string> = {
-  sm: 'px-3 py-1.5 text-label min-h-[44px]',
-  md: 'px-4 py-2 text-body min-h-[44px]',
 }
 
 /* design-ok: flush variant intentionally has no radius — dropdown/context menu items sit inside a rounded container */
@@ -48,7 +43,7 @@ export function MenuButton({
         'inline-flex items-center gap-2 font-medium cursor-pointer',
         'transition-all duration-theme',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-glow)]',
-        SIZE_MAP[size],
+        MENU_BUTTON_SIZE_MAP[size],
         active ? shape.active : shape.base,
         active ? 'text-primary' : 'text-secondary',
         !active && 'hover:opacity-70',

@@ -111,20 +111,7 @@ export function getRollingGrid(start: Date, end: Date): CalendarWeek[] {
   return weeks
 }
 
-export function formatRangeLabel(start: Date, end: Date): string {
-  const locale = typeof navigator !== 'undefined' ? navigator.language : 'en-US'
-  const sameYear = start.getFullYear() === end.getFullYear()
-
-  const fmtOpts: Intl.DateTimeFormatOptions = {
-    month: 'short',
-    day: 'numeric',
-    ...(sameYear ? {} : { year: 'numeric' }),
-  }
-
-  const startFmt = new Intl.DateTimeFormat(locale, fmtOpts).format(start)
-  const endFmt = new Intl.DateTimeFormat(locale, fmtOpts).format(end)
-  return `${startFmt} – ${endFmt}`
-}
+export { formatDateRangeLocalized as formatRangeLabel } from './date'
 
 export function getDaysOfWeek(): string[] {
   return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']

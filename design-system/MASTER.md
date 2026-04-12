@@ -116,7 +116,7 @@ Three layers. The background is architecture, not decoration.
 ```
 z-0  .bg-base      — fixed, full-bleed: `background-color: --body-bg`, layered `--bg-image` (skin), radial vignette to `--body-bg` at viewport edges (see `globals-surfaces.css`)
 z-1  .bg-overlay   — fixed, readability tint (dark: uniform `rgba`; light: may stay radial), pointer-events: none
-z-2  .app-shell    — relative, all UI content (fades to 0 on scrim dialog open)
+z-2  .app-shell    — relative, all UI content (fades to 0 on melt dialog open)
 ```
 
 **Dashboard:** `.dashboard-calendar-backdrop` adds an elevation ring (`box-shadow`) around the calendar; full-page skin paints on `.bg-base`. Re-enable `background-image` on that node only if a skin uses a photo `url()` behind the calendar only.
@@ -226,10 +226,10 @@ Top-edge light line on `.glass` and `.glass-elevated` via `::before` pseudo-elem
 
 - **Containers:** Never blur. Photo stays sharp.
 - **Dialogs:** Default to perimeter-first shells, not fogged readability slabs.
-- **Inputs:** Always blur. Subtle glass (blur + fill) at rest for readability. Hover/focus may intensify.
+- **Inputs:** Readability comes from underline + typography contrast, not fill. Focus states may add glow/blur. Baseline fill to "patch" contrast is banned (see Anti-Patterns).
 - **Transient overlays:** Menus, dropdowns, and toasts keep `.glass-elevated` — they layer over other content and need blur for readability.
 - **Chrome:** Tabs, chips, close buttons, and summary rows stay crisp. No glass.
-- **Dialog backdrop:** Blur of the raw background — acceptable because content is hidden by the scrim.
+- **Dialog backdrop:** Blur of the raw background — acceptable because content is hidden when the app-shell melts away.
 
 ### Background-First Edit Surface Model
 
@@ -255,18 +255,18 @@ Three tokens that adapt per luminance class:
 
 ---
 
-## Scrim Pattern
+## Melt Pattern
 
-When a scrim dialog opens, all content fades to 0. The dialog sits alone on the raw background.
+When a melt dialog opens, all UI content fades to 0. The dialog sits alone on the raw background.
 
 ```css
-html:has(dialog[open][data-scrim]) .app-shell { opacity: 0; }
-body:has(dialog[open][data-scrim]) { overflow: hidden; }
+html:has(dialog[open][data-melt]) .app-shell { opacity: 0; }
+body:has(dialog[open][data-melt]) { overflow: hidden; }
 ```
 
-**Scrim is opt-in.** Dialog component has a `scrim` prop. `fullScreen` dialogs default to `scrim={false}`. Simple confirmations (block date, cancel booking) show over visible content with a blurred `::backdrop`. Fullscreen overlays opt into scrim explicitly.
+**Melt is opt-in.** Dialog component has a `melt` prop. `fullScreen` dialogs default to `melt={false}`. Simple confirmations (block date, cancel booking) show over visible content with a blurred `::backdrop`. Fullscreen overlays opt into melt explicitly.
 
-**Scroll lock is scrim-only.** Non-scrim dialogs leave the body scrollable — prevents layout shake.
+**Scroll lock is melt-only.** Non-melt dialogs leave the body scrollable — prevents layout shake.
 
 ---
 
@@ -595,7 +595,7 @@ A "dark" theme mode does not imply "dark" luminance class. A skin with a mid-ton
 - **Inline `style` with CSS variables is the sanctioned pattern** for variant-driven components (Button, Badge). Inline `style` with hardcoded hex/rgb values is banned.
 - **Never** invert text colors on hover — border glow, not color flip
 - **Never** use `position: relative` on glass classes — it breaks overlay positioning
-- **Never** toggle `overflow` on body while content is visible — scrim-only scroll lock
+- **Never** toggle `overflow` on body while content is visible — melt-only scroll lock
 
 ---
 
