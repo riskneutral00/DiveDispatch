@@ -384,12 +384,8 @@ export function BookingWizard({
     );
   }
 
-  const Wrapper = isOverlay
-    ? ({ children: c }: { children: React.ReactNode }) => <div className="px-4 py-4 md:px-6">{c}</div>
-    : ({ children: c }: { children: React.ReactNode }) => <DashboardPageFrame className="px-4 py-8">{c}</DashboardPageFrame>;
-
-  return (
-    <Wrapper>
+  const content = (
+    <>
       {!isOverlay && (
         <div className="mb-6">
           <div className="flex items-center justify-between">
@@ -461,6 +457,12 @@ export function BookingWizard({
           </Button>
         </div>
       )}
-    </Wrapper>
-  );
+    </>
+  )
+
+  return isOverlay ? (
+    <div className="px-4 py-4 md:px-6">{content}</div>
+  ) : (
+    <DashboardPageFrame className="px-4 py-8">{content}</DashboardPageFrame>
+  )
 }
