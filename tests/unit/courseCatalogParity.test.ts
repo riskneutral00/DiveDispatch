@@ -94,9 +94,9 @@ describe('DSD / intro course invariants', () => {
     expect(dsd.prerequisites).toEqual([])
   })
 
-  it('DSD requires confined water', () => {
+  it('DSD does not require confined water (dive-site or boat only)', () => {
     const dsd = getCourseByCode('DSD')!
-    expect(dsd.requiresConfined).toBe(true)
+    expect(dsd.requiresConfined).toBe(false)
   })
 
   it('TRY_DIVE has no prerequisites', () => {
@@ -104,9 +104,9 @@ describe('DSD / intro course invariants', () => {
     expect(tryDive.prerequisites).toEqual([])
   })
 
-  it('TRY_DIVE requires confined water', () => {
+  it('TRY_DIVE does not require confined water', () => {
     const tryDive = getCourseByCode('TRY_DIVE')!
-    expect(tryDive.requiresConfined).toBe(true)
+    expect(tryDive.requiresConfined).toBe(false)
   })
 
   it('OW has no prerequisites', () => {

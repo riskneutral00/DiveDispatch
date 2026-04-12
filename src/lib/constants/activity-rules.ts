@@ -16,7 +16,7 @@ export const INSTRUCTOR_REQUIRED_CODES = [
 ] as const satisfies readonly CourseCode[]
 
 export const CONFINED_ACTIVITY_CODES = [
-  'DSD', 'TRY_DIVE', 'OW', 'REFRESH',
+  'OW',
 ] as const satisfies readonly CourseCode[]
 
 export const ACTIVITY_MIN_AGE: Record<CourseCode, number> = {

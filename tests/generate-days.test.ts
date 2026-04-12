@@ -35,10 +35,10 @@ describe('buildDiveSequence', () => {
     expect(seq[4]).toMatchObject({ courseCode: 'AOW', diveNumber: 5 })
   })
 
-  it('returns DSD sequence: 1 confined dive', () => {
+  it('returns DSD sequence: 1 open-water dive (DSD never uses a pool)', () => {
     const seq = buildDiveSequence(['DSD'])
     expect(seq.length).toBe(1)
-    expect(seq[0]).toMatchObject({ courseCode: 'DSD', isConfined: true })
+    expect(seq[0]).toMatchObject({ courseCode: 'DSD', isConfined: false })
   })
 
   it('concatenates multiple courses in order', () => {
@@ -121,11 +121,11 @@ describe('generateDays', () => {
     }
   })
 
-  it('generates DSD as single-day booking (empty — operator selects confined pill)', () => {
+  it('generates DSD as single-day boat/dive-site booking (no pool, no confined)', () => {
     const days = generateDays(['DSD'], testDate(5))
     expect(days.length).toBe(1)
-    expect(days[0].venueType).toBe('pool')
-    expect(days[0].dives.length).toBe(0) // empty, operator selects
+    expect(days[0].venueType).toBe('boat')
+    expect(days[0].dives.every((d) => !d.isConfined)).toBe(true)
   })
 
   it('generates days for FD (0 mandated dives) with synthetic dive slots', () => {
@@ -511,14 +511,13 @@ describe('getAvailableDives', () => {
     expect(available.some((s) => s.isConfined && s.courseCode === 'OW')).toBe(true)
   })
 
-  it('shows all dives including confined on boat days (venue is per-dive)', () => {
+  it('excludes confined dives from non-day-0 (confined only on Day 1)', () => {
     const days: DayConfig[] = [
       makeDayConfig(testDate(10), 'pool'),
       makeDayConfig(testDate(11), 'boat'),
     ]
     const available = getAvailableDives(1, days, ['OW'])
-    // Confined is available on boat days — venue is per-dive now
-    expect(available.some((s) => s.isConfined)).toBe(true)
+    expect(available.some((s) => s.isConfined)).toBe(false)
   })
 
   it('respects predecessor ordering: AOW dives unavailable until all OW dives placed', () => {
@@ -1076,15 +1075,15 @@ describe('highwater mark availability', () => {
     expect(available.some(s => s.diveNumber === 4)).toBe(true)
   })
 
-  it('2. boat day shows all OW dives including confined (venue is per-dive)', () => {
+  it('2. non-day-0 boat day excludes confined (confined only on Day 1)', () => {
     const days: DayConfig[] = [
       makeDayConfig(testDate(10), 'pool'),
       makeDayConfig(testDate(11), 'boat'),
       makeDayConfig(testDate(12), 'boat'),
     ]
     const available = getAvailableDives(1, days, ['OW'])
-    expect(available.length).toBe(5) // OW C + OW 1-4 (confined available — venue is per-dive)
-    expect(available.some(s => s.isConfined)).toBe(true)
+    expect(available.length).toBe(4)
+    expect(available.some(s => s.isConfined)).toBe(false)
   })
 
   it('3. highwater excludes earlier dives; sequential allows only next', () => {

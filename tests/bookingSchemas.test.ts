@@ -21,10 +21,8 @@ describe('INSTRUCTOR_REQUIRED_CODES', () => {
 })
 
 describe('CONFINED_ACTIVITY_CODES', () => {
-  it('includes DSD, TRY_DIVE, OW, REFRESH', () => {
-    for (const code of ['DSD', 'TRY_DIVE', 'OW', 'REFRESH']) {
-      expect(CONFINED_ACTIVITY_CODES).toContain(code)
-    }
+  it('includes only OW', () => {
+    expect(CONFINED_ACTIVITY_CODES).toEqual(['OW'])
   })
 })
 
