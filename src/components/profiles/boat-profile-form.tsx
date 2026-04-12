@@ -2,8 +2,7 @@
 
 import { Plus } from 'lucide-react'
 import { parseNumber, parseOptionalInt } from '@/lib/utils/numbers'
-import { type LocationValue } from '@/components/profiles/location-picker-lazy'
-import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
+import { BusinessContactSection } from '@/components/profiles/business-contact-section'
 
 import { FormSectionHeader } from '@/components/ui/form-section-header'
 import { DayToggleGroup } from '@/components/ui/day-toggle-group'
@@ -19,10 +18,6 @@ import {
   boatFleetSchema,
 } from '@/lib/schemas/profile-shared'
 import {
-  INITIAL_CONTACT_FORM,
-  contactFromProfile,
-  contactToPayload,
-  defaultFromMe,
   type BaseProfileSectionProps,
 } from '@/lib/profile-form'
 import { BoatType, BOAT_TYPE_OPTIONS } from '@/lib/constants/boat-types'
@@ -54,60 +49,14 @@ export function emptyRoute(): RouteState {
   return { diveSite: '', daysOfWeek: [] }
 }
 
-export function BoatContactSection({ profile: existing, me, create, update, onSaved, onClose }: BoatSectionProps) {
-  const { form, setField, errors, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit, resetToBaseline } =
-    useProfileForm({
-      profile: existing,
-      me,
-      schema: contactSchema,
-      defaults: INITIAL_CONTACT_FORM,
-      fromProfile: contactFromProfile,
-      fromMe: defaultFromMe,
-      toPayload: contactToPayload,
-      create,
-      update,
-      onSaved,
-    })
-
-  const onLocationChange = (loc: LocationValue | null) => setField('location', loc)
-
+export function BoatContactSection(props: BoatSectionProps) {
   return (
-    <ProfileFormShell
-      loading={loading}
-      onSubmit={handleSubmit}
-      onCancel={() => { resetToBaseline(); onClose?.() }}
-      footerErrorMessage={footerErrorMessage}
-      saving={saving}
-      saved={saved}
-      isDirty={isDirty}
-      isUpdate={isUpdate}
-      disableSaveWhenInvalid
-      isValid={isValid}
-      className="space-y-6"
-    >
-      <div className="space-y-4">
-        <ProfileBasicInfo
-          nameValue={form.name}
-          onNameChange={(val) => setField('name', val)}
-          nameError={errors.name}
-          nameLabel="Business Name"
-          namePlaceholder="Phuket Boat Co."
-          nameRequired
-          locationValue={form.location}
-          onLocationChange={onLocationChange}
-          locationError={errors.location}
-          locationRequired
-          emailValue={form.email}
-          onEmailChange={(val) => setField('email', val)}
-          emailError={errors.email}
-          emailRequired
-          phoneValue={form.phone}
-          onPhoneChange={(val) => setField('phone', val)}
-          phoneError={errors.phone}
-          phoneRequired
-        />
-      </div>
-    </ProfileFormShell>
+    <BusinessContactSection
+      {...props}
+      nameLabel="Business Name"
+      namePlaceholder="Phuket Boat Co."
+      schema={contactSchema}
+    />
   )
 }
 

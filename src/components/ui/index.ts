@@ -32,6 +32,8 @@ export { WizardStepShell } from "./wizard-step-shell";
 export { FormShell } from "./form-shell";
 export { FormFooter } from "./form-footer";
 export type { FormFooterProps } from "./form-footer";
+export { SortableOverlayList } from "./sortable-overlay-list";
+export type { SortableOverlayListProps } from "./sortable-overlay-list";
 export { PageTitle } from "./page-title";
 export { EmptyState } from "./empty-state";
 export { FormGrid, FormField } from "./form-grid";

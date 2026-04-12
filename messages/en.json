@@ -120,6 +120,10 @@
       "confirmed": "Confirmed",
       "vacated": "Vacated"
     },
+    "emptyStates": {
+      "noPendingRequests": "No pending requests yet.",
+      "noResourcesAssigned": "No resources assigned."
+    },
     "editConfirmTitle": "Edit booking?",
     "editConfirmBody": "Resets to Draft. Resources must re-confirm.",
     "editingTitle": "Editing: {ref}",

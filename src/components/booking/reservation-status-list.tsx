@@ -1,7 +1,11 @@
+import { useMemo } from 'react'
 import type { BookingDetailReservation } from '../../../convex/bookings'
-import { Badge, EmptyState, ListRow } from '@/components/ui'
 import { ROLE_BY_CLERK_ROLE, type ClerkRole } from '@/lib/constants/roles'
 import { reservationVariant } from '@/lib/booking/booking-display'
+import {
+  ResourceStatusList,
+  type ResourceStatusItem,
+} from './resource-status-list'
 
 interface ReservationStatusListProps {
   reservations: BookingDetailReservation[]
@@ -16,43 +20,44 @@ function statusLabel(status: BookingDetailReservation['status']): string {
   }
 }
 
-export function ReservationStatusList({ reservations }: ReservationStatusListProps) {
-  if (reservations.length === 0) {
-    return <EmptyState message="No resources assigned." />
-  }
-
-  const seen = new Set<string>()
-  const unique = reservations.filter((r) => {
-    if (seen.has(r.inventoryUnitId)) return false
-    seen.add(r.inventoryUnitId)
-    return true
-  })
+export function ReservationStatusList({
+  reservations,
+}: ReservationStatusListProps) {
+  const items: ResourceStatusItem[] = useMemo(
+    () =>
+      reservations.map((res) => {
+        const roleLabel =
+          ROLE_BY_CLERK_ROLE[res.resourceType as ClerkRole]?.label ??
+          res.resourceType
+        const secondary = res.stakeholderName
+          ? `${roleLabel} · ${res.stakeholderName}`
+          : roleLabel
+        return {
+          id: res._id,
+          primaryText: res.inventoryUnitName,
+          secondaryText: secondary,
+          badge: {
+            variant: reservationVariant(res.status),
+            label: statusLabel(res.status),
+            dot: true,
+          },
+          destructiveNote: res.vacatedBy
+            ? `Reason: ${res.vacatedBy.replace(/_/g, ' ')}`
+            : undefined,
+        }
+      }),
+    [reservations],
+  )
 
   return (
-    <ul className="space-y-2">
-      {unique.map((res) => (
-        <ListRow key={res._id} as="li">
-          <div className="min-w-0">
-            <p className="text-body font-medium truncate text-primary">
-              {res.inventoryUnitName}
-            </p>
-            <p className="text-label mt-0.5 text-secondary">
-              {ROLE_BY_CLERK_ROLE[res.resourceType as ClerkRole]?.label ?? res.resourceType}
-              {res.stakeholderName && (
-                <> · <span className="text-secondary">{res.stakeholderName}</span></>
-              )}
-            </p>
-            {res.vacatedBy && (
-              <p className="text-label mt-0.5 text-destructive">
-                Reason: {res.vacatedBy.replace(/_/g, ' ')}
-              </p>
-            )}
-          </div>
-          <Badge variant={reservationVariant(res.status)} size="sm" dot>
-            {statusLabel(res.status)}
-          </Badge>
-        </ListRow>
-      ))}
-    </ul>
+    <ResourceStatusList
+      items={items}
+      emptyMessageKey="emptyStates.noResourcesAssigned"
+      namespace="booking"
+      variant="list"
+      dedupeBy={(item) =>
+        reservations.find((r) => r._id === item.id)?.inventoryUnitId ?? item.id
+      }
+    />
   )
 }

@@ -5,7 +5,7 @@ import { type ComponentType } from 'react'
 import { useMutation, useQuery } from 'convex/react'
 import { api } from '@/lib/convex-generated'
 
-import { AgentProfileForm, type AgentProfileSection } from '@/components/profiles/agent-profile-form'
+import { AgentProfileForm } from '@/components/profiles/agent-profile-form'
 import { DiveCenterProfileForm } from '@/components/profiles/dive-center-profile-form'
 import { InstructorProfileForm } from '@/components/profiles/personal-profile-form'
 import { DiveMasterProfileForm } from '@/components/profiles/personal-profile-form'
@@ -39,6 +39,7 @@ const ROLE_FORM_CONFIGS: Partial<Record<RoleKey, RoleFormConfig>> = {
   equipment:     { apiModule: api.equipment,    Component: EquipmentProfileForm },
   pool:          { apiModule: api.venues,       Component: PoolProfileForm },
   'dive-site':   { apiModule: api.venues,       Component: DiveSiteProfileForm },
+  agent:         { apiModule: api.agents,       Component: AgentProfileForm },
 }
 
 function StandardConnectedForm({ section, config, onClose }: { section?: string; config: RoleFormConfig; onClose?: () => void }) {
@@ -47,27 +48,10 @@ function StandardConnectedForm({ section, config, onClose }: { section?: string;
   const me = useQuery(api.users.me)
   const create = useMutation(apiModule.create)
   const update = useMutation(apiModule.update)
+  const updateProfile = useMutation(api.users.updateProfile)
   return (
     <Component
       section={section}
-      profile={profile}
-      me={me}
-      create={asLooseMut(create)}
-      update={asLooseMut(update)}
-      onClose={onClose}
-    />
-  )
-}
-
-function ConnectedAgentForm({ section, onClose }: { section?: string; onClose?: () => void }) {
-  const profile = useQuery(api.agents.mine)
-  const me = useQuery(api.users.me)
-  const create = useMutation(api.agents.create)
-  const update = useMutation(api.agents.update)
-  const updateProfile = useMutation(api.users.updateProfile)
-  return (
-    <AgentProfileForm
-      section={section as AgentProfileSection}
       profile={profile}
       me={me}
       create={asLooseMut(create)}
@@ -82,20 +66,16 @@ type RoleProfileRegistryEntry = {
   renderFull: (section: string | undefined, onClose?: () => void) => React.ReactNode
 }
 
-const ROLE_PROFILE_REGISTRY: Partial<Record<RoleKey, RoleProfileRegistryEntry>> = {
-  agent: { renderFull: (section, onClose) => <ConnectedAgentForm section={section} onClose={onClose} /> },
-
-  ...Object.fromEntries(
-    Object.entries(ROLE_FORM_CONFIGS).map(([key, config]) => [
-      key,
-      {
-        renderFull: (section: string | undefined, onClose?: () => void) => (
-          <StandardConnectedForm section={section} config={config} onClose={onClose} />
-        ),
-      },
-    ]),
-  ),
-}
+const ROLE_PROFILE_REGISTRY: Partial<Record<RoleKey, RoleProfileRegistryEntry>> = Object.fromEntries(
+  Object.entries(ROLE_FORM_CONFIGS).map(([key, config]) => [
+    key,
+    {
+      renderFull: (section: string | undefined, onClose?: () => void) => (
+        <StandardConnectedForm section={section} config={config} onClose={onClose} />
+      ),
+    },
+  ]),
+)
 
 export function hasConnectedForm(roleKey: RoleKey): boolean {
   return roleKey in ROLE_PROFILE_REGISTRY

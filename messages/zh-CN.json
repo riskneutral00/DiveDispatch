@@ -120,6 +120,10 @@
       "confirmed": "已确认",
       "vacated": "已释放"
     },
+    "emptyStates": {
+      "noPendingRequests": "暂无待处理请求。",
+      "noResourcesAssigned": "未分配资源。"
+    },
     "editConfirmTitle": "编辑预订？",
     "editConfirmBody": "将重置为草稿状态，资源方需重新确认。",
     "editingTitle": "编辑中：{ref}",

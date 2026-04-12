@@ -120,6 +120,10 @@
       "confirmed": "Confirmée",
       "vacated": "Libérée"
     },
+    "emptyStates": {
+      "noPendingRequests": "Aucune demande en attente.",
+      "noResourcesAssigned": "Aucune ressource affectée."
+    },
     "editConfirmTitle": "Modifier la réservation ?",
     "editConfirmBody": "Réinitialise en Brouillon. Les ressources devront reconfirmer.",
     "editingTitle": "Modification : {ref}",

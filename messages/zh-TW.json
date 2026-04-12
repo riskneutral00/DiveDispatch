@@ -120,6 +120,10 @@
       "confirmed": "已確認",
       "vacated": "已釋出"
     },
+    "emptyStates": {
+      "noPendingRequests": "尚無待處理請求。",
+      "noResourcesAssigned": "尚未分配資源。"
+    },
     "editConfirmTitle": "編輯預約？",
     "editConfirmBody": "將重設為草稿。資源方需重新確認。",
     "editingTitle": "編輯中：{ref}",

@@ -6,7 +6,7 @@ import { useQuery, useMutation } from 'convex/react'
 import { ArrowLeft, Edit2, ShieldCheck, X } from 'lucide-react'
 import { api } from '@/lib/convex-generated'
 import type { Id } from '@/lib/convex-generated'
-import { Card, Button, EmptyState, IconButton, PageTitle, StatusBadge } from '@/components/ui'
+import { Card, Button, IconButton, NotFoundCard, PageTitle, StatusBadge } from '@/components/ui'
 import { DashboardPageFrame } from '@/components/layout/dashboard-page-frame'
 import { courseLabel } from '@/lib/constants/course-catalog'
 import { formatDateRange } from '@/lib/booking/booking-display'
@@ -48,13 +48,12 @@ export function BookingDetail({ bookingId }: BookingDetailProps) {
 
   if (booking === null) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6 gap-4">
-        <EmptyState message="Booking not found or you don't have access." />
-        <Button variant="secondary" onClick={() => router.push('/dashboard')}>
-          <ArrowLeft size={16} />
-          Back to Dashboard
-        </Button>
-      </div>
+      <NotFoundCard
+        href="/dashboard"
+        linkText="Back to Dashboard"
+        message="Booking not found or you don't have access."
+        minHeight="min-h-screen"
+      />
     )
   }
 

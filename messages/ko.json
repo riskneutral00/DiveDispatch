@@ -120,6 +120,10 @@
       "confirmed": "확정됨",
       "vacated": "해제됨"
     },
+    "emptyStates": {
+      "noPendingRequests": "대기 중인 요청이 없습니다.",
+      "noResourcesAssigned": "지정된 리소스가 없습니다."
+    },
     "editConfirmTitle": "예약을 편집하시겠습니까?",
     "editConfirmBody": "임시저장 상태로 초기화됩니다. 자원 담당자가 다시 확인해야 합니다.",
     "editingTitle": "편집 중: {ref}",

@@ -120,6 +120,10 @@
       "confirmed": "ยืนยันแล้ว",
       "vacated": "ยกเลิกการจอง"
     },
+    "emptyStates": {
+      "noPendingRequests": "ยังไม่มีคำขอที่รอดำเนินการ",
+      "noResourcesAssigned": "ยังไม่มีทรัพยากรที่กำหนด"
+    },
     "editConfirmTitle": "แก้ไขการจอง?",
     "editConfirmBody": "จะรีเซ็ตเป็นแบบร่าง ทรัพยากรต้องยืนยันใหม่",
     "editingTitle": "กำลังแก้ไข: {ref}",
