@@ -140,7 +140,7 @@ Required by `/matrix-github` and `/matrix-youtube` skills. Declares what the ski
 
 Design authority flows one direction:
 
-`Design.md` (human intent) → `/design` (interactive) → `MASTER.md` (technical spec) → `skins.ts` (runtime)
+`Design.md` (human intent) → `/design` (interactive) → `MASTER.md` (technical spec) → Convex theme seed + `src/themes/default-themes.ts` (runtime)
 
 - **`Design.md`** lives in Vault (`Vaults/DiveDispatch/Design.md`). Matt owns it. Captures brand vision, palette, metaphor.
 - **`MASTER.md`** is the canonical technical spec. `/design` evaluates and updates it.

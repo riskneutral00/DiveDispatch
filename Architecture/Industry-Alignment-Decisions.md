@@ -20,7 +20,7 @@
 - C9 complete. 10 highest-inline-insert test files migrated to `seedFixture.ts`. Portal + discard mutation component tests added.
 - C3 complete. `authorize(ctx, actor, action, resource, orgId?)` built in `convex/lib/auth.ts`. `relationships` table added to schema. Clerk Org configuration documented in `Architecture/clerk-org-config.md`. All ~65 mutation call sites across 26 files migrated. `themes.upsert` restricted from `checkHasAnyOperatorRole` to `authorize('theme:manage')`. Fallback mode preserves current behavior until Clerk Dashboard is configured. 4561 tests pass.
 
-- C2 SkinCommerce theme unification complete. `SKINS` → `DEFAULT_THEMES`/`OCEAN_DEFAULT`. ThemeProvider reads from Convex (`themes.getConfig` via `selectedThemeId`). localStorage caches theme for pre-auth cold start. `listStore` (unauthenticated) returns store metadata. `selectTheme` mutation writes `selectedThemeId`. Schema extended with `tier`/`price`/`previewUrl`. Seed writes proper `ThemeConfig` shape.
+- C2 SkinCommerce theme unification complete. Store skins are seeded from `convex/lib/defaultThemes.ts` (`DEFAULT_THEMES`); client bootstrap uses `BOOTSTRAP_FALLBACK_THEME` in `src/themes/default-themes.ts`. ThemeProvider reads from Convex (`themes.getConfig` via `selectedThemeId`). localStorage caches theme for pre-auth cold start. `listStore` (unauthenticated) returns store metadata. `selectTheme` mutation writes `selectedThemeId`. Schema extended with `tier`/`price`/`previewUrl` and `sortOrder`. Seed writes proper `ThemeConfig` shape.
 
 **Next:** ~60 raw buttons (C4) deferred to individual tickets. Clerk Dashboard manual configuration (C3 — documented, not yet applied).
 
@@ -109,8 +109,8 @@ DD leans Airbnb on 6 of 9 points. Three are Airbnb-primary with Uber-secondary.
   - [x] Fix seed config to match `ThemeConfig` type shape
   - [x] Wire `themes.getConfig` query into `ThemeProvider` (read `selectedThemeId` from authenticated user)
   - [x] Add `selectTheme` mutation (writes `selectedThemeId`)
-  - [x] `SKINS` → `DEFAULT_THEMES` / `OCEAN_DEFAULT` — `DEFAULT_THEMES` for seed, `OCEAN_DEFAULT` as bootstrap fallback in `ThemeProvider`
-  - [x] `BgSwitcher` reads from `listStore` (unauthenticated Convex query). `ThemeSwitcher` unchanged (mode toggle only).
+  - [x] `DEFAULT_THEMES` (Convex seed) + `BOOTSTRAP_FALLBACK_THEME` (client pre-auth fallback in `ThemeProvider`)
+  - [x] `BgSwitcher` reads from `listMySkins` (authenticated). `ThemeSwitcher` unchanged (mode toggle only).
   - [x] localStorage caches last-known theme for pre-auth cold start (avoids flash)
 - [x] **Store browsing ≠ theme rendering** (SkinCommerce):
   - [x] `listStore` returns metadata only (name, slug, tier, price, previewUrl)

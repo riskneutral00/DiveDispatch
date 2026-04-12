@@ -9,7 +9,7 @@ import { makeT } from "./helpers/convex-helpers";
 const MIN_CONFIG = JSON.stringify({ id: "t1", name: "T1" });
 
 describe("themes.listStoreByAppearance", () => {
-  it("returns active themes for the given appearance in canonical slug order", async () => {
+  it("returns active themes for the given appearance ordered by sortOrder then slug", async () => {
     const t = makeT();
     await t.run(async (ctx) => {
       await ctx.db.insert("themes", {
@@ -19,6 +19,7 @@ describe("themes.listStoreByAppearance", () => {
         isActive: true,
         createdAt: 100,
         appearance: "dark",
+        sortOrder: 0,
       });
       await ctx.db.insert("themes", {
         name: "D2",
@@ -27,6 +28,7 @@ describe("themes.listStoreByAppearance", () => {
         isActive: true,
         createdAt: 200,
         appearance: "dark",
+        sortOrder: 1,
       });
       await ctx.db.insert("themes", {
         name: "L1",

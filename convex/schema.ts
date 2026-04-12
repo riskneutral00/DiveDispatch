@@ -47,6 +47,8 @@ export default defineSchema({
     config: v.string(),
     isActive: v.boolean(),
     createdAt: v.number(),
+    /** Display / cycle order within the store; lower sorts first. Not a user-facing skin name. */
+    sortOrder: v.optional(v.number()),
     /** Which palette cycle list this skin belongs to (dark vs light); moon/sun mode picks the matching list. */
     appearance: v.optional(
       v.union(v.literal('dark'), v.literal('light')),

@@ -4,7 +4,7 @@ Before editing any visual property (color, spacing, sizing, radius, typography, 
 
 | Layer | What lives here | Change propagation | When to use |
 |---|---|---|---|
-| **CSS variables** (`globals.css`, `skins.ts`) | Colors, glass formulas, radii, z-index, type scale | All components, all pages, automatically | "All buttons should be bigger", "Change the primary color", "Increase border radius" |
+| **CSS variables** (`globals.css`, `default-themes.ts`, seeded theme JSON) | Colors, glass formulas, radii, z-index, type scale | All components, all pages, automatically | "All buttons should be bigger", "Change the primary color", "Increase border radius" |
 | **Component defaults** (`src/components/ui/*.tsx`) | Size variants, touch targets, internal spacing, variant styles | All instances of that component | "Buttons need more padding", "Inputs should have a different focus ring" |
 | **Page overrides** (`design-system/pages/*.md`) | Max-width, page-specific layout, section spacing | One page | "The profile page needs tighter spacing" |
 | **Instance className** (callsite) | Layout positioning only (`mt-4`, `w-full`, `flex-1`) | One element | Parent controlling child position — never visual properties |

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { DEFAULT_THEMES } from '../src/themes/default-themes'
+import { DEFAULT_THEMES } from '../convex/lib/defaultThemes'
 import { blendRgbaOverHex, contrastRatio } from '../src/themes/theme-utils'
 import type { ColorPalette } from '../src/themes/theme-types'
 

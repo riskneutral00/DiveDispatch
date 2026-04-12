@@ -1,4 +1,5 @@
 import { ThemeConfig } from "./theme-types";
+import { BG_GRADIENT_DARK, BG_GRADIENT_LIGHT } from "./background-gradients";
 
 export const GLASS_FORMULAS = {
   dark: {
@@ -102,17 +103,21 @@ const MOTION = {
   ambientAnimation: "none" as const,
 };
 
-export const OCEAN_DEFAULT: ThemeConfig = {
-  id: "ocean",
-  name: "Ocean",
-
+/**
+ * Pre-auth / invalid-cache fallback. Must stay aligned with seeded row `skin-light-0`
+ * (`convex/lib/defaultThemes.ts` — Harbor) and SSR `globals-theme.css` fallbacks.
+ */
+export const BOOTSTRAP_FALLBACK_THEME: ThemeConfig = {
+  id: "skin-light-0",
+  name: "Harbor",
+  appearance: "light",
   colors: {
     dark: {
-      primary: "#60a5fa",
-      secondary: "#60a5fa",
-      accent: "#60a5fa",
+      primary: "#0e7490",
+      secondary: "#0e7490",
+      accent: "#0e7490",
       textPrimary: "#ffffff",
-      textSecondary: "#c8c4c0",
+      textSecondary: "#a8a29e",
       textOnPrimary: "#000000",
       ...GLASS_FORMULAS.dark,
       success: "#34d399",
@@ -120,27 +125,26 @@ export const OCEAN_DEFAULT: ThemeConfig = {
       destructive: "#dc2626",
       statusActive: "#34d399",
       statusDraft: "#fbbf24",
-      statusUpcoming: "#60a5fa",
+      statusUpcoming: "#0e7490",
       statusCompleted: "#a78bfa",
       statusCancelled: "#a78bfa",
       statusUrgent: "#dc2626",
       statusBlocked: "#dc2626",
       statusMultidayBorder: "rgba(255, 255, 255, 0.7)",
-      primaryGlow: "rgba(96, 165, 250, 0.35)",
-      glassBorderHover: "rgba(96, 165, 250, 0.35)",
-      surface: "#111820",
-      surfaceElevated: "#1a2230",
-      bgImage: "url('/backgrounds/ocean-dark.jpg')",
-      bgPosition: "center 70%",
+      primaryGlow: "rgba(14, 116, 144, 0.35)",
+      glassBorderHover: "rgba(14, 116, 144, 0.35)",
+      surface: "#0c4a5e",
+      surfaceElevated: "#134e4a",
+      bgImage: BG_GRADIENT_DARK,
       bgOverlay:
-        "none",
+        "radial-gradient(ellipse 80% 60% at 50% 40%, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.6) 60%, rgba(0, 0, 0, 0.8) 100%)",
       bodyBg: "#000000",
       luminanceClass: "dark",
     },
     light: {
-      primary: "#2563eb",
-      secondary: "#3b82f6",
-      accent: "#3b82f6",
+      primary: "#0891b2",
+      secondary: "#0891b2",
+      accent: "#0891b2",
       textPrimary: "#1e3a5f",
       textSecondary: "#475569",
       textOnPrimary: "#ffffff",
@@ -150,20 +154,20 @@ export const OCEAN_DEFAULT: ThemeConfig = {
       destructive: "#dc2626",
       statusActive: "#059669",
       statusDraft: "#d97706",
-      statusUpcoming: "#2563eb",
+      statusUpcoming: "#0891b2",
       statusCompleted: "#7c3aed",
       statusCancelled: "#7c3aed",
       statusUrgent: "#dc2626",
       statusBlocked: "#dc2626",
       statusMultidayBorder: "rgba(0, 0, 0, 0.5)",
-      primaryGlow: "rgba(37, 99, 235, 0.20)",
-      glassBorderHover: "rgba(37, 99, 235, 0.25)",
-      surface: "#dbeafe",
-      surfaceElevated: "#eff6ff",
-      bgImage: "url('/backgrounds/ocean-light.jpg')",
+      primaryGlow: "rgba(8, 145, 178, 0.33)",
+      glassBorderHover: "rgba(8, 145, 178, 0.40)",
+      surface: "#d5f3f7",
+      surfaceElevated: "#ebfafc",
+      bgImage: BG_GRADIENT_LIGHT,
       bgOverlay:
         "radial-gradient(ellipse 80% 60% at 50% 50%, rgba(219, 234, 254, 0.4) 0%, rgba(219, 234, 254, 0.6) 60%, rgba(219, 234, 254, 0.75) 100%)",
-      bodyBg: "#dbeafe",
+      bodyBg: "#d5f3f7",
       luminanceClass: "bright",
     },
   },
@@ -173,7 +177,3 @@ export const OCEAN_DEFAULT: ThemeConfig = {
   shape: { ...SHAPE },
   motion: { ...MOTION },
 };
-
-export const LAGOON_DEFAULT = OCEAN_DEFAULT;
-
-export const DEFAULT_THEMES: ThemeConfig[] = [OCEAN_DEFAULT];

@@ -10,7 +10,7 @@
 
 **Calm authority.** The aesthetic of someone who knows the ocean intimately and doesn't need to prove it.
 
-**The background is the product.** Glass panels are lenses — barely-there containers that let users see through to the background. Backgrounds are sellable skins (eventually photos). Without a background image, glass is just a bordered box.
+**The background is the product.** Glass panels are lenses — barely-there containers that let users see through to the background. Backgrounds are sellable skins (CSS gradients today; optional photo assets later). Without a background layer (`--bg-image`), glass is just a bordered box.
 
 **Two modes.** Dark and Light. Each skin provides distinct palettes and backgrounds per mode. Glass stays transparent in both so the background is always visible.
 
@@ -18,7 +18,7 @@
 
 ## Color Palette
 
-> **Source of truth for values:** `src/themes/skins.ts` (palettes + glass formulas).
+> **Source of truth for values:** `convex/lib/defaultThemes.ts` (seeded store skins) and `src/themes/default-themes.ts` (`GLASS_FORMULAS` + client bootstrap).
 > **SSR fallbacks:** `src/app/globals.css` `:root` block.
 > This section documents token *names* and *purpose*. Do not duplicate hex values here — they drift.
 
@@ -37,7 +37,7 @@
 | `--color-surface-elevated` | Elevated panels, dropdown backgrounds |
 | `--body-bg` | Page background color |
 
-Each skin has **two palettes** (dark + light). Dark palettes typically use high-contrast text on deep backgrounds; light palettes use tinted monochromatic schemes. Values in `skins.ts`.
+Each skin has **two palettes** (dark + light). Dark palettes typically use high-contrast text on deep backgrounds; light palettes use tinted monochromatic schemes. Values live in seeded theme config JSON (`convex/lib/defaultThemes.ts`).
 
 ### Status Colors
 
@@ -535,7 +535,7 @@ All visible field labels MUST use `FieldLabel` from `field-shell.tsx`, or the bu
 
 ## Skin Anatomy
 
-Skins are defined in `src/themes/skins.ts` as `ThemeConfig[]` entries.
+Skins are persisted as `themes` rows (seeded from `convex/lib/defaultThemes.ts`) with `ThemeConfig` JSON per row.
 
 A skin bundles:
 
@@ -553,8 +553,8 @@ A skin bundles:
 
 Each skin has **two palettes** (dark + light), each with its own luminance class, background, and overlay. A skin's dark and light palettes may use different luminance classes (e.g., `"dark"` for a night palette, `"bright"` for a day palette). Glass formulas adjust automatically.
 
-Skin data: `src/themes/skins.ts` as `ThemeConfig[]`.
-Glass tiers: `GLASS_FORMULAS` in same file.
+Skin data: Convex `themes` table; seed definitions in `convex/lib/defaultThemes.ts`.
+Glass tiers: `GLASS_FORMULAS` in `src/themes/default-themes.ts`.
 Theme application: `ThemeProvider` injects CSS vars on `:root`.
 Contrast validation: `tests/skin-contrast.test.ts`.
 
@@ -602,7 +602,8 @@ A "dark" theme mode does not imply "dark" luminance class. A skin with a mid-ton
 | File | Role |
 |------|------|
 | `src/themes/theme-types.ts` | TypeScript interfaces (`ColorPalette`, `ThemeConfig`) |
-| `src/themes/skins.ts` | Skin definitions + `GLASS_FORMULAS` (source of truth) |
+| `convex/lib/defaultThemes.ts` | Seed theme JSON (store skins) |
+| `src/themes/default-themes.ts` | `GLASS_FORMULAS` + pre-auth bootstrap theme |
 | `src/themes/theme-utils.ts` | CSS variable generation + WCAG contrast utilities |
 | `src/themes/theme-provider.tsx` | React context, injects vars on `:root`, manages mode |
 | `src/app/globals.css` | CSS variable fallbacks, glass classes, hover behavior, field widths |
@@ -612,5 +613,5 @@ A "dark" theme mode does not imply "dark" luminance class. A skin with a mid-ton
 ---
 
 > Design spec — documents what the system *should* be, not an audit of what exists.
-> Token values live in code (`skins.ts`, `globals.css`). This file owns names, purpose, and rules.
+> Token values live in code (theme seed + `default-themes.ts`, `globals.css`). This file owns names, purpose, and rules.
 > Last updated: 2026-04-05.

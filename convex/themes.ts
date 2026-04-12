@@ -4,7 +4,7 @@ import { sanitizeFields, THEME_FIELDS } from './lib/sanitize'
 import { authorize } from './lib/auth'
 import { requireAuth } from './lib/auth'
 import { ErrorCode } from './lib/errorCodes'
-import { CANONICAL_SKIN_ORDER, STARTER_SLUGS } from './lib/themeStarters'
+import { compareThemeSortOrder } from './lib/themeOrdering'
 
 export const listActive = query({
   args: {},
@@ -45,14 +45,9 @@ export const listStoreByAppearance = query({
       )
       .take(100)
 
-    const orderMap = new Map(CANONICAL_SKIN_ORDER.map((slug, i) => [slug, i]))
-    themes.sort((a, b) => {
-      const ai = orderMap.get(a.slug) ?? 999
-      const bi = orderMap.get(b.slug) ?? 999
-      return ai - bi
-    })
+    const sorted = [...themes].sort(compareThemeSortOrder)
 
-    return themes.map((t) => ({
+    return sorted.map((t) => ({
       _id: t._id,
       name: t.name,
       slug: t.slug,
@@ -64,7 +59,7 @@ export const listStoreByAppearance = query({
   },
 })
 
-/** Returns the authenticated user's saved skins, ordered by canonical slug order. */
+/** Returns the authenticated user's saved skins, ordered by `sortOrder` then slug. */
 export const listMySkins = query({
   args: {},
   handler: async (ctx) => {
@@ -80,17 +75,13 @@ export const listMySkins = query({
     if (!user) return []
 
     let themeIds = user.savedThemeIds
-    // Fallback: if no savedThemeIds, look up starters by slug
     if (!themeIds || themeIds.length === 0) {
-      const starterThemes = await Promise.all(
-        STARTER_SLUGS.map(async (slug) =>
-          ctx.db
-            .query('themes')
-            .withIndex('by_slug', (q) => q.eq('slug', slug))
-            .unique(),
-        ),
-      )
-      themeIds = starterThemes.filter(Boolean).map((t) => t!._id)
+      const active = await ctx.db
+        .query('themes')
+        .withIndex('by_isActive', (q) => q.eq('isActive', true))
+        .take(200)
+      const sorted = [...active].sort(compareThemeSortOrder)
+      themeIds = sorted.map((t) => t._id)
     }
 
     const themes = await Promise.all(
@@ -100,13 +91,7 @@ export const listMySkins = query({
       (t): t is NonNullable<typeof t> => t !== null && t.isActive,
     )
 
-    // Sort by canonical skin order
-    const orderMap = new Map(CANONICAL_SKIN_ORDER.map((slug, i) => [slug, i]))
-    active.sort((a, b) => {
-      const ai = orderMap.get(a.slug) ?? 999
-      const bi = orderMap.get(b.slug) ?? 999
-      return ai - bi
-    })
+    active.sort(compareThemeSortOrder)
 
     return active.map((t) => ({
       _id: t._id,

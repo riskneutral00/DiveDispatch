@@ -4,13 +4,13 @@ import { NextIntlClientProvider } from 'next-intl'
 import enMessages from '../../messages/en.json'
 import { ThemeContext } from '@/themes/theme-provider'
 import { type ThemeContextValue } from '@/themes/theme-types'
-import { OCEAN_DEFAULT } from '@/themes/default-themes'
+import { BOOTSTRAP_FALLBACK_THEME } from '@/themes/default-themes'
 import { ConvexProvider, ConvexReactClient } from 'convex/react'
 
 const stubClient = new ConvexReactClient('https://stub.convex.cloud')
 
 const stubTheme: ThemeContextValue = {
-  theme: OCEAN_DEFAULT,
+  theme: BOOTSTRAP_FALLBACK_THEME,
   mode: 'dark',
   setMode: () => {},
   selectTheme: () => {},

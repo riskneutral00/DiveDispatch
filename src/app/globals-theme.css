@@ -13,10 +13,10 @@
      CSS order. See Architecture/design-system-invariants.md
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* ── Theme fallbacks (Lagoon light — default skin, pre-hydration SSR safety) ─
+/* ── Theme fallbacks (Harbor light — bootstrap skin, pre-hydration SSR safety) ─
    ThemeProvider injects live values at runtime. These ensure the page renders
    correctly before JS hydrates (SSR, no-JS, flash prevention).
-   Matches default `selectedThemeId` / Lagoon `appearance: light`.
+   Align with seeded `skin-light-0` and `<html data-theme="skin-light-0">`.
    ──────────────────────────────────────────────────────────────────────────── */
 :root {
   /* Breakpoints — must match src/themes/breakpoints.ts and Tailwind `sm` / `md` */
@@ -118,11 +118,17 @@
   --opacity-subtle: 0.1;
   --opacity-muted: 0.7;
 
-  /* Background — photo skin */
-  --bg-image: url("/backgrounds/lagoon.jpg");
-  /* Pre-hydration: small-screen branch (`cover`) — ThemeProvider sets large-screen `auto` when vw >= breakpoint */
+  /* Background — gradient shell (no static JPEG; see src/themes/background-gradients.ts) */
+  --bg-image: linear-gradient(
+    to bottom,
+    #ecfeff 0%,
+    #e0f7fa 25%,
+    #d5f3f7 55%,
+    #c4eef5 85%,
+    #b8e8f2 100%
+  );
   --bg-size: cover;
-  /* Readability tint over photo — must stay in sync with theme `--bg-overlay` when set */
+  /* Readability tint — align with theme `--bg-overlay` when set */
   --bg-overlay: radial-gradient(
     ellipse 92% 70% at 50% 50%,
     rgba(221, 252, 255, 0.26) 0%,
@@ -176,7 +182,7 @@
   --color-glass-dialog-border: rgba(0, 0, 0, 0.12);
   --glass-dialog-blur: 28px;
 
-  /* Status colors — SSR fallbacks (Lagoon light).
+  /* Status colors — SSR fallbacks (Harbor light bootstrap).
      Runtime values injected by ThemeProvider per luminance class.
      Derived -bg / -border / badge / alert / calendar tokens: globals-status-derived.css (generated).
      IMPORTANT: Do NOT add these bases to @theme inline. Tailwind's self-referential

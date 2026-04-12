@@ -66,10 +66,10 @@ function DevSwitcherInner() {
   const [open, setOpen] = useState(false)
   const [switching, setSwitching] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const panelRef = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   const closePanel = useCallback(() => setOpen(false), [])
-  useClickOutside(panelRef, closePanel, open)
+  useClickOutside(containerRef, closePanel, open)
   useEffect(() => {
     if (!open) return
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -124,18 +124,13 @@ function DevSwitcherInner() {
         </div>
       )}
 
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="fixed bottom-4 right-4 z-[var(--z-dropdown)] flex items-center gap-1.5 rounded-full px-3 py-1.5 text-label font-medium shadow-lg glass text-primary"
-        style={{ transition: 'opacity var(--transition-speed)' }}
+      <div
+        ref={containerRef}
+        className="fixed bottom-4 right-4 z-[var(--z-dropdown)]"
       >
-        <Bug className="h-3.5 w-3.5" />
-        <span>{user?.firstName ?? 'Dev'}</span>
-      </button>
-
-      {open && (
-        <div ref={panelRef} className="fixed bottom-12 right-4 z-[var(--z-dropdown)] w-80">
-          <Card padding="none" overflow="hidden">
+        {open && (
+          <div className="absolute bottom-full right-0 z-10 mb-2 w-80">
+            <Card padding="none" overflow="hidden">
             <div
               className="px-4 py-2 text-label font-semibold border-b text-secondary border-glass-border"
             >
@@ -207,8 +202,19 @@ function DevSwitcherInner() {
               })}
             </div>
           </Card>
-        </div>
-      )}
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="relative flex items-center gap-1.5 rounded-full px-3 py-1.5 text-label font-medium shadow-lg glass text-primary"
+          style={{ transition: 'opacity var(--transition-speed)' }}
+        >
+          <Bug className="h-3.5 w-3.5" />
+          <span>{user?.firstName ?? 'Dev'}</span>
+        </button>
+      </div>
     </>
   )
 }

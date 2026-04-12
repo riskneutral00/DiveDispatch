@@ -42,7 +42,7 @@ describe("Glass token compliance", () => {
 
   it("no hardcoded rgba() glass values in component files", () => {
     // Match rgba(...) that is NOT inside a var() fallback — i.e. bare rgba values
-    // We allow rgba inside var(--xxx, rgba(...)) fallbacks from skins.ts but
+    // We allow rgba inside var(--xxx, rgba(...)) fallbacks from theme palettes but
     // the goal is zero bare rgba in components used for glass styling.
     //
     // Pattern: rgba( not preceded by ", " (which is a var() fallback separator)

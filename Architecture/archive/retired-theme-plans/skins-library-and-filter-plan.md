@@ -1,7 +1,8 @@
+> **Archived 2026-04-11.** Historical planning only. Superseded by neutral skin slugs and `themes.sortOrder` (see `.sisyphus/plans/remove-retired-theme-name-references.md`). Do not treat as current architecture.
+
 ---
 name: Skins library and filter
 overview: Split Ocean into Abyss + Marble, four starters (savedThemeIds), appearance filter (moon), default active skin Lagoon + light mode, STARTER_SLUGS + load sync polish, dev-only, docs same PR.
-# Last plan sync: 2026-04-11 — see "Authoritative update" below (vault mirror).
 todos:
   - id: schema-themes-users
     content: Add themes.appearance, users.savedThemeIds; listMySkins + add/remove + guarded selectTheme
@@ -26,46 +27,11 @@ isProject: false
 
 # Skinned library, appearance filter, and Ocean removal
 
-## Authoritative update (2026-04-11)
-
-This section consolidates decisions so the repo, vault, and ultraplan stay aligned before implementation.
-
-### Naming: Ocean split (two conceptual skins → two rows)
-
-| Legacy / mental model | New slug | `themes.appearance` | Notes |
-|----------------------|----------|---------------------|--------|
-| **ocean-dark** (former Ocean `colors.dark` + dark art) | **abyss** | `dark` | Single dark starter for v1. |
-| **ocean-light** (former Ocean `colors.light` + light art) | **marble** | `light` | Split from same dual-palette Ocean JSON as today. |
-| (already in product / DB) | **lagoon** | `light` | **Default** `selectedThemeId` and default shell; assets e.g. `public/backgrounds/lagoon.jpg`. |
-| (already in product / DB) | **desert** | `light` | Light starter alongside Marble and Lagoon. |
-
-**Invariant:** at least **one** `dark` and **three** `light` starters; starters are not removable in v1 (per earlier decisions).
-
-### What sun/moon is (correction vs older wording in this file)
-
-- **Sun/moon** = **skin-family filter** only: which **`appearance`** bucket the UI is browsing (**light-list** vs **dark-list**). It is **not** “flip `colors.dark` vs `colors.light` inside the same skin row.”
-- Each **skin row** is **single-sided**: one primary palette in `config` (implementation will move toward **one palette per `ThemeConfig`**, not dual branches toggled by UI mode).
-- **[`themeToVars`](../../src/themes/theme-utils.ts)** must eventually inject CSS vars from **the selected skin’s palette alone**; filter change **swaps which theme id is active** (and thus which JSON), not which branch of one Ocean-sized blob.
-
-If any paragraph below still reads like OS “dark mode” or token-branch switching for one skin, treat this section as overriding it.
-
-### Repo ground truth (DiveDispatch)
-
-- **Convex:** [`themes.appearance`](../../convex/schema.ts) + index `by_isActive_appearance` already exist; **`users.savedThemeIds`** is **not** in schema yet (planned in this document).
-- **Seed** ([`convex/seed.ts`](../../convex/seed.ts)): still inserts a **single** `ocean` row (dual palette in one `config`) — **to be replaced** by idempotent upserts for **abyss, marble, lagoon, desert** and migration off `ocean`.
-- **Assets present** in repo: `public/backgrounds/abyss.jpg`, `marble.jpg`, `lagoon.jpg`, `desert.jpg`.
-
-### Superseded / conflicting doc
-
-- **[`Architecture/Skins-Appearance-v2-Plan.md`](../../Vaults/DiveDispatch/Architecture/Skins-Appearance-v2-Plan.md)** (Obsidian vault) proposed **`selectedDarkThemeId` / `selectedLightThemeId`**. Current product direction is **library + `savedThemeIds` + single `selectedThemeId`** and filter semantics above; **do not implement v2 dual columns** unless product explicitly revives “remember per mode” via schema rather than client index persistence.
-
----
-
 ## Goal
 
 - **Four starter skins** (no “Ocean” in UI or slugs): **Abyss** (ex–Ocean dark art/tokens), **Marble** (ex–Ocean light art/tokens), **Desert**, **Lagoon**.
 - **Palette control** ([`BgSwitcher`](src/components/layout/bg-switcher.tsx)): cycles only skins that are **saved on the account** and match the **current appearance filter** (`dark` | `light`).
-- **Moon / sun control** ([`ThemeSwitcher`](src/components/layout/theme-switcher.tsx)): **skin-family filter** (`dark` vs `light` **appearance** bucket). Vocabulary: **light** and **dark** for that filter only. It does **not** mean “toggle token branches inside one skin.” Keep `ThemeMode` aligned with the filter; **vars come from the active skin row’s config**, not from picking `colors.dark` vs `colors.light` by mode on one row (see Authoritative update).
+- **Moon / sun control** ([`ThemeSwitcher`](src/components/layout/theme-switcher.tsx)): this is the **light vs dark filter** for which skins appear in the palette cycle (correct vocabulary: **light** and **dark** only). It is **not** a second axis beside the skins; `ThemeMode` stays aligned with this filter so [`themeToVars`](src/themes/theme-utils.ts) applies the right palette.
 - **Per-user library**: `savedThemeIds` on [`users`](convex/schema.ts); **default** = all four starters; **future** catalog skins are opt-in via **add** and **removable**. **The four default skins cannot be removed** (for now), guaranteeing at least **one dark** (Abyss) and **three light** starters in every library.
 
 ## Decisions (gap fill — confirmed)

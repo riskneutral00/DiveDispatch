@@ -13,7 +13,7 @@ import {
 import { useConvexAuth, useMutation, useQuery } from "convex/react";
 import { api } from "@/lib/convex-generated";
 import { loadGoogleFonts } from "./theme-loader";
-import { LAGOON_DEFAULT } from "./default-themes";
+import { BOOTSTRAP_FALLBACK_THEME } from "./default-themes";
 import { ThemeConfig, ThemeContextValue, ThemeMode } from "./theme-types";
 import {
   clearInjectedVars,
@@ -23,7 +23,8 @@ import {
   themeToVars,
 } from "./theme-utils";
 
-const CACHE_KEY = "divedispatch-theme-cache";
+/** Bumped when bootstrap ThemeConfig shape changes (e.g. JPEG → gradient) so stale cache cannot reference removed assets. */
+const CACHE_KEY = "divedispatch-theme-cache-v2";
 const MODE_KEY = "divedispatch-theme-pref";
 
 export const ThemeContext = createContext<ThemeContextValue | null>(null);
@@ -37,14 +38,14 @@ export function useTheme(): ThemeContextValue {
 }
 
 function loadCachedTheme(): ThemeConfig {
-  if (typeof window === "undefined") return LAGOON_DEFAULT;
+  if (typeof window === "undefined") return BOOTSTRAP_FALLBACK_THEME;
   const raw = localStorage.getItem(CACHE_KEY);
-  if (!raw) return LAGOON_DEFAULT;
+  if (!raw) return BOOTSTRAP_FALLBACK_THEME;
 
   try {
     return JSON.parse(raw) as ThemeConfig;
   } catch {
-    return LAGOON_DEFAULT;
+    return BOOTSTRAP_FALLBACK_THEME;
   }
 }
 

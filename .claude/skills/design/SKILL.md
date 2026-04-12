@@ -34,7 +34,7 @@ Read these sources in order before acting:
 
 Use this authority chain throughout the session:
 
-`Design.md` → `/design` → `design-system/MASTER.md` → `skins.ts`
+`Design.md` → `/design` → `design-system/MASTER.md` → Convex theme seed + `src/themes/default-themes.ts`
 
 Page overrides layer on top of `MASTER.md`. Route-specific override wins on conflict.
 

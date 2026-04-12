@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { GLASS_FORMULAS, DEFAULT_THEMES } from '../../src/themes/default-themes'
+import { GLASS_FORMULAS } from '../../src/themes/default-themes'
+import { DEFAULT_THEMES } from '../../convex/lib/defaultThemes'
 import type { ColorPalette } from '../../src/themes/theme-types'
 
 describe('GLASS_FORMULAS structural invariants', () => {

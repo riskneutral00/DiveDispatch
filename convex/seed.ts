@@ -8,7 +8,12 @@ import type { OperatorType } from './shared/operatorTypes'
 import { queryDynamicTable, deleteDynamic } from './lib/typedDb'
 import { ALL_STAKEHOLDERS, SeedStakeholder, StakeholderRole, UNOWNED_DIVE_SITES, type SeedInventoryLine } from './seedData'
 import { insertLiveaboard, insertDiveResort } from './sketchTableGuards'
-import { OCEAN_DEFAULT, DEFAULT_THEMES as STARTER_THEME_CONFIGS_IN_ORDER } from './lib/defaultThemes'
+import {
+  DEFAULT_SELECTED_THEME_SLUG,
+  RETIRED_THEME_SLUGS,
+  SEED_THEME_SPECS,
+  themeConfigForSeedSpec,
+} from './lib/defaultThemes'
 import { ALL_INSTRUCTORS } from './seedInstructorData'
 import {
   ALL_GEAR_SIZING,
@@ -611,20 +616,20 @@ export const patchTokenIdentifiers = internalMutation({
 export const seedDefaultTheme = internalMutation({
   args: {},
   handler: async (ctx) => {
-    // 1. Upsert the four starter skins
-    for (const config of STARTER_THEME_CONFIGS_IN_ORDER) {
-      const slug = config.id
+    for (const spec of SEED_THEME_SPECS) {
+      const config = themeConfigForSeedSpec(spec)
       const existing = await ctx.db
         .query('themes')
-        .withIndex('by_slug', (q) => q.eq('slug', slug))
+        .withIndex('by_slug', (q) => q.eq('slug', spec.slug))
         .unique()
       const row = {
-        name: config.name,
-        slug,
+        name: spec.name,
+        slug: spec.slug,
         config: JSON.stringify(config),
         isActive: true,
-        appearance: config.appearance as 'dark' | 'light',
+        appearance: spec.appearance,
         tier: 'free' as const,
+        sortOrder: spec.sortOrder,
       }
       if (existing) {
         await ctx.db.patch(existing._id, row)
@@ -636,50 +641,45 @@ export const seedDefaultTheme = internalMutation({
       }
     }
 
-    // 2. Delete all ocean rows (handles duplicates)
-    const oceanRows = await ctx.db
-      .query('themes')
-      .withIndex('by_isActive', (q) => q.eq('isActive', true))
-      .take(100)
-    for (const row of oceanRows) {
-      if (row.slug === 'ocean') {
-        await ctx.db.delete(row._id)
+    for (const slug of RETIRED_THEME_SLUGS) {
+      const legacy = await ctx.db
+        .query('themes')
+        .withIndex('by_slug', (q) => q.eq('slug', slug))
+        .unique()
+      if (legacy) {
+        await ctx.db.delete(legacy._id)
       }
     }
 
-    // 3. Resolve starter theme IDs for savedThemeIds
-    const lagoon = await ctx.db
+    const defaultTheme = await ctx.db
       .query('themes')
-      .withIndex('by_slug', (q) => q.eq('slug', 'lagoon'))
+      .withIndex('by_slug', (q) => q.eq('slug', DEFAULT_SELECTED_THEME_SLUG))
       .unique()
-    if (!lagoon) {
-      throw new Error('seedDefaultTheme: lagoon theme missing after upsert')
+    if (!defaultTheme) {
+      throw new Error(`seedDefaultTheme: missing default slug ${DEFAULT_SELECTED_THEME_SLUG}`)
     }
 
     const orderedIds = await Promise.all(
-      STARTER_THEME_CONFIGS_IN_ORDER.map(async (c) => {
+      SEED_THEME_SPECS.map(async (spec) => {
         const t = await ctx.db
           .query('themes')
-          .withIndex('by_slug', (q) => q.eq('slug', c.id))
+          .withIndex('by_slug', (q) => q.eq('slug', spec.slug))
           .unique()
-        if (!t) throw new Error(`seedDefaultTheme: missing ${c.id}`)
+        if (!t) throw new Error(`seedDefaultTheme: missing ${spec.slug}`)
         return t._id
       }),
     )
 
-    // 4. Patch all users: set savedThemeIds and migrate ocean → lagoon
+    const retired = new Set<string>([...RETIRED_THEME_SLUGS])
+
     const allUsers = await ctx.db.query('users').take(5000)
     for (const user of allUsers) {
       let selected = user.selectedThemeId
-      // If selected theme is missing or was an ocean row, default to lagoon
-      if (!selected) {
-        selected = lagoon._id
-      } else {
-        const selectedTheme = await ctx.db.get(selected)
-        if (!selectedTheme) {
-          selected = lagoon._id
-        }
+      const selectedDoc = selected ? await ctx.db.get(selected) : null
+      if (!selectedDoc || retired.has(selectedDoc.slug)) {
+        selected = defaultTheme._id
       }
+
       await ctx.db.patch(user._id, {
         savedThemeIds: orderedIds,
         selectedThemeId: selected,

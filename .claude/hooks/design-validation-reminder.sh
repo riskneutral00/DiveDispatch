@@ -9,8 +9,9 @@ FILE_PATH=$(echo "$INPUT" | jq -r '.tool_input.file_path // .tool_input.path // 
 # Check if this is a design system file
 IS_DESIGN=false
 case "$FILE_PATH" in
-  */themes/skins.ts) IS_DESIGN=true ;;
-  */themes/default-theme.ts) IS_DESIGN=true ;;
+  */themes/default-themes.ts) IS_DESIGN=true ;;
+  */themes/background-gradients.ts) IS_DESIGN=true ;;
+  */convex/lib/defaultThemes.ts) IS_DESIGN=true ;;
   */components/glass/glass-*.tsx) IS_DESIGN=true ;;
   */src/app/globals.css) IS_DESIGN=true ;;
   */design-system/*.md) IS_DESIGN=true ;;

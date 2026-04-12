@@ -7,12 +7,12 @@
 
 ### Contrast and readability (tiers)
 
-Automated tests and manual QA are split into **reference stacks** (solid surfaces → glass-on-body approximation → per-skin photo/overlay). See **`design-system/MASTER.md`** — *Accessibility* / *Contrast validation reference stacks* — and `tests/skin-contrast.test.ts`. Feature code must not assume “if Tier 1 passes, every skin is readable on JPEG backgrounds”; Tier 3–4 are design-time and visual QA.
+Automated tests and manual QA are split into **reference stacks** (solid surfaces → glass-on-body approximation → per-skin background/overlay). See **`design-system/MASTER.md`** — *Accessibility* / *Contrast validation reference stacks* — and `tests/skin-contrast.test.ts`. Feature code must not assume “if Tier 1 passes, every skin is readable on every background treatment (gradients, future photos, etc.)”; Tier 3–4 are design-time and visual QA.
 
-### Layer 1: CSS Variables (globals.css + skins)
+### Layer 1: CSS Variables (globals.css + runtime theme tokens)
 Skin-switchable values. Changing a skin changes every visual property that flows through tokens.
 
-**Background sizing:** `--bg-size` is either (a) static from palette `bgSize`, or (b) **responsive** when `bgResponsiveBreakpoint` (px) is set: below that viewport width use `bgSizeSmallScreens` (default `cover`), at/above use `bgSizeLargeScreens` (default `auto`). **ThemeProvider** merges the result after measuring `window.innerWidth`. Default threshold when omitted matches Tailwind **`md`** (`768px`, `BREAKPOINT_MD_PX` in `src/themes/breakpoints.ts`). **Lagoon** and **Desert** set `768` explicitly; **Abyss** and **Marble** omit it and default to `cover`. Legacy themes without these fields behave as full-bleed `cover`.
+**Background sizing:** `--bg-size` is either (a) static from palette `bgSize`, or (b) **responsive** when `bgResponsiveBreakpoint` (px) is set: below that viewport width use `bgSizeSmallScreens` (default `cover`), at/above use `bgSizeLargeScreens` (default `auto`). **ThemeProvider** merges the result after measuring `window.innerWidth`. Default threshold when omitted matches Tailwind **`md`** (`768px`, `BREAKPOINT_MD_PX` in `src/themes/breakpoints.ts`). Individual palettes may set `768` on `bgResponsiveBreakpoint` explicitly; when omitted, responsive large-screen `auto` does not apply and the stack behaves as full-bleed `cover`. Legacy themes without these fields behave as full-bleed `cover`.
 
 **Layout breakpoints:** `:root` in `globals-theme.css` defines `--breakpoint-sm`, `--breakpoint-md`, and `--breakpoint-below-sm` (px). Values must match `src/themes/breakpoints.ts` and Tailwind’s default `sm` / `md` scale. Hand-written `@media` in `globals-utilities.css` / `globals-surfaces.css` uses literal `640px` / `639px` / `768px` (same numbers; production CSS optimizers do not accept `var()` inside `@media`). Application chrome (nav, modal shell vs content density, twilight 640–767) is specified in **`design-system/MASTER.md`** (Mobile-First Sizing).
 

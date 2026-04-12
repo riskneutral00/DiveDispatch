@@ -36,7 +36,7 @@ vi.mock("@/themes/theme-utils", async (importOriginal) => {
   };
 });
 
-import { LAGOON_DEFAULT } from "@/themes/default-themes";
+import { BOOTSTRAP_FALLBACK_THEME } from "@/themes/default-themes";
 import { ThemeProvider } from "@/themes/theme-provider";
 
 describe("ThemeProvider", () => {
@@ -80,9 +80,9 @@ describe("ThemeProvider", () => {
     expect(screen.getByText("theme child")).toBeInTheDocument();
 
     await waitFor(() => {
-      expect(mockThemeToVars).toHaveBeenCalledWith(LAGOON_DEFAULT);
+      expect(mockThemeToVars).toHaveBeenCalledWith(BOOTSTRAP_FALLBACK_THEME);
       expect(document.documentElement.getAttribute("data-theme")).toBe(
-        LAGOON_DEFAULT.id,
+        BOOTSTRAP_FALLBACK_THEME.id,
       );
     });
   });

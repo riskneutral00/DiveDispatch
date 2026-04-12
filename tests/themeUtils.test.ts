@@ -234,18 +234,18 @@ describe('resolveResponsiveBgSize', () => {
 
 describe('mergeResponsiveBackgroundSizeIntoVars', () => {
   it('sets --bg-size from viewport for responsive palettes', () => {
-    const lagoonPalette = {
+    const responsivePalette = {
       ...palette,
       bgResponsiveBreakpoint: 768,
       bgSizeSmallScreens: 'cover',
       bgSizeLargeScreens: 'auto',
     }
     const theme: ThemeConfig = {
-      id: 'lagoon',
-      name: 'Lagoon',
+      id: 'skin-light-0',
+      name: 'Harbor',
       appearance: 'light',
       colors: {
-        palette: lagoonPalette,
+        palette: responsivePalette,
         dark: palette,
       },
       typography: {
