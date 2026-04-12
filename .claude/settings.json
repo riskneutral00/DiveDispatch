@@ -190,6 +190,12 @@
           },
           {
             "type": "command",
+            "command": "bash .claude/hooks/unbounded-query-guard.sh",
+            "timeout": 5,
+            "statusMessage": "Checking query bounds…"
+          },
+          {
+            "type": "command",
             "command": "bash .claude/hooks/skeleton-stale-reminder.sh",
             "timeout": 5,
             "statusMessage": "Checking skeleton freshness…"
@@ -250,9 +256,39 @@
           },
           {
             "type": "command",
+            "command": "bash .claude/hooks/auth-gateway-guard.sh",
+            "timeout": 5,
+            "statusMessage": "Checking auth gateway usage…"
+          },
+          {
+            "type": "command",
             "command": "bash .claude/hooks/error-shape-guard.sh",
             "timeout": 5,
             "statusMessage": "Checking ConvexError shape…"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/convex-error-guard.sh",
+            "timeout": 5,
+            "statusMessage": "Checking structured errors…"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/empty-catch-guard.sh",
+            "timeout": 5,
+            "statusMessage": "Checking empty catch blocks…"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/playwright-wait-guard.sh",
+            "timeout": 5,
+            "statusMessage": "Checking Playwright wait patterns…"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/weak-assertion-guard.sh",
+            "timeout": 5,
+            "statusMessage": "Checking test assertion strength…"
           },
           {
             "type": "command",

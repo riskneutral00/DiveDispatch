@@ -17,7 +17,7 @@ esac
 
 # Allow canonical FSM files and test files
 case "$FILE_PATH" in
-  */bookings/status.ts|*/bookings/stateMachine.ts|*/bookings/autoAdvance.ts|*/shared/statuses.ts|*.test.*|*.spec.*|*/_generated/*|*/seed*) exit 0 ;;
+  */bookings/status.ts|*/bookings/stateMachine.ts|*/shared/statuses.ts|*.test.*|*.spec.*|*/_generated/*|*/seed*) exit 0 ;;
 esac
 
 # Strip commented lines and fsm-ok suppressed lines

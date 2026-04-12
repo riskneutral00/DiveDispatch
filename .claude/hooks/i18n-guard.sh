@@ -52,6 +52,13 @@ if grep -qE "toast\.(success|error)\(\`" "$FILE_PATH" 2>/dev/null; then
   ISSUES="${ISSUES}\n- Template literal in toast message. Use t('key', { variable }) for translatable text."
 fi
 
+# 6. Hardcoded user-facing string constants in .ts files (TOAST/ERROR/TITLE/LABEL/MESSAGE suffixes)
+MATCHES=$(grep -nE "^export const [A-Z_]+_(TOAST|ERROR|TITLE|LABEL|MESSAGE|WARNING)[ ]*=[ ]*['\"]" "$FILE_PATH" 2>/dev/null | grep -v 'i18n-ok')
+if [ -n "$MATCHES" ]; then
+  SAMPLE=$(echo "$MATCHES" | head -3 | tr '\n' '|')
+  ISSUES="${ISSUES}\n- Hardcoded user-facing string constant(s) detected: ${SAMPLE}. Move text to messages/*.json and call useTranslations() at the consumer. If non-user-facing (internal marker), annotate with '// i18n-ok: non-user-facing'."
+fi
+
 if [ -n "$ISSUES" ]; then
   # Escape for JSON
   ESCAPED=$(echo -e "$ISSUES" | sed 's/"/\\"/g' | tr '\n' ' ')
