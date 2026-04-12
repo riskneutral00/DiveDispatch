@@ -184,14 +184,13 @@ Performance, side effects, and test quality audit.
 
 ---
 
-## Phase 4: Finding Escalation
+## Phase 4: Return Findings
 
-For each **CRITICAL** and **HIGH** finding:
+**Do NOT invoke `/escalate` directly.** `/gate` is the single escalator. This skill returns findings; the caller aggregates and escalates.
 
-1. Invoke `/escalate` with source `review-backend-mutations` and the list of CRITICAL/HIGH findings. `/escalate` creates `.tickets/DD-*.md` for CRITICAL and HIGH findings and logs MEDIUM/LOW to `.backseat/findings.md`.
-2. Pass all MEDIUM/LOW findings to `/escalate` for logging (not ticketing).
-3. If a finding is CRITICAL/HIGH but cannot be expressed as a test (e.g., "add Promise.all"), demote it to MEDIUM before passing to `/escalate`.
-4. TDD priority ordering: untested side effects > test drift > N+1 > weak assertions > hardcoded dates
+Emit structured findings: `{ skill, findings: [{ severity, file, line, summary, proposed_fix, cannot_test? }] }`. Include all severities.
+
+TDD priority ordering (for caller's display): untested side effects > test drift > N+1 > weak assertions > hardcoded dates.
 
 ---
 

@@ -164,13 +164,13 @@ Auth, security, ownership, portal tokens, role gates, mutation consistency, and 
 
 ---
 
-## Phase 4: Finding Escalation
+## Phase 4: Return Findings
 
-For each **CRITICAL** and **HIGH** finding:
+**Do NOT invoke `/escalate` directly.** `/gate` is the single escalator. Return findings; the caller aggregates and escalates.
 
-1. Invoke `/escalate` with source `review-backend-auth` and the list of CRITICAL/HIGH findings. `/escalate` creates `.tickets/DD-*.md` for CRITICAL and HIGH findings and logs MEDIUM/LOW to `.backseat/findings.md`.
-2. Pass all MEDIUM/LOW findings to `/escalate` for logging (not ticketing).
-3. If a finding is CRITICAL/HIGH but cannot be expressed as a test (e.g., "add a role check"), include the spec for the test that would verify the check exists in the escalation.
+Emit structured findings: `{ skill, findings: [{ severity, file, line, summary, proposed_fix, test_spec? }] }`. Include all severities.
+
+For CRITICAL/HIGH that cannot be expressed as a test (e.g., "add a role check"), include `test_spec` describing the test that would verify the check exists — the caller may translate to a test-first ticket.
 
 ---
 

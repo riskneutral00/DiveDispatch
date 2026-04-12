@@ -15,14 +15,14 @@ case "$FILE_PATH" in
 esac
 
 case "$FILE_PATH" in
-  *.test.*|*.spec.*|*/convex/*|*/_generated/*|*node_modules*|*/themes/*|*/globals.css*) exit 0 ;;
+  *.test.*|*.spec.*|*/convex/*|*/_generated/*|*node_modules*|*/src/themes/*|*/design-system/themes/*|*/globals.css*) exit 0 ;;
 esac
 
 CLEAN=$(grep -vE '^\s*//' "$FILE_PATH" 2>/dev/null | grep -v 'design-ok')
 
 WARNINGS=""
 
-# 1. Spacing inversion: unprefixed value > prefixed value
+# 1. Spacing inversion: unprefixed value > prefixed value — BLOCKING
 # Catches patterns like p-6 sm:p-4, p-8 md:p-6, gap-6 sm:gap-4, m-6 sm:m-4
 while IFS= read -r line; do
   [ -z "$line" ] && continue
@@ -35,7 +35,8 @@ while IFS= read -r line; do
       UNPREFIXED_VAL=$(echo "$UNPREFIXED" | grep -oE '[0-9]+$')
       PREFIXED_VAL=$(echo "$PREFIXED" | grep -oE '[0-9]+$')
       if [ "$UNPREFIXED_VAL" -gt "$PREFIXED_VAL" ] 2>/dev/null; then
-        WARNINGS="${WARNINGS}[spacing-inversion] '${UNPREFIXED}' > '${PREFIXED}' — mobile spacing must be ≤ desktop. "
+        echo "{\"decision\":\"block\",\"reason\":\"Spacing inversion '${UNPREFIXED}' > '${PREFIXED}' — mobile must be ≤ desktop. See .claude/rules/spacing-tokens.md. Add {/* design-ok */} to suppress.\"}"
+        exit 0
       fi
     fi
   fi

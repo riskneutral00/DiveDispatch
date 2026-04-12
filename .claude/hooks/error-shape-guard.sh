@@ -19,13 +19,13 @@ case "$FILE_PATH" in
   *.test.*|*.spec.*|*/_generated/*) exit 0 ;;
 esac
 
-# Strip commented lines
-CLEAN=$(grep -vE '^\s*//' "$FILE_PATH" 2>/dev/null)
+# Strip commented lines + error-shape-ok suppression
+CLEAN=$(grep -vE '^\s*//' "$FILE_PATH" 2>/dev/null | grep -v 'error-shape-ok')
 
 # Check for ConvexError with message: field
 if echo "$CLEAN" | grep -qE 'ConvexError\(\{[^}]*\bmessage:'; then
   LINE=$(echo "$CLEAN" | grep -nE 'ConvexError\(\{[^}]*\bmessage:' | head -1 | cut -d: -f1)
-  echo "{\"decision\":\"block\",\"reason\":\"ConvexError uses { code, reason }, not { code, message } (line ${LINE}). See Architecture/error-invariants.md Rule 1.\"}"
+  echo "{\"decision\":\"block\",\"reason\":\"ConvexError uses { code, reason }, not { code, message } (line ${LINE}). See Architecture/error-invariants.md Rule 1. Escape: '// error-shape-ok: <reason>' on the offending line.\"}"
   exit 0
 fi
 

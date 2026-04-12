@@ -1,6 +1,6 @@
 ---
 name: gate
-description: "Pre-commit quality gate. Classifies changes, dispatches review skills, sweeps invariants, detects test gaps, produces GO/NO-GO verdict with CRITICAL/HIGH counts. On NO-GO, auto-fixes fixable findings (max 2 cycles) before reporting. Writes .patrol-ran sentinel. Run before /vault."
+description: "Pre-commit quality gate. Dispatches review skills + invariant sweep, aggregates findings, invokes /escalate once, auto-fixes fixable CRITICAL/HIGH (max 2 cycles). Emits .patrol-ran sentinel. Single escalator — review-* skills return findings only."
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Skill, Agent
 user-invocable: true
 ---
@@ -72,6 +72,7 @@ if [ -f .vitest-last-pass ] && [ $(( $(date +%s) - $(cat .vitest-last-pass) )) -
 | `schema` | `convex/schema.ts` |
 | `backend` | `convex/**/*.ts` excluding `convex/schema.ts` and `convex/_generated/**` |
 | `frontend` | `src/app/**`, `src/components/**`, `src/lib/**`, `design-system/**` |
+| `ui-primitives` | `src/components/ui/**` (subset of frontend — dispatches the variant audit on top of the general frontend review) |
 | `tests` | `tests/**`, `e2e/**`, any `*.test.ts` or `*.spec.ts` |
 | `config` | `package.json`, `tailwind.config.*`, `tsconfig.*`, `next.config.*`, `.env*` |
 
@@ -83,7 +84,8 @@ A file can land in multiple buckets.
 |--------|-------------------|
 | `schema` | `/review-backend-schema` |
 | `backend` | `/review-backend-mutations`, `/review-backend-auth` |
-| `frontend` | No automated skill — PostToolUse hooks + invariant sweep cover structural checks. Use `/design` interactively for visual review. |
+| `frontend` | `/review-frontend-dry` — cross-file duplicate utilities, local type aliases, leftover tokenizable inline styles, raw buttons, dialog-literal i18n leaks |
+| `ui-primitives` | `/review-ui-variants` — when `src/components/ui/**` changed: detect missing variants (className overrides for visual properties) |
 | `tests` | `/review-tests` |
 | `config` | No skill — note in output |
 
@@ -129,8 +131,13 @@ Possible skills (only those in `skillsToDispatch`):
 - `/review-backend-auth`
 - `/review-backend-mutations`
 - `/review-tests`
+- `/review-prerequisite-gates`
+- `/review-frontend-dry`
+- `/review-ui-variants`
 
-After dispatched skills complete, collect each skill's CRITICAL/HIGH/MEDIUM/LOW counts from its final output line. Merge with cached `skillResults` from the sentinel for the full picture.
+**Review skills return findings only — they do NOT invoke `/escalate`.** `/gate` is the single escalator; it aggregates findings in Phase 6 and calls `/escalate` once.
+
+After dispatched skills complete, collect each skill's CRITICAL/HIGH/MEDIUM/LOW findings + the full finding list (file, line, severity, summary, proposed fix) from its structured output. Merge with cached `skillResults` from the sentinel for the full picture.
 
 ---
 
@@ -255,7 +262,7 @@ Ready for /vault: {YES or NO}
 - **GO** → No CRITICAL or HIGH findings. Verdict = `CLEAN` or `CLEAN_UNREVIEWED` (if unreviewed merges exist).
 
 **If GO** → skip to Write Sentinel.
-**If NO-GO** → fall through to Phase 7 (Auto-Fix Loop).
+**If NO-GO** → pass the aggregated CRITICAL + HIGH + MEDIUM + LOW findings to `/escalate` in a single call (source: `gate`, reviewers: list of skills that fired). `/escalate` handles the CRITICAL/HIGH → ticket + MEDIUM/LOW → vault log split. Then fall through to Phase 7 (Auto-Fix Loop).
 
 ---
 

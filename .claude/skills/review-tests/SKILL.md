@@ -260,14 +260,13 @@ Last assessment: {date from most recent vault report, or 'never'}
 
 ---
 
-## Phase 3.5b — Finding Escalation
+## Phase 3.5b — Return Findings
 
-For each **CRITICAL** and **HIGH** finding that is actionable (fixable, not just reportable):
+**Do NOT invoke `/escalate` directly.** `/gate` is the single escalator. Return findings; the caller aggregates and escalates.
 
-1. Invoke `/escalate` with source `review-tests` and the list of CRITICAL/HIGH findings. `/escalate` creates `.tickets/DD-*.md` for CRITICAL and HIGH findings and logs MEDIUM/LOW to `.backseat/findings.md`.
-2. Pass all MEDIUM/LOW findings to `/escalate` for logging (not ticketing).
-3. Hardcoded dates, `as any` bypasses, stale imports, assertion-free tests → include fix description in escalation payload.
-4. Skip findings already covered by existing tickets in `.tickets/`.
+Emit structured findings: `{ skill, findings: [{ severity, file, line, summary, proposed_fix }] }`. Include all severities.
+
+Hardcoded dates, `as any` bypasses, stale imports, assertion-free tests → include fix description in `proposed_fix`. Skip findings already covered by existing tickets in `.tickets/`.
 
 ---
 

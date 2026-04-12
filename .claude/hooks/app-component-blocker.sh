@@ -48,7 +48,11 @@ esac
 # Block everything else
 case "$FILE_PATH" in
   *.tsx|*.ts)
-    echo "{\"decision\":\"block\",\"reason\":\"Component file '${BASENAME}' cannot be created in src/app/. Reusable components belong in src/components/. Route-local wrappers go in a _lib/ subdirectory.\"}"
+    LOG_FILE=".claude/logs/pretooluse-blocks.log"
+    mkdir -p .claude/logs 2>/dev/null
+    REASON="Component file '${BASENAME}' cannot be created in src/app/. Reusable components belong in src/components/. Route-local wrappers go in a _lib/ subdirectory."
+    printf '%s\tapp-component-blocker\t%s\t%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$FILE_PATH" "$REASON" >> "$LOG_FILE" 2>/dev/null
+    echo "{\"decision\":\"block\",\"reason\":\"$REASON\"}"
     ;;
 esac
 

@@ -1,6 +1,6 @@
 ---
 name: post-spec
-description: "Fully autonomous ticket execution pipeline. Reads ready tickets, plans cross-ticket execution, implements with TDD, spawns independent review, commits per ticket, vaults. Replaces the Car flow (driver/backseat/patrol). Resume-aware with baseline tag rollback."
+description: "Autonomous ticket execution. Picks ready tickets, TDDs them, spawns independent review, commits per ticket, vaults. Resume-aware."
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Agent, Skill
 user-invocable: true
 model: opus

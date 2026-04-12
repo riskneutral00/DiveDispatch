@@ -229,44 +229,6 @@ updated: {today}
 
 List all tickets with `status: backlog`, sorted by priority then id.
 
-### Car Status Line
-
-Before printing the board, check Car team state. Only show if `.car/` directory exists.
-
-Gather:
-1. **Queue counts:** Count `.json` files in `merged/`, `reviewed/`, `fixes/`. Also count `.json.processing` files (in-flight).
-2. **Processed count:** Count files in `processed/`.
-3. **Agent heartbeats:** For each of `driver`, `backseat`, `patrol` — check `.car/heartbeat-{agent}` file age in seconds. Mark ✓ if <60s, ✗({N}s) if stale, ? if no file.
-4. **Oldest event age:** Find the oldest `.json` file in `merged/` and `reviewed/`. Age in seconds.
-5. **Patrol verdict:** Read `.patrol-ran` JSON for `verdict` field.
-
-Print one status line followed by a pipeline block if any tickets are in-flight:
-
-```
-Car: {status} | D{hb} B{hb} P{hb} | {PROCESSED} processed
-  Driver:   DD-{NNN} [P{X}] {title} ...          ← in_progress tickets (from ticket files)
-  Backseat: DD-{NNN}, DD-{NNN}                   ← filenames in .car/merged/*.json
-  Patrol:   DD-{NNN}                             ← filenames in .car/reviewed/*.json
-```
-
-Only print pipeline rows that have tickets. If all three are empty, omit the pipeline block. Ticket IDs come from:
-- **Driver:** `status: in_progress` ticket files (`assigned_to` field confirms)
-- **Backseat:** `.car/merged/DD-{NNN}.json` filenames (extract the DD-NNN part)
-- **Patrol:** `.car/reviewed/DD-{NNN}.json` filenames (extract the DD-NNN part)
-
-For Driver row: show ID + priority + title (truncated to 50 chars). For Backseat/Patrol: IDs only.
-
-Status line formats:
-- **STALL** (any event age >600s, OR `.processing` file exists with agent heartbeat >60s):
-  `Car: STALL — {filename} waiting {N}m | D✓ B✗(62s) P✓ | 175 processed`
-- **IN-FLIGHT** (`.processing` files exist, heartbeat OK):
-  `Car: {PENDING} pending ({MERGED}→BS, {REVIEWED}→PT, {PROCESSING} in-flight) | D✓ B✓ P✓ | 175 processed`
-- `PENDING > 0` → `Car: {PENDING} pending ({MERGED}→BS, {REVIEWED}→PT) | D✓ B✓ P✓ | 175 processed`
-- `PENDING = 0 && VERDICT = CLEAN` → `Car: done — ready for /vault | D✓ B✓ P✓ | 175 processed`
-- `PENDING = 0 && VERDICT = BLOCKED` → `Car: done — BLOCKED, run /gate | D✓ B✓ P✓ | 175 processed`
-- `PENDING = 0 && VERDICT = none` → `Car: idle | D? B? P? | 175 processed`
-- No `.car/` dir → omit line entirely
-
 ## Rules
 
 - **Execute immediately.** No preamble.

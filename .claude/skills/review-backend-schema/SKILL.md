@@ -192,13 +192,21 @@ Schema, indexes, data integrity, invariants, and vault drift audit.
 
 ---
 
-## Phase 5: Finding Escalation
+## Phase 5: Return Findings
 
-For each **CRITICAL** and **HIGH** finding:
+**Do NOT invoke `/escalate` directly.** `/gate` is the single escalator — this skill returns findings and the caller aggregates across all reviewers before one `/escalate` call.
 
-1. Invoke `/escalate` with source `review-backend-schema` and the list of CRITICAL/HIGH findings. `/escalate` creates `.tickets/DD-*.md` for CRITICAL and HIGH findings and logs MEDIUM/LOW to `.backseat/findings.md`.
-2. Pass all MEDIUM/LOW findings to `/escalate` for logging (not ticketing).
-3. If a finding is CRITICAL/HIGH but cannot be expressed as a test (e.g., "add an index"), demote it to MEDIUM before passing to `/escalate`.
+Emit findings in structured form:
+```
+{
+  skill: "review-backend-schema",
+  findings: [
+    { severity: "CRITICAL|HIGH|MEDIUM|LOW", file, line, summary, proposed_fix, cannot_test?: true }
+  ]
+}
+```
+
+Include CRITICAL, HIGH, MEDIUM, LOW. `cannot_test: true` flags findings the caller may want to downgrade (e.g., "add an index").
 
 ---
 

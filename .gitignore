@@ -82,6 +82,8 @@ next-env.d.ts
 
 # claude code
 .claude/session.md
+.claude/logs/
+.claude/scheduled_tasks.lock
 .playwright-mcp/
 
 # screenshots

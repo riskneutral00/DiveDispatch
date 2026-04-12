@@ -83,10 +83,11 @@ if echo "$CLEAN" | grep -qE '\bduration-(75|100|150|200|300|500|700|1000)\b'; th
   exit 0
 fi
 
-# 4. Hardcoded z-index (raw numbers instead of CSS variable scale)
+# 4. Hardcoded z-index (raw numbers instead of CSS variable scale) — BLOCKING
 if echo "$CLEAN" | grep -qE "\bz-[0-9]+\b"; then
   MATCH=$(echo "$CLEAN" | grep -oE "\bz-[0-9]+\b" | head -1)
-  WARNINGS="${WARNINGS}[z-index] '${MATCH}' — use z-[var(--z-sticky)], z-[var(--z-dropdown)], z-[var(--z-modal)], etc. "
+  echo "{\"decision\":\"block\",\"reason\":\"Hardcoded z-index '${MATCH}' detected. Use z-[var(--z-sticky)], z-[var(--z-dropdown)], z-[var(--z-modal)], etc. Add {/* design-ok */} to suppress for debug/prototyping.\"}"
+  exit 0
 fi
 
 # 5. Unprefixed multi-column grid (mobile should be single column)
@@ -117,13 +118,9 @@ if echo "$CLEAN" | grep -qE 'hover:brightness|hover:scale'; then
   exit 0
 fi
 
-# 9. Backward spacing (mobile tighter than desktop is wrong)
-if echo "$CLEAN" | grep -qE "\bp-(5|6|8)\s+(sm|md):p-(3|4)\b"; then
-  echo '{"decision":"block","reason":"Backward spacing detected (desktop padding smaller than mobile). Spacing must be additive — mobile is the tightest. See .claude/rules/spacing-tokens.md. Add {/* design-ok */} to suppress."}'
-  exit 0
-fi
+# 9. (Consolidated) Spacing inversion — owned by mobile-viewport-check.sh.
 
-# 9. Fixed pixel widths on interactive elements (warning only)
+# 10. Fixed pixel widths on interactive elements (warning only)
 if echo "$CLEAN" | grep -iE '(button|btn|input|select)' | grep -qE "\bw-\[[0-9]+px\]"; then
   WARNINGS="${WARNINGS}[mobile] Fixed pixel width on interactive element — use w-full, percentage, or field-width classes. "
 fi

@@ -15,3 +15,6 @@ Use `ItemCard` for any removable card in a list (credentials, routes, fleet entr
 
 ## DayToggleGroup for day-of-week selection
 Use `DayToggleGroup` from `ui/day-toggle-group.tsx`. Never hand-roll day toggle buttons with inline styles.
+
+## Profile form state extends BaseProfileSectionProps
+Every `src/components/profiles/*-profile-form.tsx` must extend `BaseProfileSectionProps` from `@/lib/profile-form/types`. No local `type *FormState = ContactFormState & {...}` aliases — that's duplication of a canonical shape. Enforced by `local-type-alias-guard.sh` PostToolUse hook.

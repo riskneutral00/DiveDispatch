@@ -41,7 +41,20 @@ if (!files.includes("en.json")) {
 const reference = loadJson("en.json");
 const refFlat = new Set(flattenKeys(reference));
 
+const namespacesPath = join(__dirname, "..", "src", "i18n", "namespaces.ts");
+const namespacesSrc = readFileSync(namespacesPath, "utf8");
+const canonicalNs = [...namespacesSrc.matchAll(/"([a-z]+)"/g)].map((m) => m[1]).sort();
+const enNs = Object.keys(reference).sort();
+
 let failed = false;
+
+if (JSON.stringify(canonicalNs) !== JSON.stringify(enNs)) {
+  failed = true;
+  console.error("\nnamespace drift between src/i18n/namespaces.ts and messages/en.json:");
+  console.error("  canonical:", canonicalNs.join(", "));
+  console.error("  en.json:  ", enNs.join(", "));
+}
+
 for (const file of files) {
   if (file === "en.json") continue;
   const data = loadJson(file);
@@ -57,8 +70,8 @@ for (const file of files) {
 }
 
 if (failed) {
-  console.error("\ni18n:verify FAILED — align all locale files with messages/en.json");
+  console.error("\ni18n:verify FAILED — align all locale files with messages/en.json and namespaces.ts");
   process.exit(1);
 }
 
-console.log(`i18n:verify OK (${files.length} locales, ${refFlat.size} leaf keys)`);
+console.log(`i18n:verify OK (${files.length} locales, ${refFlat.size} leaf keys, ${canonicalNs.length} namespaces)`);

@@ -46,6 +46,27 @@ case "$FILE_PATH" in
     if echo "$CLEAN" | grep -qE "color:\s*['\"]var\(--color-text-secondary\)['\"]"; then
       WARNINGS="${WARNINGS}[token] color: var(--color-text-secondary) — use className=\"text-secondary\". "
     fi
+    if echo "$CLEAN" | grep -qE "color:\s*['\"]var\(--color-text-on-primary\)['\"]"; then
+      WARNINGS="${WARNINGS}[token] color: var(--color-text-on-primary) — use className=\"text-on-primary\". "
+    fi
+    if echo "$CLEAN" | grep -qE "color:\s*['\"]var\(--color-success\)['\"]"; then
+      WARNINGS="${WARNINGS}[token] color: var(--color-success) — use className=\"text-success\". "
+    fi
+    if echo "$CLEAN" | grep -qE "color:\s*['\"]var\(--color-warning\)['\"]"; then
+      WARNINGS="${WARNINGS}[token] color: var(--color-warning) — use className=\"text-warning\". "
+    fi
+    if echo "$CLEAN" | grep -qE "color:\s*['\"]var\(--color-destructive\)['\"]"; then
+      WARNINGS="${WARNINGS}[token] color: var(--color-destructive) — use className=\"text-destructive\". "
+    fi
+    if echo "$CLEAN" | grep -qE "color:\s*['\"]var\(--color-accent\)['\"]"; then
+      WARNINGS="${WARNINGS}[token] color: var(--color-accent) — use className=\"text-accent\". "
+    fi
+    if echo "$CLEAN" | grep -qE "background:\s*['\"]var\(--color-glass-bg\)['\"]"; then
+      WARNINGS="${WARNINGS}[token] background: var(--color-glass-bg) — use className=\"bg-glass-bg\". "
+    fi
+    if echo "$CLEAN" | grep -qE "background:\s*['\"]var\(--color-surface\)['\"]"; then
+      WARNINGS="${WARNINGS}[token] background: var(--color-surface) — use className=\"bg-surface\". "
+    fi
     if echo "$CLEAN" | grep -qE "background:\s*['\"]var\(--color-surface-elevated\)['\"]"; then
       WARNINGS="${WARNINGS}[token] background: var(--color-surface-elevated) — use className=\"bg-surface-elevated\". "
     fi

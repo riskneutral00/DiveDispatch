@@ -67,6 +67,8 @@ Violations block commit via PostToolUse mobile-viewport-check hook.
 
 Import direction: adapters import from core and shared. Core imports from shared and lib. The `notify()` call from core into `notifications.ts` is a deliberate fire-and-forget side effect, not a dependency on notification state.
 
+**FSM is universal.** Any `ctx.db.patch(_, { status })` on a booking, reservation, or equipment bag must route through a canonical transition function (`canBookingTransition`, `canReservationTransition`, `canBagTransition`) — prefer the `assert*Transition` wrappers in `convex/lib/fsm.ts`. This rule applies to adapters (`equipment*.ts`) and core alike. `fsm-status-guard.sh` blocks the pattern at edit time. See `Architecture/fsm-invariants.md`.
+
 ## Proxy (not Middleware)
 
 Next.js 16 renamed `middleware.ts` → `proxy.ts`. Auth proxy lives at `src/proxy.ts`. **Never create `src/middleware.ts`** — it conflicts and crashes the dev server. `.gitignore` blocks it.

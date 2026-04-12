@@ -13,7 +13,11 @@ esac
 # Block any other CSS-family file
 case "$FILE_PATH" in
   *.css|*.module.css|*.scss|*.sass|*.less)
-    echo '{"decision":"block","reason":"CSS file creation blocked. Only src/app/globals.css is allowed. Use Tailwind classes + CSS variables from design-system/MASTER.md."}'
+    LOG_FILE=".claude/logs/pretooluse-blocks.log"
+    mkdir -p .claude/logs 2>/dev/null
+    REASON="CSS file creation blocked. Only src/app/globals.css is allowed. Use Tailwind classes + CSS variables from design-system/MASTER.md."
+    printf '%s\tcss-file-blocker\t%s\t%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$FILE_PATH" "$REASON" >> "$LOG_FILE" 2>/dev/null
+    echo "{\"decision\":\"block\",\"reason\":\"$REASON\"}"
     ;;
 esac
 

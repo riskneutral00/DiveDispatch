@@ -17,31 +17,31 @@ esac
 
 # Allow canonical FSM files and test files
 case "$FILE_PATH" in
-  */bookings/status.ts|*/bookings/stateMachine.ts|*/shared/statuses.ts|*.test.*|*.spec.*|*/_generated/*|*/seed*) exit 0 ;;
+  */bookings/status.ts|*/bookings/stateMachine.ts|*/lib/fsm.ts|*/shared/statuses.ts|*.test.*|*.spec.*|*/_generated/*|*/seed*) exit 0 ;;
 esac
 
 # Strip commented lines and fsm-ok suppressed lines
 CLEAN=$(grep -vE '^\s*//' "$FILE_PATH" 2>/dev/null | grep -v 'fsm-ok')
 
-# Check for status: assignment with a booking/reservation status constant.
+# Check for status: assignment with a booking/reservation/bag status constant.
 # Uses a 3-line window around .patch( calls to catch multiline patches.
 # Single-line check: any line with both .patch( and status:
-if echo "$CLEAN" | grep -qE '\.patch\(.*status:\s*(BOOKING_STATUS|RESERVATION_STATUS)'; then
-  echo '{"decision":"block","reason":"Direct status patch detected outside canonical FSM files. All status transitions must go through canBookingTransition/canReservationTransition. See Architecture/fsm-invariants.md Rule 1. Add '\''// fsm-ok'\'' to suppress if the callsite is guarded. → If this is a new transition, update the FSM in bookings/status.ts first."}'
+if echo "$CLEAN" | grep -qE '\.patch\(.*status:\s*(BOOKING_STATUS|RESERVATION_STATUS|BAG_STATUS)'; then
+  echo '{"decision":"block","reason":"Direct status patch detected outside canonical FSM files. All status transitions must go through canBookingTransition/canReservationTransition/canBagTransition (use assert* helpers in convex/lib/fsm.ts). See Architecture/fsm-invariants.md. Add '\''// fsm-ok'\'' to suppress if the callsite is guarded. → If this is a new transition, update the FSM in bookings/stateMachine.ts first."}'
   exit 0
 fi
 
 # Multi-line check: status: assignment on its own line within a .patch() block.
 # Must be a property assignment (status: VALUE) not a query filter (.eq('status', VALUE)).
 # Look for lines starting with whitespace + status: followed by a status constant.
-if echo "$CLEAN" | grep -qE '^\s+status:\s*(BOOKING_STATUS|RESERVATION_STATUS)\.' ; then
+if echo "$CLEAN" | grep -qE '^\s+status:\s*(BOOKING_STATUS|RESERVATION_STATUS|BAG_STATUS)\.' ; then
   # Verify it's in a .patch() context (preceded by .patch within 3 lines) — not .eq( or .query(
-  LINES_WITH_STATUS=$(echo "$CLEAN" | grep -nE '^\s+status:\s*(BOOKING_STATUS|RESERVATION_STATUS)\.' | cut -d: -f1)
+  LINES_WITH_STATUS=$(echo "$CLEAN" | grep -nE '^\s+status:\s*(BOOKING_STATUS|RESERVATION_STATUS|BAG_STATUS)\.' | cut -d: -f1)
   for LINE_NUM in $LINES_WITH_STATUS; do
     START=$((LINE_NUM > 3 ? LINE_NUM - 3 : 1))
     CONTEXT=$(echo "$CLEAN" | sed -n "${START},${LINE_NUM}p")
     if echo "$CONTEXT" | grep -qE '\.(patch|replace)\('; then
-      echo '{"decision":"block","reason":"Direct status patch detected outside canonical FSM files (line '"$LINE_NUM"'). All status transitions must go through canBookingTransition/canReservationTransition. See Architecture/fsm-invariants.md Rule 1. Add '\''// fsm-ok'\'' to suppress if the callsite is guarded. → If this is a new transition, update the FSM in bookings/status.ts first."}'
+      echo '{"decision":"block","reason":"Direct status patch detected outside canonical FSM files (line '"$LINE_NUM"'). All status transitions must go through canBookingTransition/canReservationTransition/canBagTransition (use assert* helpers in convex/lib/fsm.ts). See Architecture/fsm-invariants.md. Add '\''// fsm-ok'\'' to suppress if the callsite is guarded. → If this is a new transition, update the FSM in bookings/stateMachine.ts first."}'
       exit 0
     fi
   done

@@ -380,12 +380,13 @@ describe('prerequisite gate: Instructor — credential depth', () => {
 
 ---
 
-## Phase 6: Finding Escalation
+## Phase 6: Return Findings
 
-For each **CRITICAL** and **HIGH** finding:
+**Do NOT invoke `/escalate` directly.** `/gate` is the single escalator. Return findings; the caller aggregates and escalates.
 
-1. Invoke `/escalate` with source `review-prerequisite-gates` and the list of CRITICAL/HIGH findings. `/escalate` creates `.tickets/DD-*.md` for CRITICAL and HIGH findings and logs MEDIUM/LOW to `.backseat/findings.md`.
-2. Include the following detail in each escalation payload:
+Emit structured findings: `{ skill, findings: [{ severity, file, line, summary, proposed_fix, test_spec }] }`. Include all severities.
+
+For each CRITICAL/HIGH, include a `test_spec` with this shape (the caller's `/escalate` call translates it into a failing-test-first ticket):
 
 ```markdown
 #### H{N}: {Role} — {field} prerequisite gate bypass
@@ -397,8 +398,6 @@ For each **CRITICAL** and **HIGH** finding:
 - [ ] {field} empty → `createDraftShell` throws `PROFILE_INCOMPLETE`.
 - [ ] (if depth gap) {field} with partial content (e.g., 4/5 specialties) → completeness < 100%.
 ```
-
-3. Pass all MEDIUM/LOW findings to `/escalate` for logging (not ticketing).
 
 ---
 

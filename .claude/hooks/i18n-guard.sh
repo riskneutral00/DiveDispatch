@@ -40,11 +40,9 @@ if grep -qE "from ['\"]@/lib/constants/error-messages['\"]" "$FILE_PATH" 2>/dev/
 fi
 
 # 4. Prop-drilled translation labels (common anti-pattern indicators)
-if grep -qE "savedLabel|saveLabel|doneLabel|notRequiredLabel" "$FILE_PATH" 2>/dev/null; then
-  # Exclude type definitions and interface props (those are the component accepting, not drilling)
-  if grep -vE '^\s*(//|/?\*|\*|interface|type |export type)' "$FILE_PATH" | grep -qE '(savedLabel|doneLabel|notRequiredLabel)=\{t'; then
-    ISSUES="${ISSUES}\n- Prop-drilling translated strings detected. Sub-components should call useTranslations() directly."
-  fi
+# Narrow: only flag when value is a t() call passed as a prop — not when the name appears in types or comments.
+if grep -vE '^\s*(//|/?\*|\*|interface|type |export type)' "$FILE_PATH" 2>/dev/null | grep -qE '\b(savedLabel|saveLabel|doneLabel|notRequiredLabel)=\{\s*t\('; then
+  ISSUES="${ISSUES}\n- Prop-drilling translated strings detected. Sub-components should call useTranslations() directly."
 fi
 
 # 5. String concatenation patterns for user-facing text (template literals with toast/error)

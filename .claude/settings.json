@@ -238,6 +238,24 @@
           },
           {
             "type": "command",
+            "command": "bash .claude/hooks/date-formatter-guard.sh",
+            "timeout": 5,
+            "statusMessage": "Checking date formatter duplication…"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/dialog-title-i18n.sh",
+            "timeout": 5,
+            "statusMessage": "Checking dialog i18n…"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/local-type-alias-guard.sh",
+            "timeout": 5,
+            "statusMessage": "Checking local type alias drift…"
+          },
+          {
+            "type": "command",
             "command": "bash .claude/hooks/style-classname-boundary.sh",
             "timeout": 5,
             "statusMessage": "Checking style↔className boundary…"
@@ -343,6 +361,18 @@
             "command": "bash .claude/hooks/raw-button-blocker.sh",
             "timeout": 5,
             "statusMessage": "Checking raw button usage…"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/anyctx-guard.sh",
+            "timeout": 5,
+            "statusMessage": "Checking for AnyCtx / as any…"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/tdd-guard.sh",
+            "timeout": 5,
+            "statusMessage": "Checking TDD — sibling test exists…"
           }
         ]
       }

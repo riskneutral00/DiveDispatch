@@ -76,11 +76,14 @@ case "$FILE_PATH" in
 esac
 
 # Inline ownership check in convex/
+# Only flag mutation-style assertions (throw). Query read-filters that short-circuit
+# with `return null` are legitimate and should not be rewritten to use assertOwnership.
 case "$FILE_PATH" in
   */convex/*)
-    if grep -qE "ownerId !== user\.slug" "$FILE_PATH" 2>/dev/null; then
+    # Match `ownerId !== user.slug` lines that throw. Skip `return null` patterns.
+    if grep -E "ownerId !== user\.slug" "$FILE_PATH" 2>/dev/null | grep -qE "throw|Error"; then
       if ! grep -q "assertOwnership\|requireOwnerOrResourceAccess" "$FILE_PATH" 2>/dev/null; then
-        DUPES="${DUPES}inline ownership check (canonical: assertOwnership or requireOwnerOrResourceAccess from convex/lib/auth), "
+        DUPES="${DUPES}inline ownership check that throws (canonical: assertOwnership or requireOwnerOrResourceAccess from convex/lib/auth), "
       fi
     fi
     ;;

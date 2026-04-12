@@ -20,14 +20,18 @@ case "$FILE_PATH" in
       fi
       rm -f "$SENTINEL"
     fi
-    echo '{"decision":"block","reason":"Direct ticket creation is not allowed. Use /spec (supports pre-researched mode when you already have a plan). Authorized agent skills (ticket-create, escalate, board) set .tickets/.spec-authorized before writing."}'
+    LOG_FILE=".claude/logs/pretooluse-blocks.log"
+    mkdir -p .claude/logs 2>/dev/null
+    REASON="Direct ticket creation is not allowed. Use /spec (supports pre-researched mode when you already have a plan). Authorized agent skills (ticket-create, escalate, board) set .tickets/.spec-authorized before writing."
+    printf '%s\tspec-guard\t%s\t%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$FILE_PATH" "$REASON" >> "$LOG_FILE" 2>/dev/null
+    echo "{\"decision\":\"block\",\"reason\":\"$REASON\"}"
     exit 0
     ;;
 esac
 
 exit 0
 
-# TEST: touch .tickets/.spec-authorized && echo '{"tool_input":{"file_path":".tickets/DD-999.md"}}' | bash spec-guard.sh; echo $?
+# TEST: touch .tickets/.spec-authorized-test && echo '{"tool_input":{"file_path":".tickets/DD-999.md"}}' | bash spec-guard.sh; rm -f .tickets/.spec-authorized-test; echo $?
 # Expected: no block (sentinel consumed), exits 0
 # TEST: echo '{"tool_input":{"file_path":".tickets/DD-999.md"}}' | bash spec-guard.sh; echo $?
 # Expected: block message output, exits 0

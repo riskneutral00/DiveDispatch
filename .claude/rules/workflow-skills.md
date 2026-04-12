@@ -6,7 +6,7 @@ description: Skill execution, ticket workflow, and pipeline behavioral rules
 When a skill is invoked, do the thing. Don't explain, prompt, or review config. Skills are buttons, not documentation pages.
 
 ## Skills are either user-invocable or agent-dispatched
-User-invocable skills (`/board`, `/spec`, `/vault`, `/post-spec`, etc.) are triggered by Matt typing the command. Agent-dispatched skills (`diff-classify`, `escalate`, etc.) are called by agents via `Skill()`. Both are valid — neither is "dead code."
+User-invocable skills (`/board`, `/spec`, `/vault`, `/post-spec`, etc.) are triggered by Matt typing the command. Agent-dispatched skills (`escalate`, `ticket-create`, etc.) are called by agents via `Skill()`. Both are valid — neither is "dead code."
 
 ## Skills are conversational agents
 Interactive skills (spec, design, QA) spawn agents with the skill's knowledge baked in. Reserve one-shot execution for non-dialogue skills (gate, vault, post-spec).
