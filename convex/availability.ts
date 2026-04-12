@@ -509,7 +509,7 @@ export const pruneBlockedDates = internalMutation({
   args: {},
   handler: async (ctx): Promise<number> => {
     const today = todayISO()
-    const allDocs = await ctx.db.query('stakeholderBlockedDates').take(BLOCKED_DATES_LIMIT)
+    const allDocs = await ctx.db.query('stakeholderBlockedDates').take(BLOCKED_DATES_LIMIT) // bounded: daily cron, full scan; row-per-date refactor would enable index but is out of scope
 
     let prunedCount = 0
 

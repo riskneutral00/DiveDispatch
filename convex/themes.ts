@@ -59,7 +59,6 @@ export const listStoreByAppearance = query({
   },
 })
 
-/** Returns the authenticated user's saved skins, ordered by `sortOrder` then slug. */
 export const listMySkins = query({
   args: {},
   handler: async (ctx) => {
@@ -131,7 +130,7 @@ export const byId = query({
 export const selectTheme = mutation({
   args: { themeId: v.id('themes') },
   handler: async (ctx, args) => {
-    const { user } = await requireAuth(ctx)
+    const { user } = await requireAuth(ctx) // auth-ok: self-operation; patch targets caller's own user record only
     const theme = await ctx.db.get(args.themeId)
     if (!theme) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
     await ctx.db.patch(user._id, { selectedThemeId: args.themeId })
@@ -180,7 +179,6 @@ export const upsert = mutation({
   },
 })
 
-/** Dev-only: backfill missing appearance on theme rows. */
 export const backfillMissingAppearance = internalMutation({
   args: { defaultAppearance: v.union(v.literal('dark'), v.literal('light')) },
   handler: async (ctx, { defaultAppearance }) => {
@@ -190,7 +188,7 @@ export const backfillMissingAppearance = internalMutation({
       .take(100)
     for (const t of all) {
       if (!t.appearance) {
-        await ctx.db.patch(t._id, { appearance: defaultAppearance })
+        await ctx.db.patch(t._id, { appearance: defaultAppearance }) // batch-exempt: dev-only backfill, bounded to 100
       }
     }
   },

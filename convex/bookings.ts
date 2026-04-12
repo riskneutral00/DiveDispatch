@@ -336,7 +336,7 @@ export async function _myDashboard(
 
   const { resourceMap, nameMap } = await buildResourceContext(ctx, allBookings.map((b) => b._id as string))
 
-  const isResourceRole = !await checkHasAnyOperatorRole(ctx, user._id)
+  const isResourceRole = !await checkHasAnyOperatorRole(ctx, user._id) // auth-ok: role introspection for data shaping, not authorization
 
   let callerUnitIds = new Set<string>()
   let inventoryUnits: InventoryUnitDoc[] = []

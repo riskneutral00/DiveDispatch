@@ -3,6 +3,8 @@ import type { MutationCtx } from '../_generated/server'
 import type { Id } from '../_generated/dataModel'
 import { getResourcesForBooking } from '../bookingResources'
 import { restoreSnapshotUnits, getAvailabilitySnapshot } from './inventoryRelease'
+import { canBookingTransition } from './stateMachine'
+import { logBookingChange } from '../lib/auditLog'
 import { BOOKING_STATUS, RESERVATION_STATUS, VACATED_REASON, NOTIFICATION_TYPE } from '../shared/statuses'
 import { ErrorCode } from '../lib/errorCodes'
 import { notify } from '../notifications'
@@ -68,7 +70,7 @@ export async function tryAutoAdvance(ctx: MutationCtx, bookingId: string): Promi
           })
         }
 
-        await ctx.db.patch(res._id, { // batch-exempt: Invariant 3 requires paired reservation + snapshot writes
+        await ctx.db.patch(res._id, { // batch-exempt // fsm-ok: vacate guarded by status filter + fresh re-read above
           status: RESERVATION_STATUS.Vacated,
           vacatedAt: Date.now(),
           vacatedBy: VACATED_REASON.EquipmentNotNeeded,
@@ -100,13 +102,29 @@ export async function tryAutoAdvance(ctx: MutationCtx, bookingId: string): Promi
   const allConfirmed = active.every((r) => r.status === RESERVATION_STATUS.Confirmed)
 
   if (allConfirmed && !hasMissingResource) {
-    await ctx.db.patch(bookingId as Id<'bookings'>, { status: BOOKING_STATUS.Upcoming })
+    if (!canBookingTransition(freshBooking.status, 'confirm')) return
+
+    await ctx.db.patch(bookingId as Id<'bookings'>, { status: BOOKING_STATUS.Upcoming }) // fsm-ok
+
+    await logBookingChange(ctx, {
+      bookingId: bookingId as Id<'bookings'>,
+      action: 'confirmed',
+      actorSlug: 'system',
+      actorType: 'system',
+    })
 
     let logistics: NotificationLogistics | undefined
     try {
       logistics = await collectLogistics(ctx, bookingId as Id<'bookings'>)
-    } catch {
+    } catch (err) {
+      await ctx.db.insert('cronRunLog', {
+        jobName: 'auto-advance-logistics',
+        status: 'failure',
+        error: err instanceof Error ? err.message : String(err),
+        runAt: Date.now(),
+      })
     }
+
     await notify(ctx, {
       userId: freshBooking.ownerId,
       type: NOTIFICATION_TYPE.BookingConfirmed,

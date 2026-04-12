@@ -442,12 +442,11 @@ export const seedResourceInventory = internalMutation({
   },
 })
 
-/** Removes duplicate stakeholderPreferences rows (keeps oldest `_creationTime` per `stakeholderId`). */
 async function dedupeStakeholderPreferencesTable(ctx: MutationCtx): Promise<{ deleted: number }> {
-  const all = await ctx.db.query('stakeholderPreferences').collect()
+  const all = await ctx.db.query('stakeholderPreferences').collect() // bounded: dev-only dedupe mutation, full table scan intentional
   const ids = stakeholderPreferenceIdsToDelete(all)
   for (const id of ids) {
-    await ctx.db.delete(id)
+    await ctx.db.delete(id) // batch-exempt: dev-only dedupe
   }
   return { deleted: ids.length }
 }
@@ -568,9 +567,9 @@ export const seedStakeholderPreferences = internalMutation({
       const existing = await ctx.db
         .query('stakeholderPreferences')
         .withIndex('by_stakeholderId', (q) => q.eq('stakeholderId', slug))
-        .collect()
+        .collect() // bounded: per-stakeholder rows, one per roleType
       for (const row of existing) {
-        await ctx.db.delete(row._id)
+        await ctx.db.delete(row._id) // batch-exempt: dev-only seed
       }
 
       await ctx.db.insert('stakeholderPreferences', { // batch-exempt
@@ -660,9 +659,9 @@ export const seedDefaultTheme = internalMutation({
         sortOrder: spec.sortOrder,
       }
       if (existing) {
-        await ctx.db.patch(existing._id, row)
+        await ctx.db.patch(existing._id, row) // batch-exempt: dev-only seed
       } else {
-        await ctx.db.insert('themes', {
+        await ctx.db.insert('themes', { // batch-exempt: dev-only seed
           ...row,
           createdAt: Date.now(),
         })
@@ -675,7 +674,7 @@ export const seedDefaultTheme = internalMutation({
         .withIndex('by_slug', (q) => q.eq('slug', slug))
         .unique()
       if (legacy) {
-        await ctx.db.delete(legacy._id)
+        await ctx.db.delete(legacy._id) // batch-exempt: dev-only seed
       }
     }
 
@@ -703,12 +702,12 @@ export const seedDefaultTheme = internalMutation({
     const allUsers = await ctx.db.query('users').take(5000)
     for (const user of allUsers) {
       let selected = user.selectedThemeId
-      const selectedDoc = selected ? await ctx.db.get(selected) : null
+      const selectedDoc = selected ? await ctx.db.get(selected) : null // batch-exempt: dev-only seed
       if (!selectedDoc || retired.has(selectedDoc.slug)) {
         selected = defaultTheme._id
       }
 
-      await ctx.db.patch(user._id, {
+      await ctx.db.patch(user._id, { // batch-exempt: dev-only seed
         savedThemeIds: orderedIds,
         selectedThemeId: selected,
       })
@@ -716,13 +715,12 @@ export const seedDefaultTheme = internalMutation({
   },
 })
 
-/** Dev-only: wipe all theme rows to reset from scratch. */
 export const clearAllThemes = internalMutation({
   args: {},
   handler: async (ctx) => {
-    const all = await ctx.db.query('themes').collect()
+    const all = await ctx.db.query('themes').collect() // bounded: dev-only wipe mutation
     for (const row of all) {
-      await ctx.db.delete(row._id)
+      await ctx.db.delete(row._id) // batch-exempt: dev-only wipe
     }
   },
 })
