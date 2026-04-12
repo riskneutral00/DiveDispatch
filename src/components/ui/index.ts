@@ -1,6 +1,6 @@
 export { Card } from "./card";
 export { IconButton } from "./icon-button";
-export type { IconButtonProps, IconButtonSize } from "./icon-button";
+export type { IconButtonProps } from "./icon-button";
 export { FullPageSpinner } from "./full-page-spinner";
 export { FieldLabel, FieldError, FieldShell } from "./field-shell";
 export { Button } from "./button";

@@ -5,13 +5,11 @@ import { cn } from '@/lib/utils/cn'
 import { INTERACTION_DEFAULTS, type IconButtonHoverEffect } from '@/lib/constants/interaction-config'
 import { ICON_BUTTON_SIZE } from '@/lib/constants/button-sizes'
 
-export type IconButtonSize = 'sm' | 'md'
 export type IconButtonVariant = 'glass' | 'ghost'
 
 export interface IconButtonProps
   extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'> {
   children: ReactNode
-  size?: IconButtonSize
   variant?: IconButtonVariant
   hoverEffect?: IconButtonHoverEffect
 }
@@ -25,13 +23,11 @@ const HOVER_CLASS: Record<IconButtonHoverEffect, string> = {
 export function IconButton({
   children,
   className = '',
-  size: _size = 'md',
   variant = 'glass',
   hoverEffect = INTERACTION_DEFAULTS.iconButtonHover,
   type = 'button',
   ...rest
 }: IconButtonProps) {
-  void _size
   const isGlass = variant === 'glass'
   return (
     <button

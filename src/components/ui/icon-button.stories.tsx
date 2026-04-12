@@ -6,7 +6,6 @@ const meta = {
   component: IconButton,
   argTypes: {
     variant: { control: 'select', options: ['glass', 'ghost'] },
-    size: { control: 'select', options: ['sm', 'md'] },
   },
 } satisfies Meta<typeof IconButton>
 export default meta
