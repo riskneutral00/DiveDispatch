@@ -149,7 +149,7 @@ describe('makeCustomerContactSchema', () => {
       legalFirstName: 'John',
       legalLastName: 'Doe',
       email: 'john@example.com',
-      phone: '+1 555 000 1234',
+      phone: '+12025550123',
       dateOfBirth: fmt(dob),
       gender: 'M' as const,
       nationality: 'US',
@@ -157,7 +157,7 @@ describe('makeCustomerContactSchema', () => {
       passportIssuingCountry: 'United States',
       passportExpirationDate: fmt(passportExpiry),
       emergencyContactName: 'Jane Doe',
-      emergencyContactPhone: '+1 555 000 5678',
+      emergencyContactPhone: '+14155550178',
       emergencyContactRelation: 'Spouse',
       ...overrides,
     }

@@ -1,5 +1,4 @@
 import { ThemeConfig } from "./theme-types";
-import { BG_GRADIENT_DARK, BG_GRADIENT_LIGHT } from "./background-gradients";
 
 export const GLASS_FORMULAS = {
   dark: {
@@ -103,10 +102,6 @@ const MOTION = {
   ambientAnimation: "none" as const,
 };
 
-/**
- * Pre-auth / invalid-cache fallback. Must stay aligned with seeded row `skin-light-4`
- * (`convex/lib/defaultThemes.ts` — Lavender) and SSR `globals-theme.css` fallbacks.
- */
 export const BOOTSTRAP_FALLBACK_THEME: ThemeConfig = {
   id: "skin-light-4",
   name: "Lavender",
@@ -135,7 +130,6 @@ export const BOOTSTRAP_FALLBACK_THEME: ThemeConfig = {
       glassBorderHover: "rgba(167, 139, 250, 0.35)",
       surface: "#1c1638",
       surfaceElevated: "#2d1f4e",
-      bgImage: BG_GRADIENT_DARK,
       bgOverlay: "rgba(0, 0, 0, 0.18)",
       bodyBg: "#000000",
       luminanceClass: "dark",
@@ -163,7 +157,6 @@ export const BOOTSTRAP_FALLBACK_THEME: ThemeConfig = {
       glassBorderHover: "rgba(147, 51, 234, 0.40)",
       surface: "#f5f3ff",
       surfaceElevated: "#faf5ff",
-      bgImage: BG_GRADIENT_LIGHT,
       bgOverlay:
         "radial-gradient(ellipse 80% 60% at 50% 50%, rgba(219, 234, 254, 0.4) 0%, rgba(219, 234, 254, 0.6) 60%, rgba(219, 234, 254, 0.75) 100%)",
       bodyBg: "#f5f3ff",

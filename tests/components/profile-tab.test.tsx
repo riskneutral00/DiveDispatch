@@ -120,13 +120,11 @@ describe('ProfileTab', () => {
     })
   })
 
-  it('shows DOB month/day/year selects', () => {
+  it('renders a single Date of birth field', () => {
     mockUser = null
 
     render(<ProfileTab />)
 
-    expect(screen.getByText('Month')).toBeInTheDocument()
-    expect(screen.getByText('Day')).toBeInTheDocument()
-    expect(screen.getByText('Year')).toBeInTheDocument()
+    expect(screen.getByText(/date of birth/i)).toBeInTheDocument()
   })
 })

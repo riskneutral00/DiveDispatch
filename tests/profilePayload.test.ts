@@ -24,9 +24,7 @@ describe('profileFromUser', () => {
       businessName: 'Blue Ocean',
       email: 'jane@test.com',
       phone: '+66812345678',
-      dobMonth: '06',
-      dobDay: '15',
-      dobYear: '1990',
+      dateOfBirth: '1990-06-15',
       appLanguage: 'en',
     })
   })
@@ -38,9 +36,7 @@ describe('profileFromUser', () => {
 
   it('handles null dateOfBirth', () => {
     const result = profileFromUser({ dateOfBirth: null })
-    expect(result.dobMonth).toBe('')
-    expect(result.dobDay).toBe('')
-    expect(result.dobYear).toBe('')
+    expect(result.dateOfBirth).toBe('')
   })
 
   it('handles non-string values gracefully', () => {
@@ -63,9 +59,7 @@ describe('profileToPayload', () => {
     businessName: '  Blue Ocean  ',
     email: '  jane@test.com  ',
     phone: '  +66812345678  ',
-    dobMonth: '06',
-    dobDay: '15',
-    dobYear: '1990',
+    dateOfBirth: '1990-06-15',
     appLanguage: 'en',
   }
 
@@ -77,13 +71,13 @@ describe('profileToPayload', () => {
     expect(payload.email).toBe('jane@test.com')
   })
 
-  it('builds dateOfBirth from dob parts', () => {
+  it('passes dateOfBirth through', () => {
     const payload = profileToPayload(fullForm)
     expect(payload.dateOfBirth).toBe('1990-06-15')
   })
 
-  it('sets dateOfBirth to undefined when parts are missing', () => {
-    const payload = profileToPayload({ ...fullForm, dobYear: '' })
+  it('sets dateOfBirth to undefined when empty', () => {
+    const payload = profileToPayload({ ...fullForm, dateOfBirth: '' })
     expect(payload.dateOfBirth).toBeUndefined()
   })
 

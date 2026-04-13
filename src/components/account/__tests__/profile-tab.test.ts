@@ -29,9 +29,7 @@ describe('profileFromUser', () => {
       businessName: 'Ocean Corp',
       email: 'jane@ocean.com',
       phone: '+1234567890',
-      dobMonth: '06',
-      dobDay: '15',
-      dobYear: '1990',
+      dateOfBirth: '1990-06-15',
       appLanguage: 'en',
     })
   })
@@ -54,9 +52,7 @@ describe('profileFromUser', () => {
       businessName: 'Ocean Corp',
       email: 'jane@ocean.com',
       phone: '+1234567890',
-      dobMonth: '',
-      dobDay: '',
-      dobYear: '',
+      dateOfBirth: '',
       appLanguage: 'en',
     })
   })
@@ -77,26 +73,22 @@ describe('profileFromUser', () => {
     expect(result).toEqual(PROFILE_DEFAULTS)
   })
 
-  it('parses dateOfBirth components correctly for single-digit day', () => {
+  it('ignores malformed dateOfBirth strings', () => {
     const user = {
       firstName: 'A',
       lastName: 'B',
       businessName: 'C',
       email: 'a@b.com',
       phone: '+1',
-      dateOfBirth: '2000-01-05',
+      dateOfBirth: 'not-a-date',
     }
 
-    const result = profileFromUser(user as Record<string, unknown>)
-
-    expect(result.dobYear).toBe('2000')
-    expect(result.dobMonth).toBe('01')
-    expect(result.dobDay).toBe('05')
+    expect(profileFromUser(user as Record<string, unknown>).dateOfBirth).toBe('')
   })
 })
 
 describe('profileToPayload', () => {
-  it('maps form state to mutation args with full DOB', () => {
+  it('maps form state to mutation args with dateOfBirth', () => {
     const form: ProfileValues = {
       firstName: ' Jane ',
       lastName: ' Doe ',
@@ -104,9 +96,7 @@ describe('profileToPayload', () => {
       businessName: ' Ocean Corp ',
       email: ' jane@ocean.com ',
       phone: ' +1234567890 ',
-      dobMonth: '06',
-      dobDay: '15',
-      dobYear: '1990',
+      dateOfBirth: '1990-06-15',
       appLanguage: 'en',
     }
 
@@ -132,9 +122,7 @@ describe('profileToPayload', () => {
       businessName: 'Ocean Corp',
       email: 'jane@ocean.com',
       phone: '+1234567890',
-      dobMonth: '',
-      dobDay: '',
-      dobYear: '',
+      dateOfBirth: '',
       appLanguage: 'en',
     }
 
@@ -151,9 +139,7 @@ describe('profileToPayload', () => {
       businessName: 'Ocean Corp',
       email: 'jane@ocean.com',
       phone: '+1234567890',
-      dobMonth: '',
-      dobDay: '',
-      dobYear: '',
+      dateOfBirth: '',
       appLanguage: 'en',
     }
 
@@ -170,9 +156,7 @@ describe('profileToPayload', () => {
       businessName: 'Ocean Corp',
       email: 'jane@ocean.com',
       phone: '  ',
-      dobMonth: '',
-      dobDay: '',
-      dobYear: '',
+      dateOfBirth: '',
       appLanguage: 'en',
     }
 
@@ -181,7 +165,7 @@ describe('profileToPayload', () => {
     expect(result.phone).toBeUndefined()
   })
 
-  it('omits dateOfBirth when any DOB component is empty', () => {
+  it('omits dateOfBirth when empty', () => {
     const form: ProfileValues = {
       firstName: 'Jane',
       lastName: 'Doe',
@@ -189,9 +173,7 @@ describe('profileToPayload', () => {
       businessName: 'Ocean Corp',
       email: 'jane@ocean.com',
       phone: '+1234567890',
-      dobMonth: '06',
-      dobDay: '',
-      dobYear: '1990',
+      dateOfBirth: '',
       appLanguage: 'en',
     }
 
@@ -208,9 +190,7 @@ describe('profileToPayload', () => {
       businessName: 'Ocean Corp',
       email: 'jane@ocean.com',
       phone: '+1234567890',
-      dobMonth: '',
-      dobDay: '',
-      dobYear: '',
+      dateOfBirth: '',
       appLanguage: 'th',
     }
 
@@ -229,9 +209,7 @@ describe('profileTabSchema', () => {
       businessName: 'Ocean Corp',
       email: 'jane@ocean.com',
       phone: '+12025551234',
-      dobMonth: '',
-      dobDay: '',
-      dobYear: '',
+      dateOfBirth: '',
       appLanguage: 'en',
     }
 
@@ -246,9 +224,7 @@ describe('profileTabSchema', () => {
       businessName: 'Ocean Corp',
       email: 'jane@ocean.com',
       phone: '+12025551234',
-      dobMonth: '',
-      dobDay: '',
-      dobYear: '',
+      dateOfBirth: '',
       appLanguage: 'en',
     }
 
@@ -263,9 +239,7 @@ describe('profileTabSchema', () => {
       businessName: 'Ocean Corp',
       email: 'not-an-email',
       phone: '+12025551234',
-      dobMonth: '',
-      dobDay: '',
-      dobYear: '',
+      dateOfBirth: '',
       appLanguage: 'en',
     }
 
@@ -280,9 +254,7 @@ describe('profileTabSchema', () => {
       businessName: 'Ocean Corp',
       email: 'jane@ocean.com',
       phone: '123',
-      dobMonth: '',
-      dobDay: '',
-      dobYear: '',
+      dateOfBirth: '',
       appLanguage: 'en',
     }
 
@@ -297,9 +269,37 @@ describe('profileTabSchema', () => {
       businessName: '',
       email: 'jane@ocean.com',
       phone: '+12025551234',
-      dobMonth: '',
-      dobDay: '',
-      dobYear: '',
+      dateOfBirth: '',
+      appLanguage: 'en',
+    }
+
+    expect(profileTabSchema.safeParse(invalid).success).toBe(false)
+  })
+
+  it('accepts a valid ISO dateOfBirth', () => {
+    const valid: ProfileValues = {
+      firstName: 'Jane',
+      lastName: 'Doe',
+      nickname: '',
+      businessName: 'Ocean Corp',
+      email: 'jane@ocean.com',
+      phone: '+12025551234',
+      dateOfBirth: '1990-06-15',
+      appLanguage: 'en',
+    }
+
+    expect(profileTabSchema.safeParse(valid).success).toBe(true)
+  })
+
+  it('rejects malformed dateOfBirth', () => {
+    const invalid: ProfileValues = {
+      firstName: 'Jane',
+      lastName: 'Doe',
+      nickname: '',
+      businessName: 'Ocean Corp',
+      email: 'jane@ocean.com',
+      phone: '+12025551234',
+      dateOfBirth: '06/15/1990',
       appLanguage: 'en',
     }
 

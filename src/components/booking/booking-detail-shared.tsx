@@ -8,6 +8,8 @@ import type { Id } from '@/lib/convex-generated'
 import type { BookingDetail, BookingDetailStakeholder } from '../../../convex/bookings'
 import type { BookingLinkInfo } from '../../../convex/bookingLinks'
 import { Button, ButtonGroup, Badge, Card, RoleIcon, EmptyState, ListRow, Skeleton, Input } from '@/components/ui'
+import { EmailField } from '@/components/ui/email-field'
+import { NameField } from '@/components/ui/name-field'
 import { DashboardPageFrame } from '@/components/layout/dashboard-page-frame'
 import type { ClerkRole } from '@/lib/constants/roles'
 import { courseLabel } from '@/lib/constants/course-catalog'
@@ -227,31 +229,19 @@ function PortalLinkSection({
   if (showCreateForm) {
     return (
       <form onSubmit={handleCreate} className="space-y-3">
-        <div>
-          <label
-            className="text-label font-medium block mb-1 text-secondary"
-          >
-            Customer name
-          </label>
-          <Input
-            value={customerName}
-            onChange={(e) => setCustomerName(e.target.value)}
-            required
-          />
-        </div>
-        <div>
-          <label
-            className="text-label font-medium block mb-1 text-secondary"
-          >
-            Customer email
-          </label>
-          <Input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-        </div>
+        <NameField
+          scope="given"
+          label="Customer name"
+          value={customerName}
+          onChange={setCustomerName}
+          required
+        />
+        <EmailField
+          label="Customer email"
+          value={email}
+          onChange={setEmail}
+          required
+        />
         {createError && (
           <p className="text-label text-destructive">
             {createError}

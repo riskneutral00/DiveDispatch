@@ -4,7 +4,7 @@ import { type LocationValue } from '@/components/profiles/location-picker-lazy'
 import { ProfileAgencyInfo } from '@/components/profiles/profile-agency-info'
 import { SectionDivider } from '@/components/ui/section-divider'
 import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
-import { LanguageField } from '@/components/profiles/language-field'
+import { LanguageField } from '@/components/ui/language-field'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import {
@@ -201,7 +201,7 @@ export function AgentContactSection({ profile, me, create, update, updateProfile
         </p>
       </div>
 
-      <hr className="border-glass-border opacity-70 my-1" />
+      <SectionDivider variant="soft" />
 
       <LanguageField
         variant="customer"

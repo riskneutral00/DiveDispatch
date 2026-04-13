@@ -25,7 +25,7 @@ const phoneRegex = /^\+?[\d\s\-().]{7,}$/
 const phoneField = z
   .string()
   .min(1, 'Required')
-  .regex(phoneRegex, 'Use international format: +1 555 000 0000')
+  .regex(phoneRegex, 'Use international format: +1 202 555 0100')
 
 const dateField = z.string().min(1, 'Required')
 

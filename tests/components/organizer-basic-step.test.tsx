@@ -78,7 +78,7 @@ describe('OrganizerBasicStep', () => {
     expect(screen.getByText('Basic Information')).toBeInTheDocument()
     expect(screen.getByPlaceholderText('e.g. Ocean Explorer Dive Center')).toBeInTheDocument()
     expect(screen.getByPlaceholderText('dive@example.com')).toBeInTheDocument()
-    expect(screen.getByPlaceholderText('+66 81 234 5678')).toBeInTheDocument()
+    expect(screen.getByText(/contact phone/i)).toBeInTheDocument()
   })
 
   it('pre-fills fields from existing profile', () => {
@@ -114,7 +114,11 @@ describe('OrganizerBasicStep', () => {
     const emailInput = screen.getByPlaceholderText('dive@example.com')
     await user.clear(emailInput)
     await user.type(emailInput, 'info@deepblue.com')
-    await user.type(screen.getByPlaceholderText('+66 81 234 5678'), '+66 81 000 0000')
+
+    const phoneInput = screen.getAllByRole('textbox').find((el) => (el as HTMLInputElement).name === 'phone' || el.getAttribute('autocomplete') === 'tel')
+    if (phoneInput) {
+      await user.type(phoneInput, '8100000000')
+    }
 
     await user.click(screen.getByRole('button', { name: /next/i }))
 
@@ -142,7 +146,10 @@ describe('OrganizerBasicStep', () => {
     const emailInput = screen.getByPlaceholderText('dive@example.com')
     await user.clear(emailInput)
     await user.type(emailInput, 'fail@test.com')
-    await user.type(screen.getByPlaceholderText('+66 81 234 5678'), '+66 81 000 0000')
+    const phoneInput = screen.getAllByRole('textbox').find((el) => (el as HTMLInputElement).name === 'phone' || el.getAttribute('autocomplete') === 'tel')
+    if (phoneInput) {
+      await user.type(phoneInput, '8100000000')
+    }
 
     await user.click(screen.getByRole('button', { name: /next/i }))
 

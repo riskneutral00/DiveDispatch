@@ -7,8 +7,13 @@ import { InlineError } from '@/components/ui/inline-error'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { NameField } from '@/components/ui/name-field'
+import { EmailField } from '@/components/ui/email-field'
+import { PhoneField } from '@/components/ui/phone-field'
+import { DateField } from '@/components/ui/date-field'
+import { BirthdayField } from '@/components/ui/birthday-field'
+import { CountryField } from '@/components/ui/country-field'
 import { DEFAULT_TEXTAREA_ROWS } from '@/lib/constants/form-config'
-import { COUNTRY_NAMES } from '@/lib/constants/countries'
 import { SimpleSelect } from '@/components/ui/simple-select'
 import { Textarea } from '@/components/ui/textarea'
 import { toISODateString } from '@/lib/utils/date'
@@ -106,7 +111,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
 
   const schema = useMemo(
     () => makeCustomerContactSchema(context?.activityType ?? []),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- comments-ok
     [(context?.activityType ?? []).join(',')],
   )
   const { validate, errors, clearError } = useFormValidation(schema)
@@ -269,62 +274,55 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
       <Card padding="md">
         <FormSectionHeader label={t('sectionPersonalDetails')} />
         <div className="grid grid-cols-6 gap-x-3 gap-y-4 sm:flex sm:flex-wrap sm:gap-4"> {/* design-ok */}
-          <Input
+          <NameField
+            scope="given"
             label={t('legalFirstName')}
             placeholder={t('placeholderPassport')}
             value={form.legalFirstName}
-            onChange={(e) => setField('legalFirstName', e.target.value)}
+            onChange={(v) => setField('legalFirstName', v)}
             error={errors.legalFirstName}
-            autoComplete="given-name"
             className="field-name"
           />
-          <Input
+          <NameField
+            scope="family"
             label={t('legalLastName')}
             placeholder={t('placeholderPassport')}
             value={form.legalLastName}
-            onChange={(e) => setField('legalLastName', e.target.value)}
+            onChange={(v) => setField('legalLastName', v)}
             error={errors.legalLastName}
-            autoComplete="family-name"
             className="field-name"
           />
-          <Input
+          <NameField
+            scope="nickname"
             label={t('preferredName')}
             placeholder={t('placeholderNickname')}
             value={form.preferredName ?? ''}
-            onChange={(e) => setField('preferredName', e.target.value)}
+            onChange={(v) => setField('preferredName', v)}
             error={errors.preferredName}
-            autoComplete="nickname"
             className="field-text-short"
           />
-          <Input
+          <PhoneField
             label={t('phone')}
-            type="tel"
-            placeholder={t('placeholderPhone')}
             value={form.phone}
-            onChange={(e) => setField('phone', e.target.value)}
+            onChange={(v) => setField('phone', v)}
             error={errors.phone}
             helperText={t('helperCountryCode')}
-            autoComplete="tel"
             className="field-phone"
           />
-          <Input
+          <EmailField
             label={t('email')}
-            type="email"
             placeholder={t('placeholderEmail')}
             value={form.email}
-            onChange={(e) => setField('email', e.target.value)}
+            onChange={(v) => setField('email', v)}
             error={errors.email}
-            autoComplete="email"
             className="field-email"
           />
           <div className="field-date">
-            <Input
+            <BirthdayField
               label={t('dateOfBirth')}
-              type="date"
-              value={form.dateOfBirth}
-              onChange={(e) => setField('dateOfBirth', e.target.value)}
+              value={form.dateOfBirth || null}
+              onChange={(v) => setField('dateOfBirth', v ?? '')}
               error={errors.dateOfBirth}
-              autoComplete="bday"
             />
             <div aria-live="polite">
               {ageError && (
@@ -342,12 +340,10 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             required
             className="field-select-short"
           />
-          <SimpleSelect
+          <CountryField
             label={t('nationality')}
-            data-testid="portal-nationality-select"
             value={form.nationality}
             onChange={(v) => setField('nationality', v)}
-            options={COUNTRY_NAMES}
             placeholder={t('placeholderSelect')}
             error={errors.nationality}
             required
@@ -367,23 +363,20 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             error={errors.passportNumber}
             className="field-text-short"
           />
-          <SimpleSelect
+          <CountryField
             label={t('issuingCountry')}
-            data-testid="portal-issuing-country-select"
             value={form.passportIssuingCountry}
             onChange={(v) => setField('passportIssuingCountry', v)}
-            options={COUNTRY_NAMES}
             placeholder={t('placeholderSelect')}
             error={errors.passportIssuingCountry}
             required
             className="field-select-long"
           />
           <div className="field-date">
-            <Input
+            <DateField
               label={t('expiryDate')}
-              type="date"
-              value={form.passportExpirationDate}
-              onChange={(e) => setField('passportExpirationDate', e.target.value)}
+              value={form.passportExpirationDate || null}
+              onChange={(v) => setField('passportExpirationDate', v ?? '')}
               error={errors.passportExpirationDate}
             />
             {passportExpiringSoon && !errors.passportExpirationDate && (
@@ -398,21 +391,19 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
       <Card padding="md">
         <FormSectionHeader label={t('sectionEmergency')} />
         <div className="grid grid-cols-6 gap-x-3 gap-y-4 sm:flex sm:flex-wrap sm:gap-4"> {/* design-ok */}
-          <Input
+          <NameField
+            scope="given"
             label={t('fullName')}
             placeholder={t('placeholderFullName')}
             value={form.emergencyContactName}
-            onChange={(e) => setField('emergencyContactName', e.target.value)}
+            onChange={(v) => setField('emergencyContactName', v)}
             error={errors.emergencyContactName}
-            autoComplete="off"
             className="field-name"
           />
-          <Input
+          <PhoneField
             label={t('phone')}
-            type="tel"
-            placeholder={t('placeholderPhone')}
             value={form.emergencyContactPhone}
-            onChange={(e) => setField('emergencyContactPhone', e.target.value)}
+            onChange={(v) => setField('emergencyContactPhone', v)}
             error={errors.emergencyContactPhone}
             helperText={t('helperCountryCode')}
             className="field-phone"

@@ -3,9 +3,10 @@
 import { type LocationValue } from '@/components/profiles/location-picker-lazy'
 import { ProfileAgencyInfo } from '@/components/profiles/profile-agency-info'
 import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
-import { LanguageField } from '@/components/profiles/language-field'
+import { LanguageField } from '@/components/ui/language-field'
 import { ProfileFormHeader } from '@/components/profiles/profile-form-header'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
+import { SectionDivider } from '@/components/ui/section-divider'
 import {
   type ContactFormState as PersonalContactFormState,
   INITIAL_CONTACT_FORM,
@@ -205,7 +206,7 @@ export function PersonalContactSection({
           phoneRequired
         />
 
-        <hr className="border-glass-border opacity-70 my-1" />
+        <SectionDivider variant="soft" />
 
         <LanguageField
           variant="teaching"

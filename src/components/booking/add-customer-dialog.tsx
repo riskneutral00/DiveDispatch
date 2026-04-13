@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Dialog, Button, Input, ButtonGroup } from '@/components/ui'
 import type { ButtonGroupOption } from '@/components/ui'
-import { LanguageField } from '@/components/profiles/language-field'
+import { LanguageField } from '@/components/ui/language-field'
 import type { Language } from '@/lib/types/language'
 import type { CustomerContact } from '@/lib/booking/wizard-state'
 

@@ -1,4 +1,6 @@
-import { Input } from '@/components/ui/input'
+import { NameField } from '@/components/ui/name-field'
+import { EmailField } from '@/components/ui/email-field'
+import { PhoneField } from '@/components/ui/phone-field'
 import { LocationPicker, type LocationValue } from '@/components/profiles/location-picker-lazy'
 
 interface ProfileBasicInfoProps {
@@ -51,13 +53,13 @@ export function ProfileBasicInfo({
 }: ProfileBasicInfoProps) {
   return (
     <div className="grid grid-cols-6 gap-x-3 gap-y-4 sm:flex sm:flex-wrap sm:gap-4 w-full"> {/* design-ok */}
-      <Input
+      <NameField
+        scope="organization"
         label={nameLabel}
         placeholder={namePlaceholder}
         value={nameValue}
-        onChange={(e) => onNameChange(e.target.value)}
+        onChange={onNameChange}
         error={nameError}
-        autoComplete="organization"
         required={nameRequired}
         className="field-name"
       />
@@ -69,28 +71,21 @@ export function ProfileBasicInfo({
         required={locationRequired}
         className="field-location"
       />
-      <Input
+      <PhoneField
         label="Phone"
-        type="text"
-        inputMode="tel"
-        placeholder="+66 81 234 5678"
         value={phoneValue}
-        onChange={(e) => onPhoneChange(e.target.value)}
+        onChange={onPhoneChange}
         error={phoneError}
-        autoComplete="tel"
         required={phoneRequired}
         className="field-phone"
       />
       {onEmailChange !== undefined && (
-        <Input
+        <EmailField
           label="Email"
-          type="text"
-          inputMode="email"
           placeholder="info@example.com"
           value={emailValue ?? ''}
-          onChange={(e) => onEmailChange(e.target.value)}
+          onChange={onEmailChange}
           error={emailError}
-          autoComplete="email"
           required={emailRequired}
           className="field-email"
         />

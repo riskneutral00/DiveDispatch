@@ -1,4 +1,7 @@
 @import "tailwindcss";
+@source not "./.claude";
+@source not "./.cursor";
+@source not "./.sisyphus";
 
 /* Wire Tailwind color/font utilities to runtime CSS custom properties (theme-driven).
    --color-primary and --color-secondary are EXCLUDED because Tailwind auto-generates
@@ -56,3 +59,7 @@
 @import "./globals-status-derived.css";
 @import "./globals-utilities.css";
 @import "./globals-surfaces.css";
+
+.bg-base {
+  --bg-image: none;
+}

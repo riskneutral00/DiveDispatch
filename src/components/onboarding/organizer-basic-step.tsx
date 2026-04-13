@@ -6,6 +6,8 @@ import { api } from '@/lib/convex-generated'
 import { LoadingCard } from '@/components/ui/loading-card'
 import { LocationPicker, type LocationValue } from '@/components/profiles/location-picker-lazy'
 import { Input } from '@/components/ui/input'
+import { EmailField } from '@/components/ui/email-field'
+import { PhoneField } from '@/components/ui/phone-field'
 import type { ClerkRole } from '@/lib/constants/roles'
 import { useOrganizerRoleApi } from '@/lib/hooks/use-organizer-role-api'
 import { getOrganizerRoleFlags } from '@/lib/constants/organizer-wizard-config'
@@ -135,21 +137,18 @@ function BasicStepInner({ role, mutations, onSaved, onBack }: BasicStepInnerProp
           onChange={(loc) => setField('location', loc)}
           error={errors.location}
         />
-        <Input
+        <EmailField
           label={t('contactEmail')}
-          type="email"
           value={form.email}
-          onChange={(e) => setField('email', e.target.value)}
+          onChange={(v) => setField('email', v)}
           placeholder="dive@example.com"
           required
           error={errors.email}
         />
-        <Input
+        <PhoneField
           label={t('contactPhone')}
-          type="tel"
           value={form.phone}
-          onChange={(e) => setField('phone', e.target.value)}
-          placeholder="+66 81 234 5678"
+          onChange={(v) => setField('phone', v)}
           required
           error={errors.phone}
         />

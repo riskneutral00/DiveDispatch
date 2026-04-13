@@ -7,6 +7,7 @@ import { CardTitle } from '../ui/card-title'
 import { InlineError } from '../ui/inline-error'
 import { Checkbox } from '../ui/checkbox'
 import { Input } from '../ui/input'
+import { DateField } from '../ui/date-field'
 import { SignaturePad, SignaturePadHandle } from './signature-pad'
 import { ShieldCheck } from 'lucide-react'
 import { toISODateString } from '@/lib/utils/date'
@@ -261,11 +262,10 @@ export function StepWaiver({
             error={errors.signature}
           />
 
-          <Input
-            type="date"
+          <DateField
             label={tPortal('date')}
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
+            value={date || null}
+            onChange={(v) => setDate(v ?? '')}
             error={errors.date}
             max={todayLocal()}
           />

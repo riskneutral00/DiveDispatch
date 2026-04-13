@@ -2,9 +2,10 @@
 
 import { Plus } from 'lucide-react'
 import { ProfileAgencyInfo } from '@/components/profiles/profile-agency-info'
-import { LanguageField } from '@/components/profiles/language-field'
+import { LanguageField } from '@/components/ui/language-field'
 import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
 import { Button } from '@/components/ui/button'
+import { SectionDivider } from '@/components/ui/section-divider'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import { diveCenterAffiliationsSchema, diveCenterContactMergedSchema } from '@/lib/schemas/profile-shared'
 import {
@@ -147,7 +148,7 @@ export function DiveCenterContactSection(props: DiveCenterSectionProps) {
           phoneRequired
         />
 
-        <hr className="border-glass-border opacity-70 my-1" />
+        <SectionDivider variant="soft" />
 
         <LanguageField
           variant="customer"

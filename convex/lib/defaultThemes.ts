@@ -1,8 +1,3 @@
-/**
- * Canonical ThemeConfig JSON for seeded store themes. Identifiers are neutral
- * (no legacy skin codenames). Ordering is via DB `sortOrder`, not slug names.
- */
-
 const GLASS_DARK = {
   glassBg: "rgba(255, 255, 255, 0.05)",
   glassBorder: "rgba(255, 255, 255, 0.12)",
@@ -75,7 +70,6 @@ const MOTION = {
   ambientAnimation: "none" as const,
 }
 
-/** Legacy slugs removed from the product; seed deletes these rows. */
 export const RETIRED_THEME_SLUGS = [
   "ocean",
   "abyss",
@@ -89,9 +83,7 @@ export type SeedThemeRowSpec = {
   name: string
   sortOrder: number
   appearance: "dark" | "light"
-  /** Accent for dark palette primary */
   darkAccent: string
-  /** Accent for light palette primary */
   lightAccent: string
   darkSurface: string
   darkSurfaceElevated: string
@@ -210,12 +202,6 @@ export const SEED_THEME_SPECS: readonly SeedThemeRowSpec[] = [
   },
 ]
 
-// Must match src/themes/background-gradients.ts (BG_GRADIENT_DARK / BG_GRADIENT_LIGHT)
-const DARK_BG =
-  "linear-gradient(to bottom, #081220 0%, #081220 100%)"
-const LIGHT_BG =
-  "linear-gradient(to bottom, #000000 0%, #000000 100%)"
-
 export function themeConfigForSeedSpec(spec: SeedThemeRowSpec) {
   const d = spec.darkAccent
   const l = spec.lightAccent
@@ -247,7 +233,6 @@ export function themeConfigForSeedSpec(spec: SeedThemeRowSpec) {
         glassBorderHover: `${d}59`,
         surface: spec.darkSurface,
         surfaceElevated: spec.darkSurfaceElevated,
-        bgImage: DARK_BG,
         bgOverlay: "rgba(0, 0, 0, 0.18)",
         bodyBg: "#000000",
         luminanceClass: "dark" as const,
@@ -275,7 +260,6 @@ export function themeConfigForSeedSpec(spec: SeedThemeRowSpec) {
         glassBorderHover: `${l}40`,
         surface: spec.lightSurface,
         surfaceElevated: spec.lightSurfaceElevated,
-        bgImage: LIGHT_BG,
         bgOverlay:
           "radial-gradient(ellipse 80% 60% at 50% 50%, rgba(219, 234, 254, 0.4) 0%, rgba(219, 234, 254, 0.6) 60%, rgba(219, 234, 254, 0.75) 100%)",
         bodyBg: spec.lightSurface,
@@ -289,8 +273,6 @@ export function themeConfigForSeedSpec(spec: SeedThemeRowSpec) {
   }
 }
 
-/** Full configs in seed order (for tests / tooling that need the JSON shape). */
 export const DEFAULT_THEMES = SEED_THEME_SPECS.map(themeConfigForSeedSpec)
 
-/** Default selection aligns with client SSR bootstrap (`skin-light-4` Lavender / app light). */
 export const DEFAULT_SELECTED_THEME_SLUG = "skin-light-4" as const

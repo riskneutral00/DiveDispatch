@@ -6,6 +6,7 @@ import { useQuery } from 'convex/react'
 import { api } from '@/lib/convex-generated'
 import { useWizardPreferences } from '@/lib/hooks/use-wizard-preferences'
 import { Button, Checkbox, SimpleSelect, ErrorAlert } from '@/components/ui'
+import { DateField } from '@/components/ui/date-field'
 import { DayRow } from './day-row'
 import { ResourceStep } from './resource-step'
 import { generateDays, getAvailableDives, autoDistributeFromDive, buildDiveSequence, cascadeRemoveOrphans } from '@/lib/booking/generate-days'
@@ -156,34 +157,26 @@ function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minSta
           />
         </div>
 
-        <div className="flex flex-col gap-1 min-w-0 reading-plane rounded-theme p-2">
-          <label className="text-body font-medium text-secondary">
-            {tCommon('startDate')}
-          </label>
-          <input /* design-ok: native date picker */
-            type="date"
-            value={entry.dates[0] ?? ''}
+        <div className="min-w-0 reading-plane rounded-theme p-2">
+          <DateField
+            label={tCommon('startDate')}
+            value={entry.dates[0] ?? null}
             min={minStartDate}
-            onChange={(e) => handleStartDateChange(e.target.value)}
-            onClick={(e) => e.currentTarget.showPicker()}
+            onChange={(v) => handleStartDateChange(v ?? '')}
             data-testid="course-start-date"
-            className="field-underline w-full text-body py-2.5 px-0 cursor-pointer text-primary caret-accent"
           />
         </div>
 
-        <div className="flex flex-col gap-1 min-w-0 reading-plane rounded-theme p-2">
-          <label className="text-body font-medium text-secondary">
-            {tCommon('endDate')}
-          </label>
-          <div className="flex gap-1 items-center">
-            <input /* design-ok: native date picker */
-              type="date"
-              value={entry.dates[1] ?? entry.dates[0] ?? ''}
-              min={entry.dates[0]}
-              onChange={(e) => handleEndDateChange(e.target.value)}
-              onClick={(e) => e.currentTarget.showPicker()}
-              className="field-underline flex-1 text-body py-2.5 px-0 cursor-pointer text-primary caret-accent"
-            />
+        <div className="min-w-0 reading-plane rounded-theme p-2">
+          <div className="flex gap-1 items-end">
+            <div className="flex-1">
+              <DateField
+                label={tCommon('endDate')}
+                value={entry.dates[1] ?? entry.dates[0] ?? null}
+                min={entry.dates[0]}
+                onChange={(v) => handleEndDateChange(v ?? '')}
+              />
+            </div>
             {canRemove && (
               <Button
                 variant="destructive-ghost"

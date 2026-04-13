@@ -96,7 +96,9 @@ describe('useProfileForm type safety', () => {
 
   it('create and update accept TPayload, not any', () => {
     type Opts = UseProfileFormOptions<TestForm, TestPayload>
-    expectTypeOf<Opts['create']>().toEqualTypeOf<(payload: TestPayload) => Promise<unknown>>()
+    expectTypeOf<Opts['create']>().toEqualTypeOf<
+      ((payload: TestPayload) => Promise<unknown>) | undefined
+    >()
     expectTypeOf<Opts['update']>().toEqualTypeOf<(payload: TestPayload) => Promise<unknown>>()
   })
 

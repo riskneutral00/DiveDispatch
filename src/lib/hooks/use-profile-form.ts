@@ -21,7 +21,7 @@ export interface UseProfileFormOptions<
   defaults: TForm
   fromProfile: (profile: ProfileRecord, me?: NonNullable<UseProfileFormOptions<TForm, TPayload>['me']>) => TForm
   toPayload: (form: TForm) => TPayload
-  create: (payload: TPayload) => Promise<unknown>
+  create?: (payload: TPayload) => Promise<unknown>
   update: (payload: TPayload) => Promise<unknown>
   onSaved?: () => void
   fromMe?: (me: NonNullable<UseProfileFormOptions<TForm, TPayload>['me']>, defaults: TForm) => TForm
@@ -138,6 +138,9 @@ export function useProfileForm<
       if (profile) {
         await update(payload)
       } else {
+        if (!create) {
+          throw new Error('useProfileForm: create handler not provided but profile is missing')
+        }
         await create(payload)
       }
 
