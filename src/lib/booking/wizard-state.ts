@@ -126,7 +126,8 @@ export interface WizardState {
   preFillVenueSlug?: string
   preFillBoatSlug?: string
 
-  referralOwnerSlug?: string
+  isReferral: boolean
+  targetOperatorSlug?: string
 }
 
 export type WizardAction =
@@ -166,6 +167,8 @@ export type WizardAction =
   | { type: 'SET_DIVE_VENUE'; dayIndex: number; diveIndex: number; venueType: 'pool' | 'boat' | 'shore'; resourceId?: string }
   | { type: 'APPLY_DIVE_RESOURCE_TO_REMAINING'; fromDayIndex: number; venueType: 'pool' | 'boat' | 'shore'; resourceId: string }
   | { type: 'SET_INVENTORY_MAP'; map: Record<string, string> }
+  | { type: 'SET_IS_REFERRAL'; value: boolean }
+  | { type: 'SET_TARGET_OPERATOR_SLUG'; value: string | undefined }
   | { type: 'RESET'; payload?: Partial<WizardState> }
 
 export function newEntryId(): string {
@@ -219,7 +222,8 @@ export function makeInitialState(bookingId: string | null = null): WizardState {
     preFillInstructorSlug: undefined,
     preFillVenueSlug: undefined,
     preFillBoatSlug: undefined,
-    referralOwnerSlug: undefined,
+    isReferral: false,
+    targetOperatorSlug: undefined,
   }
 }
 
@@ -476,6 +480,16 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
     case 'SET_INVENTORY_MAP':
       return { ...state, inventoryUnitMap: action.map }
 
+    case 'SET_IS_REFERRAL':
+      return {
+        ...state,
+        isReferral: action.value,
+        targetOperatorSlug: action.value ? state.targetOperatorSlug : undefined,
+      }
+
+    case 'SET_TARGET_OPERATOR_SLUG':
+      return { ...state, targetOperatorSlug: action.value }
+
     case 'RESET':
       return action.payload
         ? { ...makeInitialState(null), ...action.payload }
@@ -541,6 +555,8 @@ export function canAdvanceFromCustomers(customers: CustomerData[]): boolean {
 }
 
 export function canAdvanceFromItinerary(state: WizardState): boolean {
+  if (state.isReferral && !state.targetOperatorSlug) return false
+
   const courseCustomers = state.sameForAll ? state.customers.slice(0, 1) : state.customers
 
   const allHaveCourse = courseCustomers.every((c) =>

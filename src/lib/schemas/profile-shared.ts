@@ -3,7 +3,7 @@ import { locationSchema } from './location'
 import { AOW_REQUIRED_SPECIALTY_COUNT } from '@/lib/constants/agencies'
 import { BOAT_TYPES } from '@/lib/constants/boat-types'
 import { GAS_MIXES } from '@/lib/constants/gas-mixes'
-import { VENUE_TYPES } from '../../../convex/shared/venueTypes'
+import { DIVE_SITE_TYPES } from '../../../convex/shared/venueTypes'
 import {
   customerLanguagesFieldSchema,
   teachingLanguagesFieldSchema,
@@ -146,11 +146,11 @@ export const poolCapabilitiesSchema = z.object({
 export const diveSiteDetailsSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   location: locationSchema.nullable().refine((v) => v !== null, { message: 'Location is required' }),
-  venueType: z.enum(VENUE_TYPES),
+  diveSiteTypes: z.array(z.enum(DIVE_SITE_TYPES)).min(1, 'Select at least one site type'),
 })
 
 export const diveSiteCapabilitiesSchema = z.object({
-  confinedCapable: z.boolean(),
+  confinedCapable: z.boolean().optional(),
   maxDepth: z.number().min(0).optional(),
-  maxCapacity: z.number().int('Must be a whole number').positive('Must be at least 1'),
+  maxCapacity: z.number().int('Must be a whole number').positive('Must be at least 1').optional(),
 })

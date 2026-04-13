@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef } from 'react'
+import { useTranslations } from 'next-intl'
 import { useQuery } from 'convex/react'
 import { api } from '@/lib/convex-generated'
 import { useWizardPreferences } from '@/lib/hooks/use-wizard-preferences'
@@ -47,6 +48,8 @@ interface CourseEntryRowProps {
 }
 
 function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minStartDate, nextEntry, unavailableCodes }: CourseEntryRowProps) {
+  const tItin = useTranslations('booking.itinerary')
+  const tCommon = useTranslations('common')
   const agencyCodes = agency
     ? COURSE_CATALOG.filter((c) => c.agency === agency || c.agency === 'Universal').map((c) => c.code)
     : COURSE_CODES
@@ -140,7 +143,7 @@ function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minSta
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
         <div className="min-w-0">
           <SimpleSelect
-            label="Activity"
+            label={tItin('activity')}
             value={entry.activityCode}
             onChange={handleCourseChange}
             data-testid="course-activity-select"
@@ -149,13 +152,13 @@ function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minSta
               { value: '──────────', label: '──────────', disabled: true },
               { value: 'O+A', label: COMBO_COURSES['O+A'].label },
             ]}
-            placeholder="Select activity…"
+            placeholder={tItin('selectActivity')}
           />
         </div>
 
         <div className="flex flex-col gap-1 min-w-0 reading-plane rounded-theme p-2">
           <label className="text-body font-medium text-secondary">
-            Start date
+            {tCommon('startDate')}
           </label>
           <input /* design-ok: native date picker */
             type="date"
@@ -164,14 +167,13 @@ function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minSta
             onChange={(e) => handleStartDateChange(e.target.value)}
             onClick={(e) => e.currentTarget.showPicker()}
             data-testid="course-start-date"
-            className="field-underline w-full text-body py-2.5 px-0 cursor-pointer text-primary"
-            style={{ caretColor: 'var(--color-accent)' }}
+            className="field-underline w-full text-body py-2.5 px-0 cursor-pointer text-primary caret-accent"
           />
         </div>
 
         <div className="flex flex-col gap-1 min-w-0 reading-plane rounded-theme p-2">
           <label className="text-body font-medium text-secondary">
-            End date
+            {tCommon('endDate')}
           </label>
           <div className="flex gap-1 items-center">
             <input /* design-ok: native date picker */
@@ -180,8 +182,7 @@ function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minSta
               min={entry.dates[0]}
               onChange={(e) => handleEndDateChange(e.target.value)}
               onClick={(e) => e.currentTarget.showPicker()}
-              className="field-underline flex-1 text-body py-2.5 px-0 cursor-pointer text-primary"
-              style={{ caretColor: 'var(--color-accent)' }}
+              className="field-underline flex-1 text-body py-2.5 px-0 cursor-pointer text-primary caret-accent"
             />
             {canRemove && (
               <Button
@@ -189,7 +190,7 @@ function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minSta
                 size="sm"
                 type="button"
                 onClick={() => dispatch({ type: 'REMOVE_COURSE_ENTRY', customerId, entryId: entry.id })}
-                aria-label="Remove course"
+                aria-label={tItin('removeCourseAriaLabel')}
               >
                 <Trash2 size={16} />
               </Button>
@@ -204,6 +205,8 @@ function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minSta
 import { filterByAvailability, enrichOptionsWithCapacity } from '@/lib/booking/availability-filter'
 
 export function ItineraryStep({ state, dispatch, isEditMode = false }: ItineraryStepProps) {
+  const tItin = useTranslations('booking.itinerary')
+  const tCommon = useTranslations('common')
   const { customers, days, agency, sameForAll } = state
   const prevCoursesRef = useRef<string>('')
 
@@ -235,9 +238,24 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
     bookingDates.length > 0 ? { dates: bookingDates } : 'skip',
   )
 
-  const { prefs: cascadePrefs, isLoading: cascadePrefsLoading } = useWizardPreferences(
-    state.referralOwnerSlug ?? null,
+  const targetOperatorSlug = state.isReferral ? (state.targetOperatorSlug ?? null) : null
+  const { prefs: cascadePrefs, isLoading: cascadePrefsLoading } = useWizardPreferences(targetOperatorSlug)
+
+  const operatorDirectory = useQuery(api.directory.listByRole, { role: 'DiveCenter' }) ?? []
+  const targetOperatorOptions = useMemo(
+    () => operatorDirectory
+      .map((e) => ({ value: e.slug, label: `${e.name} — ${e.placeName}` }))
+      .sort((a, b) => a.label.localeCompare(b.label)),
+    [operatorDirectory],
   )
+
+  const minePrefsForDefault = useQuery(api.stakeholderPreferences.mine)
+  const preferredOperatorSlug = minePrefsForDefault?.preferredOperatorSlug
+  useEffect(() => {
+    if (state.isReferral && !state.targetOperatorSlug && preferredOperatorSlug) {
+      dispatch({ type: 'SET_TARGET_OPERATOR_SLUG', value: preferredOperatorSlug })
+    }
+  }, [state.isReferral, state.targetOperatorSlug, preferredOperatorSlug, dispatch])
 
   const preferredSlugsForCheck = useMemo(
     () => ({
@@ -263,12 +281,22 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
     }
   }, [inventoryMap, dispatch])
 
-  const preferenceCascadeAppliedRef = useRef(false)
+  const allCourseCodes: CourseCode[] = useMemo(
+    () => [...new Set(
+      customers.flatMap((c) => (c.courseEntries ?? []).map((e) => e.activityCode as CourseCode)).filter(Boolean),
+    )],
+    [customers],
+  )
+  const cascadeKey = `${targetOperatorSlug ?? ''}|${state.startDate}|${state.endDate}|${[...allCourseCodes].sort().join(',')}`
+  const lastCascadeKeyRef = useRef<string>('')
   useEffect(() => {
     if (cascadePrefs?.autoAssignPreferred === false) return
-    if (isEditMode || preferenceCascadeAppliedRef.current) return
+    if (isEditMode) return
     if (!prefAvailability || days.length === 0) return
+    if (cascadeKey === lastCascadeKeyRef.current) return
     if (state.preFillInstructorSlug || state.preFillVenueSlug || state.preFillBoatSlug) return
+
+    lastCascadeKeyRef.current = cascadeKey
 
     const inst = pickFirstAvailable(
       preferredSlugsForCheck.instructor,
@@ -282,40 +310,6 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
       preferredSlugsForCheck.boat,
       prefAvailability.boat,
     )
-    if (!inst && !venue && !boat) return
-
-    preferenceCascadeAppliedRef.current = true
-    const newDays = days.map((day) => ({
-      ...day,
-      ...(inst ? { instructorSlug: inst } : {}),
-      dives: day.dives.map((dive) => {
-        const vt = dive.venueType ?? (dive.isConfined ? 'pool' : 'boat')
-        const resourceId = vt === 'boat'
-          ? (boat || dive.resourceId)
-          : (venue || dive.resourceId)
-        return { ...dive, resourceId }
-      }),
-    }))
-    dispatch({ type: 'SET_DAYS', days: newDays })
-  }, [
-    isEditMode,
-    prefAvailability,
-    days,
-    state.preFillInstructorSlug,
-    state.preFillVenueSlug,
-    state.preFillBoatSlug,
-    preferredSlugsForCheck,
-    dispatch,
-    cascadePrefs?.autoAssignPreferred,
-  ])
-
-  const equipmentCascadeAppliedRef = useRef(false)
-  useEffect(() => {
-    if (cascadePrefs?.autoAssignPreferred === false) return
-    if (isEditMode || equipmentCascadeAppliedRef.current) return
-    if (!prefAvailability) return
-    if (state.equipment || state.compressor) return
-
     const eq = pickFirstAvailable(
       preferredSlugsForCheck.equipment,
       prefAvailability.equipment,
@@ -324,13 +318,27 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
       preferredSlugsForCheck.compressor,
       prefAvailability.compressor,
     )
-    if (!eq && !comp) return
-    equipmentCascadeAppliedRef.current = true
-    if (eq) dispatch({ type: 'SET_EQUIPMENT', value: eq })
-    if (comp) dispatch({ type: 'SET_COMPRESSOR', value: comp })
+
+    const newDays = days.map((day) => ({
+      ...day,
+      instructorSlug: day.instructorSlug || inst || undefined,
+      dives: day.dives.map((dive) => {
+        const vt = dive.venueType ?? (dive.isConfined ? 'pool' : 'boat')
+        const fallback = vt === 'boat' ? boat : venue
+        return { ...dive, resourceId: dive.resourceId || fallback || undefined }
+      }),
+    }))
+    dispatch({ type: 'SET_DAYS', days: newDays })
+    if (!state.equipment && eq) dispatch({ type: 'SET_EQUIPMENT', value: eq })
+    if (!state.compressor && comp) dispatch({ type: 'SET_COMPRESSOR', value: comp })
   }, [
     isEditMode,
     prefAvailability,
+    days,
+    cascadeKey,
+    state.preFillInstructorSlug,
+    state.preFillVenueSlug,
+    state.preFillBoatSlug,
     state.equipment,
     state.compressor,
     preferredSlugsForCheck,
@@ -354,9 +362,6 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
     }
   }, [days, boats, state.boatHasCompressor, dispatch])
 
-  const allCourseCodes: CourseCode[] = [...new Set(
-    customers.flatMap((c) => (c.courseEntries ?? []).map((e) => e.activityCode as CourseCode)).filter(Boolean),
-  )]
   const hasDateRange = state.startDate && state.endDate
 
   const today = toISODateString(new Date())
@@ -490,14 +495,35 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
 
   return (
     <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-3 p-3 rounded-theme glass-container">
+        <Checkbox
+          label={tItin('referLabel')}
+          checked={state.isReferral}
+          onChange={(checked) => dispatch({ type: 'SET_IS_REFERRAL', value: checked })}
+          data-testid="referral-mode-toggle"
+        />
+        <SimpleSelect
+          label={tItin('targetDiveCenter')}
+          value={state.targetOperatorSlug ?? ''}
+          disabled={!state.isReferral}
+          onChange={(v) => dispatch({ type: 'SET_TARGET_OPERATOR_SLUG', value: v || undefined })}
+          options={targetOperatorOptions}
+          placeholder={tItin('selectOperator')}
+          data-testid="referral-target-select"
+        />
+        {state.isReferral && !state.targetOperatorSlug && (
+          <p className="text-label text-warning">{tItin('selectOperatorFirst')}</p>
+        )}
+      </div>
+
       {customers.length > 1 && (
-        <div title="Coming soon">
+        <div title={tCommon('comingSoon')}>
           <Checkbox
             label={
               <>
-                Same courses for all customers
+                {tItin('sameCoursesLabel')}
                 <span className="text-label px-1.5 py-0.5 rounded-[var(--border-radius-button)] text-secondary bg-glass-border">
-                  Coming soon
+                  {tCommon('comingSoon')}
                 </span>
               </>
             }
@@ -514,12 +540,12 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
             <h3
               className="text-body font-semibold text-primary font-heading"
             >
-              {sameForAll && customers.length > 1 ? 'All customers' : customer.name}
+              {sameForAll && customers.length > 1 ? tItin('allCustomers') : customer.name}
             </h3>
             {sameForAll && customers.length > 1 && (
               <span className="text-label text-secondary">
                 <Copy size={10} className="inline mr-1" />
-                Applies to {customers.length} customers
+                {tItin('appliesToCustomers', { count: customers.length })}
               </span>
             )}
           </div>
@@ -554,7 +580,7 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
             className="mt-2"
           >
             <Plus size={16} />
-            Add
+            {tCommon('add')}
           </Button>
         </div>
       ))}
@@ -585,11 +611,11 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
             <h3
               className="text-body font-semibold text-primary font-heading"
             >
-              Schedule ({days.length} day{days.length !== 1 ? 's' : ''})
+              {tItin('scheduleDays', { count: days.length })}
             </h3>
             <Button variant="secondary" size="sm" onClick={handleRebuild}>
               <RotateCw size={12} />
-              Rebuild
+              {tItin('rebuild')}
             </Button>
           </div>
           {days.map((day, idx) => (
@@ -631,7 +657,7 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
 
       {customers.length === 0 && (
         <p className="text-body text-center py-6 text-secondary">
-          Add customers first.
+          {tItin('addCustomersFirst')}
         </p>
       )}
     </div>

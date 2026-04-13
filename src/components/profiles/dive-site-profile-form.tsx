@@ -3,7 +3,7 @@
 import { LocationPicker, type LocationValue } from '@/components/profiles/location-picker-lazy'
 import { SectionDivider } from '@/components/ui/section-divider'
 import { Input } from '@/components/ui/input'
-import { Select, type SelectOption } from '@/components/ui/select'
+import { Checkbox } from '@/components/ui/checkbox'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import { VenueCapabilitiesSection } from '@/components/profiles/venue-capabilities-section'
 import {
@@ -16,15 +16,16 @@ import {
   type BaseProfileSectionProps,
 } from '@/lib/profile-form'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
+import { DIVE_SITE_TYPES, type DiveSiteType } from '../../../convex/shared/venueTypes'
 
-const VENUE_TYPE_OPTIONS: SelectOption[] = [
-  { id: 'Shore', label: 'Shore' },
-  { id: 'Reef', label: 'Reef' },
-  { id: 'Lake', label: 'Lake' },
-  { id: 'River', label: 'River' },
-  { id: 'Quarry', label: 'Quarry' },
-  { id: 'Other', label: 'Other' },
-]
+const DIVE_SITE_TYPE_LABELS: Record<DiveSiteType, string> = {
+  shore: 'Shore',
+  reef: 'Reef',
+  lake: 'Lake',
+  river: 'River',
+  quarry: 'Quarry',
+  other: 'Other',
+}
 
 export type DiveSiteProfileSection = 'details' | 'capabilities'
 
@@ -33,13 +34,13 @@ type DiveSiteSectionProps = BaseProfileSectionProps
 export type DiveSiteDetailsFormState = {
   name: string
   location: LocationValue | null
-  venueType: 'Shore' | 'Reef' | 'Lake' | 'River' | 'Quarry' | 'Other'
+  diveSiteTypes: DiveSiteType[]
 }
 
 export const INITIAL_DIVE_SITE_DETAILS_FORM: DiveSiteDetailsFormState = {
   name: '',
   location: null,
-  venueType: 'Shore',
+  diveSiteTypes: [],
 }
 
 export function diveSiteDetailsFromProfile(p: Record<string, unknown>): DiveSiteDetailsFormState {
@@ -47,7 +48,7 @@ export function diveSiteDetailsFromProfile(p: Record<string, unknown>): DiveSite
   return {
     name,
     location: location as LocationValue,
-    venueType: (p.venueType as DiveSiteDetailsFormState['venueType']) ?? 'Shore',
+    diveSiteTypes: (p.diveSiteTypes as DiveSiteType[] | undefined) ?? [],
   }
 }
 
@@ -55,13 +56,14 @@ export function diveSiteDetailsToPayload(f: DiveSiteDetailsFormState): Record<st
   return {
     name: f.name,
     ...locationToPayload(f.location!),
-    venueType: f.venueType,
+    diveSiteTypes: f.diveSiteTypes,
   }
 }
 
 export function buildDiveSiteCreatePayload<T extends Record<string, unknown>>(payload: T) {
   return {
     ...payload,
+    venueCategory: 'diveSite' as const,
     hasCompressor: false,
   }
 }
@@ -82,6 +84,13 @@ export function DiveSiteDetailsSection({ profile: existing, me, create, update, 
     })
 
   const onLocationChange = (loc: LocationValue | null) => setField('location', loc)
+  const toggleSubtype = (subtype: DiveSiteType, checked: boolean) => {
+    const current = form.diveSiteTypes
+    const next = checked
+      ? Array.from(new Set([...current, subtype]))
+      : current.filter((s) => s !== subtype)
+    setField('diveSiteTypes', next)
+  }
 
   return (
     <ProfileFormShell
@@ -120,15 +129,21 @@ export function DiveSiteDetailsSection({ profile: existing, me, create, update, 
 
         <SectionDivider show />
 
-        <div>
-          <Select
-            label="Site Type"
-            value={form.venueType}
-            onChange={(val) => setField('venueType', val as DiveSiteDetailsFormState['venueType'])}
-            options={VENUE_TYPE_OPTIONS}
-            error={errors.venueType}
-            required
-          />
+        <div className="flex flex-col gap-2">
+          <span className="text-body font-medium text-secondary">Site Types</span>
+          <div className="flex flex-wrap gap-3">
+            {DIVE_SITE_TYPES.map((subtype) => (
+              <Checkbox
+                key={subtype}
+                label={DIVE_SITE_TYPE_LABELS[subtype]}
+                checked={form.diveSiteTypes.includes(subtype)}
+                onChange={(v) => toggleSubtype(subtype, v)}
+              />
+            ))}
+          </div>
+          {errors.diveSiteTypes && (
+            <span className="text-label text-destructive">{errors.diveSiteTypes}</span>
+          )}
         </div>
       </div>
     </ProfileFormShell>
@@ -159,7 +174,7 @@ export function diveSiteCapabilitiesToPayload(f: DiveSiteCapabilitiesFormState):
   return {
     confinedCapable: f.confinedCapable,
     ...(f.maxDepth > 0 ? { maxDepth: f.maxDepth } : {}),
-    maxCapacity: f.maxCapacity,
+    ...(f.maxCapacity > 0 ? { maxCapacity: f.maxCapacity } : {}),
   }
 }
 

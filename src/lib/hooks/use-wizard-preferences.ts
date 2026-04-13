@@ -3,63 +3,75 @@
 import { useMemo } from 'react'
 import { useQuery } from 'convex/react'
 import { api } from '@/lib/convex-generated'
-type PrefsDoc = {
-  preferredOperatorSlug?: string
-  preferredInstructorSlugs?: string[]
-  preferredVenueSlugs?: string[]
-  preferredBoatSlugs?: string[]
-  preferredEquipmentSlugs?: string[]
-  preferredCompressorSlugs?: string[]
-  acceptanceMode?: string
-  [key: string]: unknown
-} | null | undefined
+import type { Doc } from '@/lib/convex-generated'
 
-export function useWizardPreferences(referralOwnerSlug?: string | null): {
-  prefs: PrefsDoc
+export type WizardPreferencesDoc = Doc<'stakeholderPreferences'> | null | undefined
+
+export interface ResolveWizardPreferencesInputs {
+  targetOperatorSlug: string | null | undefined
+  userRoles: { role: string }[] | undefined
+  minePrefs: Doc<'stakeholderPreferences'> | null | undefined
+  fromTarget: Doc<'stakeholderPreferences'> | null | undefined
+  fromAgentPreferred: Doc<'stakeholderPreferences'> | null | undefined
+}
+
+export interface ResolveWizardPreferencesResult {
+  prefs: WizardPreferencesDoc
   isLoading: boolean
-} {
-  const userRoles = useQuery(api.userRoles.myRoles)
-  const roleNames = userRoles?.map((r) => r.role) ?? []
-  const hasAgent = roleNames.includes('Agent')
+}
 
+export function resolveWizardPreferences(
+  inputs: ResolveWizardPreferencesInputs,
+): ResolveWizardPreferencesResult {
+  const { targetOperatorSlug, userRoles, minePrefs, fromTarget, fromAgentPreferred } = inputs
+
+  if (targetOperatorSlug) {
+    if (fromTarget === undefined) return { prefs: undefined, isLoading: true }
+    return { prefs: fromTarget ?? null, isLoading: false }
+  }
+
+  if (userRoles === undefined || minePrefs === undefined) {
+    return { prefs: undefined, isLoading: true }
+  }
+
+  const hasAgent = userRoles.some((r) => r.role === 'Agent')
+  const agentPreferredSlug = hasAgent ? minePrefs?.preferredOperatorSlug : undefined
+
+  if (agentPreferredSlug) {
+    if (fromAgentPreferred === undefined) return { prefs: undefined, isLoading: true }
+    return { prefs: fromAgentPreferred ?? minePrefs, isLoading: false }
+  }
+
+  return { prefs: minePrefs, isLoading: false }
+}
+
+export function useWizardPreferences(
+  targetOperatorSlug?: string | null,
+): ResolveWizardPreferencesResult {
+  const userRoles = useQuery(api.userRoles.myRoles)
   const minePrefs = useQuery(api.stakeholderPreferences.mine)
 
-  const fromReferral = useQuery(
+  const fromTarget = useQuery(
     api.stakeholderPreferences.bySlug,
-    referralOwnerSlug ? { stakeholderSlug: referralOwnerSlug } : 'skip',
+    targetOperatorSlug ? { stakeholderSlug: targetOperatorSlug } : 'skip',
   )
 
-  const fromPreferredOperator = useQuery(
+  const hasAgent = userRoles?.some((r) => r.role === 'Agent') ?? false
+  const agentPreferredSlug = !targetOperatorSlug && hasAgent ? minePrefs?.preferredOperatorSlug : undefined
+  const fromAgentPreferred = useQuery(
     api.stakeholderPreferences.bySlug,
-    !referralOwnerSlug && hasAgent && minePrefs?.preferredOperatorSlug
-      ? { stakeholderSlug: minePrefs.preferredOperatorSlug }
-      : 'skip',
+    agentPreferredSlug ? { stakeholderSlug: agentPreferredSlug } : 'skip',
   )
 
-  const { prefs, isLoading } = useMemo(() => {
-    if (userRoles === undefined || minePrefs === undefined) {
-      return { prefs: undefined, isLoading: true }
-    }
-
-    if (referralOwnerSlug) {
-      if (fromReferral === undefined) return { prefs: undefined, isLoading: true }
-      return { prefs: (fromReferral ?? minePrefs) as PrefsDoc, isLoading: false }
-    }
-
-    if (hasAgent && minePrefs?.preferredOperatorSlug) {
-      if (fromPreferredOperator === undefined) return { prefs: undefined, isLoading: true }
-      return { prefs: (fromPreferredOperator ?? minePrefs) as PrefsDoc, isLoading: false }
-    }
-
-    return { prefs: minePrefs as PrefsDoc, isLoading: false }
-  }, [
-    userRoles,
-    minePrefs,
-    referralOwnerSlug,
-    fromReferral,
-    fromPreferredOperator,
-    hasAgent,
-  ])
-
-  return { prefs, isLoading }
+  return useMemo(
+    () =>
+      resolveWizardPreferences({
+        targetOperatorSlug,
+        userRoles,
+        minePrefs,
+        fromTarget,
+        fromAgentPreferred,
+      }),
+    [targetOperatorSlug, userRoles, minePrefs, fromTarget, fromAgentPreferred],
+  )
 }

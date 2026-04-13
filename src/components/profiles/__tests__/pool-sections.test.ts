@@ -217,14 +217,19 @@ describe('poolCapabilitiesToPayload', () => {
 })
 
 describe('buildPoolCreatePayload', () => {
-  it('always sets venueType to Pool', () => {
+  it('always sets venueCategory to pool', () => {
     const payload = buildPoolCreatePayload({ name: 'Test Pool' })
-    expect(payload.venueType).toBe('Pool')
+    expect(payload.venueCategory).toBe('pool')
   })
 
-  it('always sets confinedCapable to true', () => {
+  it('never sets confinedCapable', () => {
     const payload = buildPoolCreatePayload({ name: 'Test Pool' })
-    expect(payload.confinedCapable).toBe(true)
+    expect(payload).not.toHaveProperty('confinedCapable')
+  })
+
+  it('never sets legacy venueType', () => {
+    const payload = buildPoolCreatePayload({ name: 'Test Pool' })
+    expect(payload).not.toHaveProperty('venueType')
   })
 
   it('always sets hasCompressor to false', () => {
@@ -242,7 +247,7 @@ describe('buildPoolCreatePayload', () => {
     const result = buildPoolCreatePayload(contactPayload)
     expect(result.name).toBe('Blue Lagoon Training Pool')
     expect(result.email).toBe('pool@bluelagoon.com')
-    expect(result.venueType).toBe('Pool')
+    expect(result.venueCategory).toBe('pool')
     expect(result.hasCompressor).toBe(false)
   })
 })

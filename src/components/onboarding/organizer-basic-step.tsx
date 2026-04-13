@@ -1,6 +1,7 @@
 'use client'
 
 import { useMutation, useQuery } from 'convex/react'
+import { useTranslations } from 'next-intl'
 import { api } from '@/lib/convex-generated'
 import { LoadingCard } from '@/components/ui/loading-card'
 import { LocationPicker, type LocationValue } from '@/components/profiles/location-picker-lazy'
@@ -25,13 +26,14 @@ interface OrganizerBasicStepProps {
 }
 
 export function OrganizerBasicStep({ role, onSaved, onBack }: OrganizerBasicStepProps) {
+  const t = useTranslations('common')
   const mutations = useOrganizerRoleApi(role)
 
   if (!mutations) {
     return (
       <OrganizerStepCard
-        title="Basic Information"
-        subtitle="Coming soon."
+        title={t('basicInformation')}
+        subtitle={t('comingSoonPeriod')}
         onBack={onBack}
         onNext={onSaved}
       >
@@ -51,6 +53,7 @@ interface BasicStepInnerProps {
 }
 
 function BasicStepInner({ role, mutations, onSaved, onBack }: BasicStepInnerProps) {
+  const t = useTranslations('common')
   const existing = useQuery(mutations.mine)
   const me = useQuery(api.users.me)
   const createMutation = useMutation(mutations.create)
@@ -69,8 +72,8 @@ function BasicStepInner({ role, mutations, onSaved, onBack }: BasicStepInnerProp
     if (role === 'DiveSite') {
       return createMutation({
         ...base,
-        venueType: 'Shore',
-        confinedCapable: false,
+        venueCategory: 'diveSite',
+        diveSiteTypes: ['shore'],
         hasCompressor: false,
       })
     }
@@ -110,8 +113,8 @@ function BasicStepInner({ role, mutations, onSaved, onBack }: BasicStepInnerProp
 
   return (
     <OrganizerStepCard
-      title="Basic Information"
-      subtitle={`Tell us about your ${roleLabel}.`}
+      title={t('basicInformation')}
+      subtitle={t('tellUsAbout', { role: roleLabel })}
       onBack={onBack}
       onNext={handleNext}
       loading={saving}
@@ -119,7 +122,7 @@ function BasicStepInner({ role, mutations, onSaved, onBack }: BasicStepInnerProp
     >
       <div className="flex flex-col gap-4" data-testid="wizard-content">
         <Input
-          label="Business Name"
+          label={t('businessName')}
           value={form.name}
           onChange={(e) => setField('name', e.target.value)}
           placeholder="e.g. Ocean Explorer Dive Center"
@@ -127,13 +130,13 @@ function BasicStepInner({ role, mutations, onSaved, onBack }: BasicStepInnerProp
           error={errors.name}
         />
         <LocationPicker
-          label="Location"
+          label={t('location')}
           value={form.location as LocationValue | null}
           onChange={(loc) => setField('location', loc)}
           error={errors.location}
         />
         <Input
-          label="Contact Email"
+          label={t('contactEmail')}
           type="email"
           value={form.email}
           onChange={(e) => setField('email', e.target.value)}
@@ -142,7 +145,7 @@ function BasicStepInner({ role, mutations, onSaved, onBack }: BasicStepInnerProp
           error={errors.email}
         />
         <Input
-          label="Contact Phone"
+          label={t('contactPhone')}
           type="tel"
           value={form.phone}
           onChange={(e) => setField('phone', e.target.value)}

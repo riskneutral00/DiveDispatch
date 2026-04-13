@@ -108,7 +108,7 @@ export function VenueCapabilitiesSection<T extends VenueCapabilitiesFormState>({
             onChange={(e) => setField('maxCapacity', parseNumber(e.target.value, true))}
             error={errors.maxCapacity}
             placeholder={capacityPlaceholder}
-            required={venueType === 'diveSite'}
+            required={venueType === 'pool'}
             className="field-number"
           />
         </div>

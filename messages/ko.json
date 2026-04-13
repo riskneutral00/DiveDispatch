@@ -54,7 +54,17 @@
     "noNotifications": "알림이 없습니다.",
     "profileSaved": "프로필이 저장되었습니다",
     "profileSavedExtraStepFailed": "프로필이 저장되었지만 추가 단계가 실패했습니다",
-    "fixHighlightedFields": "강조 표시된 필드를 수정하세요"
+    "fixHighlightedFields": "강조 표시된 필드를 수정하세요",
+    "basicInformation": "기본 정보",
+    "comingSoon": "곧 출시",
+    "comingSoonPeriod": "곧 출시.",
+    "tellUsAbout": "{role}에 대해 알려주세요.",
+    "businessName": "사업체 이름",
+    "location": "위치",
+    "contactEmail": "연락처 이메일",
+    "contactPhone": "연락처 전화",
+    "startDate": "시작일",
+    "endDate": "종료일"
   },
   "errors": {
     "unexpected": "문제가 발생했습니다. 다시 시도해 주세요.",
@@ -206,7 +216,24 @@
     "instructor": "강사",
     "boat": "보트",
     "viewFullDetail": "상세 보기",
-    "byOperator": "{name}"
+    "byOperator": "{name}",
+    "portalLinkDelivery": "포털 링크 전송",
+    "cancelAriaLabel": "예약 취소",
+    "itinerary": {
+      "activity": "활동",
+      "selectActivity": "활동 선택…",
+      "referLabel": "다른 운영자에게 이 예약 추천",
+      "targetDiveCenter": "대상 다이빙 센터",
+      "selectOperator": "운영자 선택…",
+      "selectOperatorFirst": "계속하기 전에 대상 운영자를 선택하세요.",
+      "sameCoursesLabel": "모든 고객에 동일한 코스",
+      "allCustomers": "모든 고객",
+      "appliesToCustomers": "{count}명의 고객에 적용",
+      "scheduleDays": "일정 ({count, plural, =1 {# 일} other {# 일}})",
+      "rebuild": "재구성",
+      "addCustomersFirst": "먼저 고객을 추가하세요.",
+      "removeCourseAriaLabel": "코스 제거"
+    }
   },
   "portal": {
     "stepContact": "Contact",

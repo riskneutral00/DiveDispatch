@@ -82,7 +82,7 @@ describe('AddRoleModal', () => {
   it('shows no available roles message when all roles are held', () => {
     const allRoles = ROLES.map((r) => r.clerkRole)
     render(<AddRoleModal {...defaultProps} heldRoles={allRoles} />)
-    expect(screen.getByText(/all roles/i)).toBeInTheDocument()
+    expect(screen.getByText(/hold this role/i)).toBeInTheDocument()
   })
 
   it('disables role buttons when loading', () => {

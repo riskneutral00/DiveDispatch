@@ -17,8 +17,7 @@ type PoolSectionProps = BaseProfileSectionProps
 export function buildPoolCreatePayload<T extends Record<string, unknown>>(payload: T) {
   return {
     ...payload,
-    venueType: 'Pool' as const,
-    confinedCapable: true,
+    venueCategory: 'pool' as const,
     hasCompressor: false,
   }
 }

@@ -54,7 +54,17 @@
     "noNotifications": "暂无通知。",
     "profileSaved": "已保存资料",
     "profileSavedExtraStepFailed": "已保存资料，但额外步骤失败",
-    "fixHighlightedFields": "请修正高亮字段"
+    "fixHighlightedFields": "请修正高亮字段",
+    "basicInformation": "基本信息",
+    "comingSoon": "即将推出",
+    "comingSoonPeriod": "即将推出。",
+    "tellUsAbout": "请介绍您的{role}。",
+    "businessName": "企业名称",
+    "location": "位置",
+    "contactEmail": "联系邮箱",
+    "contactPhone": "联系电话",
+    "startDate": "开始日期",
+    "endDate": "结束日期"
   },
   "errors": {
     "unexpected": "出了点问题，请重试。",
@@ -206,7 +216,24 @@
     "instructor": "教练",
     "boat": "船",
     "viewFullDetail": "查看完整详情",
-    "byOperator": "{name}"
+    "byOperator": "{name}",
+    "portalLinkDelivery": "门户链接发送",
+    "cancelAriaLabel": "取消预订",
+    "itinerary": {
+      "activity": "活动",
+      "selectActivity": "选择活动…",
+      "referLabel": "将此预订转介给其他运营商",
+      "targetDiveCenter": "目标潜水中心",
+      "selectOperator": "选择运营商…",
+      "selectOperatorFirst": "请先选择目标运营商。",
+      "sameCoursesLabel": "所有客户使用相同课程",
+      "allCustomers": "所有客户",
+      "appliesToCustomers": "适用于{count}位客户",
+      "scheduleDays": "行程（{count, plural, =1 {# 天} other {# 天}}）",
+      "rebuild": "重建",
+      "addCustomersFirst": "请先添加客户。",
+      "removeCourseAriaLabel": "移除课程"
+    }
   },
   "portal": {
     "stepContact": "Contact",

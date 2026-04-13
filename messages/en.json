@@ -54,7 +54,17 @@
     "noNotifications": "No notifications.",
     "profileSaved": "Profile saved",
     "profileSavedExtraStepFailed": "Profile saved, but an extra step failed",
-    "fixHighlightedFields": "Fix the highlighted fields"
+    "fixHighlightedFields": "Fix the highlighted fields",
+    "basicInformation": "Basic Information",
+    "comingSoon": "Coming soon",
+    "comingSoonPeriod": "Coming soon.",
+    "tellUsAbout": "Tell us about your {role}.",
+    "businessName": "Business Name",
+    "location": "Location",
+    "contactEmail": "Contact Email",
+    "contactPhone": "Contact Phone",
+    "startDate": "Start date",
+    "endDate": "End date"
   },
   "errors": {
     "unexpected": "Something went wrong. Try again.",
@@ -206,7 +216,24 @@
     "instructor": "Instructor",
     "boat": "Boat",
     "viewFullDetail": "View Full Detail",
-    "byOperator": "by {name}"
+    "byOperator": "by {name}",
+    "portalLinkDelivery": "Portal link delivery",
+    "cancelAriaLabel": "Cancel booking",
+    "itinerary": {
+      "activity": "Activity",
+      "selectActivity": "Select activity…",
+      "referLabel": "Refer this booking to another operator",
+      "targetDiveCenter": "Target Dive Center",
+      "selectOperator": "Select operator…",
+      "selectOperatorFirst": "Select a target operator before continuing.",
+      "sameCoursesLabel": "Same courses for all customers",
+      "allCustomers": "All customers",
+      "appliesToCustomers": "Applies to {count} customers",
+      "scheduleDays": "Schedule ({count, plural, =1 {# day} other {# days}})",
+      "rebuild": "Rebuild",
+      "addCustomersFirst": "Add customers first.",
+      "removeCourseAriaLabel": "Remove course"
+    }
   },
   "portal": {
     "stepContact": "Contact",

@@ -54,7 +54,17 @@
     "noNotifications": "ไม่มีการแจ้งเตือน",
     "profileSaved": "บันทึกโปรไฟล์แล้ว",
     "profileSavedExtraStepFailed": "บันทึกโปรไฟล์แล้ว แต่ขั้นตอนเสริมล้มเหลว",
-    "fixHighlightedFields": "แก้ไขฟิลด์ที่ไฮไลต์"
+    "fixHighlightedFields": "แก้ไขฟิลด์ที่ไฮไลต์",
+    "basicInformation": "ข้อมูลพื้นฐาน",
+    "comingSoon": "เร็ว ๆ นี้",
+    "comingSoonPeriod": "เร็ว ๆ นี้.",
+    "tellUsAbout": "บอกเราเกี่ยวกับ{role}ของคุณ",
+    "businessName": "ชื่อธุรกิจ",
+    "location": "สถานที่",
+    "contactEmail": "อีเมลติดต่อ",
+    "contactPhone": "โทรศัพท์ติดต่อ",
+    "startDate": "วันเริ่มต้น",
+    "endDate": "วันสิ้นสุด"
   },
   "errors": {
     "unexpected": "เกิดข้อผิดพลาด กรุณาลองอีกครั้ง",
@@ -206,7 +216,24 @@
     "instructor": "ครูสอน",
     "boat": "เรือ",
     "viewFullDetail": "ดูรายละเอียดทั้งหมด",
-    "byOperator": "โดย {name}"
+    "byOperator": "โดย {name}",
+    "portalLinkDelivery": "ส่งลิงก์พอร์ทัล",
+    "cancelAriaLabel": "ยกเลิกการจอง",
+    "itinerary": {
+      "activity": "กิจกรรม",
+      "selectActivity": "เลือกกิจกรรม…",
+      "referLabel": "แนะนำการจองนี้ให้ผู้ประกอบการรายอื่น",
+      "targetDiveCenter": "ศูนย์ดำน้ำเป้าหมาย",
+      "selectOperator": "เลือกผู้ประกอบการ…",
+      "selectOperatorFirst": "เลือกผู้ประกอบการเป้าหมายก่อนดำเนินการต่อ",
+      "sameCoursesLabel": "คอร์สเดียวกันสำหรับลูกค้าทุกคน",
+      "allCustomers": "ลูกค้าทุกคน",
+      "appliesToCustomers": "ใช้กับลูกค้า {count} คน",
+      "scheduleDays": "กำหนดการ ({count, plural, =1 {# วัน} other {# วัน}})",
+      "rebuild": "สร้างใหม่",
+      "addCustomersFirst": "เพิ่มลูกค้าก่อน",
+      "removeCourseAriaLabel": "ลบคอร์ส"
+    }
   },
   "portal": {
     "stepContact": "Contact",

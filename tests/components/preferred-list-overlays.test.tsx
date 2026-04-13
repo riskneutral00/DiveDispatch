@@ -18,8 +18,8 @@ beforeEach(() => {
 // ─── Mock data ───────────────────────────────────────────────────────────────
 
 const VENUES: DirectoryEntry[] = [
-  { slug: 'pool-a', name: 'Crystal Pool', placeName: 'Phuket', country: 'TH', verified: true, role: 'Pool', venueType: 'Pool', maxDepth: 5, maxCapacity: 20, hasCompressor: false, confinedCapable: true },
-  { slug: 'reef-b', name: 'Shark Point', placeName: 'Koh Tao', country: 'TH', verified: true, role: 'DiveSite', venueType: 'Reef', hasCompressor: true, confinedCapable: false },
+  { slug: 'pool-a', name: 'Crystal Pool', placeName: 'Phuket', country: 'TH', verified: true, role: 'Pool', venueCategory: 'pool', maxDepth: 5, maxCapacity: 20, hasCompressor: false },
+  { slug: 'reef-b', name: 'Shark Point', placeName: 'Koh Tao', country: 'TH', verified: true, role: 'DiveSite', venueCategory: 'diveSite', diveSiteTypes: ['reef'], hasCompressor: true, confinedCapable: false },
 ]
 
 const BOATS: DirectoryEntry[] = [

@@ -54,7 +54,17 @@
     "noNotifications": "Aucune notification.",
     "profileSaved": "Profil enregistré",
     "profileSavedExtraStepFailed": "Profil enregistré, mais une étape supplémentaire a échoué",
-    "fixHighlightedFields": "Corrigez les champs en surbrillance"
+    "fixHighlightedFields": "Corrigez les champs en surbrillance",
+    "basicInformation": "Informations de base",
+    "comingSoon": "Bientôt disponible",
+    "comingSoonPeriod": "Bientôt disponible.",
+    "tellUsAbout": "Parlez-nous de votre {role}.",
+    "businessName": "Nom de l'entreprise",
+    "location": "Lieu",
+    "contactEmail": "Email de contact",
+    "contactPhone": "Téléphone de contact",
+    "startDate": "Date de début",
+    "endDate": "Date de fin"
   },
   "errors": {
     "unexpected": "Un problème est survenu. Veuillez réessayer.",
@@ -206,7 +216,24 @@
     "instructor": "Instructeur",
     "boat": "Bateau",
     "viewFullDetail": "Voir tous les détails",
-    "byOperator": "par {name}"
+    "byOperator": "par {name}",
+    "portalLinkDelivery": "Livraison du lien du portail",
+    "cancelAriaLabel": "Annuler la réservation",
+    "itinerary": {
+      "activity": "Activité",
+      "selectActivity": "Sélectionner une activité…",
+      "referLabel": "Référer cette réservation à un autre opérateur",
+      "targetDiveCenter": "Centre de plongée cible",
+      "selectOperator": "Sélectionner un opérateur…",
+      "selectOperatorFirst": "Sélectionnez un opérateur cible avant de continuer.",
+      "sameCoursesLabel": "Mêmes cours pour tous les clients",
+      "allCustomers": "Tous les clients",
+      "appliesToCustomers": "S'applique à {count} clients",
+      "scheduleDays": "Planning ({count, plural, =1 {# jour} other {# jours}})",
+      "rebuild": "Reconstruire",
+      "addCustomersFirst": "Ajoutez d'abord des clients.",
+      "removeCourseAriaLabel": "Supprimer le cours"
+    }
   },
   "portal": {
     "stepContact": "Contact",

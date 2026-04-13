@@ -76,6 +76,7 @@ function makeState(overrides: Partial<WizardState> = {}): WizardState {
     conflictError: null,
     submittedBookingId: null,
     inventoryUnitMap: {},
+    isReferral: false,
     ...overrides,
   }
 }

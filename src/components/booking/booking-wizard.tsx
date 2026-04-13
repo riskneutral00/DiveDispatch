@@ -178,6 +178,8 @@ export function BookingWizard({
           activeRole: activeRole!,
           startDate: state.startDate,
           endDate: state.endDate,
+          isReferral: state.isReferral,
+          targetOperatorSlug: state.targetOperatorSlug,
         });
         dispatch({ type: "SET_BOOKING_ID", payload: currentBookingId });
       }
@@ -223,7 +225,7 @@ export function BookingWizard({
     if (!activeRole) return null;
     setPortalDraftBusy(true);
     try {
-      const id = await createDraftShell({ activeRole });
+      const id = await createDraftShell({ activeRole, isReferral: false });
       dispatch({ type: "SET_BOOKING_ID", payload: id });
       return id;
     } catch {
@@ -261,7 +263,7 @@ export function BookingWizard({
             loading={portalDraftBusy}
             onClick={() => void ensureDraftForPortalLink()}
           >
-            Send Link
+            {tCommon("sendLink")}
           </Button>
           <p
             className="text-label mt-2 text-secondary"
@@ -277,7 +279,7 @@ export function BookingWizard({
         <p
           className="text-label font-medium text-secondary"
         >
-          Portal link delivery
+          {t("portalLinkDelivery")}
         </p>
         <SendPortalLink
           bookingId={state.bookingId as Id<"bookings">}
@@ -392,7 +394,7 @@ export function BookingWizard({
             <h1 className="text-page-title font-bold text-primary font-heading">
               {isEditMode && bookingRef
                 ? t("editingTitle", { ref: bookingRef })
-                : "New Booking"}
+                : t("newBookingTitle")}
             </h1>
             <Button
               variant="ghost"
@@ -401,7 +403,7 @@ export function BookingWizard({
               onClick={() => void handleCancel()}
               disabled={state.submitting}
               className="rounded-full" /* design-ok: circular dismiss button */
-              aria-label="Cancel booking"
+              aria-label={t("cancelAriaLabel")}
             >
               <X size={16} />
             </Button>

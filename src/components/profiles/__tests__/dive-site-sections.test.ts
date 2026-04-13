@@ -28,7 +28,7 @@ describe('diveSiteDetailsSchema', () => {
   const valid = {
     name: 'Shark Bay Reef',
     location: VALID_LOCATION,
-    venueType: 'Reef' as const,
+    diveSiteTypes: ['reef' as const],
   }
 
   it('accepts a fully valid details payload', () => {
@@ -43,14 +43,23 @@ describe('diveSiteDetailsSchema', () => {
     expect(diveSiteDetailsSchema.safeParse({ ...valid, location: null }).success).toBe(false)
   })
 
-  it('rejects invalid venueType', () => {
-    expect(diveSiteDetailsSchema.safeParse({ ...valid, venueType: 'Ocean' }).success).toBe(false)
+  it('rejects invalid diveSiteTypes entry', () => {
+    expect(diveSiteDetailsSchema.safeParse({ ...valid, diveSiteTypes: ['ocean'] }).success).toBe(false)
   })
 
-  it('accepts all valid venueType values', () => {
-    const types = ['Shore', 'Reef', 'Lake', 'River', 'Quarry', 'Other'] as const
-    for (const venueType of types) {
-      expect(diveSiteDetailsSchema.safeParse({ ...valid, venueType }).success).toBe(true)
+  it('rejects empty diveSiteTypes', () => {
+    expect(diveSiteDetailsSchema.safeParse({ ...valid, diveSiteTypes: [] }).success).toBe(false)
+  })
+
+  it('accepts multi-select combinations', () => {
+    const combos = [
+      ['shore'],
+      ['reef', 'shore'],
+      ['lake', 'river', 'quarry'],
+      ['other'],
+    ] as const
+    for (const diveSiteTypes of combos) {
+      expect(diveSiteDetailsSchema.safeParse({ ...valid, diveSiteTypes: [...diveSiteTypes] }).success).toBe(true)
     }
   })
 
@@ -74,12 +83,22 @@ describe('diveSiteCapabilitiesSchema', () => {
     expect(diveSiteCapabilitiesSchema.safeParse({ ...valid, confinedCapable: true }).success).toBe(true)
   })
 
+  it('accepts confinedCapable absent (now optional)', () => {
+    const { confinedCapable: _, ...withoutConfined } = valid
+    expect(diveSiteCapabilitiesSchema.safeParse(withoutConfined).success).toBe(true)
+  })
+
   it('accepts optional maxDepth absent', () => {
     const { maxDepth: _, ...withoutDepth } = valid
     expect(diveSiteCapabilitiesSchema.safeParse(withoutDepth).success).toBe(true)
   })
 
-  it('rejects zero maxCapacity', () => {
+  it('accepts optional maxCapacity absent (DiveSite capacity is optional)', () => {
+    const { maxCapacity: _, ...withoutCapacity } = valid
+    expect(diveSiteCapabilitiesSchema.safeParse(withoutCapacity).success).toBe(true)
+  })
+
+  it('rejects zero maxCapacity when present', () => {
     expect(diveSiteCapabilitiesSchema.safeParse({ ...valid, maxCapacity: 0 }).success).toBe(false)
   })
 
@@ -93,26 +112,26 @@ describe('diveSiteCapabilitiesSchema', () => {
 })
 
 describe('diveSiteDetailsFromProfile', () => {
-  it('extracts name, location, venueType from profile', () => {
+  it('extracts name, location, diveSiteTypes from profile', () => {
     const profile = {
       name: 'Shark Bay Reef',
       placeName: 'Shark Bay',
       country: 'Malaysia',
       lat: 5.97,
       lng: 116.07,
-      venueType: 'Reef',
+      diveSiteTypes: ['reef', 'shore'],
       maxDepth: 18,
       maxCapacity: 20,
       confinedCapable: false,
     }
     const form = diveSiteDetailsFromProfile(profile)
     expect(form.name).toBe('Shark Bay Reef')
-    expect(form.venueType).toBe('Reef')
+    expect(form.diveSiteTypes).toEqual(['reef', 'shore'])
     expect(form.location?.placeName).toBe('Shark Bay')
     expect(form.location?.country).toBe('Malaysia')
   })
 
-  it('defaults venueType to Shore when absent', () => {
+  it('defaults diveSiteTypes to empty array when absent', () => {
     const profile = {
       name: 'Mystery Site',
       placeName: 'Koh Tao',
@@ -121,7 +140,7 @@ describe('diveSiteDetailsFromProfile', () => {
       lng: 99.8,
     }
     const form = diveSiteDetailsFromProfile(profile)
-    expect(form.venueType).toBe('Shore')
+    expect(form.diveSiteTypes).toEqual([])
   })
 
   it('does not include capabilities fields', () => {
@@ -131,7 +150,7 @@ describe('diveSiteDetailsFromProfile', () => {
       country: 'Malaysia',
       lat: 4.11,
       lng: 118.63,
-      venueType: 'Reef',
+      diveSiteTypes: ['reef'],
       maxDepth: 30,
       maxCapacity: 15,
       confinedCapable: false,
@@ -148,7 +167,7 @@ describe('diveSiteDetailsToPayload', () => {
     const form: DiveSiteDetailsFormState = {
       name: 'Shark Bay Reef',
       location: { placeName: 'Shark Bay', country: 'Malaysia', lat: 5.97, lng: 116.07 },
-      venueType: 'Reef',
+      diveSiteTypes: ['reef'],
     }
     const payload = diveSiteDetailsToPayload(form)
     expect(payload.name).toBe('Shark Bay Reef')
@@ -156,20 +175,29 @@ describe('diveSiteDetailsToPayload', () => {
     expect(payload.country).toBe('Malaysia')
     expect(payload.lat).toBe(5.97)
     expect(payload.lng).toBe(116.07)
-    
-    expect(payload.venueType).toBe('Reef')
+    expect(payload.diveSiteTypes).toEqual(['reef'])
   })
 
   it('does not include capabilities fields', () => {
     const form: DiveSiteDetailsFormState = {
       name: 'Test Site',
       location: { placeName: 'BKK', country: 'TH', lat: 13.7, lng: 100.5 },
-      venueType: 'Shore',
+      diveSiteTypes: ['shore'],
     }
     const payload = diveSiteDetailsToPayload(form)
     expect(payload).not.toHaveProperty('confinedCapable')
     expect(payload).not.toHaveProperty('maxDepth')
     expect(payload).not.toHaveProperty('maxCapacity')
+  })
+
+  it('never emits legacy venueType', () => {
+    const form: DiveSiteDetailsFormState = {
+      name: 'Test Site',
+      location: { placeName: 'BKK', country: 'TH', lat: 13.7, lng: 100.5 },
+      diveSiteTypes: ['reef', 'shore'],
+    }
+    const payload = diveSiteDetailsToPayload(form)
+    expect(payload).not.toHaveProperty('venueType')
   })
 })
 
@@ -204,10 +232,10 @@ describe('diveSiteCapabilitiesFromProfile', () => {
       maxDepth: 18,
       maxCapacity: 20,
       name: 'Shark Bay Reef',
-      venueType: 'Reef',
+      diveSiteTypes: ['reef'],
     })
     expect(form).not.toHaveProperty('name')
-    expect(form).not.toHaveProperty('venueType')
+    expect(form).not.toHaveProperty('diveSiteTypes')
     expect(form).not.toHaveProperty('location')
   })
 })
@@ -235,6 +263,16 @@ describe('diveSiteCapabilitiesToPayload', () => {
     expect(payload).not.toHaveProperty('maxDepth')
   })
 
+  it('omits maxCapacity when zero (uncapped DiveSite)', () => {
+    const form: DiveSiteCapabilitiesFormState = {
+      confinedCapable: false,
+      maxDepth: 10,
+      maxCapacity: 0,
+    }
+    const payload = diveSiteCapabilitiesToPayload(form)
+    expect(payload).not.toHaveProperty('maxCapacity')
+  })
+
   it('does not include details fields', () => {
     const form: DiveSiteCapabilitiesFormState = {
       confinedCapable: false,
@@ -243,7 +281,7 @@ describe('diveSiteCapabilitiesToPayload', () => {
     }
     const payload = diveSiteCapabilitiesToPayload(form)
     expect(payload).not.toHaveProperty('name')
-    expect(payload).not.toHaveProperty('venueType')
+    expect(payload).not.toHaveProperty('diveSiteTypes')
     expect(payload).not.toHaveProperty('location')
   })
 })
@@ -254,19 +292,24 @@ describe('buildDiveSiteCreatePayload', () => {
     expect(payload.hasCompressor).toBe(false)
   })
 
+  it('always sets venueCategory to diveSite', () => {
+    const payload = buildDiveSiteCreatePayload({ name: 'Test Site' })
+    expect(payload.venueCategory).toBe('diveSite')
+  })
+
   it('preserves original details payload fields', () => {
     const detailsPayload = diveSiteDetailsToPayload({
       name: 'Shark Bay Reef',
       location: { placeName: 'Shark Bay', country: 'Malaysia', lat: 5.97, lng: 116.07 },
-      venueType: 'Reef',
+      diveSiteTypes: ['reef'],
     })
     const result = buildDiveSiteCreatePayload(detailsPayload)
     expect(result.name).toBe('Shark Bay Reef')
-    expect(result.venueType).toBe('Reef')
+    expect(result.diveSiteTypes).toEqual(['reef'])
     expect(result.hasCompressor).toBe(false)
   })
 
-  it('does not inject venueType (unlike pool)', () => {
+  it('never injects legacy venueType', () => {
     const result = buildDiveSiteCreatePayload({ name: 'Test' })
     expect(result).not.toHaveProperty('venueType')
   })
@@ -278,8 +321,8 @@ describe('INITIAL_DIVE_SITE_DETAILS_FORM', () => {
     expect(INITIAL_DIVE_SITE_DETAILS_FORM.location).toBeNull()
   })
 
-  it('defaults venueType to Shore', () => {
-    expect(INITIAL_DIVE_SITE_DETAILS_FORM.venueType).toBe('Shore')
+  it('defaults diveSiteTypes to empty array', () => {
+    expect(INITIAL_DIVE_SITE_DETAILS_FORM.diveSiteTypes).toEqual([])
   })
 })
 

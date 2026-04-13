@@ -153,8 +153,8 @@ export function useBookingWizardEffects({
       payload: {
         step: 'customers',
         bookingId: initialBookingId!,
-        ...(existingBooking.agentIsReferral
-          ? { referralOwnerSlug: existingBooking.ownerId as string }
+        ...(existingBooking.referrerId
+          ? { isReferral: true, targetOperatorSlug: existingBooking.ownerId as string }
           : {}),
       },
     })
