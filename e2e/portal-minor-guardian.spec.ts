@@ -69,7 +69,7 @@ async function completeContactStepAsMinor(
   await page.getByLabel('Legal First Name *').fill('Minor')
   await page.getByLabel('Legal Last Name *').fill('Diver')
   await page.getByLabel('Email *').fill('minor.portal@example.com')
-  await page.getByLabel('Phone *').first().fill('+1 555 000 9999')
+  await page.getByLabel('Phone *').first().fill('+12025550100')
   await page.getByLabel('Date of Birth *').fill(minorDob)
 
   await page.locator('[data-testid="portal-gender-select"]').selectOption('M')
@@ -80,7 +80,7 @@ async function completeContactStepAsMinor(
   await page.getByLabel('Expiration Date *').fill('2030-01-01')
 
   await page.getByLabel('Full Name *').fill('Parent Name')
-  await page.getByLabel('Phone *').nth(1).fill('+1 555 000 8888')
+  await page.getByLabel('Phone *').nth(1).fill('+14155550178')
   await page.getByLabel('Relationship *').fill('Parent')
 
   await page.getByRole('button', { name: 'Continue' }).click()
@@ -148,7 +148,7 @@ test.describe('portal: minor with guardian', () => {
     await page.getByLabel('Legal First Name *').fill('Adult')
     await page.getByLabel('Legal Last Name *').fill('Diver')
     await page.getByLabel('Email *').fill('adult.portal@example.com')
-    await page.getByLabel('Phone *').first().fill('+1 555 000 7777')
+    await page.getByLabel('Phone *').first().fill('+12125550180')
     await page.getByLabel('Date of Birth *').fill('1990-06-15')
 
     await page.locator('[data-testid="portal-gender-select"]').selectOption('F')
@@ -159,7 +159,7 @@ test.describe('portal: minor with guardian', () => {
     await page.getByLabel('Expiration Date *').fill('2030-01-01')
 
     await page.getByLabel('Full Name *').fill('Emergency Contact')
-    await page.getByLabel('Phone *').nth(1).fill('+1 555 000 6666')
+    await page.getByLabel('Phone *').nth(1).fill('+12125550191')
     await page.getByLabel('Relationship *').fill('Spouse')
 
     await page.getByRole('button', { name: 'Continue' }).click()

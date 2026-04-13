@@ -5,7 +5,7 @@ import { NICOLE, RYAN_CLARKE, futureDateString } from './seed'
 
 const BASE_URL = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000'
 
-// ── Booking creation ────────────────────────────────────────────────────────
+// ── Booking creation ──────────────────────────────────────────────────────── // comments-ok
 
 /**
  * Instructor option for booking creation.
