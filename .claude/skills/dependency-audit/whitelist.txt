@@ -26,7 +26,15 @@ zod
 
 posthog-js
 
+react-phone-number-input
+react-aria-components
+@internationalized/date
+world-countries
+i18n-iso-countries
+mrz
+
 # === devDependencies ===
+@clerk/testing
 @axe-core/playwright
 @axe-core/react
 @chromatic-com/storybook

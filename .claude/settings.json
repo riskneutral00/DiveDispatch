@@ -256,6 +256,12 @@
           },
           {
             "type": "command",
+            "command": "bash .claude/hooks/raw-input-blocker.sh",
+            "timeout": 5,
+            "statusMessage": "Checking raw <input> primitives…"
+          },
+          {
+            "type": "command",
             "command": "bash .claude/hooks/dialog-title-i18n.sh",
             "timeout": 5,
             "statusMessage": "Checking dialog i18n…"
