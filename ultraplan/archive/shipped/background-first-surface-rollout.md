@@ -1,3 +1,5 @@
+> **Shipped 2026-04-10.** `.glass-container` removed from `globals.css`; remaining call-site references are cleanup, not rollout.
+
 # Background-First Surface Rollout
 
 Approved 2026-04-09.

@@ -1,3 +1,5 @@
+> **Shipped 2026-04-09.** Input/Select/SimpleSelect/Textarea all migrated. Residual tablet sweep tracked in memory `project_minimalist_input_migration.md`.
+
 # Minimalist Input Migration — Underline Floating Labels
 
 Approved 2026-04-07. Profile page is done as reference implementation.

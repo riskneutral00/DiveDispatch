@@ -4,8 +4,7 @@
 #
 # Called by .git/hooks/post-merge.
 #
-# Convention (documented in ultraplan/README.md and enforced by the
-# cloud /ultraplan PR template):
+# Convention (documented in ultraplan/README.md — any PR author can use it):
 #   ## Lessons    → append to log.md + flag for next /vault compile
 #   ## Findings   → raw/Failures/YYYY-MM-DD.md
 #   ## Followups  → wiki/Plans/<topic>-followups.md (or append)

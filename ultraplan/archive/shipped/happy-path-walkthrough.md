@@ -1,3 +1,5 @@
+> **Shipped 2026-04-12.** Superseded by `/happypath` skill. Canonical spec now lives at `Vaults/DiveDispatch/HappyPath/Stops.md`.
+
 # Happy Path Walkthrough — Create 1 Booking, Fix Problems Interactively
 
 **Status:** READY TO EXECUTE (blocked on Playwright MCP reconnect)

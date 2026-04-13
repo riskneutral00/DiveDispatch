@@ -1,31 +1,36 @@
 # ultraplan/
 
-Context folder for `/ultraplan` sessions. Contains execution prompts and symlinks to project infrastructure that the cloud session needs to read.
+Local-file bridge for the `/ultraplan` browser session.
+
+`/ultraplan` runs in a browser and cannot read local files. Everything it needs must be committed to this repo. `ultraplan/` is the staging folder: symlinks expose the live project context (skills, hooks, rules, agents, design system, root `CLAUDE.md`), and plans authored in opencode get dropped here manually before a browser run.
 
 ## How to use
 
-1. Push this branch to GitHub
-2. From your CLI, run: `/ultraplan <brief description> per ultraplan/<prompt-file>.md`
-3. Review the plan in your browser, leave inline comments
-4. Execute on web (auto-PR) or teleport back to terminal
+1. (Optional) Drop the opencode-authored plan file into this folder as `<topic>.md`
+2. Commit + push the branch
+3. In the browser, start `/ultraplan <brief> per ultraplan/<plan-file>.md` — or omit the file reference if the symlinked context is all it needs
+4. Review the plan, leave inline comments
+5. Execute on web (auto-PR) or teleport back to terminal
 
-## Symlinks
+## What's exposed (symlinks)
 
-All symlinks point to live project files via relative paths. They auto-update — no manual sync needed.
+All relative paths — live-updating, no manual sync.
 
-| Link | Target | What |
-|------|--------|------|
-| `agents/` | `.claude/agents/` | Agent personas |
-| `skills/` | `.claude/skills/` | Skill definitions |
-| `hooks/` | `.claude/hooks/` | PostToolUse enforcement hooks |
-| `rules/` | `.claude/rules/` | Design + code rules |
-| `settings.json` | `.claude/settings.json` | Hook registry |
-| `design-system/` | `design-system/` | MASTER.md + page overrides |
-| `CLAUDE.md` | `CLAUDE.md` | Project invariants |
+| Link | Target | What the browser session reads |
+|------|--------|--------------------------------|
+| `agents/` | `../.claude/agents/` | Agent personas |
+| `skills/` | `../.claude/skills/` | Skill definitions |
+| `hooks/` | `../.claude/hooks/` | PostToolUse enforcement hooks |
+| `rules/` | `../.claude/rules/` | Path-scoped design + code rules |
+| `settings.json` | `../.claude/settings.json` | Hook registry |
+| `design-system/` | `../design-system/` | MASTER.md + page overrides |
+| `CLAUDE.md` | `../CLAUDE.md` | Project invariants (points to vault — vault content is not in repo, so follow-pointers will dead-end in the browser) |
+
+**Caveat on `CLAUDE.md`:** the root `CLAUDE.md` is minimal and routes most context to `Vaults/DiveDispatch/` which is not checked into the repo. A browser session cannot follow those pointers. When a brief depends on vault content, inline the relevant excerpt into the plan file rather than relying on `CLAUDE.md` alone.
 
 ## Return-Path Convention (PR body template)
 
-When the cloud `/ultraplan` session produces a PR, structure its description with these H2 sections so the local `.git/hooks/post-merge` (`scripts/vault-pr-scrape.sh`) routes findings into the vault automatically:
+When a browser-authored PR lands, `scripts/vault-pr-scrape.sh` (via `.git/hooks/post-merge`) routes structured sections into the vault. Structure the PR description with these H2s:
 
 ```markdown
 ## Summary
@@ -44,12 +49,9 @@ When the cloud `/ultraplan` session produces a PR, structure its description wit
 - ...
 ```
 
-Only `## Lessons`, `## Findings`, `## Followups` are parsed. Other sections (Summary, Test plan) are ignored by the hook. The scrape runs on any merge (not just cloud PRs) — any PR author can use this to feed the vault.
+Only `## Lessons`, `## Findings`, `## Followups` are parsed. `Summary` and `Test plan` are ignored by the hook. The scrape runs on any merge (not just browser PRs) — any author can use this template to feed the vault.
 
-## Execution Prompts
+## Briefs
 
-Each `.md` file (except this README) is a self-contained execution brief for an `/ultraplan` session.
-
-- `minimalist-input-migration.md` — Underline floating-label inputs replacing glass containers (approved 2026-04-07)
-- `background-first-surface-rollout.md` — Background-first container model: perimeter-only shells, background visible, glass reserved for active inputs (approved 2026-04-09)
-- `gate-fix-preferences-frontend.md` — Fix 2 CRITICAL + 5 HIGH gate findings: test architecture + frontend components (approved 2026-04-07)
+- **Active briefs** (if any): top-level `*.md` files. Empty at rest is normal.
+- **Archived briefs**: `archive/shipped/` (work that shipped), `archive/retired-theme-plans/` (ideas no longer pursued).
