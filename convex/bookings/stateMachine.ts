@@ -42,8 +42,6 @@ export type BookingData = {
   portalContact: boolean
   portalMedical: boolean
   portalWaiver: boolean
-  agentId?: string
-  agentIsReferral?: boolean
   resources?: BookingResourceInput[]
   divers: Array<{
     name: string
@@ -100,8 +98,6 @@ export const bookingDataValidator = v.object({
   portalContact: v.boolean(),
   portalMedical: v.boolean(),
   portalWaiver: v.boolean(),
-  agentId: v.optional(v.string()),
-  agentIsReferral: v.optional(v.boolean()),
   resources: v.optional(v.array(bookingResourceInputValidator)),
   divers: v.array(
     v.object({

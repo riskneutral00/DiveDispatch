@@ -14,6 +14,7 @@ import {
 import { batchGet } from './lib/batch'
 import { ErrorCode } from './lib/errorCodes'
 import { BOOKING_STATUS, RESERVATION_STATUS } from './shared/statuses'
+import type { OperatorType } from './shared/operatorTypes'
 
 export type BookingDetailSession = {
   _id: string
@@ -229,18 +230,23 @@ async function resolveCallerBookings(ctx: QueryCtx, user: UserDoc, activeRole: s
   const role = activeRole
   const slug = user.slug
 
-  if (OPERATOR_ROLE_SET.has(role) && role !== 'Agent') {
-    return ctx.db
-      .query('bookings')
-      .withIndex('by_ownerId_ownerType', (q) => q.eq('ownerId', slug))
-      .collect() // bounded: per-booking joins
-  }
-
-  if (role === 'Agent') {
-    return ctx.db
-      .query('bookings')
-      .withIndex('by_agentId', (q) => q.eq('agentId', slug))
-      .collect() // bounded: per-booking joins
+  if (OPERATOR_ROLE_SET.has(role)) {
+    const [owned, referred] = await Promise.all([
+      ctx.db
+        .query('bookings')
+        .withIndex('by_ownerId_ownerType', (q) => q.eq('ownerId', slug))
+        .collect(), // bounded: per-booking joins
+      ctx.db
+        .query('bookings')
+        .withIndex('by_referrerId_referrerType', (q) => q.eq('referrerId', slug).eq('referrerType', role as OperatorType))
+        .collect(), // bounded: per-booking joins
+    ])
+    const ownedIds = new Set(owned.map((b) => b._id as string))
+    const merged = [...owned]
+    for (const b of referred) {
+      if (!ownedIds.has(b._id as string)) merged.push(b as BookingDoc)
+    }
+    return merged
   }
 
   if (RESOURCE_ROLES.has(role)) {
@@ -271,16 +277,16 @@ export async function _listByOwner(
   const ownedIds = new Set(ownedBookings.map((b) => b._id as string))
   const referralBookings: BookingDoc[] = []
 
-  if (args.ownerType === 'Agent') {
-    const agentIdRows = await ctx.db
-      .query('bookings')
-      .withIndex('by_agentId', (q) => q.eq('agentId', args.ownerId))
-      .collect() // bounded: per-booking joins
+  const referredRows = await ctx.db
+    .query('bookings')
+    .withIndex('by_referrerId_referrerType', (q) =>
+      q.eq('referrerId', args.ownerId).eq('referrerType', args.ownerType as OperatorType),
+    )
+    .collect() // bounded: per-booking joins
 
-    for (const b of agentIdRows) {
-      if (!ownedIds.has(b._id as string)) {
-        referralBookings.push(b as BookingDoc)
-      }
+  for (const b of referredRows) {
+    if (!ownedIds.has(b._id as string)) {
+      referralBookings.push(b as BookingDoc)
     }
   }
 

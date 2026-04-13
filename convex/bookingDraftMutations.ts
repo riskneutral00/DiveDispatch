@@ -4,10 +4,11 @@ import { internal } from './_generated/api'
 import { authorize, authorizeWithRole, getAuthUser, getRequiredUserBySlug, HOLD_TTL_MS } from './lib/auth'
 import { profileByUserId } from './lib/profileHelpers'
 import { getAllUserRoles } from './lib/userRoleHelpers'
-import { checkHasRole, checkHasAnyOperatorRole, requireActiveRole, requireRoleReadiness } from './userRoles'
+import { requireRoleReadiness } from './userRoles'
 import { OPERATOR_ROLE_SET } from './lib/auth'
 import { releaseBookingReservations, assertNoPastDates } from './bookings/_shared'
-import { notifyReleasedInventory } from './notifications'
+import { notify, notifyReleasedInventory } from './notifications'
+import { logBookingChange } from './lib/auditLog'
 import {
   checkPreferenceCoverage,
   type CoverageInput,
@@ -16,22 +17,111 @@ import {
 import { ErrorCode } from './lib/errorCodes'
 import { sanitizeString, NAME_MAX, DRAFT_STATE_MAX } from './lib/sanitize'
 import { stakeholderTypeValidator as stakeholderType } from './lib/validators'
-import { BOOKING_STATUS, VACATED_REASON } from './shared/statuses'
+import { BOOKING_STATUS, NOTIFICATION_TYPE, VACATED_REASON } from './shared/statuses'
 import type { OperatorType } from './shared/operatorTypes'
+import type { MutationCtx } from './_generated/server'
+import type { Id } from './_generated/dataModel'
+
+async function assertPristineDraft(ctx: MutationCtx, bookingId: Id<'bookings'>): Promise<void> {
+  const [reservations, sessions, links, profiles, resources, bags] = await Promise.all([
+    ctx.db.query('reservations').withIndex('by_bookingId', (q) => q.eq('bookingId', bookingId)).take(1),
+    ctx.db.query('bookingSessions').withIndex('by_bookingId', (q) => q.eq('bookingId', bookingId)).take(1),
+    ctx.db.query('bookingLinks').withIndex('by_bookingId', (q) => q.eq('bookingId', bookingId)).take(1),
+    ctx.db.query('customerProfiles').withIndex('by_bookingId', (q) => q.eq('bookingId', bookingId)).take(1),
+    ctx.db.query('bookingResources').withIndex('by_bookingId', (q) => q.eq('bookingId', bookingId)).take(1),
+    ctx.db.query('equipmentBags').withIndex('by_bookingId', (q) => q.eq('bookingId', bookingId)).take(1),
+  ])
+  if (
+    reservations.length > 0 ||
+    sessions.length > 0 ||
+    links.length > 0 ||
+    profiles.length > 0 ||
+    resources.length > 0 ||
+    bags.length > 0
+  ) {
+    throw new ConvexError({ code: ErrorCode.INVALID_STATUS, reason: 'booking is not pristine draft' })
+  }
+}
 
 export const createDraftShell = mutation({
   args: {
     activeRole: stakeholderType,
     startDate: v.optional(v.string()),
     endDate: v.optional(v.string()),
+    isReferral: v.optional(v.boolean()),
+    targetOperatorSlug: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<string> => {
     if (!OPERATOR_ROLE_SET.has(args.activeRole)) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
-    const { user } = await authorizeWithRole(ctx, 'booking:manage', args.activeRole, { type: 'booking' }, { requireReadiness: true })
 
     if (args.startDate) {
       assertNoPastDates([{ date: args.startDate }])
     }
+
+    const isReferral = args.isReferral === true
+
+    if (isReferral) {
+      const { user } = await authorizeWithRole(ctx, 'booking:manage', args.activeRole, { type: 'booking' })
+
+      if (!args.targetOperatorSlug) {
+        throw new ConvexError({ code: ErrorCode.INVALID_INPUT, reason: 'targetOperatorSlug required for referral' })
+      }
+      if (args.targetOperatorSlug === user.slug) {
+        throw new ConvexError({ code: ErrorCode.FORBIDDEN, reason: 'self-referral' })
+      }
+
+      const targetUser = await getRequiredUserBySlug(ctx, args.targetOperatorSlug)
+      const targetRoles = await getAllUserRoles(ctx, targetUser._id)
+      const targetOperatorRole = targetRoles.find((r) => OPERATOR_ROLE_SET.has(r.role))
+      if (!targetOperatorRole) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
+      await requireRoleReadiness(ctx, targetUser._id, targetOperatorRole.role)
+
+      const bookingId = await ctx.db.insert('bookings', {
+        ownerId: targetUser.slug as string,
+        ownerType: targetOperatorRole.role as OperatorType,
+        status: BOOKING_STATUS.Draft,
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL_MS,
+        paid: false,
+        activityType: [],
+        startDate: args.startDate ?? '',
+        endDate: args.endDate ?? '',
+        divers: [],
+        referrerId: user.slug as string,
+        referrerType: args.activeRole as OperatorType,
+        operatorName: sanitizeString(targetUser.businessName ?? '', NAME_MAX),
+        portalContact: true,
+        portalMedical: true,
+        portalWaiver: true,
+        medicalHardBlock: false,
+        bookingFormComplete: false,
+        customerFormComplete: false,
+      })
+
+      await notify(ctx, {
+        userId: targetUser.slug as string,
+        type: NOTIFICATION_TYPE.BookingReferred,
+        bookingId,
+        message: `New referral from ${sanitizeString(user.businessName ?? user.slug, NAME_MAX)}`,
+      })
+
+      await logBookingChange(ctx, {
+        bookingId,
+        action: 'referral_handoff',
+        actorSlug: user.slug as string,
+        actorType: 'operator',
+        diff: JSON.stringify({
+          referrerId: user.slug,
+          referrerType: args.activeRole,
+          ownerId: targetUser.slug,
+          ownerType: targetOperatorRole.role,
+        }),
+      })
+
+      return bookingId as string
+    }
+
+    const { user } = await authorizeWithRole(ctx, 'booking:manage', args.activeRole, { type: 'booking' }, { requireReadiness: true })
 
     const prefs = await ctx.db
       .query('stakeholderPreferences')
@@ -74,8 +164,6 @@ export const createDraftShell = mutation({
       throw new ConvexError({ code: ErrorCode.RESOURCES_INCOMPLETE, missing: coverage.missing })
     }
 
-    const agentId = await checkHasRole(ctx, user._id, 'Agent') ? (user.slug as string) : undefined
-
     const bookingId = await ctx.db.insert('bookings', {
       ownerId: user.slug,
       ownerType: args.activeRole as OperatorType,
@@ -87,7 +175,6 @@ export const createDraftShell = mutation({
       startDate: args.startDate ?? '',
       endDate: args.endDate ?? '',
       divers: [],
-      agentId,
       operatorName: sanitizeString(user.businessName ?? '', NAME_MAX),
       portalContact: true,
       portalMedical: true,
@@ -105,45 +192,66 @@ export const createDraftShell = mutation({
   },
 })
 
-export const createReferralDraftShell = mutation({
+export const returnReferralToReferrer = mutation({
   args: {
-    referralDcSlug: v.string(),
+    bookingId: v.id('bookings'),
   },
-  handler: async (ctx, args): Promise<string> => {
-    const { user } = await authorize(ctx, null, 'booking:manage', { type: 'booking' })
-    if (!await checkHasRole(ctx, user._id, 'Agent')) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
+  handler: async (ctx, args): Promise<void> => {
+    const booking = await ctx.db.get(args.bookingId)
+    if (!booking) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
 
-    const dcUser = await getRequiredUserBySlug(ctx, args.referralDcSlug)
+    const { user } = await authorize(ctx, null, 'booking:manage', { type: 'booking', ownerId: booking.ownerId })
 
-    const dcRoles = await getAllUserRoles(ctx, dcUser._id)
-    const dcOperatorRole = dcRoles.find((r) => OPERATOR_ROLE_SET.has(r.role))
-    if (!dcOperatorRole) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
+    if (booking.status !== BOOKING_STATUS.Draft) {
+      throw new ConvexError({ code: ErrorCode.INVALID_STATUS })
+    }
+    if (!booking.referrerId || !booking.referrerType) {
+      throw new ConvexError({ code: ErrorCode.INVALID_STATUS, reason: 'not a referred booking' })
+    }
+    if (!OPERATOR_ROLE_SET.has(booking.referrerType)) {
+      throw new ConvexError({ code: ErrorCode.FORBIDDEN, reason: 'referrer role not operator' })
+    }
+    if (booking.returnedToReferrerAt !== undefined) {
+      throw new ConvexError({ code: ErrorCode.INVALID_STATUS, reason: 'already returned' })
+    }
 
-    await requireRoleReadiness(ctx, dcUser._id, dcOperatorRole.role)
+    await assertPristineDraft(ctx, args.bookingId)
 
-    const bookingId = await ctx.db.insert('bookings', {
-      ownerId: dcUser.slug as string,
-      ownerType: dcOperatorRole.role as OperatorType,
-      status: BOOKING_STATUS.Draft,
-      createdAt: Date.now(),
-      holdTTL: HOLD_TTL_MS,
-      paid: false,
-      activityType: [],
-      startDate: '',
-      endDate: '',
-      divers: [],
-      agentId: user.slug as string,
-      agentIsReferral: true,
-      operatorName: sanitizeString(dcUser.businessName ?? '', NAME_MAX),
-      portalContact: true,
-      portalMedical: true,
-      portalWaiver: true,
-      medicalHardBlock: false,
-      bookingFormComplete: false,
-      customerFormComplete: false,
+    const referrerUser = await getRequiredUserBySlug(ctx, booking.referrerId)
+    const referrerRoles = await getAllUserRoles(ctx, referrerUser._id)
+    const referrerRole = referrerRoles.find((r) => r.role === booking.referrerType)
+    if (!referrerRole) throw new ConvexError({ code: ErrorCode.FORBIDDEN, reason: 'referrer role missing' })
+    await requireRoleReadiness(ctx, referrerUser._id, referrerRole.role)
+
+    const oldOwnerId = booking.ownerId
+    const oldOwnerType = booking.ownerType
+    const newOwnerId = referrerUser.slug as string
+    const newOwnerType = booking.referrerType as OperatorType
+
+    await ctx.db.patch(args.bookingId, {
+      ownerId: newOwnerId,
+      ownerType: newOwnerType,
+      operatorName: sanitizeString(referrerUser.businessName ?? '', NAME_MAX),
+      returnedToReferrerAt: Date.now(),
     })
 
-    return bookingId as string
+    await notify(ctx, {
+      userId: newOwnerId,
+      type: NOTIFICATION_TYPE.BookingReferred,
+      bookingId: args.bookingId,
+      message: `Referral returned by ${sanitizeString(user.businessName ?? user.slug, NAME_MAX)}`,
+    })
+
+    await logBookingChange(ctx, {
+      bookingId: args.bookingId,
+      action: 'referral_returned',
+      actorSlug: user.slug as string,
+      actorType: 'operator',
+      diff: JSON.stringify({
+        ownerId: { old: oldOwnerId, new: newOwnerId },
+        ownerType: { old: oldOwnerType, new: newOwnerType },
+      }),
+    })
   },
 })
 

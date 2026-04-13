@@ -58,8 +58,7 @@ const RESOURCE_CONFIGS: Array<{
     createArgs: {
       name: 'Test Venue',
       ...COMMON_LOCATION,
-      venueType: 'Pool',
-      confinedCapable: true,
+      venueCategory: 'pool',
       hasCompressor: false,
     },
     updateArgs: { name: 'Updated Venue' },

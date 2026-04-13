@@ -68,21 +68,28 @@ export async function seedVenue(
     country?: string
     lat?: number
     lng?: number
-    venueType?: Doc<'venues'>['venueType']
+    venueCategory?: Doc<'venues'>['venueCategory']
+    diveSiteTypes?: Doc<'venues'>['diveSiteTypes']
     verified?: boolean
     confinedCapable?: boolean
     hasCompressor?: boolean
   } = {},
 ) {
+  const venueCategory = overrides.venueCategory ?? 'pool'
   return ctx.db.insert('venues', {
     name: overrides.name ?? 'Test Venue',
     placeName: overrides.placeName ?? 'Koh Tao',
     country: overrides.country ?? 'Thailand',
     lat: overrides.lat ?? 10.0957,
     lng: overrides.lng ?? 99.8408,
-    venueType: overrides.venueType ?? 'Pool',
+    venueCategory,
+    ...(venueCategory === 'diveSite'
+      ? { diveSiteTypes: overrides.diveSiteTypes ?? ['shore'] }
+      : {}),
     verified: overrides.verified ?? true,
-    confinedCapable: overrides.confinedCapable ?? true,
+    ...(venueCategory === 'diveSite'
+      ? { confinedCapable: overrides.confinedCapable ?? true }
+      : {}),
     hasCompressor: overrides.hasCompressor ?? false,
     ...(overrides.userId !== undefined ? { userId: overrides.userId } : {}),
   })

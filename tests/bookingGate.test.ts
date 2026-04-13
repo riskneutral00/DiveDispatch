@@ -90,9 +90,8 @@ async function seedFullDCWithCoverage(ctx: SeedCtx, slug: string) {
   await seedVenue(ctx, {
     userId: venueUserId,
     name: 'Test Pool',
-    confinedCapable: true,
     hasCompressor: false,
-    venueType: 'Pool',
+    venueCategory: 'pool',
   })
   await seedUser(ctx, {
     slug: 'test-compressor',

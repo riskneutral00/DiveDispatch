@@ -71,8 +71,8 @@ export interface SeedBooking {
     agency?: string
     activityType: CourseCode[]
   }[]
-  agentIsReferral?: boolean
-  agentId?: string
+  referrerId?: string
+  referrerType?: OperatorType
   operatorName: string
   portalContact: boolean
   portalMedical: boolean
@@ -929,16 +929,16 @@ export function generateAllSeedData(customers: SeedCustomer[]): SeedData {
       let actualOwnerId = config.ownerSlug
       let actualOwnerType: OperatorType = config.ownerType
       let operatorName = config.ownerName
-      let agentId: string | undefined = undefined
-      let agentIsReferral: boolean | undefined = undefined
+      let referrerId: string | undefined = undefined
+      let referrerType: OperatorType | undefined = undefined
 
       if (isReferralConfig(ci)) {
         const dcSlug = amandaReferralDCs[bi % amandaReferralDCs.length]
         actualOwnerId = dcSlug
         actualOwnerType = 'DiveCenter'
         operatorName = amandaReferralDCNames[dcSlug]
-        agentId = 'r5yz4q'
-        agentIsReferral = true
+        referrerId = 'r5yz4q'
+        referrerType = 'Agent'
       }
 
       const isLangMismatch = bIdx === 15
@@ -1063,8 +1063,8 @@ export function generateAllSeedData(customers: SeedCustomer[]): SeedData {
         startDate: finalStartDate,
         endDate: finalEndDate,
         divers,
-        ...(agentIsReferral !== undefined && { agentIsReferral }),
-        ...(agentId !== undefined && { agentId }),
+        ...(referrerId !== undefined && { referrerId }),
+        ...(referrerType !== undefined && { referrerType }),
         operatorName,
         portalContact: true,
         portalMedical: true,
@@ -1246,7 +1246,7 @@ export function generateAllSeedData(customers: SeedCustomer[]): SeedData {
       }
 
       if (status !== 'Draft') {
-        if (agentIsReferral) {
+        if (referrerId) {
           notifications.push({
             userId: actualOwnerId,
             type: 'booking_referred',

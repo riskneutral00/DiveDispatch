@@ -57,8 +57,8 @@ describe('listByOwner — Agent role', () => {
       await seedBooking(ctx, {
         ownerId: DC_SLUG,
         ownerType: 'DiveCenter',
-        agentId: AGENT_SLUG,
-        agentIsReferral: true,
+        referrerId: AGENT_SLUG,
+        referrerType: 'Agent',
         status: 'Upcoming',
         startDate: testDate(3),
         endDate: testDate(5),
@@ -88,8 +88,8 @@ describe('listByOwner — Agent role', () => {
       await seedBooking(ctx, {
         ownerId: DC_SLUG,
         ownerType: 'DiveCenter',
-        agentId: AGENT_SLUG,
-        agentIsReferral: true,
+        referrerId: AGENT_SLUG,
+        referrerType: 'Agent',
         status: 'Draft',
         startDate: testDate(7),
         endDate: testDate(9),
@@ -120,12 +120,9 @@ describe('listByOwner — Agent role', () => {
     const t = makeT()
     await t.run(async (ctx: SeedCtx) => {
       await seedUser(ctx, { tokenIdentifier: AGENT_TOKEN, slug: AGENT_SLUG, role: 'Agent' })
-      // Owned + agentId on same booking (edge case — treated as owned, not referral)
       await seedBooking(ctx, {
         ownerId: AGENT_SLUG,
         ownerType: 'Agent',
-        agentId: AGENT_SLUG,
-        agentIsReferral: false,
         status: 'Upcoming',
         startDate: testDate(3),
         endDate: testDate(5),
@@ -174,7 +171,6 @@ describe('listByOwner — DiveCenter role (unchanged)', () => {
       await seedBooking(ctx, {
         ownerId: AGENT_SLUG,
         ownerType: 'Agent',
-        agentId: AGENT_SLUG,
         status: 'Upcoming',
         startDate: testDate(6),
         endDate: testDate(8),

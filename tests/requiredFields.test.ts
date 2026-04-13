@@ -93,12 +93,11 @@ describe('ROLE_REQUIRED', () => {
     expect(fields).toContain('name')
     expect(fields).toContain('placeName')
     expect(fields).toContain('country')
-    expect(fields).toContain('venueType')
-    expect(fields).toContain('maxCapacity')
+    expect(fields).toContain('diveSiteTypes')
   })
 
-  it('DiveSite required fields are exactly the spec list', () => {
-    expect(ROLE_REQUIRED['DiveSite']).toEqual(['name', 'placeName', 'country', 'venueType', 'maxCapacity'])
+  it('DiveSite required fields are exactly the spec list (maxCapacity is optional)', () => {
+    expect(ROLE_REQUIRED['DiveSite']).toEqual(['name', 'placeName', 'country', 'diveSiteTypes'])
   })
 })
 

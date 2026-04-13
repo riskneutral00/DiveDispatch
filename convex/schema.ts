@@ -5,7 +5,7 @@ import { operatorTypeValidator as operatorType } from './shared/operatorTypes'
 import { resourceOwnerTypeValidator as resourceOwnerType } from './shared/resourceOwnerTypes'
 import { boatTypeValidator as boatTypeUnion } from './shared/boatTypes'
 import { gasMixValidator as gasMix } from './shared/gasMixes'
-import { venueTypeValidator as venueType } from './shared/venueTypes'
+import { venueCategoryValidator, diveSiteTypeValidator } from './shared/venueTypes'
 import { capacityModelValidator as capacityModel, genderValidator as gender, shoeSizeUnitValidator as shoeSizeUnit, acceptanceModeValidator as acceptanceMode } from './shared/schemaEnums'
 import { stakeholderTypeValidator as stakeholderType, gearTypeValidator as gearType, rentalChecklistValidator } from './lib/validators'
 import { bookingStatusValidator as bookingStatus, reservationStatusValidator as reservationStatus, bagStatusValidator, notificationTypeValidator as notificationType, vacatedReasonValidator } from './shared/statuses'
@@ -97,9 +97,10 @@ export default defineSchema({
         contactValue: v.optional(v.string()),
       }),
     ),
-    agentIsReferral: v.optional(v.boolean()),
-    agentId: v.optional(v.string()),
-    operatorName: v.string(), // snapshot: frozen at creation from users.businessName
+    referrerId: v.optional(v.string()),
+    referrerType: v.optional(operatorType),
+    returnedToReferrerAt: v.optional(v.number()),
+    operatorName: v.string(), // snapshot: frozen at creation; rewritten only by referral handoff + return
     portalContact: v.boolean(),
     portalMedical: v.boolean(),
     portalWaiver: v.boolean(),
@@ -117,7 +118,7 @@ export default defineSchema({
     .index('by_ownerId_ownerType', ['ownerId', 'ownerType'])
     .index('by_ownerId_status', ['ownerId', 'status'])
     .index('by_status', ['status'])
-    .index('by_agentId', ['agentId']),
+    .index('by_referrerId_referrerType', ['referrerId', 'referrerType']),
 
   bookingSessions: defineTable({
     bookingId: v.id('bookings'),
@@ -408,9 +409,10 @@ export default defineSchema({
     email: v.optional(v.string()),
     phone: v.optional(v.string()),
     verified: v.boolean(),
-    venueType: venueType,
+    venueCategory: venueCategoryValidator,
+    diveSiteTypes: v.optional(v.array(diveSiteTypeValidator)),
     ...accessControlFields,
-    confinedCapable: v.boolean(),
+    confinedCapable: v.optional(v.boolean()),
     hasCompressor: v.boolean(),
     maxDepth: v.optional(v.number()),
     maxCapacity: v.optional(v.number()),
@@ -674,6 +676,8 @@ export default defineSchema({
       v.literal('noshow_reverted'),
       v.literal('expired_draft_purged'),
       v.literal('user_deleted_cascade'),
+      v.literal('referral_handoff'),
+      v.literal('referral_returned'),
     ),
     actorSlug: v.string(),
     actorType: v.union(

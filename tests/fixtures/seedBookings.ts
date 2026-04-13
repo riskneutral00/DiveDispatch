@@ -26,8 +26,9 @@ export async function seedBooking(
     submittedAt?: number
     expiresAt?: number
     draftState?: string
-    agentId?: string
-    agentIsReferral?: boolean
+    referrerId?: string
+    referrerType?: Doc<'bookings'>['referrerType']
+    returnedToReferrerAt?: number
     isDemo?: boolean
     holdTTL?: number
   } = {},
@@ -56,8 +57,9 @@ export async function seedBooking(
     ...(overrides.submittedAt !== undefined ? { submittedAt: overrides.submittedAt } : {}),
     ...(overrides.expiresAt !== undefined ? { expiresAt: overrides.expiresAt } : {}),
     ...(overrides.draftState !== undefined ? { draftState: overrides.draftState } : {}),
-    ...(overrides.agentId !== undefined ? { agentId: overrides.agentId } : {}),
-    ...(overrides.agentIsReferral !== undefined ? { agentIsReferral: overrides.agentIsReferral } : {}),
+    ...(overrides.referrerId !== undefined ? { referrerId: overrides.referrerId } : {}),
+    ...(overrides.referrerType !== undefined ? { referrerType: overrides.referrerType } : {}),
+    ...(overrides.returnedToReferrerAt !== undefined ? { returnedToReferrerAt: overrides.returnedToReferrerAt } : {}),
     ...(overrides.needsAttention !== undefined ? { needsAttention: overrides.needsAttention } : {}),
     ...(overrides.isDemo !== undefined ? { isDemo: overrides.isDemo } : {}),
   })

@@ -26,7 +26,8 @@ export type DirectoryEntry = {
   hasCompressor?: boolean
   gasMixes?: string[]
   inventoryCounts?: Record<string, number>
-  venueType?: string
+  venueCategory?: 'pool' | 'diveSite'
+  diveSiteTypes?: string[]
   confinedCapable?: boolean
   maxDepth?: number
   maxCapacity?: number
@@ -48,7 +49,8 @@ type ProfileData = {
   hasCompressor?: boolean
   gasMixes?: string[]
   inventoryCounts?: Record<string, number>
-  venueType?: string
+  venueCategory?: 'pool' | 'diveSite'
+  diveSiteTypes?: string[]
   confinedCapable?: boolean
   maxDepth?: number
   maxCapacity?: number
@@ -131,8 +133,7 @@ async function fetchProfile(
     case 'Pool':
       return {
         ...base,
-        venueType: p.venueType as string | undefined,
-        confinedCapable: p.confinedCapable as boolean | undefined,
+        venueCategory: (p.venueCategory as 'pool' | 'diveSite' | undefined) ?? 'pool',
         hasCompressor: p.hasCompressor as boolean | undefined,
         maxDepth: p.maxDepth as number | undefined,
         maxCapacity: p.maxCapacity as number | undefined,
@@ -146,9 +147,12 @@ async function fetchProfile(
     case 'DiveSite':
       return {
         ...base,
-        venueType: p.venueType as string | undefined,
+        venueCategory: (p.venueCategory as 'pool' | 'diveSite' | undefined) ?? 'diveSite',
+        diveSiteTypes: p.diveSiteTypes as string[] | undefined,
         confinedCapable: p.confinedCapable as boolean | undefined,
         hasCompressor: p.hasCompressor as boolean | undefined,
+        maxDepth: p.maxDepth as number | undefined,
+        maxCapacity: p.maxCapacity as number | undefined,
       }
   }
 }
@@ -222,7 +226,8 @@ export const listByRole = query({
             hasCompressor: profile.hasCompressor,
             inventoryCounts: profile.inventoryCounts,
             gasMixes: profile.gasMixes,
-            venueType: profile.venueType,
+            venueCategory: profile.venueCategory,
+            diveSiteTypes: profile.diveSiteTypes,
             confinedCapable: profile.confinedCapable,
             maxDepth: profile.maxDepth,
             maxCapacity: profile.maxCapacity,
@@ -243,8 +248,9 @@ export const listByRole = query({
       const unowned = allVenues.filter((v) => !v.userId)
       for (const venue of unowned) {
         if (!isResourceAccessible(venue, caller.slug)) continue
-        if (args.role === 'Pool' && venue.venueType !== 'Pool') continue
-        if (args.role === 'DiveSite' && venue.venueType === 'Pool') continue
+        const category = venue.venueCategory
+        if (args.role === 'Pool' && category !== 'pool') continue
+        if (args.role === 'DiveSite' && category !== 'diveSite') continue
         const invUnit = await ctx.db
           .query('inventoryUnits')
           .withIndex('by_ownerId_ownerType', (q) => q.eq('ownerId', '__unowned__'))
@@ -258,7 +264,8 @@ export const listByRole = query({
           country: venue.country,
           verified: venue.verified,
           role: args.role,
-          venueType: venue.venueType,
+          venueCategory: category,
+          diveSiteTypes: venue.diveSiteTypes,
           confinedCapable: venue.confinedCapable,
           hasCompressor: venue.hasCompressor,
           maxDepth: venue.maxDepth,

@@ -74,22 +74,26 @@ describe('createReferralDraftShell', () => {
   it('rejects unauthenticated caller', async () => {
     const t = makeT()
     await expect(
-      t.mutation(api.bookingDraftMutations.createReferralDraftShell, {
-        referralDcSlug: 'any-dc',
+      t.mutation(api.bookingDraftMutations.createDraftShell, {
+        activeRole: 'Agent',
+        isReferral: true,
+        targetOperatorSlug: 'any-dc',
       }),
     ).rejects.toThrow(/UNAUTHENTICATED/)
   })
 
-  it('rejects non-Agent caller with FORBIDDEN', async () => {
+  it('rejects caller whose active role is not an operator role', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-caller', 'DiveCenter')
+      await seedUser(ctx, 'instr-caller', 'Instructor')
     })
 
     await expectConvexError(
-      t.withIdentity({ tokenIdentifier: 'clerk|dc-caller' })
-        .mutation(api.bookingDraftMutations.createReferralDraftShell, {
-          referralDcSlug: 'any-dc',
+      t.withIdentity({ tokenIdentifier: 'clerk|instr-caller' })
+        .mutation(api.bookingDraftMutations.createDraftShell, {
+          activeRole: 'Instructor',
+          isReferral: true,
+          targetOperatorSlug: 'any-dc',
         }),
       'FORBIDDEN',
     )
@@ -103,8 +107,10 @@ describe('createReferralDraftShell', () => {
 
     await expectConvexError(
       t.withIdentity({ tokenIdentifier: 'clerk|agent-1' })
-        .mutation(api.bookingDraftMutations.createReferralDraftShell, {
-          referralDcSlug: 'nonexistent-dc',
+        .mutation(api.bookingDraftMutations.createDraftShell, {
+          activeRole: 'Agent',
+          isReferral: true,
+          targetOperatorSlug: 'nonexistent-dc',
         }),
       'NOT_FOUND',
     )
@@ -119,8 +125,10 @@ describe('createReferralDraftShell', () => {
 
     await expectConvexError(
       t.withIdentity({ tokenIdentifier: 'clerk|agent-2' })
-        .mutation(api.bookingDraftMutations.createReferralDraftShell, {
-          referralDcSlug: 'instructor-ref',
+        .mutation(api.bookingDraftMutations.createDraftShell, {
+          activeRole: 'Agent',
+          isReferral: true,
+          targetOperatorSlug: 'instructor-ref',
         }),
       'FORBIDDEN',
     )
@@ -136,8 +144,10 @@ describe('createReferralDraftShell', () => {
 
     const bookingId = await t
       .withIdentity({ tokenIdentifier: 'clerk|agent-3' })
-      .mutation(api.bookingDraftMutations.createReferralDraftShell, {
-        referralDcSlug: 'target-dc',
+      .mutation(api.bookingDraftMutations.createDraftShell, {
+        activeRole: 'Agent',
+        isReferral: true,
+        targetOperatorSlug: 'target-dc',
       })
 
     expect(bookingId).toBeTruthy()
@@ -145,15 +155,46 @@ describe('createReferralDraftShell', () => {
     await t.run(async (ctx) => {
       const booking = await ctx.db.get(bookingId as Id<'bookings'>)
       expect(booking).not.toBeNull()
-      // DC owns the booking
       expect(booking!.ownerId).toBe('target-dc')
       expect(booking!.ownerType).toBe('DiveCenter')
-      // Agent is referrer
-      expect(booking!.agentId).toBe('agent-3')
-      expect(booking!.agentIsReferral).toBe(true)
-      // Status
+      expect(booking!.referrerId).toBe('agent-3')
+      expect(booking!.referrerType).toBe('Agent')
       expect(booking!.status).toBe('Draft')
       expect(booking!.operatorName).toBe('target-dc Business')
     })
+  })
+
+  it('rejects self-referral with FORBIDDEN', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => {
+      const dcId = await seedUser(ctx, 'self-dc', 'DiveCenter')
+      await seedCompleteOperator(ctx, 'self-dc', 'DiveCenter', dcId)
+    })
+
+    await expectConvexError(
+      t.withIdentity({ tokenIdentifier: 'clerk|self-dc' })
+        .mutation(api.bookingDraftMutations.createDraftShell, {
+          activeRole: 'DiveCenter',
+          isReferral: true,
+          targetOperatorSlug: 'self-dc',
+        }),
+      'FORBIDDEN',
+    )
+  })
+
+  it('rejects referral without targetOperatorSlug', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => {
+      await seedUser(ctx, 'agent-no-target', 'Agent')
+    })
+
+    await expectConvexError(
+      t.withIdentity({ tokenIdentifier: 'clerk|agent-no-target' })
+        .mutation(api.bookingDraftMutations.createDraftShell, {
+          activeRole: 'Agent',
+          isReferral: true,
+        }),
+      'INVALID_INPUT',
+    )
   })
 })

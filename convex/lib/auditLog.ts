@@ -18,6 +18,8 @@ export type AuditAction =
   | 'noshow_reverted'
   | 'expired_draft_purged'
   | 'user_deleted_cascade'
+  | 'referral_handoff'
+  | 'referral_returned'
 
 export type AuditActorType = 'operator' | 'resource' | 'customer' | 'system'
 

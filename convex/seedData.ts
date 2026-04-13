@@ -80,8 +80,9 @@ interface VenueProfile {
   email: string
   phone: string
   verified: boolean
-  venueType: 'Pool' | 'Shore' | 'Reef' | 'Lake' | 'River' | 'Quarry' | 'Other'
-  confinedCapable: boolean
+  venueCategory: 'pool' | 'diveSite'
+  diveSiteTypes?: Array<'shore' | 'reef' | 'lake' | 'river' | 'quarry' | 'other'>
+  confinedCapable?: boolean
   hasCompressor: boolean
   maxDepth?: number
   maxCapacity?: number
@@ -294,8 +295,7 @@ export const HUG_OCEAN: SeedStakeholder = {
     maxDepth: 3,
     maxCapacity: 15,
     verified: VERIFIED,
-    venueType: 'Pool',
-    confinedCapable: true,
+    venueCategory: 'pool',
 
     hasCompressor: false,
   },
@@ -343,8 +343,7 @@ export const NEPTUNE: SeedStakeholder = {
     maxDepth: 2.5,
     maxCapacity: 6,
     verified: VERIFIED,
-    venueType: 'Pool',
-    confinedCapable: true,
+    venueCategory: 'pool',
 
     hasCompressor: false,
   },
@@ -1013,8 +1012,7 @@ export const WATER_PRO: SeedStakeholder = {
     maxDepth: 2.5,
     maxCapacity: 25,
     verified: VERIFIED,
-    venueType: 'Pool',
-    confinedCapable: true,
+    venueCategory: 'pool',
     hasCompressor: false,
   },
 }
@@ -1041,8 +1039,7 @@ export const SHARK_BITES: SeedStakeholder = {
     maxDepth: 2.5,
     maxCapacity: 8,
     verified: VERIFIED,
-    venueType: 'Pool',
-    confinedCapable: true,
+    venueCategory: 'pool',
     hasCompressor: false,
   },
 }

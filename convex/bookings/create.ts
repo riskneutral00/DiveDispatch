@@ -227,8 +227,6 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
       portalContact: args.bookingData.portalContact,
       portalMedical: args.bookingData.portalMedical,
       portalWaiver: args.bookingData.portalWaiver,
-      agentId: args.bookingData.agentId,
-      agentIsReferral: args.bookingData.agentIsReferral,
       divers: args.bookingData.divers,
     }),
   })
@@ -284,7 +282,6 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
     const scalarFields = [
       'startDate',
       'endDate',
-      'agentId',
     ] as const
     for (const field of scalarFields) {
       const oldVal = (booking as Record<string, unknown>)[field]
