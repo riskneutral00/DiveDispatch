@@ -1,4 +1,5 @@
 import "./src/lib/env";
+import path from "path";
 import type { NextConfig } from "next";
 import bundleAnalyzer from "@next/bundle-analyzer";
 import createNextIntlPlugin from "next-intl/plugin";
@@ -18,6 +19,9 @@ const withBundleAnalyzer = bundleAnalyzer({
 });
 
 const nextConfig: NextConfig = {
+  turbopack: {
+    root: path.resolve(__dirname, ".."),
+  },
   async headers() {
     return [
       {
