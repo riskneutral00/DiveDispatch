@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Dialog, Button, Input, ButtonGroup } from '@/components/ui'
+import { NameField } from '@/components/ui/name-field'
 import type { ButtonGroupOption } from '@/components/ui'
 import { LanguageField } from '@/components/ui/language-field'
 import type { Language } from '@/lib/types/language'
@@ -66,16 +67,16 @@ export function AddCustomerDialog({
       <div className="flex flex-col gap-4">
         <div className="flex flex-wrap gap-4 w-full">
           <div className="flex flex-col gap-3 min-w-0">
-            <Input
+            <NameField
+              scope="given"
               label="Full name"
               value={name}
-              onChange={(e) => {
-                setName(e.target.value)
+              onChange={(v) => {
+                setName(v)
                 if (nameError) setNameError('')
               }}
               placeholder="e.g. Sara Kim"
               error={nameError}
-              autoFocus
             />
             <div className="flex flex-col gap-2">
               <p

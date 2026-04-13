@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
 import { ErrorAlert } from '@/components/ui/error-alert'
 import { Button, ButtonGroup, Input } from '@/components/ui'
+import { NameField } from '@/components/ui/name-field'
 import type { ButtonGroupOption } from '@/components/ui'
 import { LanguageField } from '@/components/ui/language-field'
 import { SectionDivider } from '@/components/ui/section-divider'
@@ -122,12 +123,12 @@ function InlineCustomerForm({ customer, index, canRemove, totalCustomers, dispat
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-end gap-2">
-        <Input
+        <NameField
+          scope="given"
           label="Name"
           value={customer.name}
-          onChange={(e) => handleNameChange(e.target.value)}
+          onChange={handleNameChange}
           placeholder="e.g. Sara Kim"
-          autoFocus={index === 0 && !customer.name}
           required
           className="flex-1"
         />
