@@ -53,7 +53,7 @@ Object.defineProperty(globalThis, 'localStorage', { value: localStorageStub, wri
 import { ThemeSwitcher } from '@/components/layout/theme-switcher'
 import { BgSwitcher } from '@/components/layout/bg-switcher'
 import { NotificationBell } from '@/components/notifications/notification-bell'
-import { UserMenu } from '@/components/layout/user-menu'
+import { TopNav } from '@/components/layout/top-nav'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -113,9 +113,9 @@ describe('Dashboard toolbar touch targets (WCAG 2.5.8)', () => {
     expect(hasMinTouchTarget(button)).toBe(true)
   })
 
-  it('UserMenu button has >= 44x44px touch target', () => {
+  it('TopNav avatar button has >= 44x44px touch target', () => {
     const { getByRole } = render(
-      <UserMenu roleSlug="dive-center" slug="test-user" />,
+      <TopNav onOpenOverlay={vi.fn()} />,
     )
     const button = getByRole('button', { name: 'User menu' })
     expect(hasMinTouchTarget(button)).toBe(true)

@@ -33,9 +33,8 @@ vi.mock('@/components/layout/bg-switcher', () => ({ BgSwitcher: () => null }))
 vi.mock('@/components/layout/theme-switcher', () => ({ ThemeSwitcher: () => null }))
 vi.mock('@/components/layout/hierarchy-sub-bar', () => ({ HierarchySubBar: () => null }))
 vi.mock('@/components/layout/mobile-bottom-nav', () => ({ MobileBottomNav: () => null }))
-vi.mock('@/components/layout/mobile-top-nav', () => ({ MobileTopNav: () => null }))
+vi.mock('@/components/layout/top-nav', () => ({ TopNav: () => null }))
 vi.mock('@/components/notifications/notification-bell', () => ({ NotificationBell: () => null }))
-vi.mock('@/components/layout/user-menu', () => ({ UserMenu: () => null }))
 vi.mock('@/components/onboarding/radial-progress', () => ({ RadialProgress: () => null }))
 
 // ─── Import after mocks ─────────────────────────────────────────────────────

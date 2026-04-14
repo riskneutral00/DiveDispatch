@@ -128,6 +128,7 @@
     "signOut": "ออกจากระบบ",
     "roles": "บทบาท",
     "account": "บัญชี",
+    "userMenu": "เมนูผู้ใช้",
     "addRoleTitle": "เพิ่มบทบาท",
     "addRoleDescription": "เลือกบทบาทใหม่เพื่อเพิ่มในบัญชีของคุณ"
   },

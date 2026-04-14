@@ -19,7 +19,6 @@ export type ProfileValues = {
   firstName: string
   lastName: string
   nickname: string
-  businessName: string
   email: string
   phone: string
   dateOfBirth: string
@@ -30,7 +29,6 @@ export const profileTabSchema = z.object({
   firstName: z.string().min(1, 'First name is required'),
   lastName: z.string().min(1, 'Last name is required'),
   nickname: z.string(),
-  businessName: z.string().min(1, 'Business name is required'),
   email: z.string().email('Invalid email address'),
   phone: z.string().refine((v) => isValidPhoneNumber(v), { message: 'Invalid phone number' }),
   dateOfBirth: z
@@ -45,7 +43,6 @@ export const PROFILE_DEFAULTS: ProfileValues = {
   firstName: '',
   lastName: '',
   nickname: '',
-  businessName: '',
   email: '',
   phone: '',
   dateOfBirth: '',
@@ -58,7 +55,6 @@ export function profileFromUser(p: Record<string, unknown>): ProfileValues {
     firstName: (typeof p.firstName === 'string' ? p.firstName : '') || '',
     lastName: (typeof p.lastName === 'string' ? p.lastName : '') || '',
     nickname: (typeof p.nickname === 'string' ? p.nickname : '') || '',
-    businessName: (typeof p.businessName === 'string' ? p.businessName : '') || '',
     email: (typeof p.email === 'string' ? p.email : '') || '',
     phone: (typeof p.phone === 'string' ? p.phone : '') || '',
     dateOfBirth: /^\d{4}-\d{2}-\d{2}$/.test(dob) ? dob : '',
@@ -71,7 +67,6 @@ export function profileToPayload(form: ProfileValues) {
     firstName: form.firstName.trim(),
     lastName: form.lastName.trim(),
     nickname: form.nickname.trim() || undefined,
-    businessName: form.businessName.trim(),
     phone: form.phone.trim() || undefined,
     email: form.email.trim(),
     appLanguage: form.appLanguage,
@@ -159,16 +154,6 @@ export function ProfileTab({ onClose }: { onClose?: () => void }) {
             required
           />
         </div>
-
-        <SectionDivider variant="soft" />
-
-        <NameField
-          scope="organization"
-          label={t('businessName')}
-          value={form.businessName}
-          onChange={(v) => setField('businessName', v)}
-          required
-        />
 
         <SectionDivider variant="soft" />
 

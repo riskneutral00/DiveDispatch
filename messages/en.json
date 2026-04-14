@@ -128,6 +128,7 @@
     "signOut": "Sign Out",
     "roles": "Roles",
     "account": "Account",
+    "userMenu": "User menu",
     "addRoleTitle": "Add a Role",
     "addRoleDescription": "Select a new role to add to your account."
   },

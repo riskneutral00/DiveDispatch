@@ -13,7 +13,6 @@ describe('profileFromUser', () => {
       firstName: 'Jane',
       lastName: 'Doe',
       nickname: 'JD',
-      businessName: 'Ocean Corp',
       email: 'jane@ocean.com',
       phone: '+1234567890',
       dateOfBirth: '1990-06-15',
@@ -26,7 +25,6 @@ describe('profileFromUser', () => {
       firstName: 'Jane',
       lastName: 'Doe',
       nickname: 'JD',
-      businessName: 'Ocean Corp',
       email: 'jane@ocean.com',
       phone: '+1234567890',
       dateOfBirth: '1990-06-15',
@@ -40,7 +38,6 @@ describe('profileFromUser', () => {
       lastName: 'Doe',
       email: 'jane@ocean.com',
       phone: '+1234567890',
-      businessName: 'Ocean Corp',
     }
 
     const result = profileFromUser(user as Record<string, unknown>)
@@ -49,7 +46,6 @@ describe('profileFromUser', () => {
       firstName: 'Jane',
       lastName: 'Doe',
       nickname: '',
-      businessName: 'Ocean Corp',
       email: 'jane@ocean.com',
       phone: '+1234567890',
       dateOfBirth: '',
@@ -62,7 +58,6 @@ describe('profileFromUser', () => {
       firstName: null,
       lastName: undefined,
       nickname: undefined,
-      businessName: null,
       email: null,
       phone: undefined,
       dateOfBirth: null,
@@ -77,7 +72,6 @@ describe('profileFromUser', () => {
     const user = {
       firstName: 'A',
       lastName: 'B',
-      businessName: 'C',
       email: 'a@b.com',
       phone: '+1',
       dateOfBirth: 'not-a-date',
@@ -93,7 +87,6 @@ describe('profileToPayload', () => {
       firstName: ' Jane ',
       lastName: ' Doe ',
       nickname: ' JD ',
-      businessName: ' Ocean Corp ',
       email: ' jane@ocean.com ',
       phone: ' +1234567890 ',
       dateOfBirth: '1990-06-15',
@@ -106,7 +99,6 @@ describe('profileToPayload', () => {
       firstName: 'Jane',
       lastName: 'Doe',
       nickname: 'JD',
-      businessName: 'Ocean Corp',
       email: 'jane@ocean.com',
       phone: '+1234567890',
       appLanguage: 'en',
@@ -119,7 +111,6 @@ describe('profileToPayload', () => {
       firstName: 'Jane',
       lastName: 'Doe',
       nickname: '',
-      businessName: 'Ocean Corp',
       email: 'jane@ocean.com',
       phone: '+1234567890',
       dateOfBirth: '',
@@ -131,12 +122,27 @@ describe('profileToPayload', () => {
     expect(result).not.toHaveProperty('role')
   })
 
+  it('does not include businessName — that belongs on role-specific contact sections', () => {
+    const form: ProfileValues = {
+      firstName: 'Jane',
+      lastName: 'Doe',
+      nickname: '',
+      email: 'jane@ocean.com',
+      phone: '+1234567890',
+      dateOfBirth: '',
+      appLanguage: 'en',
+    }
+
+    const result = profileToPayload(form)
+
+    expect(result).not.toHaveProperty('businessName')
+  })
+
   it('omits nickname when empty after trim', () => {
     const form: ProfileValues = {
       firstName: 'Jane',
       lastName: 'Doe',
       nickname: '  ',
-      businessName: 'Ocean Corp',
       email: 'jane@ocean.com',
       phone: '+1234567890',
       dateOfBirth: '',
@@ -153,7 +159,6 @@ describe('profileToPayload', () => {
       firstName: 'Jane',
       lastName: 'Doe',
       nickname: '',
-      businessName: 'Ocean Corp',
       email: 'jane@ocean.com',
       phone: '  ',
       dateOfBirth: '',
@@ -170,7 +175,6 @@ describe('profileToPayload', () => {
       firstName: 'Jane',
       lastName: 'Doe',
       nickname: '',
-      businessName: 'Ocean Corp',
       email: 'jane@ocean.com',
       phone: '+1234567890',
       dateOfBirth: '',
@@ -187,7 +191,6 @@ describe('profileToPayload', () => {
       firstName: 'Jane',
       lastName: 'Doe',
       nickname: '',
-      businessName: 'Ocean Corp',
       email: 'jane@ocean.com',
       phone: '+1234567890',
       dateOfBirth: '',
@@ -201,12 +204,11 @@ describe('profileToPayload', () => {
 })
 
 describe('profileTabSchema', () => {
-  it('accepts a valid form', () => {
+  it('accepts a valid form without any business/operator fields', () => {
     const valid: ProfileValues = {
       firstName: 'Jane',
       lastName: 'Doe',
       nickname: '',
-      businessName: 'Ocean Corp',
       email: 'jane@ocean.com',
       phone: '+12025551234',
       dateOfBirth: '',
@@ -221,7 +223,6 @@ describe('profileTabSchema', () => {
       firstName: '',
       lastName: 'Doe',
       nickname: '',
-      businessName: 'Ocean Corp',
       email: 'jane@ocean.com',
       phone: '+12025551234',
       dateOfBirth: '',
@@ -236,7 +237,6 @@ describe('profileTabSchema', () => {
       firstName: 'Jane',
       lastName: 'Doe',
       nickname: '',
-      businessName: 'Ocean Corp',
       email: 'not-an-email',
       phone: '+12025551234',
       dateOfBirth: '',
@@ -251,24 +251,8 @@ describe('profileTabSchema', () => {
       firstName: 'Jane',
       lastName: 'Doe',
       nickname: '',
-      businessName: 'Ocean Corp',
       email: 'jane@ocean.com',
       phone: '123',
-      dateOfBirth: '',
-      appLanguage: 'en',
-    }
-
-    expect(profileTabSchema.safeParse(invalid).success).toBe(false)
-  })
-
-  it('rejects empty businessName', () => {
-    const invalid: ProfileValues = {
-      firstName: 'Jane',
-      lastName: 'Doe',
-      nickname: '',
-      businessName: '',
-      email: 'jane@ocean.com',
-      phone: '+12025551234',
       dateOfBirth: '',
       appLanguage: 'en',
     }
@@ -281,7 +265,6 @@ describe('profileTabSchema', () => {
       firstName: 'Jane',
       lastName: 'Doe',
       nickname: '',
-      businessName: 'Ocean Corp',
       email: 'jane@ocean.com',
       phone: '+12025551234',
       dateOfBirth: '1990-06-15',
@@ -296,7 +279,6 @@ describe('profileTabSchema', () => {
       firstName: 'Jane',
       lastName: 'Doe',
       nickname: '',
-      businessName: 'Ocean Corp',
       email: 'jane@ocean.com',
       phone: '+12025551234',
       dateOfBirth: '06/15/1990',

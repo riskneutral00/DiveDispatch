@@ -128,6 +128,7 @@
     "signOut": "Se déconnecter",
     "roles": "Rôles",
     "account": "Compte",
+    "userMenu": "Menu utilisateur",
     "addRoleTitle": "Ajouter un rôle",
     "addRoleDescription": "Sélectionnez un nouveau rôle à ajouter à votre compte."
   },

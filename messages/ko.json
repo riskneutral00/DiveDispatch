@@ -128,6 +128,7 @@
     "signOut": "로그아웃",
     "roles": "역할",
     "account": "계정",
+    "userMenu": "사용자 메뉴",
     "addRoleTitle": "역할 추가",
     "addRoleDescription": "계정에 추가할 새 역할을 선택하세요."
   },

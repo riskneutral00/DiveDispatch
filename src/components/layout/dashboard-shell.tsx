@@ -12,14 +12,9 @@ import { deriveDefaultRole } from '@/lib/utils/role'
 import { cn } from '@/lib/utils/cn'
 import { useCurrentUser } from '@/lib/hooks/use-current-user'
 import { FullPageSpinner } from '@/components/ui/full-page-spinner'
-import { ProfileCompletionPill } from '../profiles/profile-completion-pill'
 import { ProfileOverlay, type ProfileOverlayTab } from '../profiles/profile-overlay'
-import { BgSwitcher } from './bg-switcher'
-import { ThemeSwitcher } from './theme-switcher'
 import { HierarchySubBar } from './hierarchy-sub-bar'
-import { MobileTopNav } from './mobile-top-nav'
-import { NotificationBell } from '../notifications/notification-bell'
-import { UserMenu } from './user-menu'
+import { TopNav } from './top-nav'
 
 interface DashboardShellProps {
   children: React.ReactNode
@@ -79,38 +74,7 @@ export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps
 
   return (
     <>
-      <header
-        className="hidden md:flex items-center px-4 py-2 flex-shrink-0 glass-divider"
-      >
-        <div className="flex-1" />
-        <span className="text-card-title font-semibold tracking-tight text-primary pointer-events-none">
-          {user.businessName}
-        </span>
-        <div className="flex-1 flex items-center justify-end gap-2">
-          {profileCompletion && profileCompletion.percentage < 100 && (
-            <ProfileCompletionPill
-              percentage={profileCompletion.percentage}
-              onOpenOverlay={() => openProfileOverlay('profile')}
-            />
-          )}
-          <ThemeSwitcher />
-          <BgSwitcher />
-          <NotificationBell />
-          <UserMenu
-            roleSlug={roleSlug}
-            slug={slug}
-            onOpenOverlay={openProfileOverlay}
-          />
-        </div>
-      </header>
-
-      <MobileTopNav
-        roleSlug={roleSlug}
-        slug={slug}
-        businessName={user.businessName}
-        onOpenOverlay={openProfileOverlay}
-        profileCompletion={profileCompletion}
-      />
+      <TopNav onOpenOverlay={openProfileOverlay} profileCompletion={profileCompletion} />
 
       <HierarchySubBar slug={slug} roleSlug={roleSlug} />
 

@@ -128,6 +128,7 @@
     "signOut": "退出登录",
     "roles": "角色",
     "account": "账户",
+    "userMenu": "用户菜单",
     "addRoleTitle": "添加角色",
     "addRoleDescription": "选择要添加到账户的新角色。"
   },
