@@ -51,3 +51,4 @@ Every auth design must handle both:
 
 - Portal mutations (`submitPortal`, `saveMedicalAnswers`) use `resolvePortalToken`, not `authorize()`. The portal has its own auth model — token IS the credential.
 - Unauthenticated queries: theme `listStore` (store browsing metadata), health check. These are explicitly marked as public.
+- **Bootstrap: `users.createUser`** uses raw `ctx.auth.getUserIdentity()` + manual `UNAUTHENTICATED` throw. Cannot route through `authorize()` because no `users` row exists yet at call time — this mutation is what creates the row from the Clerk identity. Idempotent: patches existing on token match. After successful create, all subsequent mutations for that user go through `authorize()`.

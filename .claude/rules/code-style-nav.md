@@ -22,3 +22,4 @@ The codebase is AI-generated and AI-maintained — the code is the documentation
 - `// fsm-ok` — required by `fsm-status-guard.sh` to mark intentional direct status patches in gateway files
 - `// snapshot: <description>` — required by `schema-invariants.md` Rule 5 to annotate denormalized fields
 - `// bounded: <reason>` — required by `query-invariants.md` Rule 1 to document why a `.collect()` is safe
+- `// spacing-ok: <reason>` — required by `spacing-ladder-guard.sh` to suppress off-ladder spacing values (`px-2.5`, `gap-2.5`, `gap-5`) when the visual is intentional

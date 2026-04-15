@@ -382,6 +382,12 @@
           },
           {
             "type": "command",
+            "command": "bash .claude/hooks/raw-primitive-guard.sh",
+            "timeout": 5,
+            "statusMessage": "Checking raw <select>/<textarea>/<label>/<dialog> usage…"
+          },
+          {
+            "type": "command",
             "command": "bash .claude/hooks/primitive-asterisk-guard.sh",
             "timeout": 5,
             "statusMessage": "Checking required-asterisk primitive usage…"

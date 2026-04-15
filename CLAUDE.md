@@ -18,6 +18,7 @@ Session context (log tail, lint status, followups, in-progress tickets, vault-fi
 
 - **Invariants** (architectural laws, hook-enforced): `Architecture/*-invariants.md` + `Architecture/auth-model.md`
 - **Rules** (path-scoped, hook-enforced): `.claude/rules/*.md`
+- **Component catalog** (grep before writing JSX): `src/components/CATALOG.md` — every UI primitive, profile composition, form helper, canonical hook/constant/utility. Drift-checked by `src/components/__tests__/catalog.test.ts`. Enforced by `.claude/rules/existing-components-first.md` + raw-element hooks (`raw-button-blocker`, `raw-input-blocker`, `raw-primitive-guard`).
 - **Vault schema contracts**: `Vaults/DiveDispatch/Schema/*.md`
 - **Declared imports list** (drift-checked by `schema-imports-guard.sh`): `Vaults/DiveDispatch/Schema/imports.md`
 
