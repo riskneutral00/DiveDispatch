@@ -32,6 +32,7 @@ function makeContactArgs(token: string) {
     emergencyContactName: 'Jane Diver',
     emergencyContactPhone: '+61 400 111 222',
     emergencyContactRelation: 'Spouse',
+    languages: ['en-GB'],
   }
 }
 

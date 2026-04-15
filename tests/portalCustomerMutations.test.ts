@@ -59,6 +59,7 @@ const VALID_CONTACT = {
   emergencyContactName: 'Bob Smith',
   emergencyContactPhone: '+66987654321',
   emergencyContactRelation: 'Spouse',
+  languages: ['en-GB'],
 }
 
 const VALID_MEDICAL = {
@@ -113,6 +114,49 @@ describe('savePortalContact', () => {
       expect(customer!.legalLastName).toBe('Smith')
       expect(customer!.email).toBe('alice@example.com')
       expect(customer!.nationality).toBe('US')
+    })
+  })
+
+  it('rejects empty languages array with INVALID_INPUT', async () => {
+    const t = makeT()
+    let token: string
+
+    await t.run(async (ctx) => {
+      const fixture = await seedPortalFixture(ctx)
+      token = fixture.token
+    })
+
+    await expectConvexError(
+      t.mutation(api.customers.savePortalContact, {
+        token: token!,
+        ...VALID_CONTACT,
+        languages: [],
+      }),
+      'INVALID_INPUT',
+    )
+  })
+
+  it('persists languages array to customer record', async () => {
+    const t = makeT()
+    let token: string
+    let profileId: any
+
+    await t.run(async (ctx) => {
+      const fixture = await seedPortalFixture(ctx)
+      token = fixture.token
+      profileId = fixture.profileId
+    })
+
+    await t.mutation(api.customers.savePortalContact, {
+      token: token!,
+      ...VALID_CONTACT,
+      languages: ['zh-TW', 'en-GB'],
+    })
+
+    await t.run(async (ctx) => {
+      const profile = await ctx.db.get(profileId) as Doc<'customerProfiles'> | null
+      const customer = await ctx.db.get(profile!.customerId!) as Doc<'customers'> | null
+      expect(customer!.languages).toEqual(['zh-TW', 'en-GB'])
     })
   })
 

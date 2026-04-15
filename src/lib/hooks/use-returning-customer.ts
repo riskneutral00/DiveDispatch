@@ -21,6 +21,7 @@ export interface ReturningCustomerMatch {
   agency?: string
   agencyID?: string
   allergies?: string
+  languages?: string[]
 }
 
 export interface UseReturningCustomerReturn {

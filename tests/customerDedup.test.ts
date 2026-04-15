@@ -161,6 +161,39 @@ describe('checkReturningCustomer — token gating', () => {
     })
   })
 
+  it('returns languages on returning customer hydration', async () => {
+    await t.run(async (ctx: SeedCtx) => {
+      await seedUser(ctx)
+      await ctx.db.insert('customers', {
+        legalFirstName: 'Ling',
+        legalLastName: 'Chen',
+        email: 'ling@example.com',
+        phone: '+886912345678',
+        dateOfBirth: dob(30),
+        gender: 'F',
+        nationality: 'Taiwan',
+        passportNumber: 'TW00001',
+        passportIssuingCountry: 'Taiwan',
+        passportExpirationDate: passportExpiry(),
+        emergencyContactName: 'Mei Chen',
+        emergencyContactPhone: '+886987654321',
+        emergencyContactRelation: 'Sister',
+        languages: ['zh-TW', 'en-GB'],
+        createdAt: Date.now(),
+      })
+      const { token } = await seedPortalFixture(ctx, {
+        booking: { bookingFormComplete: false },
+      })
+
+      const result = await _checkReturningCustomerHandler(ctx, {
+        email: 'ling@example.com',
+        token,
+      })
+      expect(result).not.toBeNull()
+      expect(result!.languages).toEqual(['zh-TW', 'en-GB'])
+    })
+  })
+
   it('returns null for expired portal token', async () => {
     await t.run(async (ctx: SeedCtx) => {
       await seedUser(ctx)
@@ -204,12 +237,12 @@ describe('savePortalContact — returning customer', () => {
         emergencyContactName: 'Bob',
         emergencyContactPhone: '+44712345678',
         emergencyContactRelation: 'Spouse',
+        languages: ['en-GB'],
       })
 
       const profile = await ctx.db.get(profileId)
       expect(profile!.customerId).toBeTruthy()
 
-      // Should be a NEW customer
       const customers = await ctx.db.query('customers').collect()
       expect(customers).toHaveLength(1)
     })
@@ -239,6 +272,7 @@ describe('savePortalContact — returning customer', () => {
         emergencyContactName: 'Bob',
         emergencyContactPhone: '+44712345678',
         emergencyContactRelation: 'Spouse',
+        languages: ['en-GB'],
       })
 
       // Profile should link to existing customer
@@ -286,6 +320,7 @@ describe('savePortalContact — returning customer', () => {
         emergencyContactName: 'Bob',
         emergencyContactPhone: '+44712345678',
         emergencyContactRelation: 'Spouse',
+        languages: ['en-GB'],
       }
 
       await _savePortalContactHandler(ctx, { token: token1, existingCustomerId: existingId as string, ...contactData })

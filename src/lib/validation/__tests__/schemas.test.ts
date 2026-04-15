@@ -159,9 +159,45 @@ describe('makeCustomerContactSchema', () => {
       emergencyContactName: 'Jane Doe',
       emergencyContactPhone: '+14155550178',
       emergencyContactRelation: 'Spouse',
+      languages: [{ code: 'en-GB', label: 'English' }],
       ...overrides,
     }
   }
+
+  it('fails when languages is an empty array', () => {
+    const schema = makeCustomerContactSchema()
+    const result = schema.safeParse(validContact({ languages: [] }))
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      const paths = result.error.issues.map((i) => i.path.join('.'))
+      expect(paths).toContain('languages')
+    }
+  })
+
+  it('fails when languages is missing', () => {
+    const schema = makeCustomerContactSchema()
+    const { languages: _languages, ...rest } = validContact()
+    void _languages
+    const result = schema.safeParse(rest)
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      const paths = result.error.issues.map((i) => i.path.join('.'))
+      expect(paths).toContain('languages')
+    }
+  })
+
+  it('passes with a non-empty languages array', () => {
+    const schema = makeCustomerContactSchema()
+    const result = schema.safeParse(
+      validContact({
+        languages: [
+          { code: 'zh-TW', label: 'Traditional Chinese' },
+          { code: 'en-GB', label: 'English' },
+        ],
+      }),
+    )
+    expect(result.success).toBe(true)
+  })
 
   it('passes without agency fields when no cert-required activities', () => {
     const schema = makeCustomerContactSchema(['DSD', 'TRY_DIVE'])

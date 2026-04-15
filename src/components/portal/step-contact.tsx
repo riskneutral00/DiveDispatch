@@ -16,9 +16,12 @@ import { CountryField } from '@/components/ui/country-field'
 import { DEFAULT_TEXTAREA_ROWS } from '@/lib/constants/form-config'
 import { SimpleSelect } from '@/components/ui/simple-select'
 import { Textarea } from '@/components/ui/textarea'
+import { LanguageField } from '@/components/ui/language-field'
 import { toISODateString } from '@/lib/utils/date'
 import { makeCustomerContactSchema, useFormValidation } from '@/lib/validation'
 import type { CustomerContactData } from '@/lib/validation'
+import { languageToCode, ALL_LANGUAGES } from '@/lib/constants/dive-languages'
+import type { Language } from '@/lib/types/language'
 import { CERT_REQUIRED_ACTIVITIES, getMinAge, calcAgeAtDate, isPassportExpiringSoon } from '@/lib/constants/activity-rules'
 import { usePortalContact } from '@/lib/hooks/use-portal-contact'
 import { usePortalStep } from '@/lib/hooks/use-portal-step'
@@ -28,6 +31,25 @@ import { DIVE_AGENCIES } from '@/lib/constants/agencies'
 import { FullPageSpinner } from '@/components/ui/full-page-spinner'
 import { PortalStepShell } from '@/components/portal/portal-step-shell'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
+
+function defaultLanguageFromBrowser(): Language[] {
+  const raw =
+    typeof navigator !== 'undefined' && navigator.language
+      ? navigator.language
+      : 'en'
+  const code = languageToCode(raw) || 'en-GB'
+  const match = ALL_LANGUAGES.find((l) => l.code === code)
+  if (!match) return []
+  return [{ code: match.code, label: match.label }]
+}
+
+function languagesFromCodes(codes: string[] | undefined): Language[] {
+  if (!codes) return []
+  return codes
+    .map((c) => ALL_LANGUAGES.find((l) => l.code === c))
+    .filter((l): l is NonNullable<typeof l> => Boolean(l))
+    .map((l) => ({ code: l.code, label: l.label }))
+}
 
 const defaultForm = (): CustomerContactData => ({
   legalFirstName: '',
@@ -47,6 +69,7 @@ const defaultForm = (): CustomerContactData => ({
   agency: '',
   agencyID: '',
   allergies: '',
+  languages: defaultLanguageFromBrowser(),
 })
 
 interface StepContactProps {
@@ -106,6 +129,10 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
       agency: data.agency ?? '',
       agencyID: data.agencyID ?? '',
       allergies: data.allergies ?? '',
+      languages:
+        data.languages && data.languages.length > 0
+          ? languagesFromCodes(data.languages)
+          : prev.languages,
     }))
   })
 
@@ -138,6 +165,10 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
         agency: c.agency ?? '',
         agencyID: c.agencyID ?? '',
         allergies: c.allergies ?? '',
+        languages:
+          c.languages && c.languages.length > 0
+            ? languagesFromCodes(c.languages)
+            : defaultLanguageFromBrowser(),
       })
     } else {
       const nameParts = context.prefillName.split(' ')
@@ -211,6 +242,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
         agency: validated.agency || undefined,
         agencyID: validated.agencyID || undefined,
         allergies: validated.allergies || undefined,
+        languages: validated.languages.map((l) => l.code),
       })
       onComplete()
     } catch (err) {
@@ -350,6 +382,18 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             className="field-select-long"
           />
         </div>
+      </Card>
+
+      <Card padding="md">
+        <FormSectionHeader label={t('sectionLanguages')} />
+        <LanguageField
+          variant="customer"
+          value={form.languages}
+          onChange={(v) => setField('languages', v)}
+        />
+        {errors.languages && (
+          <InlineError>{errors.languages}</InlineError>
+        )}
       </Card>
 
       <Card padding="md">

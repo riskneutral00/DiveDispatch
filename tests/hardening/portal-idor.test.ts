@@ -58,6 +58,7 @@ const VALID_CONTACT = {
   emergencyContactName: 'Bob Smith',
   emergencyContactPhone: '+66987654321',
   emergencyContactRelation: 'Spouse',
+  languages: ['en-GB'],
 }
 
 // ─── IDOR: existingCustomerId ownership ─────────────────────────────────────

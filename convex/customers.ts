@@ -51,6 +51,7 @@ export async function _checkReturningCustomerHandler(
     prescriptionStrength: match.prescriptionStrength,
     totalDives: match.totalDives,
     lastDiveDate: match.lastDiveDate,
+    languages: match.languages ?? [],
   }
 }
 
@@ -95,6 +96,7 @@ export const getPortalContext = query({
         agency?: string
         agencyID?: string
         allergies?: string
+        languages?: string[]
       } | null,
     }
   },
@@ -121,6 +123,7 @@ export const savePortalContact = mutation({
     agency: v.optional(v.string()),
     agencyID: v.optional(v.string()),
     allergies: v.optional(v.string()),
+    languages: v.array(v.string()),
   },
   handler: _savePortalContactHandler,
 })
@@ -147,12 +150,17 @@ export async function _savePortalContactHandler(
     agency?: string
     agencyID?: string
     allergies?: string
+    languages: string[]
   },
 ): Promise<void> {
   await checkRateLimit(ctx, 'savePortalContact', args.token)
   const { profile } = await resolvePortalToken(ctx, args.token)
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  if (args.languages.length === 0) {
+    throw new ConvexError({ code: ErrorCode.INVALID_INPUT, reason: 'At least one language required' })
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- comments-ok
   const { token: _token, existingCustomerId: _existingId, ...rawContactData } = args
   const contactData = sanitizeFields(rawContactData, PORTAL_CONTACT_FIELDS)
   contactData.passportNumber = sanitizePassport(contactData.passportNumber)

@@ -49,6 +49,9 @@ const baseCustomerContactSchema = z.object({
   agency: z.string().optional(),
   agencyID: z.string().optional(),
   allergies: z.string().optional(),
+  languages: z
+    .array(z.object({ code: z.string(), label: z.string() }))
+    .min(1, 'Select at least one language'),
 })
 
 export type CustomerContactData = z.infer<typeof baseCustomerContactSchema>

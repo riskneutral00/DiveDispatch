@@ -219,6 +219,7 @@ describe('L9-09: Portal Mutation Guards — expired token rejection', () => {
         emergencyContactName: 'Bob',
         emergencyContactPhone: '+66899999999',
         emergencyContactRelation: 'Spouse',
+        languages: ['en-GB'],
       }),
       'TOKEN_EXPIRED',
     )

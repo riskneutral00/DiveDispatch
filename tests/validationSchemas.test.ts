@@ -46,6 +46,7 @@ describe('makeCustomerContactSchema', () => {
     emergencyContactName: 'Bob',
     emergencyContactPhone: '+1234567890',
     emergencyContactRelation: 'Spouse',
+    languages: [{ code: 'en-GB', label: 'English' }],
   }
 
   it('base schema accepts valid contact without cert fields', () => {

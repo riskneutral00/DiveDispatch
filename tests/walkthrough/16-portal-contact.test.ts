@@ -25,6 +25,7 @@ function makeContactArgs(token: string, overrides: Record<string, unknown> = {})
     emergencyContactName: 'Carol Diver',
     emergencyContactPhone: '+61 400 111 222',
     emergencyContactRelation: 'Spouse',
+    languages: ['en-GB'],
     ...overrides,
   }
 }
