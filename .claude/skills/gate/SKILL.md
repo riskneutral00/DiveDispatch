@@ -124,20 +124,34 @@ Cached: {comma-separated skillsCached list} (unchanged since {ran timestamp})
 
 If `skillsCached` is empty (first run or all buckets changed), omit the Cached line.
 
-Invoke only `skillsToDispatch` skills **in parallel** using the Skill tool. Each skill runs its full process: inventory → audit → vault review → H-specs → baseline update.
+**Spawn one Agent per skill in `skillsToDispatch`, all in a SINGLE message** so they run truly in parallel. Use `subagent_type: "general-purpose"` and `model: "sonnet"`. Do NOT use `Skill()` for fan-out — `Skill()` is conversational substitution and cannot parallelize. Each Agent executes the underlying skill in an isolated context and returns structured findings, which this orchestrator can then aggregate.
 
-Possible skills (only those in `skillsToDispatch`):
-- `/review-backend-schema`
-- `/review-backend-auth`
-- `/review-backend-mutations`
-- `/review-tests`
-- `/review-prerequisite-gates`
-- `/review-frontend-dry`
-- `/review-ui-variants`
+Per-agent prompt template:
+
+```
+Run the {SKILL-NAME} skill end-to-end and return its structured findings.
+
+Steps:
+1. Invoke the skill via the Skill tool: Skill({skill: "{skill-name}"}).
+2. Let the skill execute its full process (inventory → audit → vault review → return findings).
+3. Capture the structured findings block it emits (the JSON-like block listing severity/file/line/summary/proposed_fix).
+4. Return ONLY that findings block as your response — no commentary, no preamble.
+
+Context: orchestrated by /gate for pre-commit verification. Stay focused. Diff scope is the current uncommitted working tree.
+```
+
+Possible skills (spawn one Agent per skill that appears in `skillsToDispatch`):
+- `review-backend-schema`
+- `review-backend-auth`
+- `review-backend-mutations`
+- `review-tests`
+- `review-prerequisite-gates`
+- `review-frontend-dry`
+- `review-ui-variants`
 
 **Review skills return findings only — they do NOT invoke `/escalate`.** `/gate` is the single escalator; it aggregates findings in Phase 6 and calls `/escalate` once.
 
-After dispatched skills complete, collect each skill's CRITICAL/HIGH/MEDIUM/LOW findings + the full finding list (file, line, severity, summary, proposed fix) from its structured output. Merge with cached `skillResults` from the sentinel for the full picture.
+After all spawned Agents return (the runtime delivers all their results before the next phase), collect each skill's CRITICAL/HIGH/MEDIUM/LOW findings + the full finding list (file, line, severity, summary, proposed fix) from each agent's response. Merge with cached `skillResults` from the sentinel for the full picture.
 
 ---
 
@@ -433,12 +447,33 @@ Exit code: 0 on GO, 1 on NO-GO.
 
 ---
 
+## Resume Contract (when invoked by /vault)
+
+If `/vault` invoked this skill (the conversation context above contains `/vault` skill instructions that haven't completed), continue executing `/vault` from **Job 0** (Untracked File Triage) immediately after the sentinel write. Do NOT stop after the verdict line.
+
+The `Skill()` boundary is conversational substitution, not a function-call return. You are the same LLM instance, both skill bodies are visible in conversation context, and `/vault`'s remaining instructions (Jobs 0-7) are still your responsibility. Treat the gate verdict line as a checkpoint, not a stopping point.
+
+Emit this line right before continuing:
+
+```
+Gate complete (verdict: {CLEAN|CLEAN_UNREVIEWED|BLOCKED}). Resuming /vault Job 0.
+```
+
+Then proceed:
+- `BLOCKED` → stop after the resume line (don't enter Job 0).
+- `CLEAN` / `CLEAN_UNREVIEWED` → continue to /vault Job 0 in the SAME turn.
+
+If `/gate` was invoked directly by the user (no `/vault` context above), stop after the verdict — no resume.
+
+---
+
 ## Rules
 
 - **Dispatch, don't duplicate.** Gate classifies and dispatches. Skills own their domains.
-- **Parallel dispatch.** Run all triggered skills simultaneously for speed.
+- **Parallel dispatch via Agent fan-out.** Spawn one Agent per review skill in a single message. Never use `Skill()` for fan-out — it can't parallelize.
 - **Invariant sweep is always on.** Fast safety net even if skills already ran.
 - **Test gaps are informational.** They appear in verdict but never block.
 - **Config-only changes skip review.** Report them and skip to verdict.
 - **Gate orchestrates, not edits.** Gate classifies, dispatches, and orchestrates. Code fixes are delegated to spawned fix agents. Dispatched skills handle their own vault writes + H-specs + baseline updates.
+- **Resume /vault automatically.** When invoked by `/vault` preflight, continue to /vault Job 0 in the same turn after writing the sentinel.
 - **Execute immediately.** No preamble. Classify, dispatch, verdict.

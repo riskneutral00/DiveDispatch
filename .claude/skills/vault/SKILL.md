@@ -50,10 +50,12 @@ GATE=$(cat .patrol-ran 2>/dev/null)
 ```
 
 1. If `.patrol-ran` exists AND `verdict` is `BLOCKED` → stop: `Build/test failure detected. Fix before vaulting.`
-2. If `.patrol-ran` exists AND `diffHash` matches `$DIFF_HASH` AND verdict is `CLEAN` or `CLEAN_UNREVIEWED` → proceed silently (gate is current).
-3. Otherwise (missing OR stale — `diffHash` doesn't match) → run `/gate` via Skill tool. Then re-read `.patrol-ran`:
-   - `CLEAN` or `CLEAN_UNREVIEWED` → proceed.
-   - `BLOCKED` → stop.
+2. If `.patrol-ran` exists AND `diffHash` matches `$DIFF_HASH` AND verdict is `CLEAN` or `CLEAN_UNREVIEWED` → proceed silently (gate is current). Continue to Job 0.
+3. Otherwise (missing OR stale — `diffHash` doesn't match) → invoke `/gate` via the Skill tool. `/gate`'s "Resume Contract" section guarantees it will write `.patrol-ran` and return control to /vault Job 0 within the same turn after emitting `Gate complete (verdict: ...). Resuming /vault Job 0.`
+   - When you see that resume line, continue to Job 0 immediately.
+   - If `/gate` reports BLOCKED, stop without entering Job 0.
+
+**Critical:** `Skill()` is conversational substitution, not a function call. After /gate's instructions execute and write the sentinel, /vault's instructions remain visible in conversation context — you (the LLM) are responsible for continuing through Jobs 0-7 in the same turn. Do not treat the `Skill(gate)` call as a stopping point.
 
 After Job 4 (commit) succeeds, clean up sentinels and write session timestamp:
 ```bash
