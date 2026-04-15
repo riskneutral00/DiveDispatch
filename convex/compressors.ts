@@ -6,7 +6,7 @@ import {
   profileUpdate,
   profileCreate,
 } from './lib/profileHelpers'
-import { BASE_PROFILE_CREATE_FIELDS, BASE_PROFILE_UPDATE_FIELDS } from './lib/validators'
+import { BASE_PROFILE_CREATE_FIELDS, BASE_PROFILE_UPDATE_FIELDS, ACCESS_CONTROL_FIELDS } from './lib/validators'
 
 const gasMixValidator = v.union(
   v.literal('air'),
@@ -17,6 +17,7 @@ const gasMixValidator = v.union(
 export const create = mutation({
   args: {
     ...BASE_PROFILE_CREATE_FIELDS,
+    ...ACCESS_CONTROL_FIELDS,
     gasMixes: v.optional(v.array(gasMixValidator)),
   },
   handler: async (ctx, args) =>
@@ -28,9 +29,10 @@ export const create = mutation({
 export const update = mutation({
   args: {
     ...BASE_PROFILE_UPDATE_FIELDS,
+    ...ACCESS_CONTROL_FIELDS,
     gasMixes: v.optional(v.array(gasMixValidator)),
   },
-  handler: async (ctx, args) => profileUpdate(ctx, args, 'compressors'),
+  handler: async (ctx, args) => profileUpdate(ctx, args, 'compressors', 'Compressor'),
 })
 
 export const byUserId = query({

@@ -68,6 +68,7 @@ import type * as lib_requiredFields from "../lib/requiredFields.js";
 import type * as lib_rolePrecedence from "../lib/rolePrecedence.js";
 import type * as lib_sanitize from "../lib/sanitize.js";
 import type * as lib_seedUtils from "../lib/seedUtils.js";
+import type * as lib_snapshotFields from "../lib/snapshotFields.js";
 import type * as lib_stakeholderPreferencesDedupe from "../lib/stakeholderPreferencesDedupe.js";
 import type * as lib_themeOrdering from "../lib/themeOrdering.js";
 import type * as lib_timeConstants from "../lib/timeConstants.js";
@@ -183,6 +184,7 @@ declare const fullApi: ApiFromModules<{
   "lib/rolePrecedence": typeof lib_rolePrecedence;
   "lib/sanitize": typeof lib_sanitize;
   "lib/seedUtils": typeof lib_seedUtils;
+  "lib/snapshotFields": typeof lib_snapshotFields;
   "lib/stakeholderPreferencesDedupe": typeof lib_stakeholderPreferencesDedupe;
   "lib/themeOrdering": typeof lib_themeOrdering;
   "lib/timeConstants": typeof lib_timeConstants;

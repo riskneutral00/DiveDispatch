@@ -195,6 +195,9 @@ export const listByRole = query({
           const profile = await fetchProfile(ctx.db, u._id, args.role, u.slug, rawProfile)
           if (!profile) return null
 
+          if (args.role === 'Compressor' && (profile.gasMixes?.length ?? 0) === 0) return null
+          if (args.role === 'Instructor' && (profile.teachingLanguages?.length ?? 0) === 0) return null
+          if (args.role === 'DiveMaster' && (profile.teachingLanguages?.length ?? 0) === 0) return null
           if (args.placeName && profile.placeName.toLowerCase() !== args.placeName.toLowerCase()) return null
           if (args.country && profile.country.toLowerCase() !== args.country.toLowerCase()) return null
           if (args.agency && args.agency !== 'all') {
@@ -279,6 +282,36 @@ export const listByRole = query({
     }
 
     return filtered
+  },
+})
+
+export const listOperators = query({
+  args: {},
+  handler: async (ctx): Promise<{ slug: string; name: string; role: 'DiveCenter' | 'Agent' }[]> => {
+    await requireAuth(ctx)
+
+    const result: { slug: string; name: string; role: 'DiveCenter' | 'Agent' }[] = []
+
+    for (const role of ['DiveCenter', 'Agent'] as const) {
+      const roleEntries = await ctx.db
+        .query('userRoles')
+        .withIndex('by_role', (q) => q.eq('role', role))
+        .take(DIRECTORY_LIST_LIMIT)
+      const users = await Promise.all(roleEntries.map((r) => ctx.db.get(r.userId)))
+      for (const u of users) {
+        if (!u) continue
+        const tableName = role === 'DiveCenter' ? 'diveCenters' : 'agents'
+        const profile = await queryDynamicTable(ctx.db, tableName)
+          .withIndex('by_userId', (q) => q.eq('userId', u._id))
+          .unique()
+        if (!profile) continue
+        const name = (profile as { name?: string }).name ?? u.slug
+        result.push({ slug: u.slug, name, role })
+      }
+    }
+
+    result.sort((a, b) => a.name.localeCompare(b.name))
+    return result
   },
 })
 

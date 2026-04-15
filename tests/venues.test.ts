@@ -375,3 +375,33 @@ describe('venues.create — access control', () => {
     ).rejects.toThrow(/FORBIDDEN/)
   })
 })
+
+describe('venues.update — access control round-trip', () => {
+  it('persists isAllowed + notAllowed arrays', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedPoolUser(ctx, 'pool-acl') })
+
+    await t.withIdentity({ tokenIdentifier: 'clerk|pool-acl' })
+      .mutation(api.venues.create, {
+        name: 'ACL Pool',
+        placeName: 'Koh Tao',
+        country: 'Thailand',
+        lat: 10.09,
+        lng: 99.84,
+        venueCategory: 'pool' as const,
+        hasCompressor: false,
+        maxCapacity: 15,
+      })
+
+    await t.withIdentity({ tokenIdentifier: 'clerk|pool-acl' })
+      .mutation(api.venues.update, {
+        isAllowed: ['dc-a'],
+        notAllowed: ['blocked-dc'],
+      })
+
+    const venue = await t.withIdentity({ tokenIdentifier: 'clerk|pool-acl' })
+      .query(api.venues.mine, {}) as Doc<'venues'> | null
+    expect(venue!.isAllowed).toEqual(['dc-a'])
+    expect(venue!.notAllowed).toEqual(['blocked-dc'])
+  })
+})

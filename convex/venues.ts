@@ -4,7 +4,7 @@ import { authorize } from './lib/auth'
 import { profileByUserId, profileMine } from './lib/profileHelpers'
 import { checkHasRole } from './userRoles'
 import { ErrorCode } from './lib/errorCodes'
-import { BASE_PROFILE_CREATE_FIELDS, BASE_PROFILE_UPDATE_FIELDS } from './lib/validators'
+import { BASE_PROFILE_CREATE_FIELDS, BASE_PROFILE_UPDATE_FIELDS, ACCESS_CONTROL_FIELDS } from './lib/validators'
 import {
   venueCategoryValidator,
   diveSiteTypeValidator,
@@ -58,6 +58,7 @@ function resolveVenueFields(input: VenueWriteInput): ResolvedVenueFields {
 export const create = mutation({
   args: {
     ...BASE_PROFILE_CREATE_FIELDS,
+    ...ACCESS_CONTROL_FIELDS,
     email: v.optional(v.string()),
     phone: v.optional(v.string()),
     venueCategory: venueCategoryValidator,
@@ -125,6 +126,7 @@ export const create = mutation({
 export const update = mutation({
   args: {
     ...BASE_PROFILE_UPDATE_FIELDS,
+    ...ACCESS_CONTROL_FIELDS,
     venueCategory: v.optional(venueCategoryValidator),
     diveSiteTypes: v.optional(v.array(diveSiteTypeValidator)),
     confinedCapable: v.optional(v.boolean()),

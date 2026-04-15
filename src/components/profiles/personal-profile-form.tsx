@@ -8,6 +8,13 @@ import { ProfileFormHeader } from '@/components/profiles/profile-form-header'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import { SectionDivider } from '@/components/ui/section-divider'
 import {
+  AccessControlSection,
+  INITIAL_ACCESS_CONTROL,
+  accessFromProfile,
+  accessToPayload,
+  type AccessControlState,
+} from '@/components/profiles/access-control-section'
+import {
   type ContactFormState as PersonalContactFormState,
   INITIAL_CONTACT_FORM,
   INITIAL_TEACHING_LANGUAGES,
@@ -42,11 +49,13 @@ export { INITIAL_CONTACT_FORM, contactFromProfile, contactToPayload }
 
 export type PersonalMergedContactFormState = PersonalContactFormState & {
   teachingLanguages: Language[]
+  access: AccessControlState
 }
 
 export const INITIAL_PERSONAL_MERGED_CONTACT: PersonalMergedContactFormState = {
   ...INITIAL_CONTACT_FORM,
   ...INITIAL_TEACHING_LANGUAGES,
+  access: INITIAL_ACCESS_CONTROL,
 }
 
 export type PersonalLanguagesFormState = { teachingLanguages: Language[] }
@@ -69,6 +78,7 @@ function mergedPersonalFromProfile(p: Record<string, unknown>): PersonalMergedCo
   return {
     ...contactFromProfile(p),
     ...languagesFromProfilePersonal(p),
+    access: accessFromProfile(p),
   }
 }
 
@@ -76,6 +86,7 @@ function mergedPersonalToPayload(f: PersonalMergedContactFormState): Record<stri
   return {
     ...contactToPayload(f),
     ...languagesToPayloadPersonal(f),
+    ...accessToPayload(f.access),
   }
 }
 
@@ -212,6 +223,13 @@ export function PersonalContactSection({
           variant="teaching"
           value={form.teachingLanguages}
           onChange={(langs) => setField('teachingLanguages', langs)}
+        />
+
+        <SectionDivider variant="soft" />
+
+        <AccessControlSection
+          value={form.access}
+          onChange={(next) => setField('access', next)}
         />
       </div>
     </ProfileFormShell>

@@ -3,6 +3,14 @@
 import { type LocationValue } from '@/components/profiles/location-picker-lazy'
 import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
+import { SectionDivider } from '@/components/ui/section-divider'
+import {
+  AccessControlSection,
+  INITIAL_ACCESS_CONTROL,
+  accessFromProfile,
+  accessToPayload,
+  type AccessControlState,
+} from '@/components/profiles/access-control-section'
 import {
   type ContactFormState,
   INITIAL_CONTACT_FORM,
@@ -13,6 +21,13 @@ import {
 } from '@/lib/profile-form'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 import type { ZodType } from 'zod'
+
+type BusinessContactWithAccess = ContactFormState & { access: AccessControlState } // dry-ok
+
+const INITIAL_BUSINESS_CONTACT: BusinessContactWithAccess = {
+  ...INITIAL_CONTACT_FORM,
+  access: INITIAL_ACCESS_CONTROL,
+}
 
 interface BusinessContactSectionProps extends BaseProfileSectionProps {
   nameLabel: string
@@ -40,10 +55,13 @@ export function BusinessContactSection({
       profile: existing,
       me,
       schema,
-      defaults: INITIAL_CONTACT_FORM,
-      fromProfile: contactFromProfile,
-      fromMe: fromMeOverride ?? defaultFromMe,
-      toPayload: contactToPayload,
+      defaults: INITIAL_BUSINESS_CONTACT,
+      fromProfile: (p) => ({ ...contactFromProfile(p), access: accessFromProfile(p) }),
+      fromMe: (u, defaults) => ({
+        ...(fromMeOverride ?? defaultFromMe)(u, defaults),
+        access: defaults.access,
+      }),
+      toPayload: (f) => ({ ...contactToPayload(f), ...accessToPayload(f.access) }),
       create: createOverride ?? create,
       update,
       onSaved,
@@ -85,6 +103,13 @@ export function BusinessContactSection({
           onPhoneChange={(val) => setField('phone', val)}
           phoneError={errors.phone}
           phoneRequired
+        />
+
+        <SectionDivider variant="soft" />
+
+        <AccessControlSection
+          value={form.access}
+          onChange={(next) => setField('access', next)}
         />
       </div>
     </ProfileFormShell>

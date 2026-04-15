@@ -7,6 +7,13 @@ import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
 import { Button } from '@/components/ui/button'
 import { SectionDivider } from '@/components/ui/section-divider'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
+import {
+  AccessControlSection,
+  INITIAL_ACCESS_CONTROL,
+  accessFromProfile,
+  accessToPayload,
+  type AccessControlState,
+} from '@/components/profiles/access-control-section'
 import { diveCenterAffiliationsSchema, diveCenterContactMergedSchema } from '@/lib/schemas/profile-shared'
 import {
   type ContactFormState as DiveCenterContactFormState,
@@ -29,13 +36,15 @@ type DiveCenterSectionProps = BaseProfileSectionProps
 export type { DiveCenterContactFormState }
 export { INITIAL_CONTACT_FORM, contactFromProfile, contactToPayload }
 
-export type DiveCenterMergedContactFormState = ContactFormState & {
+export type DiveCenterMergedContactFormState = ContactFormState & { // dry-ok
   customerLanguages: Language[]
+  access: AccessControlState
 }
 
 export const INITIAL_DC_MERGED_CONTACT: DiveCenterMergedContactFormState = {
   ...INITIAL_CONTACT_FORM,
   ...INITIAL_CUSTOMER_LANGUAGES,
+  access: INITIAL_ACCESS_CONTROL,
 }
 
 const diveCenterFromMe = (
@@ -66,20 +75,6 @@ export function languagesToPayloadDC(f: DiveCenterLanguagesFormState): Record<st
   }
 }
 
-function mergedContactFromProfile(p: Record<string, unknown>): DiveCenterMergedContactFormState {
-  return {
-    ...contactFromProfile(p),
-    ...languagesFromProfileDC(p),
-  }
-}
-
-function mergedContactToPayload(f: DiveCenterMergedContactFormState): Record<string, unknown> {
-  return {
-    ...contactToPayload(f),
-    ...languagesToPayloadDC(f),
-  }
-}
-
 export function DiveCenterContactSection(props: DiveCenterSectionProps) {
   const { profile, me, create, update, onSaved, onClose } = props
 
@@ -101,9 +96,17 @@ export function DiveCenterContactSection(props: DiveCenterSectionProps) {
     me,
     schema: diveCenterContactMergedSchema,
     defaults: INITIAL_DC_MERGED_CONTACT,
-    fromProfile: mergedContactFromProfile,
+    fromProfile: (p) => ({
+      ...contactFromProfile(p),
+      ...languagesFromProfileDC(p),
+      access: accessFromProfile(p),
+    }),
     fromMe: diveCenterFromMe,
-    toPayload: mergedContactToPayload,
+    toPayload: (f) => ({
+      ...contactToPayload(f),
+      ...languagesToPayloadDC(f),
+      ...accessToPayload(f.access),
+    }),
     create,
     update,
     onSaved,
@@ -154,6 +157,13 @@ export function DiveCenterContactSection(props: DiveCenterSectionProps) {
           variant="customer"
           value={form.customerLanguages}
           onChange={(langs) => setField('customerLanguages', langs)}
+        />
+
+        <SectionDivider variant="soft" />
+
+        <AccessControlSection
+          value={form.access}
+          onChange={(next) => setField('access', next)}
         />
       </div>
     </ProfileFormShell>

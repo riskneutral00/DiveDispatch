@@ -6,7 +6,7 @@ import {
   profileUpdate,
   profileCreate,
 } from './lib/profileHelpers'
-import { BASE_PROFILE_CREATE_FIELDS, BASE_PROFILE_UPDATE_FIELDS } from './lib/validators'
+import { BASE_PROFILE_CREATE_FIELDS, BASE_PROFILE_UPDATE_FIELDS, ACCESS_CONTROL_FIELDS } from './lib/validators'
 
 const boatTypeValidator = v.union(
   v.literal('day_boat'),
@@ -37,6 +37,7 @@ const fleetEntryValidator = v.object({
 export const create = mutation({
   args: {
     ...BASE_PROFILE_CREATE_FIELDS,
+    ...ACCESS_CONTROL_FIELDS,
     fleet: v.array(fleetEntryValidator),
   },
   handler: async (ctx, args) => {
@@ -53,6 +54,7 @@ export const create = mutation({
 export const update = mutation({
   args: {
     ...BASE_PROFILE_UPDATE_FIELDS,
+    ...ACCESS_CONTROL_FIELDS,
     fleet: v.optional(v.array(fleetEntryValidator)),
     hasCompressor: v.optional(v.boolean()),
   },

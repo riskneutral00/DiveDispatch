@@ -77,3 +77,8 @@ export const BASE_PROFILE_UPDATE_FIELDS = {
   email: v.optional(v.string()),
   phone: v.optional(v.string()),
 }
+
+export const ACCESS_CONTROL_FIELDS = {
+  isAllowed: v.optional(v.array(v.string())),
+  notAllowed: v.optional(v.array(v.string())),
+}

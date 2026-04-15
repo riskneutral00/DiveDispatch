@@ -7,6 +7,13 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import { VenueCapabilitiesSection } from '@/components/profiles/venue-capabilities-section'
 import {
+  AccessControlSection,
+  INITIAL_ACCESS_CONTROL,
+  accessFromProfile,
+  accessToPayload,
+  type AccessControlState,
+} from '@/components/profiles/access-control-section'
+import {
   diveSiteDetailsSchema,
   diveSiteCapabilitiesSchema,
 } from '@/lib/schemas/profile-shared'
@@ -35,12 +42,14 @@ export type DiveSiteDetailsFormState = {
   name: string
   location: LocationValue | null
   diveSiteTypes: DiveSiteType[]
+  access: AccessControlState
 }
 
 export const INITIAL_DIVE_SITE_DETAILS_FORM: DiveSiteDetailsFormState = {
   name: '',
   location: null,
   diveSiteTypes: [],
+  access: INITIAL_ACCESS_CONTROL,
 }
 
 export function diveSiteDetailsFromProfile(p: Record<string, unknown>): DiveSiteDetailsFormState {
@@ -49,6 +58,7 @@ export function diveSiteDetailsFromProfile(p: Record<string, unknown>): DiveSite
     name,
     location: location as LocationValue,
     diveSiteTypes: (p.diveSiteTypes as DiveSiteType[] | undefined) ?? [],
+    access: accessFromProfile(p),
   }
 }
 
@@ -57,6 +67,7 @@ export function diveSiteDetailsToPayload(f: DiveSiteDetailsFormState): Record<st
     name: f.name,
     ...locationToPayload(f.location!),
     diveSiteTypes: f.diveSiteTypes,
+    ...accessToPayload(f.access),
   }
 }
 
@@ -145,6 +156,13 @@ export function DiveSiteDetailsSection({ profile: existing, me, create, update, 
             <span className="text-label text-destructive">{errors.diveSiteTypes}</span>
           )}
         </div>
+
+        <SectionDivider variant="soft" />
+
+        <AccessControlSection
+          value={form.access}
+          onChange={(next) => setField('access', next)}
+        />
       </div>
     </ProfileFormShell>
   )

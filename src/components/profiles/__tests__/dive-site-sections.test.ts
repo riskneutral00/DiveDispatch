@@ -168,6 +168,7 @@ describe('diveSiteDetailsToPayload', () => {
       name: 'Shark Bay Reef',
       location: { placeName: 'Shark Bay', country: 'Malaysia', lat: 5.97, lng: 116.07 },
       diveSiteTypes: ['reef'],
+      access: { mode: 'open', isAllowed: [], notAllowed: [] },
     }
     const payload = diveSiteDetailsToPayload(form)
     expect(payload.name).toBe('Shark Bay Reef')
@@ -183,6 +184,7 @@ describe('diveSiteDetailsToPayload', () => {
       name: 'Test Site',
       location: { placeName: 'BKK', country: 'TH', lat: 13.7, lng: 100.5 },
       diveSiteTypes: ['shore'],
+      access: { mode: 'open', isAllowed: [], notAllowed: [] },
     }
     const payload = diveSiteDetailsToPayload(form)
     expect(payload).not.toHaveProperty('confinedCapable')
@@ -195,6 +197,7 @@ describe('diveSiteDetailsToPayload', () => {
       name: 'Test Site',
       location: { placeName: 'BKK', country: 'TH', lat: 13.7, lng: 100.5 },
       diveSiteTypes: ['reef', 'shore'],
+      access: { mode: 'open', isAllowed: [], notAllowed: [] },
     }
     const payload = diveSiteDetailsToPayload(form)
     expect(payload).not.toHaveProperty('venueType')
@@ -302,6 +305,7 @@ describe('buildDiveSiteCreatePayload', () => {
       name: 'Shark Bay Reef',
       location: { placeName: 'Shark Bay', country: 'Malaysia', lat: 5.97, lng: 116.07 },
       diveSiteTypes: ['reef'],
+      access: { mode: 'open', isAllowed: [], notAllowed: [] },
     })
     const result = buildDiveSiteCreatePayload(detailsPayload)
     expect(result.name).toBe('Shark Bay Reef')

@@ -6,7 +6,7 @@ import {
   profileUpdate,
   profileCreate,
 } from './lib/profileHelpers'
-import { BASE_PROFILE_CREATE_FIELDS, BASE_PROFILE_UPDATE_FIELDS } from './lib/validators'
+import { BASE_PROFILE_CREATE_FIELDS, BASE_PROFILE_UPDATE_FIELDS, ACCESS_CONTROL_FIELDS } from './lib/validators'
 
 const associationValidator = v.object({
   agency: v.string(),
@@ -20,6 +20,7 @@ const associationValidator = v.object({
 export const create = mutation({
   args: {
     ...BASE_PROFILE_CREATE_FIELDS,
+    ...ACCESS_CONTROL_FIELDS,
     associations: v.array(associationValidator),
     customerLanguages: v.optional(v.array(v.string())),
   },
@@ -32,6 +33,7 @@ export const create = mutation({
 export const update = mutation({
   args: {
     ...BASE_PROFILE_UPDATE_FIELDS,
+    ...ACCESS_CONTROL_FIELDS,
     associations: v.optional(v.array(associationValidator)),
     customerLanguages: v.optional(v.array(v.string())),
   },
