@@ -1,0 +1,410 @@
+# Expected state per (act, phase) for the happy-path run.
+# Keyed by `act_N_phase_M`. End-of-act assertions keyed by `act_N_end`.
+# Run-level assertion keyed by `run_end`.
+#
+# Each entry describes what the DB / UI should look like AFTER the phase completes.
+# Runtime driver diffs actual against expected; mismatch = pause + route to Observations.md.
+#
+# related_files:
+#   - choreography.md      # phases reference assertion keys
+#   - canonical.json       # expected values resolve to canonical paths
+#   - canonical.schema.json
+#   - happy-path-spec-skeleton.md  # §2 S/M/U framework, §3 LAW
+
+# ============================================================
+# Act I — Onboarding
+# ============================================================
+
+act_1_phase_1:
+  description: Compressor ×2 onboarded
+  db:
+    users:
+      - canonical: stakeholders.compressor_1.users
+        persisted: true
+      - canonical: stakeholders.compressor_2.users
+        persisted: true
+    userRoles:
+      - userEmail: stakeholders.compressor_1.users.email
+        role: compressor
+      - userEmail: stakeholders.compressor_2.users.email
+        role: compressor
+    compressors:
+      - canonical: stakeholders.compressor_1.compressors
+        verified: false
+        autoAccept: true
+      - canonical: stakeholders.compressor_2.compressors
+        verified: false
+        autoAccept: true
+        gasMixes: []   # _initial state — closes in Act II
+  ui:
+    - url: /{compressor_1.slug}/compressor/dashboard
+      visible: true
+    - url: /{compressor_2.slug}/compressor/dashboard
+      visible: true
+
+act_1_phase_2:
+  description: Equipment Manager ×3 onboarded
+  db:
+    equipment:
+      - canonical: stakeholders.equipment_manager_1.equipment
+        isAllowed: ["n7rq5j"]
+      - canonical: stakeholders.equipment_manager_2.equipment
+      - canonical: stakeholders.equipment_manager_3.equipment
+    inventoryUnits:
+      - ownerId: stakeholders.equipment_manager_1.slugRef
+        count: 30
+      - ownerId: stakeholders.equipment_manager_2.slugRef
+        count: 30
+      - ownerId: stakeholders.equipment_manager_3.slugRef
+        count: 29  # _initial: missing mask SKUs
+
+act_1_phase_3:
+  description: Boat ×2 onboarded
+  db:
+    boats:
+      - canonical: stakeholders.boat_1.boats
+        vessels_count: 1
+      - canonical: stakeholders.boat_2.boats
+        vessels_count: 0   # _initial
+
+act_1_phase_4:
+  description: Instructor ×3 onboarded
+  db:
+    instructors:
+      - canonical: stakeholders.instructor_1.instructors
+        teachingLanguages_count: 2
+      - canonical: stakeholders.instructor_2.instructors
+        teachingLanguages_count: 3
+      - canonical: stakeholders.instructor_3.instructors
+        teachingLanguages_count: 0   # _initial
+
+act_1_phase_5:
+  description: DiveMaster onboarded
+  db:
+    diveMasters:
+      - canonical: stakeholders.dive_master.diveMasters
+        teachingLanguages_count: 0   # _initial
+
+act_1_phase_6:
+  description: Pool ×4 onboarded
+  db:
+    venues:
+      - canonical: stakeholders.pool_1.venues
+        maxCapacity: 15
+      - canonical: stakeholders.pool_2.venues
+        isAllowed: ["z8mv4c"]
+        maxCapacity: 6
+      - canonical: stakeholders.pool_3.venues
+        maxCapacity: 0   # _initial
+      - canonical: stakeholders.pool_4.venues
+        maxCapacity: 8
+
+act_1_phase_7:
+  description: DiveCenter ×2 onboarded (Stop 7 canonical)
+  db:
+    diveCenters:
+      - canonical: stakeholders.dive_center_1.diveCenters
+        customerLanguages_count: 4   # ['zh-CN','zh-TW','th','en']
+        associations_count: 1        # PADI PAD-DC-90001
+      - canonical: stakeholders.dive_center_2.diveCenters
+        customerLanguages_count: 4   # ['zh-TW','zh-CN','en','th']
+        associations: []             # _initial — closes in Act II (see act_2_end gap_closures)
+
+act_1_phase_8:
+  description: Agent onboarded (Stop 9 canonical)
+  db:
+    agents:
+      - canonical: stakeholders.agent.agents
+        defaultReferral_resolves_to: stakeholders.dive_center_1.slugRef   # n7rq5j → Hug Ocean
+        customerLanguages_count: 1   # ['en']
+    stakeholderPreferences:
+      # Seed seeds preferredOperatorSlug from agents.defaultReferral (see convex/seed.ts:599-601).
+      # P0-17 flags the denormalization — after lock, edits via Preferences → Resources → Operator
+      # update preferredOperatorSlug but not agents.defaultReferral.
+      - stakeholderId: stakeholders.agent.users  # agent user slug
+        preferredOperatorSlug: stakeholders.dive_center_1.slugRef
+
+act_1_end:
+  description: All canonical users persisted; every resource row carries autoAccept (Instructor exception); every _initial gap still in _initial state.
+  db:
+    users_count: 14
+    resource_rows_count: ">=14"
+  invariants_checked: []  # No inventory writes in Act I
+
+# ============================================================
+# Act II — Booking Convergence (Canonical Spine)
+# ============================================================
+
+act_2_phase_1:
+  description: O+AP booking created in Draft
+  db:
+    bookings:
+      - status: Draft
+        ownerCanonical: stakeholders.agent   # or dive_center_1 if independent mode
+        dayCount: 5   # O+AP = OW (1 confined + 4 OW) + AOW overlay
+  ui:
+    - calendar_cell: shows booking card
+
+act_2_phase_2:
+  description: submitToDraft writes reservations + snapshots atomically
+  known_blocker: P0-1 — currently writes only instructor reservation. Must close before this phase can pass.
+  db:
+    reservations:
+      - resource: Instructor
+        count: ">=1"
+      - resource: Pool
+        count: ">=1"
+      - resource: Equipment
+        count: ">=1"
+      - resource: Compressor
+        count: ">=1"
+    availabilitySnapshots:
+      - written_in_same_mutation: true
+  invariants_checked: [LAW_3]
+
+act_2_phase_3:
+  description: Portal link generated; customers complete medical + waiver + sizing + emergency contact
+  db:
+    portalTokens:
+      - bookingId: <from act_2_phase_1>
+        customerCount: 3
+        generated: true
+    customers:
+      - canonical: stakeholders.customer_1.customer
+        medicalFlag: false            # no-medical-issue path
+        waiverSigned: true
+        sizing: completed
+        emergencyContact: completed   # present on initial submit
+        languages: ["zh-TW"]
+      - canonical: stakeholders.customer_2.customer
+        medicalFlag: true             # triggers Scene 6 hard-block → resolves in act_4_phase_1
+        waiverSigned: true
+        sizing: completed
+        emergencyContact: completed   # present on initial submit
+        languages: ["zh-CN"]
+      - canonical: stakeholders.customer_3.customer
+        medicalFlag: false
+        waiverSigned: true
+        sizing: completed
+        emergencyContact_initial: null           # deliberate-incomplete on Step 1 submit
+        emergencyContact_completed: fills_by_end_of_phase   # closes before auto-advance to Upcoming (Phase II.5 gate)
+        languages: ["en"]
+
+act_2_phase_4:
+  description: Resource confirmations cascade (auto-accept rows fire; Instructor manual). Day-to-instructor mapping per Cluster B.1 (see choreography Phase II.4 notes).
+  db:
+    reservations:
+      - resource: Instructor
+        day: 1
+        instructorCanonical: stakeholders.instructor_1   # Ryan Clarke
+        status: Confirmed
+        auto: true
+      - resource: Instructor
+        day: 2
+        instructorCanonical: stakeholders.instructor_3   # Wei Chen — Cluster B.3 cascade target
+        status: Confirmed
+        auto: false   # manual accept per Cluster F.2
+      - resource: Instructor
+        day: 3
+        instructorCanonical: stakeholders.instructor_2   # Li Ming
+        status: Confirmed
+        auto: true
+      - resource: DiveMaster
+        day: 4
+        diveMasterCanonical: stakeholders.dive_master    # Arisa Kanchanaburi — J.3 DM binding
+        status: Confirmed
+        auto: true
+      - resource: Instructor
+        day: 5
+        instructorCanonical: external_free_text          # Cluster B.2 — "Alex Rivera"
+        status: Confirmed
+        auto: true   # auto-confirmed per V1 Done Scene 2
+      - resource: Compressor
+        status: Confirmed
+        auto: true
+      - resource: Equipment
+        status: Confirmed
+        auto: true
+      - resource: Pool
+        status: Confirmed
+        auto: true
+      - resource: Boat
+        status: Confirmed
+        auto: true
+  invariants_checked: [LAW_1, LAW_2]
+
+act_2_phase_5:
+  description: Booking auto-advances Draft → Upcoming → Active → Completed
+  db:
+    booking_status_history:
+      - [Draft, Upcoming, Active, Completed]
+    availabilitySnapshots:
+      - transitions_captured: 3
+  invariants_checked: [LAW_3]
+
+act_2_phase_6:
+  description: Dive day executes (check-in, activity, debrief)
+  db:
+    bookings:
+      - status: Completed
+  ui:
+    - dive_day_screen: rendered
+
+act_2_end:
+  description: Booking Completed; all reservations Confirmed; every _initial gap closed; no snapshot drift.
+  db:
+    bookings:
+      - status: Completed
+    gap_closures:
+      - canonical: stakeholders.compressor_2.compressors.gasMixes
+        from: gasMixes_initial
+        to: gasMixes_completed
+      - canonical: stakeholders.boat_2.boats.vessels
+        from: vessels_initial
+        to: vessels_completed
+      - canonical: stakeholders.equipment_manager_3.equipment.inventoryOverrides
+        from: inventoryOverrides_initial
+        to: inventoryOverrides_completed
+      - canonical: stakeholders.instructor_3.instructors.teachingLanguages
+        from: teachingLanguages_initial
+        to: teachingLanguages_completed
+      - canonical: stakeholders.dive_master.diveMasters.teachingLanguages
+        from: teachingLanguages_initial
+        to: teachingLanguages_completed
+      - canonical: stakeholders.pool_3.venues.maxCapacity
+        from: maxCapacity_initial
+        to: maxCapacity_completed
+      - canonical: stakeholders.dive_center_2.diveCenters.associations
+        from: associations_initial
+        to: associations_completed
+      - canonical: stakeholders.customer_3.customer.emergencyContact
+        from: emergencyContact_initial   # null
+        to: emergencyContact_completed   # full object (name + phone + relationship)
+  invariants_checked: [LAW_1, LAW_2, LAW_3]
+
+# ============================================================
+# Act III — Variation Matrix
+# ============================================================
+
+act_3_phase_1:
+  description: Language fallback — #2 preferred instructor picked when #1 language mismatches. Day 2 binding per Cluster B.3.
+  db:
+    reservations:
+      - resource: Instructor
+        day: 2
+        customerCanonical: stakeholders.customer_1   # zh-TW
+        preference_order: [ryan-clarke, wei-chen, li-ming]  # Hug's preferredInstructorSlugs post-P0-12
+        ryan_skipped_reason: language_mismatch       # ['en','th'] ∌ 'zh-TW'
+        chosen: stakeholders.instructor_3            # Wei Chen — has zh-TW
+        chosenSlug: wei-chen
+  invariants_checked: [LAW_1]
+
+act_3_phase_2:
+  description: Channel variation — portal delivered via each of email, WhatsApp, SMS
+  db:
+    portalDeliveries:
+      - channel: email
+        sent: true
+      - channel: whatsapp
+        sent: true
+      - channel: sms
+        sent: true
+
+act_3_phase_3:
+  description: Partial portal progress persists; reminder fires; resume picks up where left off
+  db:
+    portalSessions:
+      - partial_state_saved: true
+      - reminder_fired: true
+      - resume_position: matches_saved_state
+
+act_3_phase_4:
+  description: Referral toggle flips ownership mid-booking
+  db:
+    bookings:
+      - ownerType_before: Agent
+      - ownerType_after: DiveCenter
+      - referral_source: stakeholders.agent.agents.defaultReferral
+      - visibility_recomputed: true
+
+# ============================================================
+# Act IV — Branch Probes
+# ============================================================
+
+act_4_phase_1:
+  description: Medical hard block fires, resolves, booking resumes (Scene 6). Fires on customer_2 per committed default.
+  db:
+    customers:
+      - canonical: stakeholders.customer_2.customer
+        medicalFlag: true
+        operator_contacted: true
+        physician_clearance_uploaded: true
+        cleared: true
+
+act_4_phase_2:
+  description: Resource decline cascades down preference list
+  db:
+    reservations:
+      - resource: Instructor
+        declines: 1
+        reassigned_to: "#2"
+  invariants_checked: [LAW_1, LAW_2]
+
+act_4_phase_3:
+  description: Language-fallback-after-mismatch traversal
+  invariants_checked: [LAW_1]
+
+act_4_phase_4:
+  description: Boat min-pax cancellation returns pooled slots
+  invariants_checked: [LAW_2]
+
+act_4_phase_5:
+  description: Customer no-show status transition
+  invariants_checked: [LAW_3]
+
+act_4_phase_6:
+  description: TTL expiry on abandoned Draft
+  invariants_checked: [LAW_3]
+
+act_4_phase_7:
+  description: Date blocking rejects out-of-range selection
+
+# ============================================================
+# Act V — Post-Trip Conversion
+# ============================================================
+
+act_5_phase_1:
+  description: Customer account creation with portal-data prefill. Per I.2 — customer_1 submits full account; customer_2 arrives at prefilled signup but does not submit; customer_3 dismisses prompt.
+  db:
+    users:
+      - canonical_source: stakeholders.customer_1.customer
+        account_created: true
+        prefilled_fields: [firstName, lastName, email, phone, dateOfBirth, emergencyContact]
+      - canonical_source: stakeholders.customer_2.customer
+        account_created: false
+        prefill_rendered: true   # form shows prefilled values; user abandons
+      - canonical_source: stakeholders.customer_3.customer
+        account_created: false
+        prompt_dismissed: true
+
+act_5_phase_2:
+  description: Review prompt fires; customer can rate
+  ui:
+    - review_prompt: visible
+
+act_5_phase_3:
+  description: First-repeat-use — prior booking visible, prefills new booking
+  ui:
+    - prior_booking_visible: true
+    - new_booking_prefill: applies
+
+# ============================================================
+# Run end
+# ============================================================
+
+run_end:
+  description: Run complete. Every LAW exercised, every Scene covered, every gap closed, no drift.
+  invariants_checked: [LAW_1, LAW_2, LAW_3]
+  scenes_covered: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+  gap_closures_complete: true
+  observations_routed: true   # per §15 rule 3

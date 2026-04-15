@@ -1,0 +1,748 @@
+{
+  "$schema": "./canonical.schema.json",
+  "order": [
+    "compressor_1",
+    "compressor_2",
+    "equipment_manager_1",
+    "equipment_manager_2",
+    "equipment_manager_3",
+    "boat_1",
+    "boat_2",
+    "instructor_1",
+    "instructor_2",
+    "instructor_3",
+    "dive_master",
+    "pool_1",
+    "pool_2",
+    "pool_3",
+    "pool_4",
+    "dive_center_1",
+    "dive_center_2",
+    "customer_1",
+    "customer_2",
+    "customer_3",
+    "agent"
+  ],
+  "stakeholders": {
+    "compressor_1": {
+      "role": "Compressor",
+      "users": {
+        "email": "scuba-market+clerk_test@divedispatch.dev",
+        "name": "Prawit Suksawat",
+        "firstName": "Prawit",
+        "lastName": "Suksawat",
+        "businessName": "Scuba Market Thailand",
+        "appLanguage": "th",
+        "phone": "+66-76-330-345",
+        "isSeeded": false,
+        "onboardingComplete": true
+      },
+      "compressors": {
+        "name": "Scuba Market Thailand",
+        "placeName": "Phuket",
+        "country": "Thailand",
+        "lat": 7.8202,
+        "lng": 98.3062,
+        "email": "scuba-market@divedispatch.dev",
+        "phone": "+66-76-330-345",
+        "gasMixes": ["air", "nitrox"],
+        "nitroxO2Percent": 32,
+        "autoAccept": true,
+        "verified": false
+      }
+    },
+    "compressor_2": {
+      "role": "Compressor",
+      "note": "Deliberate-incomplete per rule: starts with empty gasMixes → cannot fulfill tank fills → booking picker excludes. Happy-path scene walks gas-mix-add before this compressor becomes selectable.",
+      "users": {
+        "email": "compressor-chalong+clerk_test@divedispatch.dev",
+        "name": "Sombat Charoensuk",
+        "firstName": "Sombat",
+        "lastName": "Charoensuk",
+        "businessName": "Compressor Shop Chalong Pier",
+        "appLanguage": "th",
+        "phone": "+66-81-234-5014",
+        "isSeeded": false,
+        "onboardingComplete": true
+      },
+      "compressors": {
+        "name": "Compressor Shop Chalong Pier",
+        "placeName": "Phuket",
+        "country": "Thailand",
+        "lat": 7.8386,
+        "lng": 98.3519,
+        "email": "compressor-chalong@divedispatch.dev",
+        "phone": "+66-76-395-001",
+        "gasMixes_initial": [],
+        "gasMixes_completed": ["air", "nitrox"],
+        "nitroxO2Percent": 32,
+        "autoAccept": true,
+        "verified": false
+      }
+    },
+    "equipment_manager_1": {
+      "role": "Equipment",
+      "slugRef": "n7rq5j",
+      "note": "Hug Ocean internal equipment; shared user with DC/Pool/Boat roles. Private to Hug-driven bookings via isAllowed.",
+      "users": {
+        "email": "hug-ocean+clerk_test@divedispatch.dev",
+        "name": "Somchai Prasert",
+        "firstName": "Somchai",
+        "lastName": "Prasert",
+        "businessName": "Hug Ocean",
+        "appLanguage": "zh-CN",
+        "phone": "+66-81-234-5001",
+        "isSeeded": false,
+        "onboardingComplete": true
+      },
+      "equipment": {
+        "name": "Hug Ocean",
+        "placeName": "Phuket",
+        "country": "Thailand",
+        "lat": 7.8804,
+        "lng": 98.3923,
+        "email": "hug-ocean@divedispatch.dev",
+        "phone": "+66-76-381-103",
+        "manufacturersByGearType": {
+          "wetsuit": ["ScubaPro", "Aqua Lung", "Mares"],
+          "bcd": ["ScubaPro", "Aqua Lung", "Mares"],
+          "regulator": ["ScubaPro", "Aqua Lung", "Mares"]
+        },
+        "isAllowed": ["n7rq5j"],
+        "autoAccept": true,
+        "verified": false
+      },
+      "inventoryOverrides": "[30 SKUs @ totalUnits=4 each: wetsuit 3 brands × 4 sizes; bcd 3 brands × 3 sizes; fins 5 sizes (no brand); mask 1 regular (no brand); regulator 3 brands (no size). 4-customer capacity.]"
+    },
+    "equipment_manager_2": {
+      "role": "Equipment",
+      "slugRef": "v8sr2p",
+      "note": "Scuba Revolution Phuket — external equipment rental; open access. Nicknamed 'Ta'.",
+      "users": {
+        "email": "scuba-revolution+clerk_test@divedispatch.dev",
+        "name": "Anong Petcharat",
+        "firstName": "Anong",
+        "lastName": "Petcharat",
+        "nickname": "Ta",
+        "businessName": "Scuba Revolution Phuket",
+        "appLanguage": "th",
+        "phone": "+66-76-330-678",
+        "isSeeded": false,
+        "onboardingComplete": true
+      },
+      "equipment": {
+        "name": "Scuba Revolution Phuket",
+        "placeName": "Phuket",
+        "country": "Thailand",
+        "lat": 7.8207,
+        "lng": 98.3425,
+        "email": "scuba-revolution@divedispatch.dev",
+        "phone": "+66-76-330-678",
+        "manufacturersByGearType": {
+          "wetsuit": ["ScubaPro", "Aqua Lung", "Mares"],
+          "bcd": ["ScubaPro", "Aqua Lung", "Mares"],
+          "regulator": ["ScubaPro", "Aqua Lung", "Mares"]
+        },
+        "isAllowed": [],
+        "autoAccept": true,
+        "verified": false
+      },
+      "inventoryOverrides": "[Same 30-SKU spread as equipment_manager_1 @ 4-customer capacity.]"
+    },
+    "equipment_manager_3": {
+      "role": "Equipment",
+      "slugRef": "q9bz7r",
+      "note": "Nicole Dive Center — external; shared user with DC role (see dive_center_2 canonical). Starts deliberately incomplete: ZERO mask SKUs. Happy-path scene walks mask-inventory add before she becomes selectable in bookings.",
+      "users": {
+        "email": "nicole-dive-center+clerk_test@divedispatch.dev",
+        "name": "Nicole Huang",
+        "firstName": "Nicole",
+        "lastName": "Huang",
+        "businessName": "Nicole Dive Center",
+        "appLanguage": "zh-TW",
+        "phone": "+66-81-234-5004",
+        "isSeeded": false,
+        "onboardingComplete": true
+      },
+      "equipment": {
+        "name": "Nicole Dive Center",
+        "placeName": "Phuket",
+        "country": "Thailand",
+        "lat": 7.8804,
+        "lng": 98.3923,
+        "email": "nicole-dive-center@divedispatch.dev",
+        "phone": "+66-76-386-002",
+        "manufacturersByGearType": {
+          "wetsuit": ["ScubaPro", "Aqua Lung", "Mares"],
+          "bcd": ["ScubaPro", "Aqua Lung", "Mares"],
+          "regulator": ["ScubaPro", "Aqua Lung", "Mares"]
+        },
+        "isAllowed": [],
+        "autoAccept": true,
+        "verified": false
+      },
+      "inventoryOverrides_initial": "[29 SKUs @ totalUnits=4 each: wetsuit/bcd/regulator brand matrix + fins 5 sizes. NO mask SKUs — intentional gap.]",
+      "inventoryOverrides_completed": "[Add 1 mask SKU @ totalUnits=4 to reach parity with equipment_manager_1 and equipment_manager_2.]"
+    },
+    "boat_1": {
+      "role": "Boat",
+      "slugRef": "n7rq5j",
+      "boats": {
+        "name": "M.V. Hug Ocean",
+        "placeName": "Phuket",
+        "country": "Thailand",
+        "lat": 7.8804,
+        "lng": 98.3923,
+        "email": "hug-ocean@divedispatch.dev",
+        "phone": "+66-76-381-101",
+        "vessels": [
+          {
+            "name": "M.V. Hug Ocean",
+            "maxPax": 50,
+            "type": "day_boat",
+            "routes": [{ "diveSite": "Racha Noi / Racha Yai", "daysOfWeek": [1, 2, 3, 4, 5, 6, 0] }]
+          }
+        ],
+        "hasCompressor": true,
+        "isAllowed": [],
+        "notAllowed": [],
+        "autoAccept": true,
+        "verified": false
+      }
+    },
+    "boat_2": {
+      "role": "Boat",
+      "slugRef": "p5ky3w",
+      "note": "Deliberate-incomplete per rule: starts with zero vessels (empty fleet). Happy-path scene walks vessel-add before booking-picker surfaces PHUKET_DC as a selectable boat.",
+      "users": {
+        "email": "phuket-dive-center+clerk_test@divedispatch.dev",
+        "name": "Kittisak Charoen",
+        "firstName": "Kittisak",
+        "lastName": "Charoen",
+        "businessName": "Phuket Dive Center",
+        "appLanguage": "th",
+        "phone": "+66-81-234-5003",
+        "isSeeded": false,
+        "onboardingComplete": true
+      },
+      "boats": {
+        "name": "Mandarin Queen",
+        "placeName": "Phuket",
+        "country": "Thailand",
+        "lat": 7.8804,
+        "lng": 98.3923,
+        "email": "phuket-dive-center@divedispatch.dev",
+        "phone": "+66-76-385-002",
+        "vessels_initial": [],
+        "vessels_completed": [
+          {
+            "name": "M.V. Mandarin Queen 5",
+            "maxPax": 70,
+            "type": "day_boat",
+            "routes": [
+              { "diveSite": "Racha Noi / Racha Yai", "daysOfWeek": [1, 4, 6] },
+              { "diveSite": "Shark Point / King Cruiser", "daysOfWeek": [2] },
+              { "diveSite": "Phi Phi", "daysOfWeek": [3, 5, 0] }
+            ]
+          },
+          {
+            "name": "M.V. Mandarin Queen 7",
+            "maxPax": 90,
+            "type": "day_boat",
+            "routes": [
+              { "diveSite": "Racha Noi / Racha Yai", "daysOfWeek": [2, 5, 0] },
+              { "diveSite": "Shark Point / King Cruiser", "daysOfWeek": [3] },
+              { "diveSite": "Phi Phi", "daysOfWeek": [1, 4, 6] }
+            ]
+          }
+        ],
+        "hasCompressor": true,
+        "isAllowed": [],
+        "notAllowed": [],
+        "autoAccept": true,
+        "verified": false
+      }
+    },
+    "instructor_1": {
+      "role": "Instructor",
+      "slugRef": "ryan-clarke",
+      "label": "English + Thai",
+      "users": {
+        "email": "ryan-clarke+clerk_test@divedispatch.dev",
+        "name": "Ryan Clarke",
+        "firstName": "Ryan",
+        "lastName": "Clarke",
+        "businessName": "Ryan Clarke",
+        "appLanguage": "en",
+        "phone": "+66-81-600-1000",
+        "isSeeded": false,
+        "onboardingComplete": true
+      },
+      "instructors": {
+        "name": "Ryan Clarke",
+        "placeName": "Phuket",
+        "country": "Thailand",
+        "lat": 7.8804,
+        "lng": 98.3923,
+        "email": "ryan-clarke+clerk_test@divedispatch.dev",
+        "phone": "+66-81-600-1000",
+        "credential": [
+          {
+            "agency": "PADI",
+            "level": "OWSI",
+            "agencyID": "PADI-300000",
+            "specialtyRatings": ["Deep", "Navigation"]
+          }
+        ],
+        "teachingLanguages": ["en", "th"],
+        "isAllowed": [],
+        "notAllowed": [],
+        "autoAccept": true,
+        "verified": false
+      }
+    },
+    "instructor_2": {
+      "role": "Instructor",
+      "slugRef": "li-ming",
+      "label": "English + Simplified Chinese + Korean",
+      "users": {
+        "email": "li-ming+clerk_test@divedispatch.dev",
+        "name": "Li Ming",
+        "firstName": "Li",
+        "lastName": "Ming",
+        "businessName": "Li Ming",
+        "appLanguage": "en",
+        "phone": "+66-81-603-1003",
+        "isSeeded": false,
+        "onboardingComplete": true
+      },
+      "instructors": {
+        "name": "Li Ming",
+        "placeName": "Phuket",
+        "country": "Thailand",
+        "lat": 7.8804,
+        "lng": 98.3923,
+        "email": "li-ming+clerk_test@divedispatch.dev",
+        "phone": "+66-81-603-1003",
+        "credential": [
+          {
+            "agency": "SSI",
+            "level": "OWI",
+            "agencyID": "SSI-500030",
+            "specialtyRatings": ["Deep"]
+          }
+        ],
+        "teachingLanguages": ["zh-CN", "en", "ko"],
+        "isAllowed": [],
+        "notAllowed": [],
+        "autoAccept": true,
+        "verified": false
+      }
+    },
+    "instructor_3": {
+      "role": "Instructor",
+      "slugRef": "wei-chen",
+      "label": "Simplified + Traditional Chinese + Thai + English (seed needs +en — P0-12)",
+      "note": "Deliberate-incomplete per rule: starts with teachingLanguages_initial: [] — unbookable until languages added. Walkthrough exercises instructor-picker language filter + profile-complete gate.",
+      "users": {
+        "email": "wei-chen+clerk_test@divedispatch.dev",
+        "name": "Wei Chen",
+        "firstName": "Wei",
+        "lastName": "Chen",
+        "businessName": "Wei Chen",
+        "appLanguage": "en",
+        "phone": "+66-81-602-1002",
+        "isSeeded": false,
+        "onboardingComplete": true
+      },
+      "instructors": {
+        "name": "Wei Chen",
+        "placeName": "Phuket",
+        "country": "Thailand",
+        "lat": 7.8804,
+        "lng": 98.3923,
+        "email": "wei-chen+clerk_test@divedispatch.dev",
+        "phone": "+66-81-602-1002",
+        "credential": [
+          {
+            "agency": "PADI",
+            "level": "MSDT",
+            "agencyID": "PADI-300020",
+            "specialtyRatings": ["Deep", "Enriched Air", "Wreck", "Navigation", "Night"]
+          }
+        ],
+        "teachingLanguages_initial": [],
+        "teachingLanguages_completed": ["zh-CN", "zh-TW", "th", "en"],
+        "isAllowed": [],
+        "notAllowed": [],
+        "autoAccept": false,
+        "verified": false
+      }
+    },
+    "dive_master": {
+      "role": "DiveMaster",
+      "slugRef": "arisa-kanchanaburi",
+      "note": "Deliberate-incomplete per rule: starts with teachingLanguages_initial: [] — unbookable until languages added. Parallel to instructor_3 gap pattern.",
+      "users": {
+        "email": "arisa-kanchanaburi+clerk_test@divedispatch.dev",
+        "name": "Arisa Kanchanaburi",
+        "firstName": "Arisa",
+        "lastName": "Kanchanaburi",
+        "businessName": "Arisa Kanchanaburi",
+        "appLanguage": "en",
+        "phone": "+66-81-615-1015",
+        "isSeeded": false,
+        "onboardingComplete": true
+      },
+      "diveMasters": {
+        "name": "Arisa Kanchanaburi",
+        "placeName": "Phuket",
+        "country": "Thailand",
+        "lat": 7.8804,
+        "lng": 98.3923,
+        "email": "arisa-kanchanaburi+clerk_test@divedispatch.dev",
+        "phone": "+66-81-615-1015",
+        "credential": [
+          {
+            "agency": "PADI",
+            "level": "Divemaster",
+            "agencyID": "PADI-300150"
+          }
+        ],
+        "teachingLanguages_initial": [],
+        "teachingLanguages_completed": ["th", "en"],
+        "isAllowed": [],
+        "notAllowed": [],
+        "autoAccept": true,
+        "verified": false
+      }
+    },
+    "pool_1": {
+      "role": "Pool",
+      "slugRef": "n7rq5j",
+      "venues": {
+        "name": "Hug Ocean",
+        "placeName": "Phuket",
+        "country": "Thailand",
+        "lat": 7.8804,
+        "lng": 98.3923,
+        "email": "hug-ocean@divedispatch.dev",
+        "phone": "+66-76-381-102",
+        "venueCategory": "pool",
+        "hasCompressor": false,
+        "maxDepth": 3,
+        "maxCapacity": 15,
+        "confinedCapable": true,
+        "isAllowed": [],
+        "notAllowed": [],
+        "autoAccept": true,
+        "verified": false
+      }
+    },
+    "pool_2": {
+      "role": "Pool",
+      "slugRef": "z8mv4c",
+      "note": "Neptune's pool — private to Neptune-driven bookings via isAllowed. Shared user with Neptune DC + Equipment (first appearance of Neptune; Stops 7/9 reference via slugRef).",
+      "users": {
+        "email": "neptune+clerk_test@divedispatch.dev",
+        "name": "Wei Lin",
+        "firstName": "Wei",
+        "lastName": "Lin",
+        "businessName": "Neptune",
+        "appLanguage": "zh-CN",
+        "phone": "+66-81-234-5002",
+        "isSeeded": false,
+        "onboardingComplete": true
+      },
+      "venues": {
+        "name": "Neptune",
+        "placeName": "Phuket",
+        "country": "Thailand",
+        "lat": 7.8804,
+        "lng": 98.3923,
+        "email": "neptune@divedispatch.dev",
+        "phone": "+66-76-383-002",
+        "venueCategory": "pool",
+        "hasCompressor": false,
+        "maxDepth": 2.5,
+        "maxCapacity": 6,
+        "confinedCapable": true,
+        "isAllowed": ["z8mv4c"],
+        "notAllowed": [],
+        "autoAccept": true,
+        "verified": false
+      }
+    },
+    "pool_3": {
+      "role": "Pool",
+      "slugRef": "b3wt9f",
+      "note": "Deliberate-incomplete per rule: starts with maxCapacity_initial: 0 — zero bookable seats → picker excludes. Walkthrough exercises capacity-add to 25.",
+      "users": {
+        "email": "water-pro+clerk_test@divedispatch.dev",
+        "name": "Niran Jantarakul",
+        "firstName": "Niran",
+        "lastName": "Jantarakul",
+        "businessName": "Water Pro",
+        "appLanguage": "th",
+        "phone": "+66-76-394-001",
+        "isSeeded": false,
+        "onboardingComplete": true
+      },
+      "venues": {
+        "name": "Water Pro",
+        "placeName": "Phuket",
+        "country": "Thailand",
+        "lat": 7.8804,
+        "lng": 98.3923,
+        "email": "water-pro@divedispatch.dev",
+        "phone": "+66-76-394-001",
+        "venueCategory": "pool",
+        "hasCompressor": false,
+        "maxDepth": 2.5,
+        "maxCapacity_initial": 0,
+        "maxCapacity_completed": 25,
+        "confinedCapable": true,
+        "isAllowed": [],
+        "notAllowed": [],
+        "autoAccept": true,
+        "verified": false
+      }
+    },
+    "pool_4": {
+      "role": "Pool",
+      "slugRef": "g2hn6x",
+      "users": {
+        "email": "shark-bites+clerk_test@divedispatch.dev",
+        "name": "Kittisak Wongsawat",
+        "firstName": "Kittisak",
+        "lastName": "Wongsawat",
+        "businessName": "Shark Bites",
+        "appLanguage": "th",
+        "phone": "+66-76-394-002",
+        "isSeeded": false,
+        "onboardingComplete": true
+      },
+      "venues": {
+        "name": "Shark Bites",
+        "placeName": "Phuket",
+        "country": "Thailand",
+        "lat": 7.8804,
+        "lng": 98.3923,
+        "email": "shark-bites@divedispatch.dev",
+        "phone": "+66-76-394-002",
+        "venueCategory": "pool",
+        "hasCompressor": false,
+        "maxDepth": 2.5,
+        "maxCapacity": 8,
+        "confinedCapable": true,
+        "isAllowed": [],
+        "notAllowed": [],
+        "autoAccept": true,
+        "verified": false
+      }
+    },
+    "dive_center_1": {
+      "role": "DiveCenter",
+      "slugRef": "n7rq5j",
+      "note": "Hug Ocean — primary DC, multi-role with boat_1 / pool_1 / equipment_manager_1. Shared user Somchai Prasert (n7rq5j).",
+      "diveCenters": {
+        "name": "Hug Ocean",
+        "placeName": "Patong Beach, Phuket",
+        "country": "Thailand",
+        "lat": 7.896,
+        "lng": 98.298,
+        "email": "hug-ocean@divedispatch.dev",
+        "phone": "+66-76-381-100",
+        "associations": [
+          {
+            "agency": "PADI",
+            "number": "PAD-DC-90001",
+            "owDays": 4,
+            "aowDays": 2,
+            "oaDays": 5,
+            "selectedSpecialties": ["Deep", "Night", "Navigation", "Peak", "Wreck"]
+          }
+        ],
+        "customerLanguages": ["zh-CN", "zh-TW", "th", "en"],
+        "isAllowed": [],
+        "notAllowed": [],
+        "verified": true
+      }
+    },
+    "dive_center_2": {
+      "role": "DiveCenter",
+      "slugRef": "q9bz7r",
+      "note": "Nicole Dive Center — secondary DC, multi-role with equipment_manager_3 (mask-empty). Shared user Nicole Huang (q9bz7r). Carries deliberate-incomplete gap: associations_initial: [] (no agency affiliation → courses can't be offered until completed).",
+      "diveCenters": {
+        "name": "Nicole Dive Center",
+        "placeName": "Phuket",
+        "country": "Thailand",
+        "lat": 7.8804,
+        "lng": 98.3923,
+        "email": "nicole-dive-center@divedispatch.dev",
+        "phone": "+66-76-386-001",
+        "associations_initial": [],
+        "associations_completed": [
+          {
+            "agency": "PADI",
+            "number": "PAD-DC-90002",
+            "owDays": 4,
+            "aowDays": 2,
+            "oaDays": 5,
+            "selectedSpecialties": ["Deep", "Navigation"]
+          }
+        ],
+        "customerLanguages": ["zh-TW", "zh-CN", "en", "th"],
+        "isAllowed": [],
+        "notAllowed": [],
+        "verified": true
+      }
+    },
+    "customer_1": {
+      "role": "Customer",
+      "note": "Primary customer — zh-TW speaker. Language exercises Cluster B.3 language-fallback cascade: Hug's preferred order starts Ryan (no zh-TW), cascade falls to Wei Chen (has zh-TW). Reservation.instructorId resolves to wei-chen on Day 2. No medical flag.",
+      "customer": {
+        "firstName": "Mei-Ling",
+        "lastName": "Chen",
+        "email": "mei-ling.chen@example.com",
+        "phone": "+886-912-345-001",
+        "dateOfBirth": "1994-03-15",
+        "certLevel": "none",
+        "medicalFlag": false,
+        "emergencyContact": {
+          "name": "David Chen",
+          "phone": "+886-912-345-999",
+          "relationship": "spouse"
+        },
+        "languages": ["zh-TW"],
+        "sizing": {
+          "wetsuit": "M",
+          "bcd": "S",
+          "regulator": "Standard",
+          "fins": "38",
+          "mask": "Low-Volume",
+          "height": 165,
+          "weight": 55
+        }
+      }
+    },
+    "customer_2": {
+      "role": "Customer",
+      "note": "Medical-block customer — zh-CN speaker. medicalFlag: true triggers Scene 6 hard-block in Act IV Phase 1 (operator contacts → physician clearance → resume). Full emergencyContact on initial submit.",
+      "customer": {
+        "firstName": "Jun",
+        "lastName": "Wang",
+        "email": "jun.wang@example.com",
+        "phone": "+86-138-0013-8001",
+        "dateOfBirth": "1988-07-22",
+        "certLevel": "none",
+        "medicalFlag": true,
+        "emergencyContact": {
+          "name": "Li Wang",
+          "phone": "+86-138-0013-8999",
+          "relationship": "spouse"
+        },
+        "languages": ["zh-CN"],
+        "sizing": {
+          "wetsuit": "L",
+          "bcd": "M",
+          "regulator": "Standard",
+          "fins": "43",
+          "mask": "Standard",
+          "height": 178,
+          "weight": 80
+        }
+      }
+    },
+    "customer_3": {
+      "role": "Customer",
+      "note": "Deliberate-incomplete customer — en speaker. Carries emergencyContact_initial: null gap (submits portal Step 1 without emergency contact). Portal flow re-prompts in Act II Phase 3; gap closes before auto-advance to Upcoming.",
+      "customer": {
+        "firstName": "James",
+        "lastName": "Thompson",
+        "email": "james.thompson@example.com",
+        "phone": "+1-415-555-0103",
+        "dateOfBirth": "2001-11-08",
+        "certLevel": "none",
+        "medicalFlag": false,
+        "emergencyContact_initial": null,
+        "emergencyContact_completed": {
+          "name": "Sarah Thompson",
+          "phone": "+1-415-555-0199",
+          "relationship": "mother"
+        },
+        "languages": ["en"],
+        "sizing": {
+          "wetsuit": "L",
+          "bcd": "L",
+          "regulator": "Standard",
+          "fins": "45",
+          "mask": "Standard",
+          "height": 183,
+          "weight": 77
+        }
+      }
+    },
+    "agent": {
+      "role": "Agent",
+      "note": "Fresh-signup agent onboarded in Act I Phase 8. defaultReferral points at dive_center_1 (Hug Ocean, n7rq5j) — exercises Act III.4 referral-toggle flow. See P0-17: agents.defaultReferral vs stakeholderPreferences.preferredOperatorSlug semantic alignment.",
+      "users": {
+        "email": "agent.walker@phukettravel.example",
+        "name": "Alex Walker",
+        "firstName": "Alex",
+        "lastName": "Walker",
+        "businessName": "Alex Walker",
+        "appLanguage": "en",
+        "customerLanguages": ["en"],
+        "phone": "+66 81 900 1234",
+        "isSeeded": false,
+        "onboardingComplete": true
+      },
+      "agents": {
+        "name": "Alex Walker",
+        "placeName": "Phuket",
+        "country": "Thailand",
+        "lat": 7.88,
+        "lng": 98.39,
+        "email": "agent.walker@phukettravel.example",
+        "phone": "+66 81 900 1234",
+        "associations": [{ "agency": "PADI", "number": "PAD-AG-70001" }],
+        "customerLanguages": ["en"],
+        "defaultReferral": "n7rq5j",
+        "isAllowed": [],
+        "notAllowed": [],
+        "verified": true
+      }
+    }
+  },
+  "admin_venues": {
+    "kata_beach": {
+      "category": "AdminVenue",
+      "note": "Admin-added venue — no stakeholder user signs in. Pre-seeded via UNOWNED_DIVE_SITES in convex/seedData.ts and convex/seed.ts. venues.userId is omitted (schema v.optional allows); inventoryUnits uses sentinel ownerId '__unowned__' / ownerType 'DiveSite'. DiveSite stakeholder role is v0.1.1 defer — this row is a booking-form location reference only, not an operator-run resource.",
+      "venues": {
+        "name": "Kata Beach",
+        "placeName": "Phuket",
+        "country": "Thailand",
+        "lat": 7.8206,
+        "lng": 98.3003,
+        "venueCategory": "diveSite",
+        "diveSiteTypes": ["shore"],
+        "confinedCapable": true,
+        "hasCompressor": false,
+        "maxCapacity": 50,
+        "isAllowed": [],
+        "notAllowed": [],
+        "verified": true
+      },
+      "inventoryUnits": {
+        "resourceType": "DiveSite",
+        "resourceId": "kata-beach",
+        "displayName": "Kata Beach",
+        "capacityModel": "Pooled",
+        "totalUnits": 50,
+        "ownerId": "__unowned__",
+        "ownerType": "DiveSite"
+      }
+    }
+  }
+}

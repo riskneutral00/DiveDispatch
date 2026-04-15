@@ -51,13 +51,10 @@ Each open question below has five fields:
 
 **Phase arc:** Audit (current) → P0 fix → Happy-path run → Ship.
 
-**This skeleton is part of a 5-artifact set.** See [`INDEX.md`](./INDEX.md) for the routing table and insertion protocol. Joint ledger: `skeleton.md` + `canonical.json` + `canonical.schema.json` + `choreography.md` + `assertions.yaml`.
-
 - **Resuming an audit session?** Jump to §14 Resume Point.
-- **Looking for a specific stakeholder's canonical value?** [`canonical.json`](./canonical.json) — direct lookup.
-- **Checking what fields a role should have?** [`canonical.schema.json`](./canonical.schema.json) — product-intent shapes.
-- **Running the happy-path (play-by-play)?** [`choreography.md`](./choreography.md). Execution rules: §15. Assertions: [`assertions.yaml`](./assertions.yaml).
+- **Looking for canonical stakeholder data?** Jump directly to §7.12 Field Ledgers (inside §7, marked ACTIVE). LIVE ledger — edit in place.
 - **Filing a blocker?** §9 Prerequisites.
+- **Running the happy-path?** §15 Execution Conventions + `Vaults/DiveDispatch/HappyPath/Stops.md` (executable spec).
 - **Understanding scope/authorities?** §1–§6.
 - **Reconciling conflicting advice?** §10 (global open Qs) · §11 (Claude's recommendations) · §12 (tensions) · §13 (anti-patterns) · §14 lessons (audit-process). Each section's preamble declares what belongs there.
 - **Meta (cadence, ownership, reset, retirement)?** §16 Meta.
@@ -65,23 +62,19 @@ Each open question below has five fields:
 ### Data flow
 
 ```
-Audit (§14 skeleton)
-    ▼
-canonical.schema.json (product intent)  ← handwritten, the yardstick
-    ▼ validates
-canonical.json (every value)
-    │
-    ├─► Fixture.md (Vaults/DiveDispatch/HappyPath/) — run inputs
-    └─► assertions.yaml — expected post-phase state
+Audit (§14) ─────────────► Canonical ledger (§7.12, ACTIVE)
+                                       │
+                                       ├─► Fixture.md (run inputs, byte-identical)
+                                       └─► Expected state assertions (post-run)
 
-choreography.md (Acts I–V play-by-play, references canonical keys)
+Stops.md (walkthrough spec, executable)
     ▼
-/happypath runner ──── pauses per §15 Execution Conventions
+/happypath runner ──────► (pauses at every UI page — §15 Execution Conventions)
     ▼
 Observations.md (rolling log) ──► §9 Prerequisites / §14 fallout ──► gates next run
 ```
 
-Canonical values never inline into `choreography.md` — phases reference canonical keys (e.g. `stakeholders.compressor_1.users.firstName`) so the runtime resolves once. Drift between canonical and intent is caught by `ajv validate` before the run fires.
+§7.12 produces two artifacts: **Fixture.md** (what gets typed into the UI) and **expected-state assertions** (what the DB should look like after each Act). Stops.md is the orthogonal executable spec for the run itself. Observations from each run feed §9 blockers or §14 fallout, which gate the next run (pre-run blocker gate, §14).
 
 ---
 
@@ -299,27 +292,719 @@ Every entry in the ledger conforms to one of four shapes. Required fields below;
 | Agent | TBD (Stop 9) | TBD — likely `defaultReferral` | TBD |
 | AdminVenue (Kata Beach) | — | — exempt (admin-added, no onboarding, no stakeholder gap rule) | — |
 
-### Canonical data: see `canonical.json` + `canonical.schema.json`
-
-The full JSON ledger has moved to [`ultraplan/canonical.json`](./canonical.json), validated against [`ultraplan/canonical.schema.json`](./canonical.schema.json). Edit canonical values there; run `npx ajv-cli validate -s ultraplan/canonical.schema.json -d ultraplan/canonical.json` after every change.
-
-This skeleton section (§7.12) retains only the governance: entry schema (§7.12.0 above), deliberate-incomplete table (above), multi-role user rule, admin-add convention (below). All stakeholder values live in `canonical.json`.
+```json
+{
+  "order": [
+    "compressor_1",
+    "compressor_2",
+    "equipment_manager_1",
+    "equipment_manager_2",
+    "equipment_manager_3",
+    "boat_1",
+    "boat_2",
+    "instructor_1",
+    "instructor_2",
+    "instructor_3",
+    "dive_master",
+    "pool_1",
+    "pool_2",
+    "pool_3",
+    "pool_4",
+    "dive_center",
+    "agent"
+  ],
+  "stakeholders": {
+    "compressor_1": {
+      "role": "Compressor",
+      "users": {
+        "email": "scuba-market+clerk_test@divedispatch.dev",
+        "name": "Prawit Suksawat",
+        "firstName": "Prawit",
+        "lastName": "Suksawat",
+        "businessName": "Scuba Market Thailand",
+        "appLanguage": "th",
+        "phone": "+66-76-330-345",
+        "isSeeded": false,
+        "onboardingComplete": true
+      },
+      "compressors": {
+        "name": "Scuba Market Thailand",
+        "placeName": "Phuket",
+        "country": "Thailand",
+        "lat": 7.8202,
+        "lng": 98.3062,
+        "email": "scuba-market@divedispatch.dev",
+        "phone": "+66-76-330-345",
+        "gasMixes": ["air", "nitrox"],
+        "nitroxO2Percent": 32,
+        "autoAccept": true,
+        "verified": false
+      }
+    },
+    "compressor_2": {
+      "role": "Compressor",
+      "note": "Deliberate-incomplete per rule: starts with empty gasMixes → cannot fulfill tank fills → booking picker excludes. Happy-path scene walks gas-mix-add before this compressor becomes selectable.",
+      "users": {
+        "email": "compressor-chalong+clerk_test@divedispatch.dev",
+        "name": "Sombat Charoensuk",
+        "firstName": "Sombat",
+        "lastName": "Charoensuk",
+        "businessName": "Compressor Shop Chalong Pier",
+        "appLanguage": "th",
+        "phone": "+66-81-234-5014",
+        "isSeeded": false,
+        "onboardingComplete": true
+      },
+      "compressors": {
+        "name": "Compressor Shop Chalong Pier",
+        "placeName": "Phuket",
+        "country": "Thailand",
+        "lat": 7.8386,
+        "lng": 98.3519,
+        "email": "compressor-chalong@divedispatch.dev",
+        "phone": "+66-76-395-001",
+        "gasMixes_initial": [],
+        "gasMixes_completed": ["air", "nitrox"],
+        "nitroxO2Percent": 32,
+        "autoAccept": true,
+        "verified": false
+      }
+    },
+    "equipment_manager_1": {
+      "role": "Equipment",
+      "slugRef": "n7rq5j",
+      "note": "Hug Ocean internal equipment; shared user with DC/Pool/Boat roles. Private to Hug-driven bookings via isAllowed.",
+      "users": {
+        "email": "hug-ocean+clerk_test@divedispatch.dev",
+        "name": "Somchai Prasert",
+        "firstName": "Somchai",
+        "lastName": "Prasert",
+        "businessName": "Hug Ocean",
+        "appLanguage": "zh-CN",
+        "phone": "+66-81-234-5001",
+        "isSeeded": false,
+        "onboardingComplete": true
+      },
+      "equipment": {
+        "name": "Hug Ocean",
+        "placeName": "Phuket",
+        "country": "Thailand",
+        "lat": 7.8804,
+        "lng": 98.3923,
+        "email": "hug-ocean@divedispatch.dev",
+        "phone": "+66-76-381-103",
+        "manufacturersByGearType": {
+          "wetsuit": ["ScubaPro", "Aqua Lung", "Mares"],
+          "bcd": ["ScubaPro", "Aqua Lung", "Mares"],
+          "regulator": ["ScubaPro", "Aqua Lung", "Mares"]
+        },
+        "isAllowed": ["n7rq5j"],
+        "autoAccept": true,
+        "verified": false
+      },
+      "inventoryOverrides": "[30 SKUs @ totalUnits=4 each: wetsuit 3 brands × 4 sizes; bcd 3 brands × 3 sizes; fins 5 sizes (no brand); mask 1 regular (no brand); regulator 3 brands (no size). 4-customer capacity.]"
+    },
+    "equipment_manager_2": {
+      "role": "Equipment",
+      "slugRef": "v8sr2p",
+      "note": "Scuba Revolution Phuket — external equipment rental; open access. Nicknamed 'Ta'.",
+      "users": {
+        "email": "scuba-revolution+clerk_test@divedispatch.dev",
+        "name": "Anong Petcharat",
+        "firstName": "Anong",
+        "lastName": "Petcharat",
+        "nickname": "Ta",
+        "businessName": "Scuba Revolution Phuket",
+        "appLanguage": "th",
+        "phone": "+66-76-330-678",
+        "isSeeded": false,
+        "onboardingComplete": true
+      },
+      "equipment": {
+        "name": "Scuba Revolution Phuket",
+        "placeName": "Phuket",
+        "country": "Thailand",
+        "lat": 7.8207,
+        "lng": 98.3425,
+        "email": "scuba-revolution@divedispatch.dev",
+        "phone": "+66-76-330-678",
+        "manufacturersByGearType": {
+          "wetsuit": ["ScubaPro", "Aqua Lung", "Mares"],
+          "bcd": ["ScubaPro", "Aqua Lung", "Mares"],
+          "regulator": ["ScubaPro", "Aqua Lung", "Mares"]
+        },
+        "isAllowed": [],
+        "autoAccept": true,
+        "verified": false
+      },
+      "inventoryOverrides": "[Same 30-SKU spread as equipment_manager_1 @ 4-customer capacity.]"
+    },
+    "equipment_manager_3": {
+      "role": "Equipment",
+      "slugRef": "q9bz7r",
+      "note": "Nicole Dive Center — external; shared user with DC role (see dive_center canonical for Stop 7). Starts deliberately incomplete: ZERO mask SKUs. Happy-path scene walks mask-inventory add before she becomes selectable in bookings.",
+      "users": {
+        "email": "nicole-dive-center+clerk_test@divedispatch.dev",
+        "name": "Nicole Huang",
+        "firstName": "Nicole",
+        "lastName": "Huang",
+        "businessName": "Nicole Dive Center",
+        "appLanguage": "zh-TW",
+        "phone": "+66-81-234-5004",
+        "isSeeded": false,
+        "onboardingComplete": true
+      },
+      "equipment": {
+        "name": "Nicole Dive Center",
+        "placeName": "Phuket",
+        "country": "Thailand",
+        "lat": 7.8804,
+        "lng": 98.3923,
+        "email": "nicole-dive-center@divedispatch.dev",
+        "phone": "+66-76-386-002",
+        "manufacturersByGearType": {
+          "wetsuit": ["ScubaPro", "Aqua Lung", "Mares"],
+          "bcd": ["ScubaPro", "Aqua Lung", "Mares"],
+          "regulator": ["ScubaPro", "Aqua Lung", "Mares"]
+        },
+        "isAllowed": [],
+        "autoAccept": true,
+        "verified": false
+      },
+      "inventoryOverrides_initial": "[29 SKUs @ totalUnits=4 each: wetsuit/bcd/regulator brand matrix + fins 5 sizes. NO mask SKUs — intentional gap.]",
+      "inventoryOverrides_completed": "[Add 1 mask SKU @ totalUnits=4 to reach parity with equipment_manager_1 and equipment_manager_2.]"
+    },
+    "boat_1": {
+      "role": "Boat",
+      "slugRef": "n7rq5j",
+      "boats": {
+        "name": "M.V. Hug Ocean",
+        "placeName": "Phuket",
+        "country": "Thailand",
+        "lat": 7.8804,
+        "lng": 98.3923,
+        "email": "hug-ocean@divedispatch.dev",
+        "phone": "+66-76-381-101",
+        "vessels": [
+          {
+            "name": "M.V. Hug Ocean",
+            "maxPax": 50,
+            "type": "day_boat",
+            "routes": [{ "diveSite": "Racha Noi / Racha Yai", "daysOfWeek": [1, 2, 3, 4, 5, 6, 0] }]
+          }
+        ],
+        "hasCompressor": true,
+        "isAllowed": [],
+        "notAllowed": [],
+        "autoAccept": true,
+        "verified": false
+      }
+    },
+    "boat_2": {
+      "role": "Boat",
+      "slugRef": "p5ky3w",
+      "note": "Deliberate-incomplete per rule: starts with zero vessels (empty fleet). Happy-path scene walks vessel-add before booking-picker surfaces PHUKET_DC as a selectable boat.",
+      "users": {
+        "email": "phuket-dive-center+clerk_test@divedispatch.dev",
+        "name": "Kittisak Charoen",
+        "firstName": "Kittisak",
+        "lastName": "Charoen",
+        "businessName": "Phuket Dive Center",
+        "appLanguage": "th",
+        "phone": "+66-81-234-5003",
+        "isSeeded": false,
+        "onboardingComplete": true
+      },
+      "boats": {
+        "name": "Mandarin Queen",
+        "placeName": "Phuket",
+        "country": "Thailand",
+        "lat": 7.8804,
+        "lng": 98.3923,
+        "email": "phuket-dive-center@divedispatch.dev",
+        "phone": "+66-76-385-002",
+        "vessels_initial": [],
+        "vessels_completed": [
+          {
+            "name": "M.V. Mandarin Queen 5",
+            "maxPax": 70,
+            "type": "day_boat",
+            "routes": [
+              { "diveSite": "Racha Noi / Racha Yai", "daysOfWeek": [1, 4, 6] },
+              { "diveSite": "Shark Point / King Cruiser", "daysOfWeek": [2] },
+              { "diveSite": "Phi Phi", "daysOfWeek": [3, 5, 0] }
+            ]
+          },
+          {
+            "name": "M.V. Mandarin Queen 7",
+            "maxPax": 90,
+            "type": "day_boat",
+            "routes": [
+              { "diveSite": "Racha Noi / Racha Yai", "daysOfWeek": [2, 5, 0] },
+              { "diveSite": "Shark Point / King Cruiser", "daysOfWeek": [3] },
+              { "diveSite": "Phi Phi", "daysOfWeek": [1, 4, 6] }
+            ]
+          }
+        ],
+        "hasCompressor": true,
+        "isAllowed": [],
+        "notAllowed": [],
+        "autoAccept": true,
+        "verified": false
+      }
+    },
+    "instructor_1": {
+      "role": "Instructor",
+      "slugRef": "ryan-clarke",
+      "label": "English + Thai",
+      "users": {
+        "email": "ryan-clarke+clerk_test@divedispatch.dev",
+        "name": "Ryan Clarke",
+        "firstName": "Ryan",
+        "lastName": "Clarke",
+        "businessName": "Ryan Clarke",
+        "appLanguage": "en",
+        "phone": "+66-81-600-1000",
+        "isSeeded": false,
+        "onboardingComplete": true
+      },
+      "instructors": {
+        "name": "Ryan Clarke",
+        "placeName": "Phuket",
+        "country": "Thailand",
+        "lat": 7.8804,
+        "lng": 98.3923,
+        "email": "ryan-clarke+clerk_test@divedispatch.dev",
+        "phone": "+66-81-600-1000",
+        "credential": [
+          {
+            "agency": "PADI",
+            "level": "OWSI",
+            "agencyID": "PADI-300000",
+            "specialtyRatings": ["Deep", "Navigation"]
+          }
+        ],
+        "teachingLanguages": ["en", "th"],
+        "isAllowed": [],
+        "notAllowed": [],
+        "verified": false
+      }
+    },
+    "instructor_2": {
+      "role": "Instructor",
+      "slugRef": "li-ming",
+      "label": "English + Simplified Chinese + Korean",
+      "users": {
+        "email": "li-ming+clerk_test@divedispatch.dev",
+        "name": "Li Ming",
+        "firstName": "Li",
+        "lastName": "Ming",
+        "businessName": "Li Ming",
+        "appLanguage": "en",
+        "phone": "+66-81-603-1003",
+        "isSeeded": false,
+        "onboardingComplete": true
+      },
+      "instructors": {
+        "name": "Li Ming",
+        "placeName": "Phuket",
+        "country": "Thailand",
+        "lat": 7.8804,
+        "lng": 98.3923,
+        "email": "li-ming+clerk_test@divedispatch.dev",
+        "phone": "+66-81-603-1003",
+        "credential": [
+          {
+            "agency": "SSI",
+            "level": "OWI",
+            "agencyID": "SSI-500030",
+            "specialtyRatings": ["Deep"]
+          }
+        ],
+        "teachingLanguages": ["zh-CN", "en", "ko"],
+        "isAllowed": [],
+        "notAllowed": [],
+        "verified": false
+      }
+    },
+    "instructor_3": {
+      "role": "Instructor",
+      "slugRef": "wei-chen",
+      "label": "Simplified + Traditional Chinese + Thai + English (seed needs +en — P0-12)",
+      "note": "Deliberate-incomplete per rule: starts with teachingLanguages_initial: [] — unbookable until languages added. Walkthrough exercises instructor-picker language filter + profile-complete gate.",
+      "users": {
+        "email": "wei-chen+clerk_test@divedispatch.dev",
+        "name": "Wei Chen",
+        "firstName": "Wei",
+        "lastName": "Chen",
+        "businessName": "Wei Chen",
+        "appLanguage": "en",
+        "phone": "+66-81-602-1002",
+        "isSeeded": false,
+        "onboardingComplete": true
+      },
+      "instructors": {
+        "name": "Wei Chen",
+        "placeName": "Phuket",
+        "country": "Thailand",
+        "lat": 7.8804,
+        "lng": 98.3923,
+        "email": "wei-chen+clerk_test@divedispatch.dev",
+        "phone": "+66-81-602-1002",
+        "credential": [
+          {
+            "agency": "PADI",
+            "level": "MSDT",
+            "agencyID": "PADI-300020",
+            "specialtyRatings": ["Deep", "Enriched Air", "Wreck", "Navigation", "Night"]
+          }
+        ],
+        "teachingLanguages_initial": [],
+        "teachingLanguages_completed": ["zh-CN", "zh-TW", "th", "en"],
+        "isAllowed": [],
+        "notAllowed": [],
+        "verified": false
+      }
+    },
+    "dive_master": {
+      "role": "DiveMaster",
+      "slugRef": "arisa-kanchanaburi",
+      "note": "Deliberate-incomplete per rule: starts with teachingLanguages_initial: [] — unbookable until languages added. Parallel to instructor_3 gap pattern.",
+      "users": {
+        "email": "arisa-kanchanaburi+clerk_test@divedispatch.dev",
+        "name": "Arisa Kanchanaburi",
+        "firstName": "Arisa",
+        "lastName": "Kanchanaburi",
+        "businessName": "Arisa Kanchanaburi",
+        "appLanguage": "en",
+        "phone": "+66-81-615-1015",
+        "isSeeded": false,
+        "onboardingComplete": true
+      },
+      "diveMasters": {
+        "name": "Arisa Kanchanaburi",
+        "placeName": "Phuket",
+        "country": "Thailand",
+        "lat": 7.8804,
+        "lng": 98.3923,
+        "email": "arisa-kanchanaburi+clerk_test@divedispatch.dev",
+        "phone": "+66-81-615-1015",
+        "credential": [
+          {
+            "agency": "PADI",
+            "level": "Divemaster",
+            "agencyID": "PADI-300150"
+          }
+        ],
+        "teachingLanguages_initial": [],
+        "teachingLanguages_completed": ["th", "en"],
+        "isAllowed": [],
+        "notAllowed": [],
+        "verified": false
+      }
+    },
+    "pool_1": {
+      "role": "Pool",
+      "slugRef": "n7rq5j",
+      "venues": {
+        "name": "Hug Ocean",
+        "placeName": "Phuket",
+        "country": "Thailand",
+        "lat": 7.8804,
+        "lng": 98.3923,
+        "email": "hug-ocean@divedispatch.dev",
+        "phone": "+66-76-381-102",
+        "venueCategory": "pool",
+        "hasCompressor": false,
+        "maxDepth": 3,
+        "maxCapacity": 15,
+        "isAllowed": [],
+        "notAllowed": [],
+        "autoAccept": true,
+        "verified": false
+      }
+    },
+    "pool_2": {
+      "role": "Pool",
+      "slugRef": "z8mv4c",
+      "note": "Neptune's pool — private to Neptune-driven bookings via isAllowed. Shared user with Neptune DC + Equipment (first appearance of Neptune in §7.12; Stops 7/9 reference via slugRef).",
+      "users": {
+        "email": "neptune+clerk_test@divedispatch.dev",
+        "name": "Wei Lin",
+        "firstName": "Wei",
+        "lastName": "Lin",
+        "businessName": "Neptune",
+        "appLanguage": "zh-CN",
+        "phone": "+66-81-234-5002",
+        "isSeeded": false,
+        "onboardingComplete": true
+      },
+      "venues": {
+        "name": "Neptune",
+        "placeName": "Phuket",
+        "country": "Thailand",
+        "lat": 7.8804,
+        "lng": 98.3923,
+        "email": "neptune@divedispatch.dev",
+        "phone": "+66-76-383-002",
+        "venueCategory": "pool",
+        "hasCompressor": false,
+        "maxDepth": 2.5,
+        "maxCapacity": 6,
+        "isAllowed": ["z8mv4c"],
+        "notAllowed": [],
+        "autoAccept": true,
+        "verified": false
+      }
+    },
+    "pool_3": {
+      "role": "Pool",
+      "slugRef": "b3wt9f",
+      "note": "Deliberate-incomplete per rule: starts with maxCapacity_initial: 0 — zero bookable seats → picker excludes. Walkthrough exercises capacity-add to 25.",
+      "users": {
+        "email": "water-pro+clerk_test@divedispatch.dev",
+        "name": "Niran Jantarakul",
+        "firstName": "Niran",
+        "lastName": "Jantarakul",
+        "businessName": "Water Pro",
+        "appLanguage": "th",
+        "phone": "+66-76-394-001",
+        "isSeeded": false,
+        "onboardingComplete": true
+      },
+      "venues": {
+        "name": "Water Pro",
+        "placeName": "Phuket",
+        "country": "Thailand",
+        "lat": 7.8804,
+        "lng": 98.3923,
+        "email": "water-pro@divedispatch.dev",
+        "phone": "+66-76-394-001",
+        "venueCategory": "pool",
+        "hasCompressor": false,
+        "maxDepth": 2.5,
+        "maxCapacity_initial": 0,
+        "maxCapacity_completed": 25,
+        "isAllowed": [],
+        "notAllowed": [],
+        "autoAccept": true,
+        "verified": false
+      }
+    },
+    "pool_4": {
+      "role": "Pool",
+      "slugRef": "g2hn6x",
+      "users": {
+        "email": "shark-bites+clerk_test@divedispatch.dev",
+        "name": "Kittisak Wongsawat",
+        "firstName": "Kittisak",
+        "lastName": "Wongsawat",
+        "businessName": "Shark Bites",
+        "appLanguage": "th",
+        "phone": "+66-76-394-002",
+        "isSeeded": false,
+        "onboardingComplete": true
+      },
+      "venues": {
+        "name": "Shark Bites",
+        "placeName": "Phuket",
+        "country": "Thailand",
+        "lat": 7.8804,
+        "lng": 98.3923,
+        "email": "shark-bites@divedispatch.dev",
+        "phone": "+66-76-394-002",
+        "venueCategory": "pool",
+        "hasCompressor": false,
+        "maxDepth": 2.5,
+        "maxCapacity": 8,
+        "isAllowed": [],
+        "notAllowed": [],
+        "autoAccept": true,
+        "verified": false
+      }
+    },
+    "dive_center": {
+      "role": "DiveCenter",
+      "users": {
+        "email": "owner@hugocean.example",
+        "name": "Patong Owner",
+        "firstName": "Patong",
+        "lastName": "Owner",
+        "businessName": "Hug Ocean Dive Center",
+        "appLanguage": "en",
+        "customerLanguages": ["en", "th", "zh-CN"],
+        "phone": "+66 76 111 2222",
+        "isSeeded": false,
+        "onboardingComplete": true
+      },
+      "diveCenters": {
+        "name": "Hug Ocean",
+        "placeName": "Patong Beach, Phuket",
+        "country": "Thailand",
+        "lat": 7.896,
+        "lng": 98.298,
+        "email": "owner@hugocean.example",
+        "phone": "+66 76 111 2222",
+        "associations": [
+          {
+            "agency": "PADI",
+            "number": "PAD-DC-90001",
+            "owDays": 4,
+            "aowDays": 2,
+            "oaDays": 5,
+            "selectedSpecialties": ["Deep", "Night", "Navigation", "Peak", "Wreck"]
+          }
+        ],
+        "customerLanguages": ["en", "th", "zh-CN"],
+        "isAllowed": [],
+        "notAllowed": [],
+        "verified": true
+      }
+    },
+    "agent": {
+      "role": "Agent",
+      "users": {
+        "email": "agent.walker@phukettravel.example",
+        "name": "Alex Walker",
+        "firstName": "Alex",
+        "lastName": "Walker",
+        "businessName": "Alex Walker",
+        "appLanguage": "en",
+        "customerLanguages": ["en"],
+        "phone": "+66 81 900 1234",
+        "isSeeded": false,
+        "onboardingComplete": true
+      },
+      "agents": {
+        "name": "Alex Walker",
+        "placeName": "Phuket",
+        "country": "Thailand",
+        "lat": 7.88,
+        "lng": 98.39,
+        "email": "agent.walker@phukettravel.example",
+        "phone": "+66 81 900 1234",
+        "associations": [{ "agency": "PADI", "number": "PAD-AG-70001" }],
+        "defaultReferral": "hug-ocean-slug",
+        "isAllowed": [],
+        "notAllowed": [],
+        "verified": true
+      }
+    }
+  },
+  "admin_venues": {
+    "kata_beach": {
+      "category": "AdminVenue",
+      "note": "Admin-added venue — no stakeholder user signs in. Pre-seeded via UNOWNED_DIVE_SITES at convex/seedData.ts:1075-1077 and convex/seed.ts:419-441. venues.userId is omitted (schema v.optional allows); inventoryUnits uses sentinel ownerId '__unowned__' / ownerType 'DiveSite'. DiveSite stakeholder role is v0.1.1 defer — this row is a booking-form location reference only, not an operator-run resource.",
+      "venues": {
+        "name": "Kata Beach",
+        "placeName": "Phuket",
+        "country": "Thailand",
+        "lat": 7.8206,
+        "lng": 98.3003,
+        "venueCategory": "diveSite",
+        "diveSiteTypes": ["shore"],
+        "confinedCapable": true,
+        "hasCompressor": false,
+        "maxCapacity": 50,
+        "isAllowed": [],
+        "notAllowed": [],
+        "verified": true
+      },
+      "inventoryUnits": {
+        "resourceType": "DiveSite",
+        "resourceId": "kata-beach",
+        "displayName": "Kata Beach",
+        "capacityModel": "Pooled",
+        "totalUnits": 50,
+        "ownerId": "__unowned__",
+        "ownerType": "DiveSite"
+      }
+    }
+  }
+}
+```
 
 **Admin-add convention:** `admin_venues` is a sibling of `stakeholders` — entries have no user, no onboarding stop, no `userId` on `venues`, and use sentinel `ownerId: '__unowned__'` + `ownerType: 'DiveSite'` on `inventoryUnits`. Admin pre-seeds these before Stop 1 begins. Happy-path booking forms reference them as selectable dive-site options.
 
-**Resume:** `canonical.json` is the single source for prefilled onboarding; align UI steps and DB assertions (in `assertions.yaml`) to these values (adjust emails / slugs when wiring to real Clerk/Convex ids).
+**Resume:** Act I canonical stakeholder JSON above is the single source for prefilled onboarding; align UI steps and DB assertions to these values (adjust emails slugs when wiring to real Clerk/Convex ids).
 
 ---
 
 ## 8. Proposed Acts partition
 
-Five Acts partition the run: **I Onboarding · II Booking Convergence · III Variation Matrix · IV Branch Probes · V Post-Trip Conversion**.
+Five Acts partition the run. Each Act has numbered sub-phases. Every inventory-writing phase carries an `Invariant:` annotation naming the LAW exercised (per §11 rec #5). Every phase declares its minimum verification layer (§2 S/M/U framework). Every phase cites which Scene(s) from `V1 Done Criteria.md` it validates (per §11 rec #2).
 
-**Full play-by-play moved to [`choreography.md`](./choreography.md).** Each phase there cites canonical keys, Scene citations (per `V1 Done Criteria.md`), min verification layer (S/M/U per §2), and LAW invariants exercised (per §3). Expected state per phase lives in [`assertions.yaml`](./assertions.yaml).
+Scene citations are short-form: `Scene N` per `Vaults/DiveDispatch/Product/V1 Done Criteria.md`. LAW references are LAW 1/2/3 per §3.
 
-- Choreography references canonical keys — never inlines values (prevents drift).
-- Assertions keyed by `act_N_phase_M` — runtime diffs actual vs expected.
-- Every LAW must be exercised at least once across the Acts (§3 rule).
+### Act I — Onboarding (Stakeholder Creation)
+
+Each resource + operator stakeholder logs in, completes onboarding, verifies persistence. One sub-phase per §14 audit stop. Customer is not onboarded here (joins via portal in Act II). Admin venues are pre-seeded (no phase).
+
+| Phase | Stop | Min layer | Scene | Invariant |
+|---|---|---|---|---|
+| I.1 | Compressor (×2) | S + U | Scene 15 | none (no inventory write) |
+| I.2 | Equipment Manager (×3) | S + U | Scene 14 | none |
+| I.3 | Boat (×2) | S + U | — | none |
+| I.4 | Instructor (×3) | S + U | Scene 13 | none |
+| I.5 | DiveMaster | S + U | — | none |
+| I.6 | Pool (×4) | S + U | — | none |
+| I.7 | DiveCenter (×2) | S + U | **Scene 1** | none |
+| I.8 | Agent | S + U | — | none |
+
+**End-of-Act assertion:** every §7.12 canonical user has a persisted `users` row + N role rows per Lesson #9; every resource row carries `autoAccept: true` (Instructor toggleable); every deliberate-incomplete pair still shows `_initial` state (`_completed` lands in Act II / III).
+
+### Act II — Booking Convergence (Canonical Spine)
+
+| Phase | Action | Min layer | Scene | Invariant |
+|---|---|---|---|---|
+| II.1 | Agent (or DC) drags O+AP quick-book onto calendar → booking in `Draft` | S + M | **Scene 2** | none |
+| II.2 | `submitToDraft` writes instructor + pool + equipment + compressor reservations atomically with AvailabilitySnapshot | S + M | **Scene 2** | **LAW 3** (same-mutation snapshot atomicity). Currently broken — see **P0-1**. |
+| II.3 | Portal link generated → customer opens → completes medical + waiver + sizing + emergency contact | S + M + U | **Scene 3** | none (portal does not write inventory) |
+| II.4 | Resource-side confirmations cascade (auto-accept for Compressor / Equipment / Boat / Pool / DiveMaster; manual accept for Instructor) | S + M | Scene 2 + Scene 7 (decline branch) | **LAW 1** (exclusive-unit: instructor cannot double-hold); **LAW 2** (pooled: pool/equipment count decrements; blocks only at zero) |
+| II.5 | Booking auto-advances Draft → Upcoming → Active → Completed as gates fire | S + M | **Scene 4** | **LAW 3** (snapshot atomicity on state transitions) |
+| II.6 | Dive day opens → check-in → activity completes | S + M + U | **Scene 5** | none |
+
+**End-of-Act assertion:** booking status = `Completed`; reservations table has one row per resource per day; no `AvailabilitySnapshot` drift; every `_initial` gap on a user touched by the booking has closed to `_completed`.
+
+### Act III — Variation Matrix
+
+Same booking shape as Act II, exercised across variation axes. Each axis is independent and must hold.
+
+| Phase | Variation | Min layer | Scene | Invariant |
+|---|---|---|---|---|
+| III.1 | Customer-language fallback (preferred instructor language mismatch → cascade to #2 in ordered preference) | M | Cross-Cutting | **LAW 1** (#2 instructor's exclusive slot holds) |
+| III.2 | Channel variation (email vs WhatsApp vs SMS for portal invite) | M + U | Cross-Cutting | none |
+| III.3 | Partial portal progress → reminder fires → resume from last-completed step | M + U | **Scene 3** | none |
+| III.4 | Referral toggle mid-booking (agent creates, flips to referred DC → ownership + visibility re-compute) | S + M | **Scene 12** | none |
+
+### Act IV — Branch Probes (in-spec unhappy paths that rejoin)
+
+| Phase | Branch | Min layer | Scene | Invariant |
+|---|---|---|---|---|
+| IV.1 | Medical hard block → operator contacts → resolve → resume | M + U | **Scene 6** | none (medical does not touch inventory) |
+| IV.2 | Resource decline → cascade down preference list → re-assign → rejoin spine | S + M | **Scene 7** | **LAW 1** (reassigned instructor's exclusive slot transitions cleanly); **LAW 2** (pooled decrement on replacement) |
+| IV.3 | Language-fallback-after-mismatch (ordered-preference traversal) | M | Cross-Cutting | **LAW 1** |
+| IV.4 | Boat min-pax cancellation | S + M | **Scene 8** | **LAW 2** (boat pooled slots return on cancel) |
+| IV.5 | Customer no-show → status transition | S + M | **Scene 9** | **LAW 3** (state-transition snapshot) |
+| IV.6 | TTL expiry on abandoned Draft | S + M | **Scene 10** | **LAW 3** |
+| IV.7 | Date blocking | S + M + U | **Scene 11** | none |
+
+### Act V — Post-Trip Conversion
+
+| Phase | Action | Min layer | Scene | Invariant |
+|---|---|---|---|---|
+| V.1 | Customer account creation prompt + prefill from portal data | S + U | Scene 5 | none |
+| V.2 | Review prompt fires | M + U | Scene 5 | none |
+| V.3 | First-repeat-use (customer logs in; prior booking visible + prefills for new booking) | S + U | — | none |
+
+### End-of-run assertions
+
+- Every LAW (1, 2, 3) has been exercised at least once across all Acts. A LAW not exercised anywhere is a spec gap, not an omission (§3 rule).
+- Every Scene 1–5 (happy path) has a green phase.
+- Every Scene 6–11 (unhappy that rejoin) has a green phase in Act IV.
+- Every in-scope stakeholder from §14 progress snapshot has touched the booking at least once.
+
+---
 
 ## 9. Prerequisites (known blockers)
 
@@ -416,7 +1101,7 @@ Five Acts partition the run: **I Onboarding · II Booking Convergence · III Var
 - **Action:**
   - Seed extend: add `'en'` to Wei Chen's ROSTER entry (`seedInstructorData.ts:58`) so the seed-hydrated state matches canonical `_completed`.
   - Harness: the happy-path runner must either (a) delete the seeded Wei Chen before onboarding, (b) pick a distinct slug for the happy-path Wei Chen and alias canonical `slugRef`, or (c) document that the happy path resets and re-seeds before each run. Pick one; document in §7.12 or a new §15 "Harness conventions."
-  - OPERATOR_PREFERRED check: `convex/seed.ts:467-493` — verify Hug's `preferredInstructorSlugs` includes `'wei-chen'`, `'ryan-clarke'`, and `'li-ming'` (current seed line 469 has `['wei-chen', 'nicole-tam', 'mike-chen', 'xiao-lei', 'zhen-liu']` — missing Ryan + Li Ming). **Committed target (2026-04-14, Cluster B.3):** `preferredInstructorSlugs: ['ryan-clarke', 'wei-chen', 'li-ming']` — Ryan must be #1 so Day 2 zh-TW binding cascades to Wei Chen #2 (proves language-fallback traversal per `assertions.yaml#act_3_phase_1`).
+  - OPERATOR_PREFERRED check: `convex/seed.ts:467-493` — verify Hug's `preferredInstructorSlugs` includes `'wei-chen'`, `'ryan-clarke'`, and `'li-ming'` (current seed line 469 has `['wei-chen', 'nicole-tam', 'mike-chen', 'xiao-lei', 'zhen-liu']` — missing Ryan + Li Ming). Update if the happy path needs Hug to auto-prefer the 3 canonical instructors.
   - Same action for `dive_master` (`arisa-kanchanaburi`): verify DM-eligible preferences; Arisa's seed `['th', 'en']` already matches `_completed` so no seed language extension needed — only harness collision handling.
 
 ### P0-13 — `venues.autoAccept` for pool rows
@@ -434,105 +1119,6 @@ Five Acts partition the run: **I Onboarding · II Booking Convergence · III Var
 - **Source:** Stop 6 audit.
 - **Impact:** Canonical `pool_2` declares Neptune's pool private to Neptune-driven bookings. Seed currently omits `isAllowed` (defaults to `[]` open). Seed/canonical drift — without the update, seed-hydrated state allows any operator to attach Neptune's pool, contradicting the happy-path access-control test.
 - **Action:** At `convex/seedData.ts:338-349`, add `isAllowed: ['z8mv4c']` to NEPTUNE.pool. Parallel to the existing `NEPTUNE.equipment.isAllowed: ['z8mv4c']` pattern at `convex/seedData.ts:350-358`.
-
-### P0-15 — `customers` table missing `languages` column; portal does not capture customer language
-
-- **Ticket:** `.tickets/DD-485.md`
-- **Source:** Stop 8 audit (three-way framing). Canonical `entryCustomer.languages` required (min 1). Convex `customers` table has no `languages` / `language` / `locale` column. Portal 6-step wizard (`src/app/(portal)/portal/[token]/page.tsx` → `portal-active-flow.tsx`) has no language input — contact Step 1 collects name/email/phone/DOB/gender/nationality/passport/emergency but not preferred-communication language.
-- **Impact:** Language-matching instructor cascade (Cluster B.3 / `act_3_phase_1`) requires `customer.languages`. Without the column + input, Ryan → Wei Chen fallback cannot fire — the booking picker has no `customer_1.languages = ['zh-TW']` to match against. Language-localized portal chrome (Cluster D.1) also depends on this.
-- **Action:**
-  - Schema: add `customers.languages: v.array(v.string())` (required, min 1) to `convex/schema.ts` customers table.
-  - Mutation: extend `convex/portal*.ts` customer-create + update args.
-  - FE: add language-picker field to `src/components/portal/portal-active-flow.tsx` Step 1 Contact (default from browser locale, user-editable). Use native-script labels per `rules/language-picker.md`.
-  - Seed: n/a (customers are portal-created, no seed).
-  - Booking match: `convex/bookings/*.ts` instructor-cascade must read `customer.languages` and match against `instructor.teachingLanguages`.
-
-### P0-17 — `agents.defaultReferral` vs `stakeholderPreferences.preferredOperatorSlug` semantic alignment
-
-- **Ticket:** `.tickets/DD-487.md`
-- **Source:** Stop 9 audit.
-- **Impact:** `convex/schema.ts:512` stores `agents.defaultReferral` as a nullable string. `convex/schema.ts:284` stores `stakeholderPreferences.preferredOperatorSlug` as a nullable string on the prefs row. `convex/seed.ts:555-560, 599-601` **copies** `agent.defaultReferral` from seed fixtures INTO `preferredOperatorSlug` at seed time — a one-way snapshot. `agent-profile-form.tsx:195-201` reads `form.defaultReferral` for display ("Bookings cascade from your preferred operator. Change in Preferences → Resources → Operator."). The Preferences editor (`preferences-editor.tsx`) writes `preferredOperatorSlug`. The booking cascade (`use-wizard-preferences.ts:38, 60`) reads `preferredOperatorSlug`. So after an agent edits their preference, `preferredOperatorSlug` moves but `agents.defaultReferral` stays at its initial value — they drift. The agent form still displays the stale `defaultReferral` value as "this is your active referral," which is wrong.
-- **Action:**
-  - Decide canonical: keep `preferredOperatorSlug` in `stakeholderPreferences` as truth (recommended — it's where edits land, and the cascade reads it) and remove `agents.defaultReferral` column, OR make `agents.defaultReferral` a derived read-through to `preferredOperatorSlug`.
-  - Schema change: remove `agents.defaultReferral` from `convex/schema.ts:512`.
-  - Mutation change: remove `defaultReferral` from `convex/agents.ts:17, 29` (create + update args).
-  - Seed change: drop `defaultReferral` from agent fixtures (`convex/seedData.ts:808, 838, 868, 898`); continue writing `preferredOperatorSlug` to stakeholderPreferences (already wired at `convex/seed.ts:599-601`).
-  - FE change: `agent-profile-form.tsx:195-201` reads `form.preferredOperatorSlug` (or the equivalent from the prefs query) instead of `form.defaultReferral`. `profile-shared.ts:34-46, 68-72, 85-90, 93-98` drop `defaultReferral` from `AgentContactFormState`.
-  - Canonical update after fix: rename `entryAgent.agents.defaultReferral` → move into a prefs-level block, or keep the canonical name as an abstraction and remap at runtime.
-  - Happy-path run: canonical currently carries `agents.defaultReferral: "n7rq5j"` — the referral toggle in Act III.4 must still work post-fix (just reading from the prefs row).
-
-### P0-16 — Portal emergency-contact partial-save path (investigation)
-
-- **Ticket:** `.tickets/DD-486.md`
-- **Source:** Stop 8 audit. Canonical `customer_3.customer.emergencyContact_initial: null` declares the deliberate-incomplete pattern — customer submits portal Step 1 without full emergency contact; gap closes before auto-advance to Upcoming. Current portal `step-contact.tsx` lists emergencyContactName/Phone/Relation as required. If Step 1 validation blocks submit without emergency contact, the deliberate-incomplete scenario is not reproducible via UI.
-- **Impact:** Act II Phase 3 + gap-close events (`act_2_end.gap_closures`) require the initial submit to succeed with nulls, then re-prompt before Phase II.5 gate. Without a partial-save path, the customer deliberate-incomplete carrier has no reproducible flow.
-- **Action:**
-  - Investigate: grep `step-contact.tsx` for emergencyContact validators + submit gating. Confirm behavior — does Step 1 Next require all emergencyContact fields?
-  - If blocking: decide between (a) relax Step 1 validation to allow null emergency contact + force re-prompt at Step 6 Submit, (b) move emergencyContact to a later step (Step 5 Safety already has bloodType/allergies/medications) so Step 1 can submit without it, (c) change canonical to a different deliberate-incomplete field (e.g., `sizing_initial: null`).
-  - If not blocking: document where the partial-save path lives and cite in this P0 as resolved.
-
-### P0-18 — `compressors.gasMixes` non-empty runtime gate
-
-- **Ticket:** `.tickets/DD-488.md`
-- **Source:** Retro re-audit Stop 1 (2026-04-14). Canonical `compressor_2.compressors.gasMixes_initial: []` relies on runtime enforcement; schema allows empty array.
-- **Impact:** Without a gate, empty-gasMixes compressors surface in the booking picker, contradicting the deliberate-incomplete scenario. Parallel to P0-7 (equipment) / P0-14 (pool).
-- **Action:** mutation validator reject empty gasMixes when `profileComplete: true`; cascade helper excludes empty rows; zod tightened; FE Gas Mixes tab hint.
-
-### P0-19 — `instructors.autoAccept` + `diveMasters.autoAccept` schema + FE
-
-- **Ticket:** `.tickets/DD-489.md`
-- **Source:** Retro re-audit Stops 4+5. Canonical patched 2026-04-14: instructor_1/_2 `autoAccept: true`, instructor_3 `autoAccept: false` (Wei Chen manual per F.2), dive_master `autoAccept: true`. Schema has no column; FE has no toggle.
-- **Impact:** Cannot round-trip canonical values; Lesson #8 pattern incomplete (Instructor = toggleable enabled, DM = disabled-on-true).
-- **Action:** add `autoAccept` column to both tables; mutation accepts it; FE renders enabled checkbox on Instructor (toggleable) + disabled checkbox on DiveMaster (always true); seed extends ROSTER with per-instructor autoAccept; canonical schema `entryDiveMaster.diveMasters.autoAccept: const true` (added 2026-04-14).
-
-### P0-20 — `teachingLanguages` empty-array gate on Instructor + DiveMaster
-
-- **Ticket:** `.tickets/DD-490.md`
-- **Source:** Retro re-audit Stops 4+5. Canonical uses `_initial: []` → `_completed: [...]` pattern for instructor_3 (Wei Chen) + dive_master (Arisa). Schema allows empty array; no picker exclusion guaranteed.
-- **Impact:** Happy-path deliberate-incomplete bookability gate relies on this behavior — must be enforced.
-- **Action:** mutation validator reject empty on `profileComplete: true`; cascade helper excludes empty rows; zod `.min(1)` for profile-complete state; integration test.
-
-### P0-21 — Pool `confinedCapable` FE conditional-render bug
-
-- **Ticket:** `.tickets/DD-491.md`
-- **Source:** Retro re-audit Stop 6. Canonical pool_1–4 all declare `confinedCapable: true`. VenueCapabilities section renders the checkbox ONLY when `venueCategory === 'diveSite'` — pool instances never surface the toggle.
-- **Impact:** Operators cannot mark their pool confined-capable; gates OW confined-water sessions per Product Definition §4.
-- **Action:** render checkbox for pool (default `true`) + diveSite (current). Keep admin venues seed-managed.
-
-### P0-22 — `hasCompressor` hardcoded in pool + boat payload builders
-
-- **Ticket:** `.tickets/DD-492.md`
-- **Source:** Retro re-audit Stops 3+6. Schema has `hasCompressor: v.boolean()` on both `boats` and `venues`; FE hardcodes the value at payload-build time (pool: `false`; boat: `true`). No UI path to correct.
-- **Impact:** Operators whose pool has on-site compressor, or whose boat lacks one, cannot reflect reality. Booking logic uses this flag.
-- **Action:** decide Option A (expose checkbox), B (derive from vessels), or C (admin-only + remove mutation arg). Recommend A. Default pool `false`, boat `true`.
-
-### P0-23 — `commonLanguageCodes` ghost field in PreferencesEditor
-
-- **Ticket:** `.tickets/DD-493.md`
-- **Source:** Retro re-audit cross-cutting. Schema has `stakeholderPreferences.commonLanguageCodes`; form state initializes to `['en']`; upsert mutation accepts. No UI renders it anywhere.
-- **Impact:** Dead code OR a missed-implementation spec. Either way, confusing.
-- **Action:** trace origin via git blame (per `feedback_trace_before_implement.md`). If orphaned: remove. If deferred: create follow-up ticket.
-
-### P0-24 — `isAllowed` / `notAllowed` access control has no FE input
-
-- **Ticket:** `.tickets/DD-494.md`
-- **Source:** Retro re-audit Stops 2–6. Schemas accept both arrays; canonical uses heavily (`equipment_manager_1.isAllowed: ['n7rq5j']`, `pool_2.isAllowed: ['z8mv4c']`). No profile form surfaces either.
-- **Impact:** Operators onboarding via UI cannot replicate the canonical access-control pattern — currently seed-only.
-- **Action:** Option A (expose FE) via shared `access-control-editor.tsx` across six profile forms, or Option B (admin-only + remove mutation arg). Recommend A for operator autonomy.
-
-### P0-25 — `nitroxCertified` missing from customers + instructors (safety)
-
-- **Ticket:** `.tickets/DD-495.md`
-- **Source:** Retro re-audit Stops 2+4. V1 Done Criteria Scene 15 requires visible nitrox cert. No `customers.nitroxCertified` column; `instructors` has `specialtyRatings` (could derive) but no standalone field or UI surface. Booking cascade does not gate nitrox-cylinder assignment on cert status.
-- **Impact:** Safety + liability gap — uncertified diver can be booked on a nitrox tank.
-- **Action:** add `customers.nitroxCertified` + `instructors.nitroxCertified` (or explicit derivation); portal Step 4/5 captures customer cert; instructor form surfaces state; booking cascade blocks nitrox assignment when cert missing.
-
-### P0-26 — Snapshot field immutability enforcement
-
-- **Ticket:** `.tickets/DD-496.md`
-- **Source:** Retro re-audit cross-cutting. `Industry-Alignment-Decisions.md` C1 declares five fields as snapshots: `bookings.operatorName`, `bookings.startDate`, `bookings.endDate`, `bookingLinks.customerName`, `bookingLinks.email`. Schema stores as plain `v.string()`; mutations can overwrite.
-- **Impact:** Audit log unreliable; referral return and portal-resent semantics become ambiguous.
-- **Action:** add `// snapshot: <description>` comments per `.claude/rules/code-style-nav.md`; add mutation guards that reject patches attempting to overwrite with different values; update `schema-invariants.md` Rule 5 vault doc; integration test per field.
 
 *(Matt: add additional known blockers below or leave for L.2.)*
 
@@ -576,32 +1162,27 @@ Five Acts partition the run: **I Onboarding · II Booking Convergence · III Var
 
 ### Cluster B — Instructor Coverage
 
-> **Answered 2026-04-14 same turn Stop 8 locked.** Committed defaults per Lesson #5. Canonical keys referenced; see `choreography.md` Phase II.4 notes for the full day-to-instructor table and `assertions.yaml#act_2_phase_4` + `act_3_phase_1` for expected state.
+> **Deferred — unblocks after Stop 8 locks.** B.1 day-to-instructor assignment depends on the three customers' languages (defined in Stop 8 Customer canonical). Answer Cluster B in the same turn Stop 8 locks, using Lesson #5 committed defaults. Stop 4 Instructor is marked DONE in §14 for canonical-ledger purposes only; run-time choreography remains open until Cluster B answers land.
 
 #### B.1 — Exact day-to-instructor assignment
 
 - **Why it matters:** Locks the concrete booking itinerary used in Act II. Must exercise all four language-keyed instructors at least once.
 - **Claude's recommendation:** O+AP is one booking of ~5 days (OW = 1 confined + 4 open-water; Advanced Plus adds 5 AOW dives, typically days 3–5). Rotate the four in-system instructors across the first four days; reserve Day 5 for external free-text fallback (see B.2). Pick exact per-day assignments in your answer — the constraint is every in-system instructor appears at least once, and day-to-language mapping aligns with the three customers' languages at least once each.
-- **Matt's answer:** (committed default, 2026-04-14)
-  - **Day 1** (confined + OW dive 1): `canonical.stakeholders.instructor_1` (Ryan Clarke, en/th)
-  - **Day 2** (OW dives 2–3): `canonical.stakeholders.instructor_3` (Wei Chen, zh-CN/zh-TW/th/en) — Cluster B.3 cascade target
-  - **Day 3** (OW dive 4 + AOW dive 1): `canonical.stakeholders.instructor_2` (Li Ming, zh-CN/en/ko)
-  - **Day 4** (AOW dives 2–3): `canonical.stakeholders.dive_master` (Arisa Kanchanaburi, th/en) — exercises DM binding per J.3
-  - **Day 5** (AOW dives 4–5): external free-text (Cluster B.2)
+- **Matt's answer:** _(blank)_
 - **Verification layer:** M (booking creation with per-day instructor binding), S (Reservation rows per day)
 
 #### B.2 — Exact point where external free-text instructor enters
 
 - **Why it matters:** Tests the free-text fallback code path. Must happen at a deterministic stop.
 - **Claude's recommendation:** Day 5 of the O+AP booking — all four in-system instructors unavailable (conflicting schedules, days off, language mismatch). Agent or DC adds external free-text instructor ("Alex Rivera") inline. System accepts and treats as auto-confirmed per V1 Done Scene 2 ("Hand-entered instructor treated as auto-confirmed").
-- **Matt's answer:** Accepted — Day 5, free-text "Alex Rivera", auto-confirmed per V1 Done Scene 2. Canonical expresses as `external_free_text` sentinel in `assertions.yaml#act_2_phase_4` (no profile FK).
+- **Matt's answer:** _(blank)_
 - **Verification layer:** M (Reservation row has external-instructor flag, no profile FK), U (free-text input accepts name)
 
 #### B.3 — Does the path need to prove language-matching FAILURE before fallback?
 
 - **Why it matters:** Determines whether the spec needs a stop where preferred-instructor language mismatch triggers fallback-down-list.
 - **Claude's recommendation:** Yes — once. One booking day has a customer language not matched by the #1 preferred instructor; the cascade falls to the #2 preferred instructor with matching language. Proves both that language match is enforced and that fallback traversal works.
-- **Matt's answer:** Accepted — Day 2 binding. `customer_1.languages: ['zh-TW']` ∉ Ryan's `teachingLanguages: ['en','th']`. Hug's `preferredInstructorSlugs = ['ryan-clarke', 'wei-chen', 'li-ming']` (extends P0-12). Cascade Ryan → Wei Chen (has zh-TW) → bind `Reservation.instructorId = wei-chen`. Asserted at `assertions.yaml#act_3_phase_1`.
+- **Matt's answer:** _(blank)_
 - **Verification layer:** M (cascade picks #2, not #1), S (Reservation.instructorId = #2)
 
 ---
@@ -953,9 +1534,7 @@ Do not:
 
 **Last session:** 2026-04-14.
 
-**State at handoff:** Stops 1–6 + `admin_venues.kata_beach` locked in `canonical.json`. §9 holds P0-1 through P0-14. §14 is the resume pointer; joint ledger per Lesson #1 is: `skeleton.md` + `canonical.json` + `canonical.schema.json` + `choreography.md` + `assertions.yaml` (see [`INDEX.md`](./INDEX.md)). Three stops remain: Stop 7 (DiveCenter), Stop 8 (Customer — lighter portal template), Stop 9 (Agent — renumbered from old Stop 10; Stop 10 deleted). DC / Customer / Agent placeholder entries already in `canonical.json` with `_pending` markers — replace in place when the stop locks.
-
-**Retroactive re-audit owed on Stops 1–6:** previous audits used `convex/schema.ts` as the yardstick (schema-driven). New framing is three-way: canonical intent ∪ schema ∪ FE. Fields silently omitted as "schema-optional" may be canonical-required (e.g., `confinedCapable` on pools, now added). Re-audit surfaces any missed canonical values as new P0s.
+**State at handoff:** Stops 1–6 + `admin_venues.kata_beach` locked in §7.12. §9 holds P0-1 through P0-14. §14 is the resume pointer; §7.12 + §9 are the ledger (Lesson #1). Three stops remain: Stop 7 (DiveCenter), Stop 8 (Customer — lighter portal template), Stop 9 (Agent — renumbered from old Stop 10; Stop 10 deleted).
 
 ### Audit structure
 
@@ -970,7 +1549,7 @@ Stakeholder audit stops split into three layers (see §0 Glossary for full defin
 
 These rules fire from mistakes already made this audit. Do not relearn.
 
-1. **The joint ledger is: `skeleton.md` + `canonical.json` + `canonical.schema.json` + `choreography.md` + `assertions.yaml`.** Nothing in `.claude/plans/`. Nothing in `Vaults/DiveDispatch/wiki/Plans/`. See [`INDEX.md`](./INDEX.md) routing table for what belongs where. Plan files created by plan mode are harness artifacts; migrate content out immediately and delete. Historical mistake: Stops 1 + 2 canonical drifted into a plan file while skeleton stayed stale for 2 rounds — two files of truth always drift.
+1. **Skeleton §7.12 + §9 are the ONLY canonical ledger.** No shadow plan file, no parallel ledger in `.claude/plans/`. A plan file created by plan mode is a harness artifact; migrate content out immediately and delete. Mistake: Stops 1 + 2 canonical drifted into plan file while skeleton stayed stale for 2 rounds. Cost: wasted edits + Matt catching it twice.
 
 2. **Orient to the whole app once, not stop-by-stop.** Before Stop 1, read in parallel: `convex/schema.ts` (all 39 tables), `convex/seedData.ts` (every seed fixture), `src/components/profiles/*.tsx` (every role form), `src/components/account/profile-basic-info.tsx` (shared Profile-tab primitives), `src/lib/constants/roles.ts` (tab config). This catches (a) multi-role users like `HUG_OCEAN` (DC+Boat+Pool+Equipment) and `NICOLE_DC` (DC+Equipment) — same user across multiple stop entries, not separate stakeholders; (b) shared primitives already shipped (firstName/lastName/nickname/DOB/appLanguage) so they don't get false-flagged; (c) helper builders like `buildNicoleInventoryOverrides()` that encode inventory generation patterns. Narrow per-stop Explore agents missed all three categories and produced false blockers.
 
@@ -994,16 +1573,16 @@ These rules fire from mistakes already made this audit. Do not relearn.
 
 | Stop | Category | Role | Status | Canonical in §7.12 | Blockers in §9 | §11 rec |
 |---|---|---|---|---|---|---|
-| 1 | Resource | Compressor ×2 | DONE (retro-patched 2026-04-14 — +P0-18 gasMixes gate) | compressor_1 (Scuba Market), compressor_2 (Chalong Pier, gasMixes-gap) | P0-2, P0-3, P0-4, P0-5, P0-18 (5) | harmonized |
-| 2 | Resource | Equipment Manager ×3 | DONE (retro-patched 2026-04-14 — +P0-24 isAllowed FE, +P0-25 nitroxCertified) | equipment_manager_1 (Hug), equipment_manager_2 (Scuba Revolution), equipment_manager_3 (Nicole — mask-empty) | P0-6, P0-7, P0-8, P0-24, P0-25 (5) | harmonized |
-| 3 | Resource | Boat ×2 | DONE (retro-patched 2026-04-14 — +P0-22 hasCompressor, +P0-24 isAllowed FE) | boat_1 (Hug, M.V. Hug Ocean), boat_2 (PHUKET_DC, MQ5+MQ7) | P0-9, P0-10, P0-11, P0-22, P0-24 (5) | harmonized |
-| 4 | Resource | Instructor ×3 | DONE (retro-patched 2026-04-14 — +autoAccept canonical patch, +P0-19, P0-20, P0-24, P0-25) | instructor_1 (Ryan, autoAccept true), instructor_2 (Li Ming, autoAccept true), instructor_3 (Wei Chen, autoAccept false — manual per F.2, teachingLanguages-gap) | P0-12, P0-19, P0-20, P0-24, P0-25 (5) | harmonized |
-| 5 | Resource | DiveMaster | DONE (retro-patched 2026-04-14 — +autoAccept canonical patch, +P0-19, P0-20) | dive_master (Arisa, autoAccept true, teachingLanguages-gap) | P0-12, P0-19, P0-20 (3) | harmonized |
-| 6 | Resource | Pool ×4 | DONE (retro-patched 2026-04-14 — +P0-21 confinedCapable FE, +P0-22 hasCompressor, +P0-24 isAllowed FE) | pool_1 (Hug), pool_2 (Neptune isAllowed), pool_3 (Water Pro maxCapacity-gap), pool_4 (Shark Bites) | P0-13, P0-14, P0-21, P0-22, P0-24 (5) | harmonized |
+| 1 | Resource | Compressor ×2 | DONE (retro-patched 2026-04-14 — compressor_2 now carries `gasMixes_initial: []`) | compressor_1 (Scuba Market), compressor_2 (Chalong Pier, gasMixes-gap) | P0-2, P0-3, P0-4, P0-5 (4) | harmonized |
+| 2 | Resource | Equipment Manager ×3 | DONE | equipment_manager_1 (Hug), equipment_manager_2 (Scuba Revolution), equipment_manager_3 (Nicole — mask-empty) | P0-6, P0-7, P0-8 (3) | harmonized |
+| 3 | Resource | Boat ×2 | DONE | boat_1 (Hug, M.V. Hug Ocean), boat_2 (PHUKET_DC, MQ5+MQ7) | P0-9, P0-10, P0-11 (3) | harmonized |
+| 4 | Resource | Instructor ×3 | DONE | instructor_1 (Ryan), instructor_2 (Li Ming), instructor_3 (Wei Chen, teachingLanguages-gap) | P0-12 (1) | harmonized |
+| 5 | Resource | DiveMaster | DONE | dive_master (Arisa, teachingLanguages-gap) | covered by P0-12 | harmonized |
+| 6 | Resource | Pool ×4 | DONE | pool_1 (Hug), pool_2 (Neptune isAllowed), pool_3 (Water Pro maxCapacity-gap), pool_4 (Shark Bites) | P0-13, P0-14 (2) | harmonized |
 | admin | Admin | AdminVenue | DONE (Kata Beach = single sufficient exemplar) | `admin_venues.kata_beach` | none | harmonized |
-| 7 | Operator | DiveCenter | DONE | dive_center_1 (Hug Ocean, slug n7rq5j), dive_center_2 (Nicole Dive Center, slug q9bz7r, associations-gap) | none (no new three-way gaps) | harmonized |
-| 8 | Customer | Customer | DONE | customer_1 (Mei-Ling Chen, zh-TW), customer_2 (Jun Wang, zh-CN, medical-block), customer_3 (James Thompson, en, emergencyContact-gap) | P0-15, P0-16 (2) | harmonized (Cluster B.1/B.2/B.3 answered) |
-| 9 | Operator | Agent | DONE | agent (Alex Walker, fresh-signup, defaultReferral → dive_center_1 via n7rq5j) | P0-17 (1) | harmonized |
+| 7 | Operator | DiveCenter | NOT STARTED | stale `dive_center` — split into `dive_center_1` / `dive_center_2` | n/a yet | pending |
+| 8 | Customer | Customer | NOT STARTED (lighter portal template) | not yet written | n/a yet | pending |
+| 9 | Operator | Agent | NOT STARTED (depends on Stop 7 DCs for referral) | stale `agent` entry | n/a yet | pending |
 | — | Cross-cutting | Act II spine (submitToDraft bug) | OPEN | n/a (bug, not ledger entry) | P0-1 (1) | — |
 
 **§11 harmonization rule:** when a stop locks DONE, update its §11 recommendation status the same turn. The "§11 rec" column flips `pending` → `harmonized` as part of the same-turn discipline.
@@ -1013,70 +1592,57 @@ These rules fire from mistakes already made this audit. Do not relearn.
 **All P0s in §9 must close before the happy-path run can execute.** Filing rule: when a stop locks DONE, file its P0s to `.tickets/DD-*.md` via `/board` the same turn. Don't batch to audit end; don't defer.
 
 Batching for reference:
-- Stop 1 (Compressor): P0-2, P0-3, P0-4, P0-5, P0-18 (gasMixes non-empty gate)
-- Stop 2 (Equipment): P0-6, P0-7, P0-8, P0-24 (isAllowed FE), P0-25 (nitroxCertified safety)
-- Stop 3 (Boat): P0-9, P0-10, P0-11, P0-22 (hasCompressor FE), P0-24 (isAllowed FE)
-- Stop 4 (Instructor): P0-12, P0-19 (autoAccept), P0-20 (teachingLanguages gate), P0-24 (isAllowed FE), P0-25 (nitroxCertified)
-- Stop 5 (DiveMaster): P0-12, P0-19 (autoAccept), P0-20 (teachingLanguages gate)
-- Stop 6 (Pool): P0-13, P0-14, P0-21 (confinedCapable FE), P0-22 (hasCompressor FE), P0-24 (isAllowed FE)
-- Stop 7 (DiveCenter): none (dive_center_1/2 locked without new gaps)
-- Stop 8 (Customer): P0-15 (customers.languages schema + portal gap), P0-16 (emergencyContact partial-save investigation)
-- Stop 9 (Agent): P0-17 (agents.defaultReferral vs preferredOperatorSlug denormalization)
-- Cross-cutting: P0-1 (`submitToDraft` bug, Act II spine), P0-23 (commonLanguageCodes ghost field), P0-26 (snapshot immutability enforcement)
+- Stop 1 (Compressor): P0-2, P0-3, P0-4, P0-5
+- Stop 2 (Equipment): P0-6, P0-7, P0-8
+- Stop 3 (Boat): P0-9, P0-10, P0-11
+- Stops 4+5 (Instructor + DiveMaster): P0-12
+- Stop 6 (Pool): P0-13, P0-14
+- Cross-cutting (Act II spine): P0-1 (`submitToDraft` bug)
 
-**Total §9 count: 26 P0s** (P0-1 through P0-26). All filed to `.tickets/DD-*.md`: DD-457…DD-464 (legacy subset; most remaining are un-ticketed legacy per project memory), DD-485 (P0-15), DD-486 (P0-16), DD-487 (P0-17), DD-488 (P0-18), DD-489 (P0-19), DD-490 (P0-20), DD-491 (P0-21), DD-492 (P0-22), DD-493 (P0-23), DD-494 (P0-24), DD-495 (P0-25), DD-496 (P0-26). P0-1 through P0-14 still need ticket filing — queue for next session or backfill via `/board create` before /happypath run.
+Stops 7, 8, 9 will add P0-15+ as they lock.
 
-### Per-stop validation checklist (five-file touch)
+### Per-stop validation checklist
 
-Before flipping a stop's status to DONE, verify — all five files update in the same turn:
+Before flipping a stop's status to DONE, verify:
 
-1. **`canonical.json`** — stakeholder entry written; `_pending` placeholder removed. `ajv validate -s canonical.schema.json -d canonical.json` passes.
-2. **`canonical.schema.json`** — if the entry type needs a new shape (new role concept, new field), update here first.
-3. **`choreography.md`** — Act I / II / III / IV / V phase table references the new canonical key(s); flow steps added if the stop changes the run shape.
-4. **`assertions.yaml`** — relevant `act_N_phase_M` entries updated to reference the new canonical keys and expected state.
-5. **`skeleton.md`** — §9 blockers filed (new P0s from schema/FE gaps uncovered) + §14 progress row flipped to DONE + §11 harmonization + `/board` files P0 tickets to `.tickets/`.
-
-Additional per-entry checks (enforced by schema where possible):
-
-- Every `<field>_initial` has a matching `<field>_completed`.
-- Every `slugRef` points to a stakeholder id that exists in `canonical.json`.
-- Seed values cited match current `convex/seedData.ts` (Lesson #4).
-- Three-way field audit: every canonical field verified against convex schema (P0 if missing/wrong) AND FE form (P0 if missing).
+1. Canonical JSON in §7.12 parses as valid JSON.
+2. Every `<field>_initial` has a matching `<field>_completed`.
+3. Every `slugRef` points to a user defined in another stop's canonical block.
+4. Seed values cited in the entry match the current `convex/seedData.ts` (Lesson #4).
+5. §7.12.0 Canonical entry schema requirements for the entry type are met.
+6. `§11 rec` column flipped `pending` → `harmonized`.
+7. P0 blockers filed to `.tickets/` the same turn.
 
 ### Next-stop staging rule
 
-Only **one stop's interview state** is queued in §14 at a time. When the queued stop locks DONE, overwrite its interview-state block with the next unlocked stop's in the same turn. **All stops 1–9 + admin venues now locked. The next queue entry is the retro re-audit of Stops 1–6.**
+Only **one stop's interview state** is queued in §14 at a time. When the queued stop locks DONE, overwrite its interview-state block with the next unlocked stop's in the same turn. Current order: Stop 7 → Stop 8 → Stop 9.
 
-### Audit COMPLETE (2026-04-14)
+### Stop 7 DiveCenter — interview state (next resume point)
 
-All stakeholder ledger stops locked:
+**Explore findings** (schema `convex/schema.ts`, form `src/components/profiles/dive-center-profile-form.tsx`, seed `convex/seedData.ts` — line numbers are point-in-time, re-grep if refactored):
 
-- **Stops 1–6 (Resources) + admin_venues.kata_beach** — previously locked; retro-patched 2026-04-14 under three-way framing. 9 new P0s filed (P0-18 through P0-26). Canonical patch: `autoAccept` added to `instructor_1/_2/_3.instructors` + `dive_master.diveMasters` per Lesson #8; canonical schema `entryDiveMaster.diveMasters.autoAccept: const true` added.
-- **Stop 7 DiveCenter** — `dive_center_1` (Hug Ocean, n7rq5j), `dive_center_2` (Nicole Dive Center, q9bz7r). No new P0s.
-- **Stop 8 Customer** — `customer_1/_2/_3` (Mei-Ling / Jun / James). Cluster B.1/B.2/B.3 answered; migrated to `choreography.md` Phase II.4 notes. New P0s: P0-15, P0-16.
-- **Stop 9 Agent** — `agent` (Alex Walker, defaultReferral → dive_center_1). New P0: P0-17.
+- **Schema fields:** `userId`, `name`, `placeName`, `country`, `lat`, `lng`, `email`, `phone`, `associations[] {agency, number, owDays?, aowDays?, oaDays?, selectedSpecialties?[]}`, `customerLanguages` (optional — tightens to required min 1 per P0-2), `isAllowed/notAllowed`, `verified`. **No `autoAccept` column** — organizer role (Lesson #8).
+- **Seed DCs available:** HUG_OCEAN (n7rq5j), NEPTUNE (z8mv4c — user-blocked in pool_2), PHUKET_DC (p5ky3w — user-blocked in boat_2), NICOLE_DC (q9bz7r — user-blocked in equipment_manager_3), SCUBA_REVOLUTION (v8sr2p — user-blocked in equipment_manager_2). All multi-role; reference via `slugRef` per Lesson #9.
 
-§9 P0 count: **P0-1 through P0-26 (26 total)**. Pre-run gate still blocking — all 26 must close before `/happypath` can fire. Retirement criteria (INDEX.md + §16): audit COMPLETE ✓ · one fully green happy-path run ✗ · V1 shipped ✗. Artifact set retires when all three hold.
+**Committed defaults for the 4 open questions** (per Lesson #5 — Matt overrides if wrong):
 
-### Next queue — P0 closure, then /happypath run
+1. **How many DCs?** Default: **2 (Hug + Nicole).** Override to 3+ only if referral-cascade test requires fuller coverage.
+2. **Secondary DC identity?** Default: **Nicole** — seed-match; user row already blocked in equipment_manager_3, slugRef keeps it DRY.
+3. **Deliberate-incomplete field?** Default: **`associations_initial: []`** — blocks course creation at the root, natural onboarding step for new DCs.
+4. **customerLanguages `_completed` values?** Default: **seed-canonical** — HUG_OCEAN `['zh-CN','zh-TW','th','en']`, NICOLE_DC `['zh-TW','zh-CN','en','th']`. Override to extend language matrix if test needs it.
 
-**Scope:** work through the 26-entry §9 queue. Land each fix via `/post-spec DD-NNN` (or picked from `/board`). When §9 empties, the happy-path run (via `/happypath` skill) becomes eligible.
+### Resume instructions for the next session
 
-**Ticket coverage:** P0-15 through P0-26 have tickets DD-485 through DD-496. **P0-1 through P0-14 still need backfill into `.tickets/DD-*.md`** before `/post-spec` can consume them — either `/board create` each, or open §9 in reverse order and skip-to-ticketed (start with P0-18+). Document backfill status here when complete.
-
-**Resume instructions for the next session:**
-
-1. Read this section first.
-2. Either: (a) backfill P0-1…P0-14 as tickets via `/board create` so `/post-spec` can consume; OR (b) start with DD-485+ (P0-15+) and come back to P0-1…P0-14 later.
-3. Pick a ticket, execute `/post-spec DD-NNN`. Fix land, ticket moves to done. §9 count decrements.
-4. When §9 empty, run `/happypath`. Follow §15 Execution Conventions. Paused findings route to `Vaults/DiveDispatch/HappyPath/Observations.md` per §15 rule 3.
-5. On first fully green run + V1 ship, invoke retirement: move `ultraplan/*` to `ultraplan/archive/<date>/`, promote spec into `Vaults/DiveDispatch/HappyPath/Stops.md` + `Fixture.md`, delete HANDOFF.
+1. Read skeleton §14 (this section) first. Internalize all 10 lessons and the validation checklist.
+2. Open Stop 7 DiveCenter. Use the committed defaults above unless Matt overrides. **Same-turn discipline:** canonical into §7.12 + blockers into §9 + deliberate-incomplete header-table row + §14 progress row + §11 harmonization + file P0s via `/board` + overwrite interview-state block with Stop 8's → DONE in one turn.
+3. Then Stop 8 Customer (lighter portal template — see Audit structure). No autoAccept / isAllowed / userRoles row.
+4. Then Stop 9 Agent (same template as Stop 7, references DC slugs from Stop 7 via slugRef).
+5. After Stop 9 locks: rewrite §14 as "audit COMPLETE" — all rows DONE, §9 at final count, §11 fully harmonized.
+6. **Run happy-path only after every P0 in §9 is closed.** During the run, follow §15 Execution Conventions.
 
 ### For the next LLM — context handoff summary
 
-You inherit a **stakeholder field audit at COMPLETE status**. All 9 stops + admin_venues locked; 26 P0s in §9; 12 ticketed (DD-485..DD-496). Next work is P0 closure via `/post-spec`, then `/happypath` run.
-
-Read `ultraplan/INDEX.md` for routing; §9 for open blockers (fix these); §14 above for current progress. Follow the 10 lessons — especially #1 (five-file ledger only), #4 (seed wins), #5 (commit defaults on every open Q), #9 (slugRef for multi-role), #10 (admin venues outside stakeholders).
+You inherit a **work-in-progress stakeholder field audit** feeding the DiveDispatch happy-path spec at `ultraplan/happy-path-spec-skeleton.md`. §7.12 is the canonical stakeholder ledger (ACTIVE — edit in place); §9 is the blocker queue. Stops 1–6 + admin_venues are locked. Three stops remain: Stop 7 DiveCenter (operator), Stop 8 Customer (lighter portal template), Stop 9 Agent (operator; depends on Stop 7 for referral). All P0s must close before the happy-path run. Open Stop 7 with the 4 committed defaults above; follow the 10 lessons — especially #1 (skeleton-only ledger), #4 (seed wins), #5 (commit defaults on every open Q), #9 (slugRef for multi-role), #10 (admin venues outside stakeholders).
 
 ## 15. Execution Conventions
 

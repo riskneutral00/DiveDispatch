@@ -1,0 +1,510 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://divedispatch.local/ultraplan/canonical.schema.json",
+  "title": "DiveDispatch Happy-Path Canonical Ledger",
+  "description": "Product-intent-driven canonical field shapes for every stakeholder in the happy path. Handwritten — NOT auto-derived from convex/schema.ts. When canonical, convex schema, or FE disagree, the disagreement is a P0 blocker. See ultraplan/INDEX.md for the ledger's role.",
+  "type": "object",
+  "required": ["order", "stakeholders"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "order": {
+      "type": "array",
+      "description": "Creation order for the happy-path run. Drives Act I phase sequence.",
+      "items": { "type": "string" },
+      "uniqueItems": true
+    },
+    "stakeholders": {
+      "type": "object",
+      "description": "Keyed by canonical stakeholder id (e.g. compressor_1, dive_center_2).",
+      "additionalProperties": { "$ref": "#/$defs/stakeholderEntry" }
+    },
+    "admin_venues": {
+      "type": "object",
+      "description": "Admin-added venues. No owning stakeholder; pre-seeded via UNOWNED_DIVE_SITES.",
+      "additionalProperties": { "$ref": "#/$defs/adminVenueEntry" }
+    }
+  },
+  "$defs": {
+    "stakeholderEntry": {
+      "oneOf": [
+        { "$ref": "#/$defs/entryCompressor" },
+        { "$ref": "#/$defs/entryEquipment" },
+        { "$ref": "#/$defs/entryBoat" },
+        { "$ref": "#/$defs/entryInstructor" },
+        { "$ref": "#/$defs/entryDiveMaster" },
+        { "$ref": "#/$defs/entryPool" },
+        { "$ref": "#/$defs/entryDiveCenter" },
+        { "$ref": "#/$defs/entryAgent" },
+        { "$ref": "#/$defs/entryCustomer" },
+        { "$ref": "#/$defs/entryPending" }
+      ]
+    },
+    "entryPending": {
+      "description": "Placeholder for a stakeholder whose audit stop has not locked yet. MUST have _pending field with rationale. DELETE when stop locks.",
+      "type": "object",
+      "required": ["role", "_pending"],
+      "properties": {
+        "role": { "type": "string" },
+        "note": { "type": "string" },
+        "_pending": { "type": "string" },
+        "slugRef": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "usersBlock": {
+      "description": "Canonical per-user record. Mirrors `users` table but omits runtime-assigned tokenIdentifier/slug.",
+      "type": "object",
+      "required": ["email", "firstName", "lastName", "businessName", "appLanguage", "isSeeded", "onboardingComplete"],
+      "properties": {
+        "email": { "type": "string", "format": "email" },
+        "name": { "type": "string" },
+        "firstName": { "type": "string", "minLength": 1 },
+        "lastName": { "type": "string", "minLength": 1 },
+        "nickname": { "type": "string" },
+        "businessName": { "type": "string", "minLength": 1 },
+        "appLanguage": { "type": "string", "enum": ["en", "th", "zh-CN", "zh-TW", "ko", "ja"] },
+        "customerLanguages": { "type": "array", "items": { "type": "string" } },
+        "phone": { "type": "string" },
+        "dateOfBirth": { "type": "string", "description": "ISO date. Required for Customer; optional for operators." },
+        "isSeeded": { "type": "boolean" },
+        "onboardingComplete": { "type": "boolean" },
+        "defaultLocation": { "type": "string" }
+      }
+    },
+    "accessControl": {
+      "description": "isAllowed / notAllowed. Role-specific — Compressor defers, Equipment/Pool use. Defaults to [] when absent.",
+      "type": "object",
+      "properties": {
+        "isAllowed": { "type": "array", "items": { "type": "string" } },
+        "notAllowed": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "location": {
+      "type": "object",
+      "required": ["placeName", "country", "lat", "lng"],
+      "properties": {
+        "placeName": { "type": "string", "minLength": 1 },
+        "country": { "type": "string", "minLength": 1 },
+        "lat": { "type": "number", "minimum": -90, "maximum": 90 },
+        "lng": { "type": "number", "minimum": -180, "maximum": 180 }
+      }
+    },
+    "credential": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["agency", "level", "agencyID"],
+        "properties": {
+          "agency": { "type": "string", "enum": ["PADI", "SSI", "SDI", "NAUI", "RAID", "BSAC", "CMAS", "TDI"] },
+          "level": { "type": "string" },
+          "agencyID": { "type": "string" },
+          "specialtyRatings": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "vessel": {
+      "type": "object",
+      "required": ["name", "maxPax", "type", "routes"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "maxPax": { "type": "integer", "minimum": 1 },
+        "type": { "type": "string", "enum": ["day_boat", "liveaboard", "rib", "longtail", "speedboat"] },
+        "routes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["diveSite", "daysOfWeek"],
+            "properties": {
+              "diveSite": { "type": "string" },
+              "daysOfWeek": { "type": "array", "items": { "type": "integer", "minimum": 0, "maximum": 6 }, "uniqueItems": true }
+            }
+          }
+        }
+      }
+    },
+    "entryCompressor": {
+      "type": "object",
+      "required": ["role", "compressors"],
+      "properties": {
+        "role": { "const": "Compressor" },
+        "slugRef": { "type": "string" },
+        "note": { "type": "string" },
+        "users": { "$ref": "#/$defs/usersBlock" },
+        "compressors": {
+          "allOf": [
+            { "$ref": "#/$defs/location" },
+            { "$ref": "#/$defs/accessControl" },
+            {
+              "type": "object",
+              "required": ["name", "email", "phone", "autoAccept", "verified"],
+              "properties": {
+                "name": { "type": "string" },
+                "email": { "type": "string", "format": "email" },
+                "phone": { "type": "string" },
+                "gasMixes": { "type": "array", "items": { "type": "string", "enum": ["air", "nitrox", "trimix"] }, "minItems": 1 },
+                "gasMixes_initial": { "type": "array", "items": { "type": "string" }, "maxItems": 0 },
+                "gasMixes_completed": { "type": "array", "items": { "type": "string", "enum": ["air", "nitrox", "trimix"] }, "minItems": 1 },
+                "nitroxO2Percent": { "type": "integer", "minimum": 22, "maximum": 40, "description": "Required when gasMixes includes 'nitrox'. Schema P0-3." },
+                "autoAccept": { "const": true, "description": "Compressor auto-accepts (row-level boolean, disabled FE checkbox). P0-3 adds schema column." },
+                "verified": { "type": "boolean" }
+              }
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "entryEquipment": {
+      "type": "object",
+      "required": ["role", "equipment"],
+      "properties": {
+        "role": { "const": "Equipment" },
+        "slugRef": { "type": "string" },
+        "note": { "type": "string" },
+        "users": { "$ref": "#/$defs/usersBlock" },
+        "equipment": {
+          "allOf": [
+            { "$ref": "#/$defs/location" },
+            { "$ref": "#/$defs/accessControl" },
+            {
+              "type": "object",
+              "required": ["name", "email", "phone", "autoAccept", "verified"],
+              "properties": {
+                "name": { "type": "string" },
+                "email": { "type": "string", "format": "email" },
+                "phone": { "type": "string" },
+                "manufacturersByGearType": {
+                  "type": "object",
+                  "minProperties": 1,
+                  "description": "P0-7: tighten schema from optional → required non-empty. Min 3 gear types for happy path.",
+                  "additionalProperties": { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+                },
+                "autoAccept": { "const": true, "description": "P0-6 adds schema column." },
+                "verified": { "type": "boolean" }
+              }
+            }
+          ]
+        },
+        "inventoryOverrides": { "type": "string" },
+        "inventoryOverrides_initial": { "type": "string" },
+        "inventoryOverrides_completed": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "entryBoat": {
+      "type": "object",
+      "required": ["role", "boats"],
+      "properties": {
+        "role": { "const": "Boat" },
+        "slugRef": { "type": "string" },
+        "note": { "type": "string" },
+        "users": { "$ref": "#/$defs/usersBlock" },
+        "boats": {
+          "allOf": [
+            { "$ref": "#/$defs/location" },
+            { "$ref": "#/$defs/accessControl" },
+            {
+              "type": "object",
+              "required": ["name", "email", "phone", "hasCompressor", "autoAccept", "verified"],
+              "properties": {
+                "name": { "type": "string" },
+                "email": { "type": "string", "format": "email" },
+                "phone": { "type": "string" },
+                "vessels": { "type": "array", "items": { "$ref": "#/$defs/vessel" }, "minItems": 1 },
+                "vessels_initial": { "type": "array", "maxItems": 0 },
+                "vessels_completed": { "type": "array", "items": { "$ref": "#/$defs/vessel" }, "minItems": 1 },
+                "hasCompressor": { "type": "boolean" },
+                "autoAccept": { "const": true, "description": "P0-9 adds schema column." },
+                "verified": { "type": "boolean" }
+              }
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "entryInstructor": {
+      "type": "object",
+      "required": ["role", "instructors"],
+      "properties": {
+        "role": { "const": "Instructor" },
+        "slugRef": { "type": "string" },
+        "label": { "type": "string" },
+        "note": { "type": "string" },
+        "users": { "$ref": "#/$defs/usersBlock" },
+        "instructors": {
+          "allOf": [
+            { "$ref": "#/$defs/location" },
+            { "$ref": "#/$defs/accessControl" },
+            {
+              "type": "object",
+              "required": ["name", "email", "phone", "credential", "verified"],
+              "properties": {
+                "name": { "type": "string" },
+                "email": { "type": "string", "format": "email" },
+                "phone": { "type": "string" },
+                "credential": { "$ref": "#/$defs/credential" },
+                "teachingLanguages": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+                "teachingLanguages_initial": { "type": "array", "maxItems": 0 },
+                "teachingLanguages_completed": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+                "autoAccept": { "type": "boolean", "description": "Instructor is the exception — toggleable, not forced true. Optional." },
+                "verified": { "type": "boolean" }
+              }
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "entryDiveMaster": {
+      "type": "object",
+      "required": ["role", "diveMasters"],
+      "properties": {
+        "role": { "const": "DiveMaster" },
+        "slugRef": { "type": "string" },
+        "note": { "type": "string" },
+        "users": { "$ref": "#/$defs/usersBlock" },
+        "diveMasters": {
+          "allOf": [
+            { "$ref": "#/$defs/location" },
+            { "$ref": "#/$defs/accessControl" },
+            {
+              "type": "object",
+              "required": ["name", "email", "phone", "credential", "verified"],
+              "properties": {
+                "name": { "type": "string" },
+                "email": { "type": "string", "format": "email" },
+                "phone": { "type": "string" },
+                "credential": { "$ref": "#/$defs/credential" },
+                "teachingLanguages": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+                "teachingLanguages_initial": { "type": "array", "maxItems": 0 },
+                "teachingLanguages_completed": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+                "autoAccept": { "const": true, "description": "P0-19 adds schema column. DM follows Lesson #8 resource pattern — disabled checkbox, true server-side." },
+                "verified": { "type": "boolean" }
+              }
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "entryPool": {
+      "type": "object",
+      "required": ["role", "venues"],
+      "properties": {
+        "role": { "const": "Pool" },
+        "slugRef": { "type": "string" },
+        "note": { "type": "string" },
+        "users": { "$ref": "#/$defs/usersBlock" },
+        "venues": {
+          "allOf": [
+            { "$ref": "#/$defs/location" },
+            { "$ref": "#/$defs/accessControl" },
+            {
+              "type": "object",
+              "required": ["name", "venueCategory", "hasCompressor", "autoAccept", "verified"],
+              "properties": {
+                "name": { "type": "string" },
+                "email": { "type": "string", "format": "email" },
+                "phone": { "type": "string" },
+                "venueCategory": { "const": "pool" },
+                "maxDepth": { "type": "number", "minimum": 0 },
+                "maxCapacity": { "type": "integer", "minimum": 1 },
+                "maxCapacity_initial": { "type": "integer", "const": 0 },
+                "maxCapacity_completed": { "type": "integer", "minimum": 1 },
+                "confinedCapable": { "type": "boolean", "description": "Should be true for pools (confined-water training venue)." },
+                "hasCompressor": { "type": "boolean" },
+                "autoAccept": { "const": true, "description": "P0-13 adds schema column." },
+                "verified": { "type": "boolean" }
+              }
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "entryDiveCenter": {
+      "type": "object",
+      "required": ["role", "diveCenters"],
+      "properties": {
+        "role": { "const": "DiveCenter" },
+        "slugRef": { "type": "string" },
+        "note": { "type": "string" },
+        "_pending": { "type": "string" },
+        "users": { "$ref": "#/$defs/usersBlock" },
+        "diveCenters": {
+          "allOf": [
+            { "$ref": "#/$defs/location" },
+            { "$ref": "#/$defs/accessControl" },
+            {
+              "type": "object",
+              "required": ["name", "email", "phone", "customerLanguages", "verified"],
+              "properties": {
+                "name": { "type": "string" },
+                "email": { "type": "string", "format": "email" },
+                "phone": { "type": "string" },
+                "associations": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "type": "object",
+                    "required": ["agency", "number"],
+                    "properties": {
+                      "agency": { "type": "string" },
+                      "number": { "type": "string" },
+                      "owDays": { "type": "integer", "minimum": 1 },
+                      "aowDays": { "type": "integer", "minimum": 1 },
+                      "oaDays": { "type": "integer", "minimum": 1 },
+                      "selectedSpecialties": { "type": "array", "items": { "type": "string" } }
+                    }
+                  }
+                },
+                "associations_initial": { "type": "array", "maxItems": 0 },
+                "associations_completed": { "type": "array", "minItems": 1 },
+                "customerLanguages": { "type": "array", "items": { "type": "string" }, "minItems": 1, "description": "P0-2: tightens schema from optional → required min 1 and moves from users → diveCenters." },
+                "verified": { "type": "boolean" }
+              }
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "entryAgent": {
+      "type": "object",
+      "required": ["role", "agents"],
+      "properties": {
+        "role": { "const": "Agent" },
+        "slugRef": { "type": "string" },
+        "note": { "type": "string" },
+        "_pending": { "type": "string" },
+        "users": { "$ref": "#/$defs/usersBlock" },
+        "agents": {
+          "allOf": [
+            { "$ref": "#/$defs/location" },
+            { "$ref": "#/$defs/accessControl" },
+            {
+              "type": "object",
+              "required": ["name", "email", "phone", "customerLanguages", "verified"],
+              "properties": {
+                "name": { "type": "string" },
+                "email": { "type": "string", "format": "email" },
+                "phone": { "type": "string" },
+                "associations": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["agency", "number"],
+                    "properties": {
+                      "agency": { "type": "string" },
+                      "number": { "type": "string" }
+                    }
+                  }
+                },
+                "defaultReferral": { "type": "string", "description": "slugRef to a dive_center_* entry. Drives referral mode." },
+                "customerLanguages": { "type": "array", "items": { "type": "string" }, "minItems": 1, "description": "P0-2: tightens schema from users → agents (required)." },
+                "verified": { "type": "boolean" }
+              }
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "entryCustomer": {
+      "type": "object",
+      "description": "Lighter portal template — no userRoles row, no autoAccept, no isAllowed.",
+      "required": ["role"],
+      "properties": {
+        "role": { "const": "Customer" },
+        "note": { "type": "string" },
+        "_pending": { "type": "string" },
+        "customer": {
+          "type": "object",
+          "required": ["firstName", "lastName", "email", "phone", "dateOfBirth", "certLevel", "medicalFlag", "languages"],
+          "properties": {
+            "firstName": { "type": "string", "minLength": 1 },
+            "lastName": { "type": "string", "minLength": 1 },
+            "email": { "type": "string", "format": "email" },
+            "phone": { "type": "string" },
+            "dateOfBirth": { "type": "string", "description": "ISO date. Required — gates medical eligibility and liability waiver." },
+            "certLevel": { "type": "string", "description": "e.g., 'none' for Discover Diver, 'OW', 'AOW', 'Rescue'." },
+            "medicalFlag": { "type": "boolean", "description": "true if medical form flags any condition — triggers Scene 6 branch." },
+            "emergencyContact": {
+              "type": "object",
+              "required": ["name", "phone", "relationship"],
+              "properties": {
+                "name": { "type": "string" },
+                "phone": { "type": "string" },
+                "relationship": { "type": "string" }
+              }
+            },
+            "emergencyContact_initial": { "description": "Deliberate-incomplete option.", "type": "null" },
+            "emergencyContact_completed": { "$ref": "#/$defs/entryCustomer/properties/customer/properties/emergencyContact" },
+            "languages": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+            "sizing": {
+              "type": "object",
+              "properties": {
+                "wetsuit": { "type": "string" },
+                "bcd": { "type": "string" },
+                "regulator": { "type": "string" },
+                "fins": { "type": "string" },
+                "mask": { "type": "string" },
+                "height": { "type": "number" },
+                "weight": { "type": "number" }
+              }
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "adminVenueEntry": {
+      "type": "object",
+      "required": ["category", "venues", "inventoryUnits"],
+      "properties": {
+        "category": { "const": "AdminVenue" },
+        "note": { "type": "string" },
+        "venues": {
+          "allOf": [
+            { "$ref": "#/$defs/location" },
+            { "$ref": "#/$defs/accessControl" },
+            {
+              "type": "object",
+              "required": ["name", "venueCategory", "hasCompressor", "verified"],
+              "properties": {
+                "name": { "type": "string" },
+                "email": { "type": "string" },
+                "phone": { "type": "string" },
+                "venueCategory": { "type": "string", "enum": ["pool", "diveSite", "diveCenter"] },
+                "diveSiteTypes": { "type": "array", "items": { "type": "string", "enum": ["shore", "boat"] } },
+                "confinedCapable": { "type": "boolean" },
+                "hasCompressor": { "type": "boolean" },
+                "maxCapacity": { "type": "integer", "minimum": 1 },
+                "maxDepth": { "type": "number" },
+                "verified": { "const": true, "description": "Admin pre-approves." }
+              }
+            }
+          ]
+        },
+        "inventoryUnits": {
+          "type": "object",
+          "required": ["resourceType", "resourceId", "displayName", "capacityModel", "totalUnits", "ownerId", "ownerType"],
+          "properties": {
+            "resourceType": { "type": "string", "enum": ["DiveSite", "Pool", "Boat"] },
+            "resourceId": { "type": "string" },
+            "displayName": { "type": "string" },
+            "capacityModel": { "type": "string", "enum": ["Pooled", "Exclusive"] },
+            "totalUnits": { "type": "integer", "minimum": 1 },
+            "ownerId": { "const": "__unowned__" },
+            "ownerType": { "const": "DiveSite" }
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
