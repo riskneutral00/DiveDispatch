@@ -271,8 +271,7 @@ export function SpecialtyField({
         ))}
       </div>
 
-      {/* Visible layout — ONE container, no row splitting.
-          Pills never move between parent elements, preventing insertBefore crashes. */}
+      {/* comments-ok: ONE container, no row splitting — pills moving between parents causes React insertBefore crashes */}
       <div
         className="flex flex-wrap gap-2 items-center"
         style={{ opacity: measured ? 1 : 0 }}
@@ -330,7 +329,7 @@ function SpecialtyPill({
   onToggle,
 }: SpecialtyPillProps) {
   return (
-    <label
+    <label /* design-ok: clickable surface wrapping sr-only toggle inside compound pill picker */
       className={`inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-full text-label font-medium transition-all duration-theme ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}
       style={{
         background: checked

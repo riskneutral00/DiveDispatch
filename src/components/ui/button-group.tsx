@@ -73,10 +73,9 @@ export function ButtonGroup({
       role="group"
       aria-label={ariaLabel}
       className={cn(
-        "inline-flex rounded-theme overflow-hidden border flex-shrink-0 reading-plane p-2",
+        "inline-flex rounded-theme overflow-hidden border border-glass-border flex-shrink-0 reading-plane p-2",
         className,
       )}
-      style={{ borderColor: "var(--color-glass-border)" }}
     >
       {options.map(({ value: v, label }) => (
         <button
@@ -84,7 +83,7 @@ export function ButtonGroup({
           type="button"
           onClick={() => onChange(v)}
           className={cn(
-            "px-2.5 py-2 font-medium capitalize transition-all duration-theme border-l first:border-l-0",
+            "px-2.5 py-2 font-medium capitalize transition-all duration-theme border-l first:border-l-0", // spacing-ok: compact segmented control padding
             textSize,
           )}
           style={{

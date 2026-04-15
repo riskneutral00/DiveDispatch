@@ -106,10 +106,7 @@ export function Dialog({
               className,
             )}
           >
-            <div
-              className="flex items-center justify-between gap-4 px-4 py-3 md:px-6 md:py-4 flex-shrink-0 border-b"
-              style={{ borderColor: "var(--color-glass-border)" }}
-            >
+            <div className="flex items-center justify-between gap-4 px-4 py-3 md:px-6 md:py-4 flex-shrink-0 border-b border-b-glass-border">
               <div className="flex-1 min-w-0">
                 {title && (
                   <h2
@@ -162,10 +159,7 @@ export function Dialog({
           )}
         >
           {(title || description) && (
-            <div
-              className="flex items-start justify-between gap-4 p-4 md:p-6 border-b"
-              style={{ borderColor: "var(--color-glass-border)" }}
-            >
+            <div className="flex items-start justify-between gap-4 p-4 md:p-6 border-b border-b-glass-border">
               <div className="flex-1 min-w-0">
                 {title && (
                   <h2

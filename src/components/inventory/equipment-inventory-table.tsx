@@ -369,7 +369,7 @@ function AddItemDialog({
             onChange={(e) => setIsPrescription(e.target.checked)}
             className="w-5 h-5 accent-[var(--color-primary)]"
           />
-          <label htmlFor="add-prescription" className="text-body text-primary">
+          <label /* design-ok: pairs with native checkbox above */ htmlFor="add-prescription" className="text-body text-primary">
             Prescription mask
           </label>
         </div>

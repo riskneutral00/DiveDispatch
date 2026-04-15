@@ -70,8 +70,7 @@ export function HierarchySubBar({ slug, roleSlug }: HierarchySubBarProps) {
               <span
                 key={`divider-${idx}`}
                 data-testid="role-hierarchy-divider"
-                className="h-5 w-px flex-shrink-0"
-                style={{ background: 'var(--color-glass-border)' }}
+                className="h-5 w-px flex-shrink-0 bg-glass-border"
                 aria-hidden
               />
             )

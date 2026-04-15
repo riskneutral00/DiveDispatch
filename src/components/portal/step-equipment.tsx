@@ -343,7 +343,7 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
             {(['Yes', 'No'] as const).map((opt) => {
               const isSelected = needsPoweredLenses === (opt === 'Yes')
               return (
-                <label key={opt} className="flex items-center gap-2 cursor-pointer">
+                <label /* design-ok: clickable surface wrapping sr-only radio with custom indicator */ key={opt} className="flex items-center gap-2 cursor-pointer">
                   <input /* design-ok: sr-only radio with custom indicator */
                     type="radio"
                     name="poweredLenses"

@@ -456,7 +456,7 @@ function LocationPickerTrigger({ value, onOpen, onClear, error, label, required,
         )}
       </div>
       {label && (
-        <label
+        <label /* design-ok: floating-label overlay inside compound picker trigger */
           htmlFor={inputId}
           className={cn(
             'absolute left-0 pointer-events-none transition-all duration-theme',
