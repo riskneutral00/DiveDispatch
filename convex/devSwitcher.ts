@@ -5,6 +5,7 @@ import type { DataModel } from './_generated/dataModel'
 import { requireDevEnvironment } from './lib/devGuard'
 import { ErrorCode } from './lib/errorCodes'
 import { deriveDefaultRole } from './lib/rolePrecedence'
+import { getAllUserRoles } from './lib/userRoleHelpers'
 
 type MutCtx = GenericMutationCtx<DataModel>
 
@@ -31,10 +32,7 @@ async function devSwitchUserHandler(ctx: MutCtx, targetSlug: string) {
     throw new ConvexError({ code: ErrorCode.FORBIDDEN, reason: 'Can only switch to seed users' })
   }
 
-  const targetRoles = await ctx.db
-    .query('userRoles')
-    .withIndex('by_userId', (q) => q.eq('userId', target._id))
-    .collect() // bounded: per-user roles, max ~12
+  const targetRoles = await getAllUserRoles(ctx, target._id)
   if (targetRoles.length === 0) {
     throw new ConvexError({ code: ErrorCode.NOT_FOUND, reason: 'Target user has no roles' })
   }

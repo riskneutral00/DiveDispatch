@@ -145,12 +145,16 @@ async function hasAnyOperatorRole(ctx: MutationCtx, userId: Id<'users'>): Promis
 }
 
 export async function getRequiredUserBySlug(ctx: DbCtx, slug: string): Promise<Doc<'users'>> {
-  const user = await ctx.db
+  const user = await getUserBySlug(ctx, slug)
+  if (!user) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
+  return user
+}
+
+export async function getUserBySlug(ctx: DbCtx, slug: string): Promise<Doc<'users'> | null> {
+  return ctx.db
     .query('users')
     .withIndex('by_slug', (q) => q.eq('slug', slug))
     .unique()
-  if (!user) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
-  return user
 }
 
 async function hasRole(

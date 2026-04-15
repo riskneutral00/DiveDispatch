@@ -1,6 +1,6 @@
 import { ConvexError, v } from 'convex/values'
 import { mutation } from './_generated/server'
-import { authorize } from './lib/auth'
+import { authorize, getUserBySlug } from './lib/auth'
 import type { MutationCtx } from './_generated/server'
 import type { Doc, Id } from './_generated/dataModel'
 import { tryAutoAdvance, canBookingTransition, canReservationTransition, isSessionStarted } from './bookings/_shared'
@@ -28,10 +28,7 @@ async function getOwnerCity(
   ownerSlug: string,
   ownerType: ResourceType,
 ): Promise<string | null> {
-  const user = await ctx.db
-    .query('users')
-    .withIndex('by_slug', (q) => q.eq('slug', ownerSlug))
-    .unique()
+  const user = await getUserBySlug(ctx, ownerSlug)
   if (!user) return null
 
   return getProfileCity(ctx, user._id, ownerType)
@@ -53,11 +50,7 @@ async function batchGetUsers(
   slugs: string[],
 ): Promise<Map<string, Doc<'users'> | null>> {
   if (slugs.length === 0) return new Map()
-  const users = await Promise.all(
-    slugs.map((slug) =>
-      ctx.db.query('users').withIndex('by_slug', (q) => q.eq('slug', slug)).unique(),
-    ),
-  )
+  const users = await Promise.all(slugs.map((slug) => getUserBySlug(ctx, slug)))
   const map = new Map<string, Doc<'users'> | null>()
   for (let i = 0; i < slugs.length; i++) {
     map.set(slugs[i], users[i])

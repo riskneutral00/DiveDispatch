@@ -148,6 +148,7 @@ export const bookingCountForRole = query({
 
     const roleRow = await ctx.db.get(roleId)
     if (!roleRow) return 0
+    if (roleRow.userId !== authUser._id) return 0
 
     const user = await ctx.db.get(roleRow.userId)
     if (!user) return 0
