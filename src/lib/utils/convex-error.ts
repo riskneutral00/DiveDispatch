@@ -27,6 +27,7 @@ const CODE_TO_KEY: Record<string, string> = {
   RESOURCES_INCOMPLETE: 'resourcesIncomplete',
   DUPLICATE_ROLE: 'duplicateRole',
   LAST_ROLE: 'lastRole',
+  SNAPSHOT_FIELD_IMMUTABLE: 'snapshotFieldImmutable',
   RATE_LIMITED: 'rateLimited',
 }
 

@@ -21,10 +21,11 @@
    - Enforced by: `/review-backend-schema` flags tables without validator functions
    - Current sketch tables: `liveaboards`, `cabins`, `tripSchedules`, `diveResorts`, `diveHostels`
 
-5. **Denormalized fields are annotated with explicit semantics.** Every denormalized field gets one of two annotations:
+5. **Denormalized fields are annotated with explicit semantics AND enforced as immutable at the mutation layer.** Every denormalized field gets one of two annotations:
    - `// snapshot: frozen at creation, intentionally never synced` — like Airbnb's price-at-booking. The value is correct as of creation time.
    - Eliminated — derive from the source of truth at read time instead.
    - There is no third option. "Denormalized and we hope it stays in sync" is not a valid state.
+   - Runtime enforcement: `convex/lib/snapshotFields.ts#assertSnapshotImmutability` throws `SNAPSHOT_FIELD_IMMUTABLE` when an update handler's patch args would change a snapshot field to a different value. Documented exceptions (referral handoff rewriting `bookings.operatorName`) call `ctx.db.patch` directly, bypassing the guard.
    - Violation history: `bookings.operatorName` denormalized from `users.businessName` with no sync mechanism. `bookings.startDate/endDate` copied from wizard input while canonical truth is `bookingSessions.date`. `declineReservation` used the stale denormalized values.
 
 6. **Schema fields are required, not optional-with-fallback.** `v.optional()` means "some rows legitimately don't have this value." It does NOT mean "I didn't write a migration." If a new field is added, existing rows are backfilled.
@@ -34,8 +35,10 @@
 
 ## Exceptions
 
-- `bookings.operatorName` is a legitimate snapshot (frozen at creation).
-- `bookings.startDate/endDate` are snapshots frozen at creation. Canonical truth is `bookingSessions.date`, but the booking-level fields serve the dashboard list view without joining sessions.
-- `bookingLinks.customerName/email` are legitimate snapshots (frozen at link creation).
+- `bookings.operatorName` — snapshot of the operator at booking creation time. Rewritten only by referral handoff + return (documented mutation-layer exception in `bookingDraftMutations.ts#returnReferralToReferrer`).
+- `bookings.startDate` — snapshot of the planned range start at creation time. Canonical per-day truth is `bookingSessions.date`; this field serves the dashboard list view without joining sessions.
+- `bookings.endDate` — snapshot of the planned range end at creation time. Canonical per-day truth is `bookingSessions.date`; this field serves the dashboard list view without joining sessions.
+- `bookingLinks.customerName` — snapshot of the customer's name at link send time. Customer may rename themselves later via portal; the link record preserves who the link was sent to.
+- `bookingLinks.email` — snapshot of the customer's email at link send time. Customer may change their email later via portal; the link record preserves the address used for delivery.
 - `customers.allergies` / `customerProfiles.allergies`: snapshot pattern. `customerProfiles.allergies` is the per-booking canonical source for operational context (boat widget, safety forms). `customers.allergies` is the persistent customer record, synced from latest profile via `saveSafetyInfo` write-through when `customerId` is set. No read-time fallback chain — each consumer picks the right source.
 - `bookingLinks.token` / `customerProfiles.linkToken`: intentional dual-write. Same UUID, different access paths. `bookingLinks.by_token` for portal auth lookup, `customerProfiles.by_linkToken` for profile lookup. Created together in `bookingLinks.ts` — never diverge.

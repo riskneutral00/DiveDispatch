@@ -21,6 +21,7 @@ import { logBookingChange } from '../lib/auditLog'
 import { notifyReleasedInventory } from '../notifications'
 import { deleteResourcesForBooking, insertBookingResource } from '../bookingResources'
 import { ErrorCode } from '../lib/errorCodes'
+import { assertSnapshotImmutability, BOOKINGS_SNAPSHOT_FIELDS } from '../lib/snapshotFields'
 import { profileBySlug } from '../lib/profileHelpers'
 import type { Doc } from '../_generated/dataModel'
 import { canTeachCourses, type Credential } from '../lib/credentialMatch'
@@ -216,7 +217,7 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
     })
   }
 
-  await ctx.db.patch(args.bookingId as Id<"bookings">, {
+  const bookingPatch: Record<string, unknown> = {
     submittedAt: now,
     expiresAt,
     bookingFormComplete: true,
@@ -229,7 +230,13 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
       portalWaiver: args.bookingData.portalWaiver,
       divers: args.bookingData.divers,
     }),
-  })
+  }
+  assertSnapshotImmutability(
+    booking as unknown as Record<string, unknown>,
+    bookingPatch,
+    BOOKINGS_SNAPSHOT_FIELDS,
+  )
+  await ctx.db.patch(args.bookingId as Id<"bookings">, bookingPatch)
 
   if (isResubmit) {
     await deleteResourcesForBooking(ctx, args.bookingId)
@@ -276,30 +283,6 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
   }
 
   await tryAutoAdvance(ctx, args.bookingId)
-
-  if (isResubmit && args.bookingData) {
-    const diff: Record<string, { old: unknown; new: unknown }> = {}
-    const scalarFields = [
-      'startDate',
-      'endDate',
-    ] as const
-    for (const field of scalarFields) {
-      const oldVal = (booking as Record<string, unknown>)[field]
-      const newVal = (args.bookingData as Record<string, unknown>)[field]
-      if (oldVal !== newVal) {
-        diff[field] = { old: oldVal, new: newVal }
-      }
-    }
-    if (Object.keys(diff).length > 0) {
-      await logBookingChange(ctx, {
-        bookingId: args.bookingId as Id<'bookings'>,
-        action: 'edited',
-        actorSlug: user.slug,
-        actorType: 'operator',
-        diff: JSON.stringify(diff),
-      })
-    }
-  }
 
   await logBookingChange(ctx, {
     bookingId: args.bookingId as Id<'bookings'>,
