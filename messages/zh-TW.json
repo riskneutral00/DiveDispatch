@@ -116,6 +116,7 @@
     "conflict": "資源衝突——其他人已搶先預訂。",
     "profileIncomplete": "請先完善您的個人資料再繼續。",
     "resourcesIncomplete": "請在確認前指派所有必要資源。",
+    "snapshotFieldImmutable": "建立後此欄位無法變更。",
     "rateLimited": "請求過多，請稍後再試。"
   },
   "nav": {
@@ -300,6 +301,7 @@
       "signupPrompt": "準備好下一次潛水了嗎？"
     },
     "sectionPersonalDetails": "Personal Details",
+    "sectionLanguages": "Languages You Speak",
     "sectionPassport": "Passport / ID",
     "sectionEmergency": "Emergency Contact",
     "sectionCertification": "Diving Certification",

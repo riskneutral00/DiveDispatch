@@ -116,6 +116,7 @@
     "conflict": "Resource conflict — someone else booked it first.",
     "profileIncomplete": "Complete your profile before continuing.",
     "resourcesIncomplete": "Assign all required resources before confirming.",
+    "snapshotFieldImmutable": "This field can't be changed after creation.",
     "rateLimited": "Too many requests. Wait a moment and try again."
   },
   "nav": {
@@ -300,6 +301,7 @@
       "signupPrompt": "Ready for your next dive?"
     },
     "sectionPersonalDetails": "Personal Details",
+    "sectionLanguages": "Languages You Speak",
     "sectionPassport": "Passport / ID",
     "sectionEmergency": "Emergency Contact",
     "sectionCertification": "Diving Certification",

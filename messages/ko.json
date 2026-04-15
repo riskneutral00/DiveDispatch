@@ -116,6 +116,7 @@
     "conflict": "리소스 충돌 — 다른 사람이 먼저 예약했습니다.",
     "profileIncomplete": "계속하기 전에 프로필을 완성하세요.",
     "resourcesIncomplete": "확인하기 전에 필요한 모든 리소스를 배정하세요.",
+    "snapshotFieldImmutable": "생성 후에는 이 필드를 변경할 수 없습니다.",
     "rateLimited": "요청이 너무 많습니다. 잠시 후 다시 시도하세요."
   },
   "nav": {
@@ -300,6 +301,7 @@
       "signupPrompt": "다음 다이빙을 준비하시겠습니까?"
     },
     "sectionPersonalDetails": "Personal Details",
+    "sectionLanguages": "Languages You Speak",
     "sectionPassport": "Passport / ID",
     "sectionEmergency": "Emergency Contact",
     "sectionCertification": "Diving Certification",
