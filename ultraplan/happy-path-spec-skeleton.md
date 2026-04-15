@@ -530,9 +530,24 @@ Five Acts partition the run: **I Onboarding · II Booking Convergence · III Var
 ### P0-26 — Snapshot field immutability enforcement
 
 - **Ticket:** `.tickets/DD-496.md`
-- **Source:** Retro re-audit cross-cutting. `Industry-Alignment-Decisions.md` C1 declares five fields as snapshots: `bookings.operatorName`, `bookings.startDate`, `bookings.endDate`, `bookingLinks.customerName`, `bookingLinks.email`. Schema stores as plain `v.string()`; mutations can overwrite.
+- **Source:** Retro re-audit cross-cutting. `Industry-Alignment-Decisions.md` C1 declares five fields as snapshots: `bookings.operatorName`, `bookings.startDate`, `bookingLinks.customerName`, `bookingLinks.email`, `bookings.endDate`. Schema stores as plain `v.string()`; mutations can overwrite.
 - **Impact:** Audit log unreliable; referral return and portal-resent semantics become ambiguous.
 - **Action:** add `// snapshot: <description>` comments per `.claude/rules/code-style-nav.md`; add mutation guards that reject patches attempting to overwrite with different values; update `schema-invariants.md` Rule 5 vault doc; integration test per field.
+
+### P0-27 — Per-course-type preference cascade
+
+- **Ticket:** not yet filed (replaces retired DD-317 concept)
+- **Source:** Matt's vision 2026-04-14 — "operator has preferred stakeholders ... pre-loaded instructors and boats for a certain type of course (OW vs AOW)." Investigation confirmed flat-list cascade is built (`use-wizard-preferences.ts:23-46`, `itinerary-step.tsx:234-309`) but schema has no `activityType` / `courseCode` key on `stakeholderPreferences`. Current behavior: every course type inherits the same preferred instructor/boat/pool/equipment/compressor.
+- **Impact:** Vision's "pre-loaded per course type" requirement cannot be exercised in happypath. Booking for multi-course activity (OW + AOW) cannot route to different instructors per phase.
+- **Action:**
+  - Schema: add `preferencesByCourseType: v.optional(v.record(courseCode, v.object({instructorSlug: v.optional(...), boatSlug: v.optional(...), poolSlug: v.optional(...), equipmentSlug: v.optional(...), compressorSlug: v.optional(...)})))` on `stakeholderPreferences` table. Flat arrays remain as fallback.
+  - Mutation: `stakeholderPreferences.update` accepts the new shape; validation rejects unknown courseCodes.
+  - FE: DC + Agent profile Preferences tab adds per-course-type picker (group by course code, per-row resource picks).
+  - Cascade: `resolveWizardPreferences` reads course-keyed map first for the current `activityType`, falls back to flat list when no course-specific entry.
+  - Cascade trigger: re-resolve on `activityType` change inside booking form.
+  - Integration test: DC sets OW→Instructor A + AOW→Instructor B; booking with `activityType=[OW, AOW]` assigns A to OW days + B to AOW days.
+- **Depends on:** P0-1 (`submitToDraft` fix) — cascaded picks must persist to reservation writes.
+- **Size:** L (schema + mutation + 2 form surfaces + cascade hook + tests).
 
 *(Matt: add additional known blockers below or leave for L.2.)*
 
@@ -899,7 +914,7 @@ Five Acts partition the run: **I Onboarding · II Booking Convergence · III Var
   - DD-353 (customer contact drops at submit — persistence gap)
   - DD-354 (SendPortalLink dead code — not wired)
   - DD-314 (3-channel deep-link send — not built)
-  - DD-317 (referral loads operator prefs — not built)
+  - ~~DD-317 (referral loads operator prefs — not built)~~ **RETIRED 2026-04-14** — cascade verified built at `src/lib/hooks/use-wizard-preferences.ts:23-46` + `src/components/booking/itinerary-step.tsx:234-309` + `convex/bookingDraftMutations.ts:79-91`. Flat-preference cascade works; referral toggle flips source correctly. Integration test coverage happens via happypath run itself. See P0-27 for the real gap (per-course-type cascade).
   - DD-363, DD-364 (post-trip landing, account conversion — not built)
 
   Act II cannot run without DD-353 and DD-354 at minimum. Act V cannot run without DD-363 / DD-364. File each as explicit prerequisite or confirm already-tracked.
@@ -931,7 +946,7 @@ Preserved from the original brief:
 
 1. Product intent and implementation are not identical.
 2. Some reminder and messaging behaviors are specified in docs but only partially implemented (DD-362, DD-354, DD-363).
-3. Referral and preference-cascade behavior has known drift risk (DD-317).
+3. Referral and preference-cascade behavior is wired end-to-end for flat preferences (see retired DD-317 note in §10 L.2). Per-course-type cascade is not built — see P0-27.
 4. Existing walkthrough observations show a booking can appear healthy while still missing required reservation writes (`Observations.md:8–14`).
 5. Post-trip conversion is conceptually richer in the docs than in clearly finished UX.
 
