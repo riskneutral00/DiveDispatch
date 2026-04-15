@@ -34,3 +34,7 @@ Full decision record + implementation checklist: `Vaults/DiveDispatch/wiki/Archi
 | Session / Failure / Review / Ingest / Lint | `Vaults/DiveDispatch/raw/<kind>/YYYY-MM-DD*.md` |
 | Chronological log (working tier) | `Vaults/DiveDispatch/log.md` |
 | Cross-vault reference | `[[vault:<name>/<path>]]` → see `Vaults/shared/index.md` |
+
+## Happy-path audit + run spec
+
+The happy-path spec set lives in `ultraplan/`. **Read `ultraplan/INDEX.md` first** for the routing table and resume pointer. Five-artifact joint ledger: `skeleton.md` + `canonical.json` + `canonical.schema.json` + `choreography.md` + `assertions.yaml`. Nothing goes in `.claude/plans/` for this work.
