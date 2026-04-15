@@ -4,6 +4,7 @@ import type { Doc, Id, TableNames } from '../_generated/dataModel'
 import { authorize, getAuthUser } from './auth'
 import { checkHasRole } from '../userRoles'
 import { ErrorCode } from './errorCodes'
+import { ROLE_REQUIRED } from './requiredFields'
 import { queryDynamicTable, insertDynamicTable, patchDynamic } from './typedDb'
 
 export const ROLE_TABLE_MAP: Record<string, TableNames> = {
@@ -77,6 +78,7 @@ export async function profileUpdate(
   ctx: MutationCtx,
   args: Record<string, unknown>,
   tableName: TableNames,
+  role?: string,
 ) {
   const { user } = await authorize(ctx, null, 'profile:manage', { type: 'profile' })
 
@@ -89,7 +91,57 @@ export async function profileUpdate(
   for (const [key, value] of Object.entries(args)) {
     if (!PROTECTED_FIELDS.has(key)) safeArgs[key] = value
   }
+
+  if (role) {
+    await assertProfileCompletenessInvariant(
+      ctx,
+      user._id,
+      role,
+      profile as unknown as Record<string, unknown>,
+      safeArgs,
+    )
+  }
+
   await patchDynamic(ctx.db, profile._id, safeArgs)
+}
+
+function isRoleFieldSatisfied(
+  profile: Record<string, unknown>,
+  field: string,
+  role: string,
+): boolean {
+  if (role === 'Boat' && field === 'diveSite') {
+    const fleet = profile.fleet as Array<{ routes?: Array<{ diveSite: string }> }> | undefined
+    return !!fleet?.some((f) => f.routes?.some((r) => r.diveSite))
+  }
+  const value = profile[field]
+  if (Array.isArray(value)) return value.length > 0
+  return typeof value === 'string' && value.trim().length > 0
+}
+
+export async function assertProfileCompletenessInvariant(
+  ctx: MutationCtx,
+  userId: Id<'users'>,
+  role: string,
+  existing: Record<string, unknown>,
+  patch: Record<string, unknown>,
+): Promise<void> {
+  const roleRow = await ctx.db
+    .query('userRoles')
+    .withIndex('by_userId', (q) => q.eq('userId', userId))
+    .filter((q) => q.eq(q.field('role'), role))
+    .unique()
+  if (!roleRow?.profileComplete) return
+
+  const merged = { ...existing, ...patch }
+  const required = ROLE_REQUIRED[role] ?? []
+  const violations = required.filter((field) => !isRoleFieldSatisfied(merged, field, role))
+  if (violations.length > 0) {
+    throw new ConvexError({
+      code: ErrorCode.PROFILE_INCOMPLETE,
+      data: { violations },
+    })
+  }
 }
 
 export async function profileCreate(

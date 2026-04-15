@@ -10,6 +10,6 @@ export const ROLE_REQUIRED: Record<string, readonly string[]> = {
   Boat: ['name', 'placeName', 'diveSite', 'fleet'],
   Equipment: ['name', 'placeName'],
   Pool: ['name', 'placeName'],
-  Compressor: ['name', 'placeName'],
+  Compressor: ['name', 'placeName', 'gasMixes'],
   DiveSite: ['name', 'placeName', 'country', 'diveSiteTypes'],
 }
