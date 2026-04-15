@@ -156,7 +156,6 @@ interface AgentProfile {
   email: string
   phone: string
   associations: { agency: string; number: string }[]
-  defaultReferral?: string
   verified: boolean
 }
 
@@ -805,7 +804,6 @@ export const AMANDA: SeedStakeholder = {
     email: 'amanda@divedispatch.dev',
     phone: '+66-81-555-0012',
     associations: [{ agency: 'PADI', number: 'A-10482' }],
-    defaultReferral: 'q9bz7r',  // Nicole DC
     verified: VERIFIED,
   },
 }
@@ -835,7 +833,6 @@ export const JIYEON_AGENT: SeedStakeholder = {
       { agency: 'PADI', number: 'A-20501' },
       { agency: 'SSI', number: 'A-20502' },
     ],
-    defaultReferral: 'w3kn7p',  // Hanul Dive
     verified: VERIFIED,
   },
 }
@@ -865,7 +862,6 @@ export const KENJI_AGENT: SeedStakeholder = {
       { agency: 'PADI', number: 'A-20503' },
       { agency: 'SSI', number: 'A-20504' },
     ],
-    defaultReferral: 'b6um4j',  // Umi Dive
     verified: VERIFIED,
   },
 }
@@ -895,7 +891,6 @@ export const EVA_AGENT: SeedStakeholder = {
       { agency: 'PADI', number: 'A-20505' },
       { agency: 'SSI', number: 'A-20506' },
     ],
-    defaultReferral: 't7gw1k',  // Pray DC
     verified: VERIFIED,
   },
 }

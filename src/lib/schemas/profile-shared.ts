@@ -37,7 +37,6 @@ export const diveCenterLanguagesSchema = z.object({
   customerLanguages: customerLanguagesFieldSchema,
 })
 
-/** Contact + customer languages (single save in role profile). */
 export const diveCenterContactMergedSchema = contactSchema.merge(diveCenterLanguagesSchema)
 
 const diveCenterAssociationItemSchema = z.object({
@@ -62,15 +61,12 @@ export const diveCenterAffiliationsSchema = z
     { message: 'Not enough specialties selected', path: ['associations'] },
   )
 
-export const agentContactSchema = contactSchema.extend({
-  defaultReferral: z.string().nullable().optional(),
-})
+export const agentContactSchema = contactSchema
 
 export const agentLanguagesSchema = z.object({
   customerLanguages: customerLanguagesFieldSchema,
 })
 
-/** Agent contact + customer languages (agent update + users.updateProfile for languages). */
 export const agentContactMergedSchema = agentContactSchema.merge(agentLanguagesSchema)
 
 export const agentAssociationsSchema = z.object({
@@ -85,7 +81,6 @@ export const personalLanguagesSchema = z.object({
   teachingLanguages: teachingLanguagesFieldSchema,
 })
 
-/** Instructor / dive master contact + teaching languages (single resource save). */
 export const personalContactMergedSchema = personalContactSchema.merge(personalLanguagesSchema)
 
 export const diveMasterCredentialsSchema = z.object({

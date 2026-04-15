@@ -404,12 +404,17 @@
                     }
                   }
                 },
-                "defaultReferral": { "type": "string", "description": "slugRef to a dive_center_* entry. Drives referral mode." },
                 "customerLanguages": { "type": "array", "items": { "type": "string" }, "minItems": 1, "description": "P0-2: tightens schema from users → agents (required)." },
                 "verified": { "type": "boolean" }
               }
             }
           ]
+        },
+        "stakeholderPreferences": {
+          "type": "object",
+          "properties": {
+            "preferredOperatorSlug": { "type": "string", "description": "slugRef to a dive_center_* entry. Drives agent referral mode. Canonical source (was agents.defaultReferral prior to P0-17)." }
+          }
         }
       },
       "additionalProperties": false

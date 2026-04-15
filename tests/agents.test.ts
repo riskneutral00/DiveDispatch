@@ -62,7 +62,6 @@ describe('agents.create', () => {
       expect(agent!.name).toBe('Test Agent')
       expect(agent!.userId).toEqual(userId)
       expect(agent!.verified).toBe(false)
-      expect(agent!.defaultReferral).toBeUndefined()
       expect(agent!.placeName).toBe('Koh Tao')
       expect(agent!.country).toBe('Thailand')
     })
@@ -121,15 +120,54 @@ describe('agents.update', () => {
     await t.withIdentity({ tokenIdentifier: 'clerk|upd-agent' })
       .mutation(api.agents.update, {
         name: 'Updated Agent',
-        defaultReferral: 'some-dc-slug',
       })
 
     await t.run(async (ctx) => {
       const agent = await ctx.db.get(agentId!) as Doc<'agents'> | null
       expect(agent!.name).toBe('Updated Agent')
-      expect(agent!.defaultReferral).toBe('some-dc-slug')
-      // Unchanged fields preserved
       expect(agent!.email).toBe('agent@test.com')
+    })
+  })
+
+  it('persists isAllowed (whitelist) via update mutation', async () => {
+    const t = makeT()
+    let agentId: Awaited<ReturnType<typeof seedAgent>> | undefined
+    await t.run(async (ctx) => {
+      const userId = await seedUser(ctx, 'wl-agent', 'Agent')
+      agentId = await seedAgent(ctx, userId)
+    })
+
+    await t.withIdentity({ tokenIdentifier: 'clerk|wl-agent' })
+      .mutation(api.agents.update, {
+        isAllowed: ['dc-one', 'dc-two'],
+        notAllowed: [],
+      })
+
+    await t.run(async (ctx) => {
+      const agent = await ctx.db.get(agentId!) as Doc<'agents'> | null
+      expect(agent!.isAllowed).toEqual(['dc-one', 'dc-two'])
+      expect(agent!.notAllowed).toEqual([])
+    })
+  })
+
+  it('persists notAllowed (blocklist) via update mutation', async () => {
+    const t = makeT()
+    let agentId: Awaited<ReturnType<typeof seedAgent>> | undefined
+    await t.run(async (ctx) => {
+      const userId = await seedUser(ctx, 'bl-agent', 'Agent')
+      agentId = await seedAgent(ctx, userId)
+    })
+
+    await t.withIdentity({ tokenIdentifier: 'clerk|bl-agent' })
+      .mutation(api.agents.update, {
+        isAllowed: [],
+        notAllowed: ['bad-dc'],
+      })
+
+    await t.run(async (ctx) => {
+      const agent = await ctx.db.get(agentId!) as Doc<'agents'> | null
+      expect(agent!.isAllowed).toEqual([])
+      expect(agent!.notAllowed).toEqual(['bad-dc'])
     })
   })
 })

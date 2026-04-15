@@ -40,7 +40,6 @@ export async function seedAgent(
     email?: string
     phone?: string
     associations?: Array<{ agency: string; number: string }>
-    defaultReferral?: string
     verified?: boolean
   } = {},
 ) {
@@ -54,7 +53,6 @@ export async function seedAgent(
     email: overrides.email ?? 'agent@test.com',
     phone: overrides.phone ?? '+66123456789',
     associations: overrides.associations ?? [{ agency: 'PADI', number: '12345' }],
-    ...(overrides.defaultReferral ? { defaultReferral: overrides.defaultReferral } : {}),
     verified: overrides.verified ?? false,
   })
 }

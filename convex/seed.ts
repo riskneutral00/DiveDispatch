@@ -546,17 +546,10 @@ export const seedStakeholderPreferences = internalMutation({
     }
 
     const AGENT_PREFERRED_OPERATOR: Record<string, string> = {
-      'r5yz4q': 'q9bz7r',             // Amanda → Nicole DC
-      'k4ko9j': 'w3kn7p',             // Ji-Yeon → Hanul Dive
-      'a7ja2m': 'b6um4j',             // Kenji → Umi Dive
-      'e6eu5z': 't7gw1k',             // Eva → Pray DC
-    }
-
-    const agentReferralMap = new Map<string, string>()
-    for (const s of ALL_STAKEHOLDERS) {
-      if (s.agent?.defaultReferral) {
-        agentReferralMap.set(s.user.slug, s.agent.defaultReferral)
-      }
+      'r5yz4q': 'q9bz7r',
+      'k4ko9j': 'w3kn7p',
+      'a7ja2m': 'b6um4j',
+      'e6eu5z': 't7gw1k',
     }
 
     const allStakeholders: { slug: string; role: StakeholderRole }[] = [
@@ -596,8 +589,8 @@ export const seedStakeholderPreferences = internalMutation({
         ...(OPERATOR_PREFERRED[slug]?.equipment && {
           preferredEquipmentSlugs: OPERATOR_PREFERRED[slug].equipment,
         }),
-        ...(agentReferralMap.has(slug) && {
-          preferredOperatorSlug: agentReferralMap.get(slug),
+        ...(AGENT_PREFERRED_OPERATOR[slug] && {
+          preferredOperatorSlug: AGENT_PREFERRED_OPERATOR[slug],
         }),
       })
     }

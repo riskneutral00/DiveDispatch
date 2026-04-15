@@ -46,6 +46,7 @@ function StandardConnectedForm({ section, config, onClose }: { section?: string;
   const { apiModule, Component } = config
   const profile = useQuery(apiModule.mine)
   const me = useQuery(api.users.me)
+  const prefs = useQuery(api.stakeholderPreferences.mine)
   const create = useMutation(apiModule.create)
   const update = useMutation(apiModule.update)
   const updateProfile = useMutation(api.users.updateProfile)
@@ -58,6 +59,7 @@ function StandardConnectedForm({ section, config, onClose }: { section?: string;
       update={asLooseMut(update)}
       updateProfile={asLooseMut(updateProfile)}
       onClose={onClose}
+      preferredOperatorSlug={prefs?.preferredOperatorSlug ?? null}
     />
   )
 }

@@ -141,22 +141,10 @@ describe('agentContactSchema', () => {
     location: validLocation,
     email: 'agent@reef.com',
     phone: '+66-81-000-0000',
-    defaultReferral: 'some-dc-slug',
   }
 
-  it('accepts valid agent contact with defaultReferral', () => {
+  it('accepts valid agent contact', () => {
     expect(agentContactSchema.safeParse(valid).success).toBe(true)
-  })
-
-  it('accepts null defaultReferral (independent)', () => {
-    const result = agentContactSchema.safeParse({ ...valid, defaultReferral: null })
-    expect(result.success).toBe(true)
-  })
-
-  it('accepts missing defaultReferral (independent)', () => {
-    const { defaultReferral: _, ...rest } = valid
-    const result = agentContactSchema.safeParse(rest)
-    expect(result.success).toBe(true)
   })
 
   it('rejects empty name', () => {

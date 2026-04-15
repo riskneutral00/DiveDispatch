@@ -32,7 +32,6 @@ export default defineSchema({
     dateOfBirth: v.optional(v.string()),
     isSeeded: v.boolean(),
     selectedThemeId: v.optional(v.id('themes')),
-    /** Starter + optional catalog skins available to this account (palette cycles within this list). */
     savedThemeIds: v.optional(v.array(v.id('themes'))),
     onboardingComplete: v.optional(v.boolean()),
     defaultLocation: v.optional(v.string()),
@@ -47,9 +46,7 @@ export default defineSchema({
     config: v.string(),
     isActive: v.boolean(),
     createdAt: v.number(),
-    /** Display / cycle order within the store; lower sorts first. Not a user-facing skin name. */
     sortOrder: v.optional(v.number()),
-    /** Which palette cycle list this skin belongs to (dark vs light); moon/sun mode picks the matching list. */
     appearance: v.optional(
       v.union(v.literal('dark'), v.literal('light')),
     ),
@@ -174,6 +171,7 @@ export default defineSchema({
     emergencyContactRelation: v.string(),
     clerkUserId: v.optional(v.string()),
     flags: v.optional(v.array(v.literal('medical_block'))),
+    languages: v.optional(v.array(v.string())),
     createdAt: v.number(),
   })
     .index('by_email', ['email'])
@@ -509,7 +507,6 @@ export default defineSchema({
     email: v.string(),
     phone: v.string(),
     associations: v.array(v.object({ agency: v.string(), number: v.string() })),
-    defaultReferral: v.optional(v.string()),
     ...accessControlFields,
     verified: v.boolean(),
   }).index('by_userId', ['userId']),

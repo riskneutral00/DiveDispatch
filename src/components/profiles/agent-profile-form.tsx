@@ -8,6 +8,13 @@ import { LanguageField } from '@/components/ui/language-field'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import {
+  AccessControlSection,
+  INITIAL_ACCESS_CONTROL,
+  accessFromProfile,
+  accessToPayload,
+  type AccessControlState,
+} from '@/components/profiles/access-control-section'
+import {
   type ContactFormState,
   INITIAL_CONTACT_FORM as BASE_INITIAL_CONTACT,
   INITIAL_CUSTOMER_LANGUAGES,
@@ -31,9 +38,9 @@ export type AgentProfileSection = 'contact' | 'associations'
 
 type AssociationData = z.infer<typeof associationSchema>
 
-export type AgentContactFormState = ContactFormState & {
-  defaultReferral: string | null
+export type AgentContactFormState = ContactFormState & { // dry-ok
   customerLanguages: Language[]
+  access: AccessControlState
 }
 
 export type AgentAssociationsFormState = {
@@ -42,8 +49,8 @@ export type AgentAssociationsFormState = {
 
 export const INITIAL_CONTACT_FORM: AgentContactFormState = {
   ...BASE_INITIAL_CONTACT,
-  defaultReferral: null,
   ...INITIAL_CUSTOMER_LANGUAGES,
+  access: INITIAL_ACCESS_CONTROL,
 }
 
 export const INITIAL_LANGUAGES_FORM = INITIAL_CUSTOMER_LANGUAGES
@@ -68,8 +75,8 @@ export function languagesToPayloadAgent(_f: Pick<AgentContactFormState, 'custome
 export function contactFromProfile(p: Record<string, unknown>): AgentContactFormState {
   return {
     ...baseContactFromProfile(p),
-    defaultReferral: (p.defaultReferral as string) ?? null,
     ...INITIAL_CUSTOMER_LANGUAGES,
+    access: accessFromProfile(p),
   }
 }
 
@@ -85,15 +92,15 @@ function contactFromProfileMerged(p: Record<string, unknown>, me?: Record<string
 function agentMergedFromMe(u: Record<string, unknown>, defaults: AgentContactFormState): AgentContactFormState {
   return {
     ...defaultFromMe(u, defaults),
-    defaultReferral: defaults.defaultReferral,
     customerLanguages: languagesFromProfile((u as { customerLanguages?: string[] }).customerLanguages),
+    access: defaults.access,
   }
 }
 
 export function contactToPayload(f: AgentContactFormState): Record<string, unknown> {
   return {
     ...baseContactToPayload(f),
-    ...(f.defaultReferral ? { defaultReferral: f.defaultReferral } : {}),
+    ...accessToPayload(f.access),
   }
 }
 
@@ -115,11 +122,12 @@ export function associationsToPayload(f: AgentAssociationsFormState): Record<str
 
 type AgentContactSectionProps = BaseProfileSectionProps & {
   updateProfile: (payload: Record<string, unknown>) => Promise<unknown>
+  preferredOperatorSlug?: string | null
 }
 
 export type AgentAssociationsSectionProps = Pick<BaseProfileSectionProps, 'profile' | 'create' | 'update'> & { onClose?: () => void }
 
-export function AgentContactSection({ profile, me, create, update, updateProfile, onClose }: AgentContactSectionProps) {
+export function AgentContactSection({ profile, me, create, update, updateProfile, onClose, preferredOperatorSlug }: AgentContactSectionProps) {
   const {
     form,
     setField,
@@ -195,7 +203,7 @@ export function AgentContactSection({ profile, me, create, update, updateProfile
       <div>
         <FormSectionHeader label="Default Referral" />
         <p className="text-label mt-2 text-secondary">
-          {form.defaultReferral
+          {preferredOperatorSlug
             ? 'Bookings cascade from your preferred operator. Change in Preferences → Resources → Operator.'
             : 'You create and manage bookings independently.'}
         </p>
@@ -207,6 +215,13 @@ export function AgentContactSection({ profile, me, create, update, updateProfile
         variant="customer"
         value={form.customerLanguages}
         onChange={(langs) => setField('customerLanguages', langs)}
+      />
+
+      <SectionDivider variant="soft" />
+
+      <AccessControlSection
+        value={form.access}
+        onChange={(next) => setField('access', next)}
       />
     </ProfileFormShell>
   )
@@ -271,9 +286,10 @@ type AgentProfileFormProps = {
   update: (payload: Record<string, unknown>) => Promise<unknown>
   updateProfile: (payload: Record<string, unknown>) => Promise<unknown>
   onClose?: () => void
+  preferredOperatorSlug?: string | null
 }
 
-export function AgentProfileForm({ section, profile, me, create, update, updateProfile, onClose }: AgentProfileFormProps) {
+export function AgentProfileForm({ section, profile, me, create, update, updateProfile, onClose, preferredOperatorSlug }: AgentProfileFormProps) {
   if (section === 'associations')
     return <AgentAssociationsSection profile={profile} create={create} update={update} onClose={onClose} />
   return (
@@ -284,6 +300,7 @@ export function AgentProfileForm({ section, profile, me, create, update, updateP
       update={update}
       updateProfile={updateProfile}
       onClose={onClose}
+      preferredOperatorSlug={preferredOperatorSlug}
     />
   )
 }

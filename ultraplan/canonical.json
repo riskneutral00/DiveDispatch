@@ -685,7 +685,7 @@
     },
     "agent": {
       "role": "Agent",
-      "note": "Fresh-signup agent onboarded in Act I Phase 8. defaultReferral points at dive_center_1 (Hug Ocean, n7rq5j) — exercises Act III.4 referral-toggle flow. See P0-17: agents.defaultReferral vs stakeholderPreferences.preferredOperatorSlug semantic alignment.",
+      "note": "Fresh-signup agent onboarded in Act I Phase 8. stakeholderPreferences.preferredOperatorSlug points at dive_center_1 (Hug Ocean, n7rq5j) — exercises Act III.4 referral-toggle flow.",
       "users": {
         "email": "agent.walker@phukettravel.example",
         "name": "Alex Walker",
@@ -708,10 +708,12 @@
         "phone": "+66 81 900 1234",
         "associations": [{ "agency": "PADI", "number": "PAD-AG-70001" }],
         "customerLanguages": ["en"],
-        "defaultReferral": "n7rq5j",
         "isAllowed": [],
         "notAllowed": [],
         "verified": true
+      },
+      "stakeholderPreferences": {
+        "preferredOperatorSlug": "n7rq5j"
       }
     }
   },
