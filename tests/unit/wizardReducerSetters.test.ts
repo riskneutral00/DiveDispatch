@@ -6,9 +6,14 @@ import {
   type DayConfig,
   type BookingConflictDetail,
 } from '../../src/lib/booking/wizard-state'
+import { testDate } from '../helpers/dates'
+
+const DAY_1 = testDate(30)
+const DAY_2 = testDate(31)
+const DAY_3 = testDate(32)
 
 const DAY_BASE: DayConfig = {
-  date: '2026-04-01',
+  date: DAY_1,
   dives: [],
   divesPerDay: 2,
   startTime: '08:00',
@@ -96,7 +101,7 @@ describe('SET_DAY_INSTRUCTOR', () => {
   it('sets instructorSlug on the target day', () => {
     const state = stateWithDays([
       { ...DAY_BASE },
-      { ...DAY_BASE, date: '2026-04-02' },
+      { ...DAY_BASE, date: DAY_2 },
     ])
     const next = wizardReducer(state, { type: 'SET_DAY_INSTRUCTOR', dayIndex: 1, slug: 'jane-inst' })
     expect(next.days[1].instructorSlug).toBe('jane-inst')
@@ -105,7 +110,7 @@ describe('SET_DAY_INSTRUCTOR', () => {
   it('does not affect other days', () => {
     const state = stateWithDays([
       { ...DAY_BASE, instructorSlug: 'bob-inst' },
-      { ...DAY_BASE, date: '2026-04-02' },
+      { ...DAY_BASE, date: DAY_2 },
     ])
     const next = wizardReducer(state, { type: 'SET_DAY_INSTRUCTOR', dayIndex: 1, slug: 'jane-inst' })
     expect(next.days[0].instructorSlug).toBe('bob-inst')
@@ -115,9 +120,9 @@ describe('SET_DAY_INSTRUCTOR', () => {
 describe('APPLY_INSTRUCTOR_TO_REMAINING', () => {
   it('applies instructor to fromDayIndex and all subsequent days', () => {
     const state = stateWithDays([
-      { ...DAY_BASE, date: '2026-04-01' },
-      { ...DAY_BASE, date: '2026-04-02' },
-      { ...DAY_BASE, date: '2026-04-03' },
+      { ...DAY_BASE, date: DAY_1 },
+      { ...DAY_BASE, date: DAY_2 },
+      { ...DAY_BASE, date: DAY_3 },
     ])
     const next = wizardReducer(state, { type: 'APPLY_INSTRUCTOR_TO_REMAINING', fromDayIndex: 1, slug: 'jane-inst' })
     expect(next.days[0].instructorSlug).toBeUndefined()
@@ -128,7 +133,7 @@ describe('APPLY_INSTRUCTOR_TO_REMAINING', () => {
   it('does not change days before fromDayIndex', () => {
     const state = stateWithDays([
       { ...DAY_BASE, instructorSlug: 'bob-inst' },
-      { ...DAY_BASE, date: '2026-04-02' },
+      { ...DAY_BASE, date: DAY_2 },
     ])
     const next = wizardReducer(state, { type: 'APPLY_INSTRUCTOR_TO_REMAINING', fromDayIndex: 1, slug: 'jane-inst' })
     expect(next.days[0].instructorSlug).toBe('bob-inst')
@@ -168,7 +173,7 @@ describe('SET_SUBMITTING', () => {
 describe('SET_CONFLICT_ERROR', () => {
   it('sets conflict errors', () => {
     const errors: BookingConflictDetail[] = [
-      { inventoryUnitId: 'unit-1', date: '2026-04-01', reason: 'Already booked' },
+      { inventoryUnitId: 'unit-1', date: DAY_1, reason: 'Already booked' },
     ]
     const state = makeInitialState()
     const next = wizardReducer(state, { type: 'SET_CONFLICT_ERROR', errors })
@@ -178,7 +183,7 @@ describe('SET_CONFLICT_ERROR', () => {
   it('clears conflict errors with null', () => {
     const state = {
       ...makeInitialState(),
-      conflictError: [{ inventoryUnitId: 'u1', date: '2026-04-01', reason: 'x' }],
+      conflictError: [{ inventoryUnitId: 'u1', date: DAY_1, reason: 'x' }],
     }
     const next = wizardReducer(state, { type: 'SET_CONFLICT_ERROR', errors: null })
     expect(next.conflictError).toBeNull()

@@ -17,6 +17,7 @@ export async function seedUser(
     firstName?: string
     lastName?: string
     businessName?: string
+    isSeeded?: boolean
     skipUserRoles?: boolean
   } = {},
 ) {
@@ -30,7 +31,7 @@ export async function seedUser(
     lastName: overrides.lastName ?? 'User',
     businessName: overrides.businessName ?? 'Test Business',
     phone: '+66812345678',
-    isSeeded: true,
+    isSeeded: overrides.isSeeded ?? true,
     appLanguage: 'en',
   })
   if (!overrides.skipUserRoles) {

@@ -6,9 +6,14 @@ import {
   type DayConfig,
   type DiveSlot,
 } from '../../src/lib/booking/wizard-state'
+import { testDate } from '../helpers/dates'
+
+const DAY_1 = testDate(30)
+const DAY_2 = testDate(31)
+const DAY_3 = testDate(32)
 
 const DAY_BASE: DayConfig = {
-  date: '2026-04-01',
+  date: DAY_1,
   dives: [],
   divesPerDay: 2,
   startTime: '08:00',
@@ -90,7 +95,7 @@ describe('SET_DIVE_VENUE', () => {
     const dive2: DiveSlot = { courseCode: 'OW', diveNumber: 2, isConfined: false }
     const state = stateWithDays([
       { ...DAY_BASE, dives: [dive1] },
-      { ...DAY_BASE, date: '2026-04-02', dives: [dive2] },
+      { ...DAY_BASE, date: DAY_2, dives: [dive2] },
     ])
     const next = wizardReducer(state, {
       type: 'SET_DIVE_VENUE',
@@ -179,14 +184,14 @@ describe('TOGGLE_DIVE', () => {
 describe('REMOVE_DAY', () => {
   it('removes a day by index', () => {
     const state = stateWithDays([
-      { ...DAY_BASE, date: '2026-04-01' },
-      { ...DAY_BASE, date: '2026-04-02' },
-      { ...DAY_BASE, date: '2026-04-03' },
+      { ...DAY_BASE, date: DAY_1 },
+      { ...DAY_BASE, date: DAY_2 },
+      { ...DAY_BASE, date: DAY_3 },
     ])
     const next = wizardReducer(state, { type: 'REMOVE_DAY', dayIndex: 1 })
     expect(next.days).toHaveLength(2)
-    expect(next.days[0].date).toBe('2026-04-01')
-    expect(next.days[1].date).toBe('2026-04-03')
+    expect(next.days[0].date).toBe(DAY_1)
+    expect(next.days[1].date).toBe(DAY_3)
   })
 
   it('does not remove the last remaining day', () => {

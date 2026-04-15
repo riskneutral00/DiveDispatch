@@ -11,29 +11,22 @@ import { api } from '../convex/_generated/api'
 import type { Id } from '../convex/_generated/dataModel'
 import { makeT, expectConvexError } from './helpers/convex-helpers'
 import type { StakeholderRole } from '../convex/lib/validators'
+import { seedUser as seedBaseUser } from './fixtures/seedUsers'
 
 type Ctx = Parameters<Parameters<ReturnType<typeof makeT>['run']>[0]>[0]
 
 async function seedUser(ctx: Ctx, slug: string, role: StakeholderRole = 'Agent') {
-  const userId = await ctx.db.insert('users', {
-    tokenIdentifier: `clerk|${slug}`,
+  return seedBaseUser(ctx, {
     slug,
+    role,
+    tokenIdentifier: `clerk|${slug}`,
     email: `${slug}@test.com`,
     name: `${slug} Display`,
     firstName: slug,
     lastName: 'Test',
-    phone: '+66800000000',
     businessName: `${slug} Business`,
     isSeeded: false,
-    appLanguage: 'en',
   })
-  await ctx.db.insert('userRoles', {
-    userId,
-    role,
-    createdAt: Date.now(),
-    profileComplete: false,
-  })
-  return userId
 }
 
 /** Seed the role-profile table + stakeholderPreferences so the operator passes checkProfileCompleteness. */
