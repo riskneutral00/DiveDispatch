@@ -18,6 +18,7 @@ import { canBookingTransition } from './bookings/stateMachine'
 import { extractErrorCode, ISOLATABLE_ERRORS } from './lib/errorClassification'
 import { batchDelete, batchPatch } from './lib/batch'
 import { sanitizeFields, USER_FIELDS } from './lib/sanitize'
+import { isAdult, MIN_SIGNUP_AGE_YEARS } from './lib/age'
 
 function publicUser(user: Doc<'users'>) {
   const { tokenIdentifier: _ti, email: _e, ...rest } = user
@@ -41,11 +42,13 @@ export const createUser = mutation({
     role: stakeholderType,
     roles: v.optional(v.array(stakeholderType)),
     businessName: v.optional(v.string()),
-    firstName: v.optional(v.string()),
-    lastName: v.optional(v.string()),
+    firstName: v.string(),
+    lastName: v.string(),
+    dateOfBirth: v.string(),
+    tcAccepted: v.literal(true),
+    tcVersion: v.string(),
     nickname: v.optional(v.string()),
     phone: v.optional(v.string()),
-    dateOfBirth: v.optional(v.string()),
     appLanguage: v.optional(v.string()),
     customerLanguages: v.optional(v.array(v.string())),
   },
@@ -55,6 +58,13 @@ export const createUser = mutation({
 
     await checkRateLimit(ctx, 'createUser', identity.tokenIdentifier)
 
+    if (!isAdult(args.dateOfBirth)) {
+      throw new ConvexError({
+        code: ErrorCode.VALIDATION,
+        reason: `Must be ${MIN_SIGNUP_AGE_YEARS} or older`,
+      })
+    }
+
     const existing = await ctx.db
       .query('users')
       .withIndex('by_tokenIdentifier', (q) =>
@@ -62,24 +72,23 @@ export const createUser = mutation({
       )
       .unique()
 
-    const identityFirstName = identity.givenName ?? ''
-    const identityLastName = identity.familyName ?? ''
-    const firstName = args.firstName ?? identityFirstName
-    const lastName = args.lastName ?? identityLastName
     const name = identity.name ?? ''
     const email = identity.email ?? ''
     const businessName = args.businessName ?? name
+    const now = Date.now()
 
     if (existing) {
       await ctx.db.patch(existing._id, {
         businessName,
-        ...(args.firstName !== undefined && { firstName: args.firstName }),
-        ...(args.lastName !== undefined && { lastName: args.lastName }),
+        firstName: args.firstName,
+        lastName: args.lastName,
+        ...(existing.dateOfBirth === undefined && { dateOfBirth: args.dateOfBirth }),
         ...(args.nickname !== undefined && { nickname: args.nickname }),
         ...(args.phone !== undefined && { phone: args.phone }),
-        ...(args.dateOfBirth !== undefined && { dateOfBirth: args.dateOfBirth }),
         ...(args.appLanguage !== undefined && { appLanguage: args.appLanguage }),
         ...(args.customerLanguages !== undefined && { customerLanguages: args.customerLanguages }),
+        ...(existing.tcAcceptedAt === undefined && { tcAcceptedAt: now }),
+        ...(args.tcVersion !== existing.tcVersion && { tcVersion: args.tcVersion, tcAcceptedAt: now }),
       })
       return existing._id
     }
@@ -90,11 +99,13 @@ export const createUser = mutation({
       slug,
       email,
       name,
-      firstName,
-      lastName,
+      firstName: args.firstName,
+      lastName: args.lastName,
+      dateOfBirth: args.dateOfBirth,
+      tcAcceptedAt: now,
+      tcVersion: args.tcVersion,
       ...(args.nickname !== undefined && { nickname: args.nickname }),
       ...(args.phone !== undefined && { phone: args.phone }),
-      ...(args.dateOfBirth !== undefined && { dateOfBirth: args.dateOfBirth }),
       businessName,
       customerLanguages: args.customerLanguages,
       isSeeded: false,

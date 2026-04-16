@@ -683,3 +683,63 @@ describe('gearSizingLookup.listByManufacturer', () => {
     )
   })
 })
+
+const EM_TOKEN_B = 'test|em-user-b'
+const EM_SLUG_B = 'em-slug-b'
+
+describe('gearSizingLookup ownership', () => {
+  let t: ReturnType<typeof makeT>
+  let entryId: Id<'gearSizingLookup'>
+
+  beforeEach(async () => {
+    t = makeT()
+    await t.withIdentity({ tokenIdentifier: EM_TOKEN }).run(async (ctx) => {
+      await seedUser(ctx, { tokenIdentifier: EM_TOKEN, slug: EM_SLUG, role: 'Equipment', email: 'em@test.com' })
+    })
+    await t.withIdentity({ tokenIdentifier: EM_TOKEN_B }).run(async (ctx) => {
+      await seedUser(ctx, { tokenIdentifier: EM_TOKEN_B, slug: EM_SLUG_B, role: 'Equipment', email: 'em-b@test.com' })
+    })
+    entryId = await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
+      api.gearSizingLookup.addSizingEntry,
+      { manufacturer: 'OwnerBrand', gearType: 'wetsuit', size: 'M', minHeight: 165, maxHeight: 180, minWeight: 60, maxWeight: 85 },
+    ) as Id<'gearSizingLookup'>
+  })
+
+  it('stores createdBy on insert', async () => {
+    await t.run(async (ctx) => {
+      const entry = await ctx.db.get(entryId)
+      expect(entry!.createdBy).toBe(EM_SLUG)
+    })
+  })
+
+  it('blocks updateSizingEntry by non-owner', async () => {
+    await expectConvexError(
+      t.withIdentity({ tokenIdentifier: EM_TOKEN_B }).mutation(
+        api.gearSizingLookup.updateSizingEntry,
+        { entryId, size: 'L' },
+      ),
+      'FORBIDDEN',
+    )
+  })
+
+  it('blocks removeSizingEntry by non-owner', async () => {
+    await expectConvexError(
+      t.withIdentity({ tokenIdentifier: EM_TOKEN_B }).mutation(
+        api.gearSizingLookup.removeSizingEntry,
+        { entryId },
+      ),
+      'FORBIDDEN',
+    )
+  })
+
+  it('allows owner to update own entry', async () => {
+    await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
+      api.gearSizingLookup.updateSizingEntry,
+      { entryId, size: 'L' },
+    )
+    await t.run(async (ctx) => {
+      const entry = await ctx.db.get(entryId)
+      expect(entry!.size).toBe('L')
+    })
+  })
+})

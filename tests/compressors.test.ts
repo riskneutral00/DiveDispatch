@@ -297,3 +297,67 @@ describe('compressors.mine', () => {
     expect(result!.name).toBe('Test Compressor')
   })
 })
+
+describe('compressors nitrox range validation', () => {
+  it('accepts valid nitrox range on create', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedUser(ctx, 'nitrox-ok') })
+
+    const compId = await t.withIdentity({ tokenIdentifier: 'clerk|nitrox-ok' })
+      .mutation(api.compressors.create, {
+        ...VALID_ARGS,
+        gasMixes: ['air', 'nitrox'],
+        nitroxMin: 28,
+        nitroxMax: 36,
+      })
+
+    await t.run(async (ctx) => {
+      const comp = await ctx.db.get(compId as Id<'compressors'>) as Doc<'compressors'> | null
+      expect(comp!.nitroxMin).toBe(28)
+      expect(comp!.nitroxMax).toBe(36)
+    })
+  })
+
+  it('rejects nitroxMin below 21 on create', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedUser(ctx, 'nitrox-low') })
+
+    await expect(
+      t.withIdentity({ tokenIdentifier: 'clerk|nitrox-low' })
+        .mutation(api.compressors.create, { ...VALID_ARGS, nitroxMin: 15 }),
+    ).rejects.toThrow(/VALIDATION/)
+  })
+
+  it('rejects nitroxMax above 40 on create', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedUser(ctx, 'nitrox-high') })
+
+    await expect(
+      t.withIdentity({ tokenIdentifier: 'clerk|nitrox-high' })
+        .mutation(api.compressors.create, { ...VALID_ARGS, nitroxMax: 50 }),
+    ).rejects.toThrow(/VALIDATION/)
+  })
+
+  it('rejects nitroxMin > nitroxMax on create', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedUser(ctx, 'nitrox-inv') })
+
+    await expect(
+      t.withIdentity({ tokenIdentifier: 'clerk|nitrox-inv' })
+        .mutation(api.compressors.create, { ...VALID_ARGS, nitroxMin: 36, nitroxMax: 28 }),
+    ).rejects.toThrow(/VALIDATION/)
+  })
+
+  it('rejects out-of-range nitrox on update', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => {
+      const userId = await seedUser(ctx, 'nitrox-upd')
+      await seedCompressorProfile(ctx, userId)
+    })
+
+    await expect(
+      t.withIdentity({ tokenIdentifier: 'clerk|nitrox-upd' })
+        .mutation(api.compressors.update, { nitroxMin: 50 }),
+    ).rejects.toThrow(/VALIDATION/)
+  })
+})

@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { ConvexError, type Value } from 'convex/values'
 import { api, internal } from '../convex/_generated/api'
 import { makeT } from './helpers/convex-helpers'
+import { createUserDefaults } from './helpers/createUser'
 
 describe('createUser mutation', () => {
   it('uses identity.email and ignores args.email on new user', async () => {
@@ -12,7 +13,7 @@ describe('createUser mutation', () => {
         tokenIdentifier: 'clerk|email-trust-new',
         email: 'real@clerk.dev',
       })
-      .mutation(api.users.createUser, {
+      .mutation(api.users.createUser, { ...createUserDefaults,
         role: 'DiveCenter',
         businessName: 'Trust Test DC',
       })
@@ -33,7 +34,7 @@ describe('createUser mutation', () => {
 
     // Create user first
     vi.useFakeTimers({ now: Date.now() })
-    await t.withIdentity(identity).mutation(api.users.createUser, {
+    await t.withIdentity(identity).mutation(api.users.createUser, { ...createUserDefaults,
       role: 'DiveCenter',
       businessName: 'First Call',
     })
@@ -42,7 +43,7 @@ describe('createUser mutation', () => {
 
     // Second call with a mismatched email in args should not overwrite
     vi.useFakeTimers({ now: Date.now() })
-    await t.withIdentity(identity).mutation(api.users.createUser, {
+    await t.withIdentity(identity).mutation(api.users.createUser, { ...createUserDefaults,
       role: 'DiveCenter',
       businessName: 'Second Call',
     })
@@ -58,7 +59,7 @@ describe('createUser mutation', () => {
     vi.useFakeTimers({ now: Date.now() })
     const userId = await t
       .withIdentity({ tokenIdentifier: 'clerk|phone-user' })
-      .mutation(api.users.createUser, {
+      .mutation(api.users.createUser, { ...createUserDefaults,
         role: 'DiveCenter',
         businessName: 'Test DC',
         phone: '+66123456789',
@@ -76,7 +77,7 @@ describe('createUser mutation', () => {
     vi.useFakeTimers({ now: Date.now() })
     const userId = await t
       .withIdentity({ tokenIdentifier: 'clerk|named-user' })
-      .mutation(api.users.createUser, {
+      .mutation(api.users.createUser, { ...createUserDefaults,
         role: 'Instructor',
         businessName: 'Captain Mike',
         firstName: 'Mike',
@@ -98,7 +99,7 @@ describe('createUser mutation', () => {
     vi.useFakeTimers({ now: Date.now() })
     const userId = await t
       .withIdentity({ tokenIdentifier: 'clerk|no-phone' })
-      .mutation(api.users.createUser, {
+      .mutation(api.users.createUser, { ...createUserDefaults,
         role: 'DiveCenter',
         businessName: 'Test DC',
       })
@@ -116,7 +117,7 @@ describe('createUser mutation', () => {
 
     // First call creates the user
     vi.useFakeTimers({ now: Date.now() })
-    await t.withIdentity(identity).mutation(api.users.createUser, {
+    await t.withIdentity(identity).mutation(api.users.createUser, { ...createUserDefaults,
       role: 'DiveCenter',
       businessName: 'Old Biz',
     })
@@ -126,7 +127,7 @@ describe('createUser mutation', () => {
 
     // Second call patches with new data
     vi.useFakeTimers({ now: Date.now() })
-    await t.withIdentity(identity).mutation(api.users.createUser, {
+    await t.withIdentity(identity).mutation(api.users.createUser, { ...createUserDefaults,
       role: 'Agent',
       businessName: 'New Biz',
       phone: '+1234567890',
@@ -145,6 +146,187 @@ describe('createUser mutation', () => {
   })
 })
 
+describe('createUser age gate + T&C', () => {
+  it('rejects a DOB making the user under 18', async () => {
+    const t = makeT()
+    const now = Date.now()
+    const today = new Date(now)
+    const dobUnder18 = `${today.getUTCFullYear() - 17}-${String(today.getUTCMonth() + 1).padStart(2, '0')}-${String(today.getUTCDate()).padStart(2, '0')}`
+
+    vi.useFakeTimers({ now })
+    try {
+      await t.withIdentity({ tokenIdentifier: 'clerk|minor' }).mutation(api.users.createUser, {
+        ...createUserDefaults,
+        dateOfBirth: dobUnder18,
+        role: 'DiveCenter',
+        businessName: 'Minor DC',
+      })
+      expect.fail('Expected ConvexError to be thrown')
+    } catch (err) {
+      expect(err).toBeInstanceOf(ConvexError)
+      const raw = (err as ConvexError<Value>).data
+      const data = typeof raw === 'string' ? JSON.parse(raw) : raw
+      expect(data.code).toBe('VALIDATION')
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('stores tcAcceptedAt timestamp on new user insert', async () => {
+    const t = makeT()
+    const fixedNow = Date.UTC(2026, 0, 15)
+    vi.useFakeTimers({ now: fixedNow })
+    const userId = await t.withIdentity({ tokenIdentifier: 'clerk|tc-accepter' })
+      .mutation(api.users.createUser, {
+        ...createUserDefaults,
+        role: 'DiveCenter',
+        businessName: 'TC DC',
+      })
+    await t.finishAllScheduledFunctions(vi.runAllTimers)
+    vi.useRealTimers()
+
+    const user = await t.run(async (ctx) => ctx.db.get(userId))
+    expect(user?.tcAcceptedAt).toBe(fixedNow)
+  })
+
+  it('does not overwrite tcAcceptedAt on idempotent re-call', async () => {
+    const t = makeT()
+    const identity = { tokenIdentifier: 'clerk|tc-idem' }
+    const firstNow = Date.UTC(2026, 0, 15)
+    const secondNow = Date.UTC(2026, 0, 20)
+
+    vi.useFakeTimers({ now: firstNow })
+    await t.withIdentity(identity).mutation(api.users.createUser, {
+      ...createUserDefaults,
+      role: 'DiveCenter',
+      businessName: 'First',
+    })
+    await t.finishAllScheduledFunctions(vi.runAllTimers)
+    vi.useRealTimers()
+
+    vi.useFakeTimers({ now: secondNow })
+    await t.withIdentity(identity).mutation(api.users.createUser, {
+      ...createUserDefaults,
+      role: 'Instructor',
+      businessName: 'Second',
+    })
+    await t.finishAllScheduledFunctions(vi.runAllTimers)
+    vi.useRealTimers()
+
+    const user = await t.withIdentity(identity).query(api.users.me, {})
+    expect(user?.tcAcceptedAt).toBe(firstNow)
+  })
+
+  it('stores tcVersion on new user insert', async () => {
+    const t = makeT()
+    vi.useFakeTimers({ now: Date.now() })
+    const userId = await t.withIdentity({ tokenIdentifier: 'clerk|tc-version-new' })
+      .mutation(api.users.createUser, {
+        ...createUserDefaults,
+        role: 'DiveCenter',
+        businessName: 'Version DC',
+        tcVersion: '2026-04-16-v1',
+      })
+    await t.finishAllScheduledFunctions(vi.runAllTimers)
+    vi.useRealTimers()
+
+    const user = await t.run(async (ctx) => ctx.db.get(userId))
+    expect(user?.tcVersion).toBe('2026-04-16-v1')
+  })
+
+  it('updates tcVersion and refreshes tcAcceptedAt on re-submission with new version', async () => {
+    const t = makeT()
+    const identity = { tokenIdentifier: 'clerk|tc-version-upgrade' }
+    const firstNow = Date.UTC(2026, 0, 15)
+    const secondNow = Date.UTC(2026, 5, 1)
+
+    vi.useFakeTimers({ now: firstNow })
+    await t.withIdentity(identity).mutation(api.users.createUser, {
+      ...createUserDefaults,
+      role: 'DiveCenter',
+      businessName: 'V1 DC',
+      tcVersion: '2026-04-16-v1',
+    })
+    await t.finishAllScheduledFunctions(vi.runAllTimers)
+    vi.useRealTimers()
+
+    vi.useFakeTimers({ now: secondNow })
+    await t.withIdentity(identity).mutation(api.users.createUser, {
+      ...createUserDefaults,
+      role: 'DiveCenter',
+      businessName: 'V2 DC',
+      tcVersion: '2026-05-01-v2',
+    })
+    await t.finishAllScheduledFunctions(vi.runAllTimers)
+    vi.useRealTimers()
+
+    const user = await t.withIdentity(identity).query(api.users.me, {})
+    expect(user?.tcVersion).toBe('2026-05-01-v2')
+    expect(user?.tcAcceptedAt).toBe(secondNow)
+  })
+
+  it('does not refresh tcAcceptedAt on re-submission with same version', async () => {
+    const t = makeT()
+    const identity = { tokenIdentifier: 'clerk|tc-version-same' }
+    const firstNow = Date.UTC(2026, 0, 15)
+    const secondNow = Date.UTC(2026, 5, 1)
+
+    vi.useFakeTimers({ now: firstNow })
+    await t.withIdentity(identity).mutation(api.users.createUser, {
+      ...createUserDefaults,
+      role: 'DiveCenter',
+      businessName: 'Same V DC',
+      tcVersion: '2026-04-16-v1',
+    })
+    await t.finishAllScheduledFunctions(vi.runAllTimers)
+    vi.useRealTimers()
+
+    vi.useFakeTimers({ now: secondNow })
+    await t.withIdentity(identity).mutation(api.users.createUser, {
+      ...createUserDefaults,
+      role: 'DiveCenter',
+      businessName: 'Same V DC 2',
+      tcVersion: '2026-04-16-v1',
+    })
+    await t.finishAllScheduledFunctions(vi.runAllTimers)
+    vi.useRealTimers()
+
+    const user = await t.withIdentity(identity).query(api.users.me, {})
+    expect(user?.tcVersion).toBe('2026-04-16-v1')
+    expect(user?.tcAcceptedAt).toBe(firstNow)
+  })
+})
+
+describe('createUser dateOfBirth immutability', () => {
+  it('does not overwrite dateOfBirth on idempotent re-submission', async () => {
+    const t = makeT()
+    const identity = { tokenIdentifier: 'clerk|dob-immutable' }
+
+    vi.useFakeTimers({ now: Date.now() })
+    await t.withIdentity(identity).mutation(api.users.createUser, {
+      ...createUserDefaults,
+      role: 'DiveCenter',
+      businessName: 'DOB DC',
+      dateOfBirth: '1990-01-01',
+    })
+    await t.finishAllScheduledFunctions(vi.runAllTimers)
+    vi.useRealTimers()
+
+    vi.useFakeTimers({ now: Date.now() })
+    await t.withIdentity(identity).mutation(api.users.createUser, {
+      ...createUserDefaults,
+      role: 'DiveCenter',
+      businessName: 'DOB DC 2',
+      dateOfBirth: '2000-06-15',
+    })
+    await t.finishAllScheduledFunctions(vi.runAllTimers)
+    vi.useRealTimers()
+
+    const user = await t.withIdentity(identity).query(api.users.me, {})
+    expect(user?.dateOfBirth).toBe('1990-01-01')
+  })
+})
+
 describe('createUser rate limiting', () => {
   it('rejects the 4th call within a minute with RATE_LIMITED', async () => {
     const t = makeT()
@@ -153,7 +335,7 @@ describe('createUser rate limiting', () => {
     // createUser allows 3 per minute — exhaust all 3 (idempotent re-calls still consume tokens)
     for (let i = 0; i < 3; i++) {
       vi.useFakeTimers({ now: Date.now() })
-      await t.withIdentity(identity).mutation(api.users.createUser, {
+      await t.withIdentity(identity).mutation(api.users.createUser, { ...createUserDefaults,
         role: 'DiveCenter',
         businessName: 'Rate Test DC',
       })
@@ -164,7 +346,7 @@ describe('createUser rate limiting', () => {
     // 4th call should throw RATE_LIMITED
     try {
       vi.useFakeTimers({ now: Date.now() })
-      await t.withIdentity(identity).mutation(api.users.createUser, {
+      await t.withIdentity(identity).mutation(api.users.createUser, { ...createUserDefaults,
         role: 'DiveCenter',
         businessName: 'Rate Test DC',
       })
@@ -188,7 +370,7 @@ describe('createUser rate limiting', () => {
     // Exhaust limit for identity A (3 calls)
     for (let i = 0; i < 3; i++) {
       vi.useFakeTimers({ now: Date.now() })
-      await t.withIdentity(identityA).mutation(api.users.createUser, {
+      await t.withIdentity(identityA).mutation(api.users.createUser, { ...createUserDefaults,
         role: 'DiveCenter',
         businessName: 'DC A',
       })
@@ -198,7 +380,7 @@ describe('createUser rate limiting', () => {
 
     // Identity B should still work
     vi.useFakeTimers({ now: Date.now() })
-    const userId = await t.withIdentity(identityB).mutation(api.users.createUser, {
+    const userId = await t.withIdentity(identityB).mutation(api.users.createUser, { ...createUserDefaults,
       role: 'DiveCenter',
       businessName: 'DC B',
     })
@@ -216,7 +398,7 @@ describe('updateBusinessInfo mutation', () => {
 
     // Create user first
     vi.useFakeTimers({ now: Date.now() })
-    await t.withIdentity(identity).mutation(api.users.createUser, {
+    await t.withIdentity(identity).mutation(api.users.createUser, { ...createUserDefaults,
       role: 'DiveCenter',
       businessName: 'Placeholder',
     })
@@ -264,7 +446,7 @@ describe('updateProfile email removed from args schema', () => {
 
     // Create user first
     vi.useFakeTimers({ now: Date.now() })
-    await t.withIdentity(identity).mutation(api.users.createUser, {
+    await t.withIdentity(identity).mutation(api.users.createUser, { ...createUserDefaults,
       role: 'DiveCenter',
       businessName: 'Schema Test',
     })
@@ -286,7 +468,7 @@ describe('updateProfile email removed from args schema', () => {
 
     // Create user first
     vi.useFakeTimers({ now: Date.now() })
-    await t.withIdentity(identity).mutation(api.users.createUser, {
+    await t.withIdentity(identity).mutation(api.users.createUser, { ...createUserDefaults,
       role: 'DiveCenter',
       businessName: 'Preserve Test',
     })

@@ -29,6 +29,13 @@ async function seedUser(ctx: Ctx, slug: string, role: StakeholderRole = 'Agent')
   })
 }
 
+async function seedReadyAgent(ctx: Ctx, slug: string) {
+  const userId = await seedUser(ctx, slug, 'Agent')
+  await ctx.db.patch(userId, { customerLanguages: ['en'] })
+  await seedCompleteOperator(ctx, slug, 'Agent', userId)
+  return userId
+}
+
 /** Seed the role-profile table + stakeholderPreferences so the operator passes checkProfileCompleteness. */
 async function seedCompleteOperator(ctx: Ctx, slug: string, role: StakeholderRole, userId: Id<'users'>) {
   if (role === 'DiveCenter') {
@@ -43,6 +50,20 @@ async function seedCompleteOperator(ctx: Ctx, slug: string, role: StakeholderRol
       phone: '+66123456789',
       associations: [{ agency: 'PADI', number: '12345', selectedSpecialties: ['PPB', 'Navigation', 'Deep', 'Night', 'Wreck'] }],
       customerLanguages: ['en'],
+      verified: true,
+    })
+  }
+  if (role === 'Agent') {
+    await ctx.db.insert('agents', {
+      userId,
+      name: `${slug} Agency`,
+      placeName: 'Koh Tao',
+      country: 'Thailand',
+      lat: 10.0957,
+      lng: 99.8408,
+      email: `${slug}@test.com`,
+      phone: '+66123456789',
+      associations: [{ agency: 'PADI', number: '99999' }],
       verified: true,
     })
   }
@@ -95,7 +116,7 @@ describe('createReferralDraftShell', () => {
   it('rejects when referral DC slug does not exist', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
-      await seedUser(ctx, 'agent-1', 'Agent')
+      await seedReadyAgent(ctx, 'agent-1')
     })
 
     await expectConvexError(
@@ -112,7 +133,7 @@ describe('createReferralDraftShell', () => {
   it('rejects when referral target is not an operator role', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
-      await seedUser(ctx, 'agent-2', 'Agent')
+      await seedReadyAgent(ctx, 'agent-2')
       await seedUser(ctx, 'instructor-ref', 'Instructor')
     })
 
@@ -127,10 +148,29 @@ describe('createReferralDraftShell', () => {
     )
   })
 
+  it('rejects referral from incomplete Agent profile', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => {
+      await seedUser(ctx, 'incomplete-agent', 'Agent')
+      const dcId = await seedUser(ctx, 'ready-dc', 'DiveCenter')
+      await seedCompleteOperator(ctx, 'ready-dc', 'DiveCenter', dcId)
+    })
+
+    await expectConvexError(
+      t.withIdentity({ tokenIdentifier: 'clerk|incomplete-agent' })
+        .mutation(api.bookingDraftMutations.createDraftShell, {
+          activeRole: 'Agent',
+          isReferral: true,
+          targetOperatorSlug: 'ready-dc',
+        }),
+      'PROFILE_INCOMPLETE',
+    )
+  })
+
   it('creates booking with DC as owner and Agent as referrer', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
-      await seedUser(ctx, 'agent-3', 'Agent')
+      await seedReadyAgent(ctx, 'agent-3')
       const dcId = await seedUser(ctx, 'target-dc', 'DiveCenter')
       await seedCompleteOperator(ctx, 'target-dc', 'DiveCenter', dcId)
     })
@@ -178,7 +218,7 @@ describe('createReferralDraftShell', () => {
   it('rejects referral without targetOperatorSlug', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
-      await seedUser(ctx, 'agent-no-target', 'Agent')
+      await seedReadyAgent(ctx, 'agent-no-target')
     })
 
     await expectConvexError(

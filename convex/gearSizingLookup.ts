@@ -1,7 +1,7 @@
 import { ConvexError, v } from 'convex/values'
 import type { Id } from './_generated/dataModel'
 import { mutation, query } from './_generated/server'
-import { authorize, requireAuth } from './lib/auth'
+import { assertOwnership, authorize, requireAuth } from './lib/auth'
 import { gearTypeValidator } from './lib/validators'
 import { ErrorCode } from './lib/errorCodes'
 
@@ -44,7 +44,7 @@ export const addSizingEntry = mutation({
     shoeSizeUnit: v.optional(v.union(v.literal('EU'), v.literal('US'), v.literal('CM'))),
   },
   handler: async (ctx, args): Promise<Id<'gearSizingLookup'>> => {
-    await authorize(ctx, null, 'resource:manage', { type: 'resource', requiredRole: 'Equipment' })
+    const { user } = await authorize(ctx, null, 'resource:manage', { type: 'resource', requiredRole: 'Equipment' })
 
     validateRanges(args.minHeight, args.maxHeight, args.minWeight, args.maxWeight)
 
@@ -73,6 +73,7 @@ export const addSizingEntry = mutation({
       maxWeight: args.maxWeight,
       ...(args.shoeSize !== undefined ? { shoeSize: args.shoeSize } : {}),
       ...(args.shoeSizeUnit !== undefined ? { shoeSizeUnit: args.shoeSizeUnit } : {}),
+      createdBy: user.slug,
     })
   },
 })
@@ -89,10 +90,11 @@ export const updateSizingEntry = mutation({
     shoeSizeUnit: v.optional(v.union(v.literal('EU'), v.literal('US'), v.literal('CM'))),
   },
   handler: async (ctx, args): Promise<void> => {
-    await authorize(ctx, null, 'resource:manage', { type: 'resource', requiredRole: 'Equipment' })
+    const { user } = await authorize(ctx, null, 'resource:manage', { type: 'resource', requiredRole: 'Equipment' })
 
     const entry = await ctx.db.get(args.entryId)
     if (!entry) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
+    if (entry.createdBy !== undefined) assertOwnership({ ownerId: entry.createdBy }, user)
 
     if (args.size !== undefined && args.size !== entry.size) {
       const siblings = await ctx.db
@@ -132,10 +134,11 @@ export const removeSizingEntry = mutation({
     entryId: v.id('gearSizingLookup'),
   },
   handler: async (ctx, args): Promise<void> => {
-    await authorize(ctx, null, 'resource:manage', { type: 'resource', requiredRole: 'Equipment' })
+    const { user } = await authorize(ctx, null, 'resource:manage', { type: 'resource', requiredRole: 'Equipment' })
 
     const entry = await ctx.db.get(args.entryId)
     if (!entry) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
+    if (entry.createdBy !== undefined) assertOwnership({ ownerId: entry.createdBy }, user)
 
     await ctx.db.delete(args.entryId)
   },

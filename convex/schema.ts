@@ -36,6 +36,7 @@ export default defineSchema({
     onboardingComplete: v.optional(v.boolean()),
     defaultLocation: v.optional(v.string()),
     tcAcceptedAt: v.optional(v.number()),
+    tcVersion: v.optional(v.string()),
   })
     .index('by_tokenIdentifier', ['tokenIdentifier'])
     .index('by_slug', ['slug'])

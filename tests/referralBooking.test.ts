@@ -1,8 +1,33 @@
 import { describe, it, expect } from 'vitest'
 import { api } from '../convex/_generated/api'
 import type { Id } from '../convex/_generated/dataModel'
-import { seedUser, seedDiveCenterProfile, seedStakeholderPreferences } from './fixtures'
+import { seedUser, seedDiveCenterProfile, seedStakeholderPreferences, type SeedCtx } from './fixtures'
 import { makeT } from './helpers/convex-helpers'
+
+async function seedReadyAgent(ctx: SeedCtx, slug: string) {
+  const userId = await seedUser(ctx, { slug, tokenIdentifier: `clerk|${slug}`, role: 'Agent' })
+  await ctx.db.patch(userId, { customerLanguages: ['en'] })
+  await ctx.db.insert('agents', {
+    userId,
+    name: `${slug} Agency`,
+    placeName: 'Koh Tao',
+    country: 'Thailand',
+    lat: 10.0957,
+    lng: 99.8408,
+    email: `${slug}@test.com`,
+    phone: '+66123456789',
+    associations: [{ agency: 'PADI', number: '99999' }],
+    verified: true,
+  })
+  await seedStakeholderPreferences(ctx, slug, {
+    stakeholderType: 'Agent',
+    preferredInstructorSlugs: ['i'],
+    preferredEquipmentSlugs: ['e'],
+    preferredVenueSlugs: ['v'],
+    preferredCompressorSlugs: ['c'],
+  })
+  return userId
+}
 
 describe('createDraftShell — referral mode', () => {
   it('rejects non-operator active role with FORBIDDEN', async () => {
@@ -35,7 +60,7 @@ describe('createDraftShell — referral mode', () => {
   it('rejects non-existent target slug with NOT_FOUND', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
-      await seedUser(ctx, { slug: 'agent-user', tokenIdentifier: 'clerk|agent-user', role: 'Agent' })
+      await seedReadyAgent(ctx, 'agent-user')
     })
 
     await expect(
@@ -51,7 +76,7 @@ describe('createDraftShell — referral mode', () => {
   it('rejects referral to non-operator role (Instructor) with FORBIDDEN', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
-      await seedUser(ctx, { slug: 'agent-ref', tokenIdentifier: 'clerk|agent-ref', role: 'Agent' })
+      await seedReadyAgent(ctx, 'agent-ref')
       await seedUser(ctx, { slug: 'instructor-target', tokenIdentifier: 'clerk|instructor-target', role: 'Instructor' })
     })
 
@@ -68,7 +93,7 @@ describe('createDraftShell — referral mode', () => {
   it('creates referral booking with DC ownership + Agent lineage', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
-      await seedUser(ctx, { slug: 'referral-agent', tokenIdentifier: 'clerk|referral-agent', role: 'Agent' })
+      await seedReadyAgent(ctx, 'referral-agent')
       const dcId = await seedUser(ctx, { slug: 'target-dc', tokenIdentifier: 'clerk|target-dc', role: 'DiveCenter', businessName: 'Target DC Biz' })
       await ctx.db.patch(dcId, { phone: '+66800000000' })
       await seedDiveCenterProfile(ctx, dcId)
@@ -122,7 +147,7 @@ describe('createDraftShell — referral mode', () => {
   it('allows referral to Liveaboard target', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
-      await seedUser(ctx, { slug: 'agent-lb', tokenIdentifier: 'clerk|agent-lb', role: 'Agent' })
+      await seedReadyAgent(ctx, 'agent-lb')
       const lbId = await seedUser(ctx, { slug: 'target-lb', tokenIdentifier: 'clerk|target-lb', role: 'Liveaboard', businessName: 'LB Biz' })
       await ctx.db.patch(lbId, { phone: '+66800000000' })
       await seedStakeholderPreferences(ctx, 'target-lb', {

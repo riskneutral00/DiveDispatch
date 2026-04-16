@@ -61,7 +61,7 @@ export const createDraftShell = mutation({
     const isReferral = args.isReferral === true
 
     if (isReferral) {
-      const { user } = await authorizeWithRole(ctx, 'booking:manage', args.activeRole, { type: 'booking' })
+      const { user } = await authorizeWithRole(ctx, 'booking:manage', args.activeRole, { type: 'booking' }, { requireReadiness: true })
 
       if (!args.targetOperatorSlug) {
         throw new ConvexError({ code: ErrorCode.INVALID_INPUT, reason: 'targetOperatorSlug required for referral' })

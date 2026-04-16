@@ -110,6 +110,7 @@ import type * as shared_ratioRules from "../shared/ratioRules.js";
 import type * as shared_resourceOwnerTypes from "../shared/resourceOwnerTypes.js";
 import type * as shared_schemaEnums from "../shared/schemaEnums.js";
 import type * as shared_statuses from "../shared/statuses.js";
+import type * as shared_tcVersion from "../shared/tcVersion.js";
 import type * as shared_venueTypes from "../shared/venueTypes.js";
 import type * as sketchTableGuards from "../sketchTableGuards.js";
 import type * as stakeholderPreferences from "../stakeholderPreferences.js";
@@ -229,6 +230,7 @@ declare const fullApi: ApiFromModules<{
   "shared/resourceOwnerTypes": typeof shared_resourceOwnerTypes;
   "shared/schemaEnums": typeof shared_schemaEnums;
   "shared/statuses": typeof shared_statuses;
+  "shared/tcVersion": typeof shared_tcVersion;
   "shared/venueTypes": typeof shared_venueTypes;
   sketchTableGuards: typeof sketchTableGuards;
   stakeholderPreferences: typeof stakeholderPreferences;
