@@ -52,10 +52,13 @@ describe('getCoursesForAgency', () => {
     expect(ssi.every(c => c.agency === 'SSI')).toBe(true)
   })
 
-  it('returns Universal courses', () => {
-    const uni = getCoursesForAgency('Universal')
-    expect(uni.length).toBeGreaterThan(0)
-    expect(uni.some(c => c.code === 'FD')).toBe(true)
+  it('FD and REFRESH have per-agency entries (no Universal category)', () => {
+    const padi = getCoursesForAgency('PADI')
+    const ssi = getCoursesForAgency('SSI')
+    expect(padi.some(c => c.code === 'FD')).toBe(true)
+    expect(ssi.some(c => c.code === 'FD')).toBe(true)
+    expect(padi.some(c => c.code === 'REFRESH')).toBe(true)
+    expect(ssi.some(c => c.code === 'REFRESH')).toBe(true)
   })
 })
 
@@ -90,12 +93,6 @@ describe('COURSE_CATALOG', () => {
   it('all entries have positive minDays', () => {
     for (const entry of COURSE_CATALOG) {
       expect(entry.minDays).toBeGreaterThan(0)
-    }
-  })
-
-  it('all entries have positive maxDiversPerInstructor', () => {
-    for (const entry of COURSE_CATALOG) {
-      expect(entry.maxDiversPerInstructor).toBeGreaterThan(0)
     }
   })
 

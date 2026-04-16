@@ -28,6 +28,7 @@ const CODE_TO_KEY: Record<string, string> = {
   DUPLICATE_ROLE: 'duplicateRole',
   LAST_ROLE: 'lastRole',
   SNAPSHOT_FIELD_IMMUTABLE: 'snapshotFieldImmutable',
+  CAPABILITY_GAP: 'capabilityGap',
   RATE_LIMITED: 'rateLimited',
 }
 

@@ -248,7 +248,7 @@ describe('userRoles.deleteRole', () => {
 
       // instructor profile gone
       const profile = await ctx.db
-        .query('instructors')
+        .query('diveStaff')
         .withIndex('by_userId', (q) => q.eq('userId', userId!))
         .unique()
       expect(profile).toBeNull()

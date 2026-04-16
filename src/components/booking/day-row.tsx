@@ -1,6 +1,6 @@
 'use client'
 
-import { X, Anchor, Waves, Droplets } from 'lucide-react'
+import { X, Anchor, Waves, Droplets, AlertTriangle } from 'lucide-react'
 import { Card, Input, Select, SimpleSelect, IconButton, ActionLink } from '@/components/ui'
 import type { DayConfig, WizardAction, DiveSlot } from '@/lib/booking/wizard-state'
 import type { DiveSlotDef } from '@/lib/booking/generate-days'
@@ -34,6 +34,7 @@ interface DayRowProps {
   totalDays?: number
   courseCodes?: string[]
   customerLanguages?: string[]
+  capabilityWarning?: string
 }
 
 const VENUE_ICONS = {
@@ -76,7 +77,7 @@ function DivePill({
           ? 'Day limit reached — max 3 dives'
           : getCourseByCode(slot.courseCode as CourseCode)?.name ?? slot.courseCode
       }
-      className="px-2.5 py-1 rounded-full text-[11px] font-semibold transition-colors duration-theme"
+      className="px-2.5 py-1 rounded-full text-[11px] font-semibold transition-colors duration-theme" /* spacing-ok: course pill — px-2 too tight for 11px labels, px-3 too loose */
       style={{
         background: active ? 'var(--color-accent)' : 'var(--color-glass-bg)',
         color: active ? 'var(--color-text-on-primary)' : 'var(--color-text-secondary)',
@@ -106,6 +107,7 @@ export function DayRow({
   totalDays = 1,
   courseCodes = [],
   customerLanguages,
+  capabilityWarning,
 }: DayRowProps) {
   const showRemainingCheckbox = dayIndex < totalDays - 1
 
@@ -175,7 +177,6 @@ export function DayRow({
                 onChange={(e) =>
                   dispatch({ type: 'UPDATE_DAY', dayIndex, patch: { externalInstructorName: e.target.value } })
                 }
-                placeholder="External"
               />
               <ActionLink
                 onClick={() => {
@@ -204,6 +205,15 @@ export function DayRow({
               placeholder="Select instructor…"
               customerLanguages={customerLanguages}
             />
+          )}
+          {capabilityWarning && (
+            <div
+              className="flex items-center gap-1.5 text-label px-2 py-1 rounded-theme text-destructive"
+              title={capabilityWarning}
+            >
+              <AlertTriangle size={11} className="flex-shrink-0" />
+              <span className="truncate">{capabilityWarning}</span>
+            </div>
           )}
         </div>
 
@@ -254,7 +264,6 @@ export function DayRow({
                 onChange={(e) =>
                   dispatch({ type: 'UPDATE_DAY', dayIndex, patch: { externalDiveMasterName: e.target.value } })
                 }
-                placeholder="Name"
               />
               <ActionLink
                 onClick={() => {
@@ -329,7 +338,7 @@ export function DayRow({
                             key={vt}
                             type="button"
                             onClick={() => dispatch({ type: 'SET_DIVE_VENUE', dayIndex, diveIndex: diveIdx, venueType: vt })}
-                            className={`flex items-center gap-1 ${TOUCH_TARGET_CLASS} px-2.5 py-1.5 rounded-[var(--border-radius-button)] text-[10px] font-medium transition-colors duration-theme border`}
+                            className={`flex items-center gap-1 ${TOUCH_TARGET_CLASS} px-2.5 py-1.5 rounded-[var(--border-radius-button)] text-[10px] font-medium transition-colors duration-theme border`} /* spacing-ok: venue chip — px-2 too tight for 10px labels */
                             style={{
                               background: isVenueSelected ? 'var(--color-accent)' : 'var(--color-glass-bg)',
                               color: isVenueSelected ? 'var(--color-text-on-primary)' : 'var(--color-text-secondary)',

@@ -43,6 +43,7 @@ describe('CourseCode single source of truth', () => {
       .split('\n')
       .filter(Boolean)
       .filter((line) => !line.includes('convex/shared/courseCodes.ts'))
+      .filter((line) => !line.includes('convex/shared/activityCatalog.ts'))
       .filter((line) => !line.includes('export { type CourseCode'))
       .filter((line) => !line.includes('import { type CourseCode'))
 

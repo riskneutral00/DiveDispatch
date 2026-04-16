@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { getEndDateDefault, calculateComboDates } from '../src/lib/booking/course-validation'
+import { getEndDateDefault, calculateComboDates } from '../src/lib/booking/activity-validation'
 import { addDays, toISODateString } from '../src/lib/utils/date'
 
 // Use relative dates so tests never go stale

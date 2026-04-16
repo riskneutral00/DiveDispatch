@@ -13,8 +13,9 @@ async function seedDiveMasterProfile(
   userId: Id<'users'>,
   overrides: { teachingLanguages?: string[] } = {},
 ) {
-  return ctx.db.insert('diveMasters', {
+  return ctx.db.insert('diveStaff', {
     userId,
+    role: 'DiveMaster',
     name: 'Test DiveMaster',
     placeName: 'Koh Tao',
     country: 'Thailand',
@@ -22,7 +23,7 @@ async function seedDiveMasterProfile(
     lng: 99.8408,
     email: 'dm@test.com',
     phone: '+66123456789',
-    credential: [{ agency: 'PADI', level: 'DM', agencyID: '77777' }],
+    credential: [{ agency: 'PADI', level: 'Divemaster', agencyID: '77777' }],
     teachingLanguages: overrides.teachingLanguages ?? ['en'],
     verified: true,
   })
@@ -41,7 +42,7 @@ describe('diveMasters.update — monotonic profileComplete invariant', () => {
       .mutation(api.diveMasters.update, { teachingLanguages: [] })
 
     await t.run(async (ctx) => {
-      const dm = await ctx.db.get(dmId!) as Doc<'diveMasters'> | null
+      const dm = await ctx.db.get(dmId!) as Doc<'diveStaff'> | null
       expect(dm!.teachingLanguages).toEqual([])
     })
   })

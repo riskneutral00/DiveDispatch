@@ -10,6 +10,7 @@ async function seedUser(ctx: SeedCtx, slug: string, role: 'Instructor' | 'DiveMa
 
 const VALID_INSTRUCTOR_ARGS = {
   name: 'Jane Instructor',
+  role: 'Instructor' as const,
   placeName: 'Koh Tao',
   country: 'Thailand',
   lat: 10.09,
@@ -44,7 +45,7 @@ describe('instructors.create', () => {
 
     expect(typeof instrId).toBe('string')
     await t.run(async (ctx) => {
-      const instr = await ctx.db.get(instrId as Id<'instructors'>) as Doc<'instructors'> | null
+      const instr = await ctx.db.get(instrId as Id<'diveStaff'>) as Doc<'diveStaff'> | null
       expect(instr).not.toBeNull()
       expect(instr!.name).toBe('Jane Instructor')
       expect(instr!.userId).toEqual(userId)
@@ -54,14 +55,14 @@ describe('instructors.create', () => {
     })
   })
 
-  it('allows DiveMaster role to create instructor profile', async () => {
+  it('rejects DiveMaster role creating Instructor-typed profile', async () => {
     const t = makeT()
     await t.run(async (ctx) => { await seedUser(ctx, 'dm-user', 'DiveMaster') })
 
-    const instrId = await t.withIdentity({ tokenIdentifier: 'clerk|dm-user' })
-      .mutation(api.instructors.create, VALID_INSTRUCTOR_ARGS)
-
-    expect(typeof instrId).toBe('string')
+    await expect(
+      t.withIdentity({ tokenIdentifier: 'clerk|dm-user' })
+        .mutation(api.instructors.create, VALID_INSTRUCTOR_ARGS),
+    ).rejects.toThrow(/FORBIDDEN/)
   })
 
   it('returns existing ID on duplicate create', async () => {
@@ -101,7 +102,7 @@ describe('instructors.update', () => {
       .mutation(api.instructors.update, { name: 'Updated Instructor' })
 
     await t.run(async (ctx) => {
-      const instr = await ctx.db.get(instrId!) as Doc<'instructors'> | null
+      const instr = await ctx.db.get(instrId!) as Doc<'diveStaff'> | null
       expect(instr!.name).toBe('Updated Instructor')
       expect(instr!.email).toBe('instructor@test.com')
     })
@@ -121,7 +122,7 @@ describe('instructors.update — monotonic profileComplete invariant', () => {
       .mutation(api.instructors.update, { teachingLanguages: [] })
 
     await t.run(async (ctx) => {
-      const instr = await ctx.db.get(instrId!) as Doc<'instructors'> | null
+      const instr = await ctx.db.get(instrId!) as Doc<'diveStaff'> | null
       expect(instr!.teachingLanguages).toEqual([])
     })
   })

@@ -13,7 +13,7 @@
 import { describe, it, expect } from 'vitest'
 import { api, internal } from '../convex/_generated/api'
 import { tryAutoAdvance, isSessionEnded } from '../convex/bookings/_shared'
-import { getEndDateDefault } from '../src/lib/booking/course-validation'
+import { getEndDateDefault } from '../src/lib/booking/activity-validation'
 import { addDays } from '../src/lib/utils/date'
 import { COMBO_COURSES } from '../src/lib/constants/course-catalog'
 import type { Id } from '../convex/_generated/dataModel'

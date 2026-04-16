@@ -194,7 +194,7 @@ export const ROLES: RoleConfig[] = [
     isOrganizer: false,
     isResource: true,
     displayGroup: 'resource',
-    tableName: 'instructors',
+    tableName: 'diveStaff',
     description: 'Lead courses, certify students, and guide dives at operator-organized trips.',
     profileTabs: [
       { id: 'contact', label: 'Contact' },
@@ -213,7 +213,7 @@ export const ROLES: RoleConfig[] = [
     isOrganizer: false,
     isResource: true,
     displayGroup: 'resource',
-    tableName: 'diveMasters',
+    tableName: 'diveStaff',
     description: 'Guide certified divers, assist instructors, and lead fun dives.',
     profileTabs: [
       { id: 'contact', label: 'Contact' },

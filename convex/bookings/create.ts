@@ -24,7 +24,8 @@ import { ErrorCode } from '../lib/errorCodes'
 import { assertSnapshotImmutability, BOOKINGS_SNAPSHOT_FIELDS } from '../lib/snapshotFields'
 import { profileBySlug } from '../lib/profileHelpers'
 import type { Doc } from '../_generated/dataModel'
-import { canTeachCourses, type Credential } from '../lib/credentialMatch'
+import { staffCanConductActivity, type Credential } from '../shared/capabilityGate'
+import type { ActivityCode } from '../shared/activityCatalog'
 import { normalizeTime } from '../lib/validators'
 import { RESERVATION_STATUS, VACATED_REASON } from '../shared/statuses'
 import { validateRatio } from '../shared/ratioRules'
@@ -263,23 +264,24 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
       (r.roleType ?? 'Instructor') !== 'DiveMaster',
   )
 
-  const warnings: Array<{ type: string; missing: string[] }> = []
-
-  for (const ir of instructorResources) { // batch-exempt
-    const instructor = await profileBySlug(ctx, ir.resourceId!, 'instructors') as Doc<'instructors'> | null
+  for (const ir of instructorResources) { // batch-exempt: sequential per-resource gate
+    const instructor = await profileBySlug(ctx, ir.resourceId!, 'diveStaff') as Doc<'diveStaff'> | null
     if (!instructor) continue
 
-    const result = canTeachCourses(
-      instructor.credential as Credential[],
-      bookingCourses,
-    )
-    if (!result.canTeach) {
-      warnings.push({ type: 'credential_gap', missing: result.missing })
+    for (const activityCode of bookingCourses) {
+      const result = staffCanConductActivity(
+        instructor.credential as Credential[],
+        activityCode as ActivityCode,
+      )
+      if (!result.allowed) {
+        throw new ConvexError({
+          code: ErrorCode.CAPABILITY_GAP,
+          ...(result.reason ?? {}),
+          instructorSlug: ir.resourceId,
+          activityCode,
+        })
+      }
     }
-  }
-
-  if (warnings.length > 0) {
-    await ctx.db.patch(args.bookingId as Id<"bookings">, { warnings })
   }
 
   await tryAutoAdvance(ctx, args.bookingId)

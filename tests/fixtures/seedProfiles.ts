@@ -107,8 +107,9 @@ export async function seedInstructorProfile(
     teachingLanguages?: string[]
   } = {},
 ) {
-  return ctx.db.insert('instructors', {
+  return ctx.db.insert('diveStaff', {
     userId,
+    role: 'Instructor',
     name: overrides.name ?? 'Test Instructor',
     placeName: overrides.placeName ?? 'Koh Tao',
     country: overrides.country ?? 'Thailand',

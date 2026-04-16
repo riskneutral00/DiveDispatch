@@ -3,11 +3,8 @@ import {
   COURSE_CATALOG,
   getCourseByCode,
   getCoursesForAgency,
-  type CourseCatalogEntry,
 } from '../../src/lib/constants/course-catalog'
 import { COURSE_CODES } from '../../convex/shared/courseCodes'
-
-// ── PADI ↔ SSI course parity ───────────────────────────────────────────────────
 
 describe('PADI ↔ SSI course parity', () => {
   const padiCourses = getCoursesForAgency('PADI')
@@ -57,8 +54,6 @@ describe('PADI ↔ SSI course parity', () => {
   })
 })
 
-// ── Agency coverage ────────────────────────────────────────────────────────────
-
 describe('course code coverage', () => {
   it('every COURSE_CODES entry appears in COURSE_CATALOG at least once', () => {
     for (const code of COURSE_CODES) {
@@ -67,13 +62,11 @@ describe('course code coverage', () => {
     }
   })
 
-  it('Universal courses are agency-agnostic (no PADI/SSI duplicate)', () => {
-    const universal = getCoursesForAgency('Universal')
-    const padiCodes = new Set(getCoursesForAgency('PADI').map((c) => c.code))
-    const ssiCodes = new Set(getCoursesForAgency('SSI').map((c) => c.code))
-    for (const course of universal) {
-      expect(padiCodes.has(course.code), `Universal ${course.code} also in PADI`).toBe(false)
-      expect(ssiCodes.has(course.code), `Universal ${course.code} also in SSI`).toBe(false)
+  it('every activity has both PADI and SSI entries (no Universal category)', () => {
+    for (const code of COURSE_CODES) {
+      const agencies = COURSE_CATALOG.filter((c) => c.code === code).map((c) => c.agency)
+      expect(agencies, `${code} missing agency entries`).toContain('PADI')
+      expect(agencies, `${code} missing agency entries`).toContain('SSI')
     }
   })
 
@@ -85,8 +78,6 @@ describe('course code coverage', () => {
     }
   })
 })
-
-// ── DSD and intro course invariants ────────────────────────────────────────────
 
 describe('DSD / intro course invariants', () => {
   it('DSD has no prerequisites (entry-level)', () => {
@@ -124,8 +115,6 @@ describe('DSD / intro course invariants', () => {
   })
 })
 
-// ── Certification chain: OW → AOW → RESCUE → DM ───────────────────────────────
-
 describe('certification chain', () => {
   it('AOW requires OW', () => {
     expect(getCourseByCode('AOW')!.prerequisites).toContain('OW')
@@ -152,43 +141,6 @@ describe('certification chain', () => {
   })
 })
 
-// ── maxDiversPerInstructor constraints ──────────────────────────────────────────
-
-describe('maxDiversPerInstructor constraints', () => {
-  it('DM is 1:1 (all agencies)', () => {
-    const dmEntries = COURSE_CATALOG.filter((c) => c.code === 'DM')
-    for (const entry of dmEntries) {
-      expect(entry.maxDiversPerInstructor, `${entry.agency} DM`).toBe(1)
-    }
-  })
-
-  it('REFRESH is max 2 divers per instructor', () => {
-    const refresh = getCourseByCode('REFRESH')!
-    expect(refresh.maxDiversPerInstructor).toBe(2)
-  })
-
-  it('DSD is max 4 per instructor (all agencies)', () => {
-    const dsdEntries = COURSE_CATALOG.filter((c) => c.code === 'DSD')
-    for (const entry of dsdEntries) {
-      expect(entry.maxDiversPerInstructor, `${entry.agency} DSD`).toBe(4)
-    }
-  })
-
-  it('SSI OW allows more divers than PADI OW', () => {
-    const padiOW = getCoursesForAgency('PADI').find((c) => c.code === 'OW')!
-    const ssiOW = getCoursesForAgency('SSI').find((c) => c.code === 'OW')!
-    expect(ssiOW.maxDiversPerInstructor).toBeGreaterThan(padiOW.maxDiversPerInstructor)
-  })
-
-  it('no maxDiversPerInstructor exceeds 8', () => {
-    for (const entry of COURSE_CATALOG) {
-      expect(entry.maxDiversPerInstructor, `${entry.agency} ${entry.code}`).toBeLessThanOrEqual(8)
-    }
-  })
-})
-
-// ── Description and name sanity ────────────────────────────────────────────────
-
 describe('catalog entry completeness', () => {
   it('every entry has a non-empty name', () => {
     for (const entry of COURSE_CATALOG) {
@@ -202,17 +154,10 @@ describe('catalog entry completeness', () => {
     }
   })
 
-  it('PADI courses contain "PADI" in their name', () => {
-    const padi = getCoursesForAgency('PADI')
-    for (const entry of padi) {
-      expect(entry.name, `${entry.code}`).toContain('PADI')
-    }
-  })
-
-  it('SSI courses contain "SSI" in their name', () => {
-    const ssi = getCoursesForAgency('SSI')
-    for (const entry of ssi) {
-      expect(entry.name, `${entry.code}`).toContain('SSI')
-    }
+  it('PADI and SSI courses use agency-specific names', () => {
+    const padiDSD = getCoursesForAgency('PADI').find((c) => c.code === 'DSD')!
+    const ssiDSD = getCoursesForAgency('SSI').find((c) => c.code === 'DSD')!
+    expect(padiDSD.name).toBe('Discover Scuba Diving')
+    expect(ssiDSD.name).toBe('Try Scuba Diving')
   })
 })

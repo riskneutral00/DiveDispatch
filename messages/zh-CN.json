@@ -71,6 +71,9 @@
     "phone": "电话",
     "email": "邮箱",
     "dateOfBirth": "出生日期",
+    "year": "年",
+    "month": "月",
+    "day": "日",
     "appLanguage": "应用语言",
     "country": "国家",
     "nationality": "国籍",
@@ -117,6 +120,7 @@
     "profileIncomplete": "请先完善您的个人资料再继续。",
     "resourcesIncomplete": "请在确认前分配所有必需资源。",
     "snapshotFieldImmutable": "创建后此字段无法更改。",
+    "capabilityGap": "该员工无法进行此活动。请检查其资质。",
     "rateLimited": "请求过多，请稍后再试。"
   },
   "nav": {
@@ -142,7 +146,10 @@
     "hasAccount": "已有账号？",
     "selectRole": "选择您的角色",
     "roleOrganizer": "创建预订",
-    "roleResource": "提供服务"
+    "roleResource": "提供服务",
+    "profileStepTitle": "完善您的资料",
+    "iAgreeToTerms": "我同意<link>条款和条件</link>",
+    "termsPageTitle": "条款和条件"
   },
   "booking": {
     "status": {
@@ -172,7 +179,6 @@
       "cancelConfirm": "取消",
       "cancelKeep": "保留",
       "cancelReasonLabel": "原因",
-      "cancelReasonPlaceholder": "例如：客户请求取消",
       "discardDraftTitle": "舍弃草稿？",
       "discardDraftBody": "这将删除草稿并释放所有预订保留。",
       "bookingTitle": "预订",

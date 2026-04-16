@@ -158,8 +158,9 @@ describe('prerequisite gate: DiveMaster — credential depth', () => {
       const userId = await seedUser(ctx, { role: 'DiveMaster' })
       await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
       // DiveMaster credential has no courses field
-      await ctx.db.insert('diveMasters', {
+      await ctx.db.insert('diveStaff', {
         userId,
+    role: 'DiveMaster',
         name: 'Test DM',
         placeName: 'Koh Tao',
         country: 'Thailand',

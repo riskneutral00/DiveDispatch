@@ -28,8 +28,9 @@ async function seedInstructorUser(ctx: SeedCtx, slug: string) {
 }
 
 async function seedInstructorProfile(ctx: SeedCtx, userId: Id<'users'>, name: string, placeName: string, country: string, verified = false) {
-  return ctx.db.insert('instructors', {
+  return ctx.db.insert('diveStaff', {
     userId,
+    role: 'Instructor',
     name,
     placeName,
     country,
@@ -217,7 +218,7 @@ describe('listByRole language propagation', () => {
       await ctx.db.patch(u1, { customerLanguages: ['fr-FR', 'de-DE'] })
       // Set teachingLanguages on instructor profile (SHOULD appear)
       await seedInstructorProfile(ctx, u1, 'Nattaya', 'Koh Tao', 'Thailand', true)
-      const inst = await ctx.db.query('instructors')
+      const inst = await ctx.db.query('diveStaff')
         .withIndex('by_userId', (q) => q.eq('userId', u1))
         .unique()
       await ctx.db.patch(inst!._id, { teachingLanguages: ['en-GB', 'th-TH'] })
@@ -283,8 +284,9 @@ describe('listByRole credentials passthrough', () => {
     await t.run(async (ctx) => {
       await seedCallerUser(ctx, 'caller-creds')
       const u1 = await seedInstructorUser(ctx, 'inst-creds')
-      await ctx.db.insert('instructors', {
+      await ctx.db.insert('diveStaff', {
         userId: u1,
+        role: 'Instructor',
         name: 'Multi Cred Instructor',
         placeName: 'Phuket',
         country: 'Thailand',
@@ -306,8 +308,8 @@ describe('listByRole credentials passthrough', () => {
 
     expect(result).toHaveLength(1)
     expect(result[0].credentials).toEqual([
-      { agency: 'PADI', specialtyRatings: ['OW', 'AOW', 'Rescue'] },
-      { agency: 'SSI', specialtyRatings: ['OW', 'Stress & Rescue'] },
+      { agency: 'PADI', level: 'OWSI', specialtyRatings: ['OW', 'AOW', 'Rescue'] },
+      { agency: 'SSI', level: 'Instructor', specialtyRatings: ['OW', 'Stress & Rescue'] },
     ])
   })
 
@@ -316,8 +318,9 @@ describe('listByRole credentials passthrough', () => {
     await t.run(async (ctx) => {
       await seedCallerUser(ctx, 'caller-no-creds')
       const u1 = await seedInstructorUser(ctx, 'inst-no-creds')
-      await ctx.db.insert('instructors', {
+      await ctx.db.insert('diveStaff', {
         userId: u1,
+        role: 'Instructor',
         name: 'No Cred Instructor',
         placeName: 'Krabi',
         country: 'Thailand',
@@ -350,8 +353,9 @@ describe('listByRole credentials passthrough', () => {
     await t.run(async (ctx) => {
       await seedCallerUser(ctx, 'caller-guard')
       const u1 = await seedInstructorUser(ctx, 'inst-guard')
-      await ctx.db.insert('instructors', {
+      await ctx.db.insert('diveStaff', {
         userId: u1,
+        role: 'Instructor',
         name: 'Guard Path Instructor',
         placeName: 'Phuket',
         country: 'Thailand',

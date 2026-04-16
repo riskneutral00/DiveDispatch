@@ -1,0 +1,167 @@
+import { describe, it, expect } from 'vitest'
+import { readFileSync } from 'fs'
+import { resolve } from 'path'
+import {
+  AGENCY_CONFIGS,
+  PADI,
+  SSI,
+  ACTIVITY_CODES,
+  Rank,
+} from '../convex/shared/activityCatalog'
+
+const VAULT_PATH = resolve(__dirname, '../../Vaults/DiveDispatch/Product/SpecialtyMatrix.md')
+
+function parseCols(line: string): string[] {
+  return line.split('|').map((c) => c.trim())
+}
+
+function parseSpecialtyMatrix(): string[] {
+  const content = readFileSync(VAULT_PATH, 'utf-8')
+  const lines = content.split('\n')
+  const matrixStart = lines.findIndex((l) => l.startsWith('| Category'))
+  if (matrixStart === -1) throw new Error('Cannot find matrix header in SpecialtyMatrix.md')
+
+  const rows: string[] = []
+  for (let i = matrixStart + 2; i < lines.length; i++) {
+    const line = lines[i].trim()
+    if (!line.startsWith('|')) break
+    const cols = parseCols(line)
+    if (cols[2]) rows.push(cols[2])
+  }
+  return rows
+}
+
+function parseAutomaticAuthority(): Array<{ topic: string; adventureDive: string }> {
+  const content = readFileSync(VAULT_PATH, 'utf-8')
+  const lines = content.split('\n')
+  const matrixStart = lines.findIndex((l) => l.startsWith('| Category'))
+  if (matrixStart === -1) return []
+
+  const authority: Array<{ topic: string; adventureDive: string }> = []
+  for (let i = matrixStart + 2; i < lines.length; i++) {
+    const line = lines[i].trim()
+    if (!line.startsWith('|')) break
+    const cols = parseCols(line)
+    if (cols[4]?.includes('(Automatic Authority)')) {
+      if (cols[2]) authority.push({ topic: cols[2], adventureDive: cols[3] || '' })
+    }
+  }
+  return authority
+}
+
+function parseAgencyHierarchy(): Array<{ padi: string; ssi: string }> {
+  const content = readFileSync(VAULT_PATH, 'utf-8')
+  const lines = content.split('\n')
+  const hierarchyStart = lines.findIndex((l) => l.includes('Agency Hierarchy'))
+  if (hierarchyStart === -1) throw new Error('Cannot find Agency Hierarchy section')
+
+  const headerLine = lines.slice(hierarchyStart).findIndex((l) => l.startsWith('| PADI'))
+  if (headerLine === -1) throw new Error('Cannot find hierarchy table header')
+
+  const rows: Array<{ padi: string; ssi: string }> = []
+  const start = hierarchyStart + headerLine + 2
+  for (let i = start; i < lines.length; i++) {
+    const line = lines[i].trim()
+    if (!line.startsWith('|')) break
+    const cols = line.split('|').map((c) => c.trim()).filter(Boolean)
+    if (cols.length >= 2) {
+      rows.push({ padi: cols[0].split('(')[0].trim(), ssi: cols[1].split('(')[0].trim() })
+    }
+  }
+  return rows
+}
+
+describe('vault ↔ code parity: specialty count', () => {
+  const vaultTopics = parseSpecialtyMatrix()
+
+  it('vault has exactly 23 specialty rows', () => {
+    expect(vaultTopics.length).toBe(23)
+  })
+
+  it('PADI config has 23 specialties', () => {
+    expect(PADI.specialties.length).toBe(23)
+  })
+
+  it('SSI config has 23 specialties', () => {
+    expect(SSI.specialties.length).toBe(23)
+  })
+})
+
+describe('vault ↔ code parity: automatic authority', () => {
+  const vaultAA = parseAutomaticAuthority()
+
+  it('vault automatic authority topics match code', () => {
+    const codeAA = [...PADI.automaticAuthority].sort()
+    expect(vaultAA.length).toBe(codeAA.length)
+
+    const vaultTopicCodes = vaultAA
+      .map(({ topic, adventureDive }) => {
+        return PADI.specialties.find((s) => {
+          if (adventureDive && s.adventureDiveName === adventureDive) return true
+          return s.code === topic || s.label === topic
+        })?.code
+      })
+      .filter(Boolean)
+      .sort()
+
+    expect(vaultTopicCodes).toEqual(codeAA)
+  })
+
+  it('PADI and SSI agree on automatic authority', () => {
+    expect([...PADI.automaticAuthority].sort()).toEqual([...SSI.automaticAuthority].sort())
+  })
+})
+
+describe('vault ↔ code parity: agency hierarchy', () => {
+  const vaultHierarchy = parseAgencyHierarchy()
+
+  it('vault hierarchy has 5 rows', () => {
+    expect(vaultHierarchy.length).toBe(5)
+  })
+
+  it('every PADI level in vault exists in code', () => {
+    const codeLevels = new Set(PADI.levels.map((l) => l.code))
+    for (const row of vaultHierarchy) {
+      expect(codeLevels.has(row.padi), `Missing PADI level: ${row.padi}`).toBe(true)
+    }
+  })
+
+  it('every SSI level in vault exists in code', () => {
+    const codeLevels = new Set(SSI.levels.map((l) => l.code))
+    for (const row of vaultHierarchy) {
+      expect(codeLevels.has(row.ssi), `Missing SSI level: ${row.ssi}`).toBe(true)
+    }
+  })
+})
+
+describe('activity code coverage', () => {
+  it('every ACTIVITY_CODE has a rule in PADI config', () => {
+    for (const code of ACTIVITY_CODES) {
+      expect(PADI.activityRules[code], `Missing PADI rule for ${code}`).toBeDefined()
+    }
+  })
+
+  it('every ACTIVITY_CODE has a rule in SSI config', () => {
+    for (const code of ACTIVITY_CODES) {
+      expect(SSI.activityRules[code], `Missing SSI rule for ${code}`).toBeDefined()
+    }
+  })
+})
+
+describe('rank ordinal consistency', () => {
+  for (const [name, config] of Object.entries(AGENCY_CONFIGS)) {
+    it(`${name} levels have monotonically non-decreasing ranks`, () => {
+      let prevRank = 0
+      for (const level of config.levels) {
+        expect(level.rank, `${name} ${level.code} rank ${level.rank} < previous ${prevRank}`).toBeGreaterThanOrEqual(prevRank)
+        prevRank = level.rank
+      }
+    })
+
+    it(`${name} levels span DM through Director`, () => {
+      const ranks = new Set(config.levels.map((l) => l.rank))
+      expect(ranks.has(Rank.DM), `${name} missing DM rank`).toBe(true)
+      expect(ranks.has(Rank.Instructor), `${name} missing Instructor rank`).toBe(true)
+    })
+  }
+})

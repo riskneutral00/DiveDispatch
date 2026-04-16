@@ -10,7 +10,7 @@ import {
   getEndDateDefault,
   getUnavailableCodes,
   detectReferralWarnings,
-} from '../src/lib/booking/course-validation'
+} from '../src/lib/booking/activity-validation'
 import { testDate } from './helpers/dates'
 import { addDays } from '../src/lib/utils/date'
 

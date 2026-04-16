@@ -10,7 +10,7 @@ import { DateField } from '@/components/ui/date-field'
 import { DayRow } from './day-row'
 import { ResourceStep } from './resource-step'
 import { generateDays, getAvailableDives, autoDistributeFromDive, buildDiveSequence, cascadeRemoveOrphans } from '@/lib/booking/generate-days'
-import { getEndDateDefault, validatePrerequisites, validatePrerequisiteOrder, validateCourseCombo, validateCourseDateOverlap, validateNoDuplicateCourses, validateStartDateNotInPast, calculateComboDates, getUnavailableCodes, detectReferralWarnings } from '@/lib/booking/course-validation'
+import { getEndDateDefault, validatePrerequisites, validatePrerequisiteOrder, validateCourseCombo, validateCourseDateOverlap, validateNoDuplicateCourses, validateStartDateNotInPast, calculateComboDates, getUnavailableCodes, detectReferralWarnings } from '@/lib/booking/activity-validation'
 import { toISODateString } from '@/lib/utils/date'
 import type { WizardState, WizardAction, CourseEntry, DiveSlot } from '@/lib/booking/wizard-state'
 import type { CourseCode } from '@/lib/constants/course-catalog'
@@ -18,6 +18,8 @@ import { COURSE_CATALOG, COURSE_DISPLAY_LABELS, COMBO_COURSES, COURSE_CODES } fr
 import { addDays } from '@/lib/utils/date'
 import type { Dispatch } from 'react'
 import { Copy, OctagonX, Plus, RotateCw, Trash2 } from 'lucide-react'
+import { staffCanConductActivity, type Credential } from '../../../convex/shared/capabilityGate'
+import type { ActivityCode } from '../../../convex/shared/activityCatalog'
 
 interface ItineraryStepProps {
   state: WizardState
@@ -52,7 +54,7 @@ function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minSta
   const tItin = useTranslations('booking.itinerary')
   const tCommon = useTranslations('common')
   const agencyCodes = agency
-    ? COURSE_CATALOG.filter((c) => c.agency === agency || c.agency === 'Universal').map((c) => c.code)
+    ? COURSE_CATALOG.filter((c) => c.agency === agency).map((c) => c.code)
     : COURSE_CODES
   const uniqueCodes = [...new Set(agencyCodes)].filter(
     (c) => !unavailableCodes?.has(c),
@@ -214,6 +216,40 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
   const boatOptions = boats.map((r) => ({ id: r.slug, label: r.name }))
   const poolOptions = pools.map((r) => ({ id: r.slug, label: r.name }))
 
+  const credentialsBySlug = useMemo(() => {
+    const map = new Map<string, Credential[]>()
+    for (const r of [...instructors, ...diveMasters]) {
+      if (r.credentials) {
+        map.set(r.slug, r.credentials.map((c) => ({
+          agency: c.agency,
+          level: c.level,
+          specialtyRatings: c.specialtyRatings,
+        })))
+      }
+    }
+    return map
+  }, [instructors, diveMasters])
+
+  const capabilityWarnings = useMemo(() => {
+    const warnings: Record<number, string> = {}
+    for (let i = 0; i < days.length; i++) {
+      const day = days[i]
+      const slug = day.instructorSlug
+      if (!slug || slug === '__external__') continue
+      const creds = credentialsBySlug.get(slug)
+      if (!creds || creds.length === 0) continue
+      const dayCodes = [...new Set(day.dives.map((d) => d.courseCode))] as ActivityCode[]
+      for (const code of dayCodes) {
+        const result = staffCanConductActivity(creds, code)
+        if (!result.allowed) {
+          warnings[i] = result.reason?.detail ?? 'Credential mismatch'
+          break
+        }
+      }
+    }
+    return warnings
+  }, [days, credentialsBySlug])
+
   const instructorInventory = useQuery(api.availability.listInventoryByType, { type: 'Instructor' }) ?? []
   const boatInventory = useQuery(api.availability.listInventoryByType, { type: 'Boat' }) ?? []
   const poolInventory = useQuery(api.availability.listInventoryByType, { type: 'Pool' }) ?? []
@@ -374,19 +410,11 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
   const diverCount = customers.length
   const instructorRatioWarnings: string[] = []
   if (diverCount > 0 && allCourseCodes.length > 0) {
-    const agencyFilter = agency || undefined
-    let minRatio = Infinity
-    for (const code of allCourseCodes) {
-      const entry = COURSE_CATALOG.find((c) => c.code === code && (!agencyFilter || c.agency === agencyFilter || c.agency === 'Universal'))
-        ?? COURSE_CATALOG.find((c) => c.code === code)
-      if (entry && entry.maxDiversPerInstructor < minRatio) {
-        minRatio = entry.maxDiversPerInstructor
-      }
-    }
-    if (minRatio < Infinity && diverCount > minRatio) {
-      const requiredInstructors = Math.ceil(diverCount / minRatio)
+    const ADMIN_MAX_DIVERS_PER_INSTRUCTOR = 4
+    if (diverCount > ADMIN_MAX_DIVERS_PER_INSTRUCTOR) {
+      const requiredInstructors = Math.ceil(diverCount / ADMIN_MAX_DIVERS_PER_INSTRUCTOR)
       instructorRatioWarnings.push(
-        `${diverCount} divers with max ${minRatio} per instructor — minimum ${requiredInstructors} instructors/DMs required.`,
+        `${diverCount} divers with max ${ADMIN_MAX_DIVERS_PER_INSTRUCTOR} per instructor — minimum ${requiredInstructors} instructors/DMs required.`,
       )
     }
   }
@@ -629,6 +657,7 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
               totalDays={days.length}
               courseCodes={allCourseCodes}
               customerLanguages={customerLanguageCodes}
+              capabilityWarning={capabilityWarnings[idx]}
             />
           ))}
         </div>

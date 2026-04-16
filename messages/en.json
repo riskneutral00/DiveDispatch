@@ -71,6 +71,9 @@
     "phone": "Phone",
     "email": "Email",
     "dateOfBirth": "Date of birth",
+    "year": "Year",
+    "month": "Month",
+    "day": "Day",
     "appLanguage": "App Language",
     "country": "Country",
     "nationality": "Nationality",
@@ -117,6 +120,7 @@
     "profileIncomplete": "Complete your profile before continuing.",
     "resourcesIncomplete": "Assign all required resources before confirming.",
     "snapshotFieldImmutable": "This field can't be changed after creation.",
+    "capabilityGap": "This staff member cannot conduct this activity. Check their credentials.",
     "rateLimited": "Too many requests. Wait a moment and try again."
   },
   "nav": {
@@ -142,7 +146,10 @@
     "hasAccount": "Have an account?",
     "selectRole": "Select your role",
     "roleOrganizer": "Create bookings",
-    "roleResource": "Provide services"
+    "roleResource": "Provide services",
+    "profileStepTitle": "Complete your profile",
+    "iAgreeToTerms": "I agree to the <link>Terms and Conditions</link>",
+    "termsPageTitle": "Terms and Conditions"
   },
   "booking": {
     "status": {
@@ -172,7 +179,6 @@
       "cancelConfirm": "Cancel",
       "cancelKeep": "Keep",
       "cancelReasonLabel": "Reason",
-      "cancelReasonPlaceholder": "e.g. customer requested cancellation",
       "discardDraftTitle": "Discard draft?",
       "discardDraftBody": "This will delete the draft and release all holds.",
       "bookingTitle": "Booking",

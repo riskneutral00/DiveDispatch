@@ -71,6 +71,9 @@
     "phone": "電話",
     "email": "電子郵件",
     "dateOfBirth": "出生日期",
+    "year": "年",
+    "month": "月",
+    "day": "日",
     "appLanguage": "應用程式語言",
     "country": "國家",
     "nationality": "國籍",
@@ -117,6 +120,7 @@
     "profileIncomplete": "請先完善您的個人資料再繼續。",
     "resourcesIncomplete": "請在確認前指派所有必要資源。",
     "snapshotFieldImmutable": "建立後此欄位無法變更。",
+    "capabilityGap": "該員工無法進行此活動。請檢查其資質。",
     "rateLimited": "請求過多，請稍後再試。"
   },
   "nav": {
@@ -142,7 +146,10 @@
     "hasAccount": "已有帳號？",
     "selectRole": "選擇您的角色",
     "roleOrganizer": "建立預約",
-    "roleResource": "提供服務"
+    "roleResource": "提供服務",
+    "profileStepTitle": "完善您的資料",
+    "iAgreeToTerms": "我同意<link>條款與條件</link>",
+    "termsPageTitle": "條款與條件"
   },
   "booking": {
     "status": {
@@ -172,7 +179,6 @@
       "cancelConfirm": "取消",
       "cancelKeep": "保留",
       "cancelReasonLabel": "原因",
-      "cancelReasonPlaceholder": "例如：客戶要求取消",
       "discardDraftTitle": "捨棄草稿？",
       "discardDraftBody": "這將刪除草稿並釋放所有預約保留。",
       "bookingTitle": "預約",

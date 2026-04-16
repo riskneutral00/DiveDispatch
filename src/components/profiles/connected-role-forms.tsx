@@ -32,8 +32,8 @@ interface RoleFormConfig {
 
 const ROLE_FORM_CONFIGS: Partial<Record<RoleKey, RoleFormConfig>> = {
   'dive-center': { apiModule: api.diveCenters, Component: DiveCenterProfileForm },
-  instructor:    { apiModule: api.instructors,  Component: InstructorProfileForm },
-  'dive-master': { apiModule: api.diveMasters,  Component: DiveMasterProfileForm },
+  instructor:    { apiModule: api.diveStaff,    Component: InstructorProfileForm },
+  'dive-master': { apiModule: api.diveStaff,    Component: DiveMasterProfileForm },
   boat:          { apiModule: api.boats,        Component: BoatProfileForm },
   compressor:    { apiModule: api.compressors,  Component: CompressorProfileForm },
   equipment:     { apiModule: api.equipment,    Component: EquipmentProfileForm },

@@ -20,4 +20,4 @@ export {
   COURSE_DAY_RANGES,
   getMandatorySpecialties,
   getDefaultSpecialties,
-} from '../../../convex/shared/agencies'
+} from '../../../convex/shared/activityCatalog'

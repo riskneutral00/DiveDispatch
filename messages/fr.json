@@ -71,6 +71,9 @@
     "phone": "Téléphone",
     "email": "E-mail",
     "dateOfBirth": "Date de naissance",
+    "year": "Année",
+    "month": "Mois",
+    "day": "Jour",
     "appLanguage": "Langue de l'application",
     "country": "Pays",
     "nationality": "Nationalité",
@@ -117,6 +120,7 @@
     "profileIncomplete": "Complétez votre profil avant de continuer.",
     "resourcesIncomplete": "Assignez toutes les ressources requises avant de confirmer.",
     "snapshotFieldImmutable": "Ce champ ne peut pas être modifié après la création.",
+    "capabilityGap": "Ce membre du personnel ne peut pas mener cette activité. Vérifiez ses qualifications.",
     "rateLimited": "Trop de requêtes. Patientez un instant et réessayez."
   },
   "nav": {
@@ -142,7 +146,10 @@
     "hasAccount": "Vous avez un compte ?",
     "selectRole": "Sélectionnez votre rôle",
     "roleOrganizer": "Créer des réservations",
-    "roleResource": "Fournir des services"
+    "roleResource": "Fournir des services",
+    "profileStepTitle": "Complétez votre profil",
+    "iAgreeToTerms": "J'accepte les <link>Conditions Générales</link>",
+    "termsPageTitle": "Conditions Générales"
   },
   "booking": {
     "status": {
@@ -172,7 +179,6 @@
       "cancelConfirm": "Annuler",
       "cancelKeep": "Conserver",
       "cancelReasonLabel": "Raison",
-      "cancelReasonPlaceholder": "p. ex. annulation à la demande du client",
       "discardDraftTitle": "Supprimer le brouillon ?",
       "discardDraftBody": "Cela supprimera le brouillon et libérera toutes les retenues.",
       "bookingTitle": "Réservation",

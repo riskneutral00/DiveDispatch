@@ -8,14 +8,14 @@ import { ROLE_REQUIRED } from './requiredFields'
 import { queryDynamicTable, insertDynamicTable, patchDynamic } from './typedDb'
 
 export const ROLE_TABLE_MAP: Record<string, TableNames> = {
-  Instructor: 'instructors',
+  Instructor: 'diveStaff',
   Boat: 'boats',
   Equipment: 'equipment',
   Pool: 'venues',
   DiveSite: 'venues',
   Compressor: 'compressors',
   DiveCenter: 'diveCenters',
-  DiveMaster: 'diveMasters',
+  DiveMaster: 'diveStaff',
   Agent: 'agents',
   Liveaboard: 'liveaboards',
   DiveResort: 'diveResorts',
@@ -92,11 +92,14 @@ export async function profileUpdate(
     if (!PROTECTED_FIELDS.has(key)) safeArgs[key] = value
   }
 
-  if (role) {
+  const effectiveRole = role === 'diveStaff'
+    ? ((profile as unknown as Record<string, unknown>).role as string) ?? 'Instructor'
+    : role
+  if (effectiveRole) {
     await assertProfileCompletenessInvariant(
       ctx,
       user._id,
-      role,
+      effectiveRole,
       profile as unknown as Record<string, unknown>,
       safeArgs,
     )

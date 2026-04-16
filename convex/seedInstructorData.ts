@@ -41,6 +41,7 @@ function buildInstructor(def: InstructorDef, index: number): SeedStakeholder {
     roles: [{ role }],
     instructor: {
       name: `${def.firstName} ${def.lastName}`,
+      role,
       ...PHUKET,
       email,
       phone,
@@ -107,4 +108,6 @@ const ROSTER: InstructorDef[] = [
   { firstName: 'Oh', lastName: 'Sang-Hoon', credentials: [{ agency: 'SSI', level: 'OWI', specialtyRatings: ['Deep', 'Enriched Air'] }], teachingLanguages: ['ko', 'zh-TW', 'ja'] },
 ]
 
-export const ALL_INSTRUCTORS: SeedStakeholder[] = ROSTER.map((def, i) => buildInstructor(def, i))
+export const PARKED_INSTRUCTORS: SeedStakeholder[] = ROSTER.map((def, i) => buildInstructor(def, i))
+
+export const ALL_INSTRUCTORS: SeedStakeholder[] = []

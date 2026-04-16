@@ -95,7 +95,7 @@ async function batchGetTeachingLanguages(
     slugs.map((slug) => {
       const user = userMap.get(slug)
       return user
-        ? profileByUserId(ctx, user._id, 'instructors')
+        ? profileByUserId(ctx, user._id, 'diveStaff')
         : Promise.resolve(null)
     }),
   )

@@ -5,7 +5,7 @@ import {
   validateCourseDateOverlap,
   validateNoDuplicateCourses,
   validateStartDateNotInPast,
-} from '@/lib/booking/course-validation'
+} from '@/lib/booking/activity-validation'
 import { toISODateString } from '@/lib/utils/date'
 
 const WIZARD_STATE_VERSION = 1
@@ -601,14 +601,9 @@ export function canAdvanceFromItinerary(state: WizardState): boolean {
     courseCustomers.flatMap((c) => (c.courseEntries ?? []).map((e) => e.activityCode)).filter(Boolean),
   )]
   if (allCourseCodes.length > 0 && state.customers.length > 0) {
-    let minRatio = Infinity
-    for (const code of allCourseCodes) {
-      const entry = COURSE_CATALOG.find((c) => c.code === code)
-      if (entry && entry.maxDiversPerInstructor < minRatio) {
-        minRatio = entry.maxDiversPerInstructor
-      }
-    }
-    if (minRatio < Infinity && state.customers.length > minRatio) {
+    const ADMIN_MAX_DIVERS_PER_INSTRUCTOR = 4
+    const minRatio = ADMIN_MAX_DIVERS_PER_INSTRUCTOR
+    if (state.customers.length > minRatio) {
       const requiredInstructors = Math.ceil(state.customers.length / minRatio)
       const uniqueInstructors = new Set<string>()
       for (const day of state.days) {

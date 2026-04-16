@@ -160,10 +160,10 @@ const TABLES_TO_WIPE = [
   'bookings', 'bookingResources', 'bookingSessions', 'customers', 'customerProfiles', 'bookingLinks',
   'inventoryUnits', 'reservations', 'availabilitySnapshots', 'equipmentInventory',
   'stakeholderPreferences', 'notifications',
-  'diveCenters', 'instructors', 'boats', 'equipment', 'venues', 'compressors',
+  'diveCenters', 'diveStaff', 'boats', 'equipment', 'venues', 'compressors',
   'equipmentBags', 'gearSizingLookup',
   'bookingTemplates',
-  'agents', 'diveMasters',
+  'agents',
   'liveaboards', 'cabins', 'tripSchedules',
   'diveResorts', 'rooms', 'diveHostels',
   'stakeholderBlockedDates',
@@ -279,27 +279,9 @@ export const seedInstructors = internalMutation({
     for (const s of ALL_INSTRUCTORS) {
       const userId = await insertUser(ctx, s)
       const primaryRole = s.roles?.[0]?.role
-      if (primaryRole === 'DiveMaster' && s.instructor) {
-        const { specialtyRatings: _ignored, ...credNoRatings } = s.instructor.credential[0] ?? {}
-        await ctx.db.insert('diveMasters', { // batch-exempt
-          userId,
-          name: s.instructor.name,
-          placeName: s.instructor.placeName,
-          country: s.instructor.country,
-          lat: s.instructor.lat,
-          lng: s.instructor.lng,
-          email: s.instructor.email,
-          phone: s.instructor.phone,
-          credential: s.instructor.credential.map((c) => ({
-            agency: c.agency,
-            level: c.level,
-            agencyID: c.agencyID,
-          })),
-          teachingLanguages: s.instructor.teachingLanguages,
-          verified: s.instructor.verified,
-        })
-      } else if (s.instructor) {
-        await ctx.db.insert('instructors', { userId, ...s.instructor }) // batch-exempt
+      if (s.instructor) {
+        const seedRole = primaryRole === 'DiveMaster' ? 'DiveMaster' as const : 'Instructor' as const
+        await ctx.db.insert('diveStaff', { userId, ...s.instructor, role: seedRole }) // batch-exempt: sequential per-instructor seed
       }
     }
   },
@@ -637,6 +619,7 @@ export const patchTokenIdentifiers = internalMutation({
 export const seedDefaultTheme = internalMutation({
   args: {},
   handler: async (ctx) => {
+    // Patches existing theme rows from convex/lib/defaultThemes.ts — re-run after palette token edits.
     for (const spec of SEED_THEME_SPECS) {
       const config = themeConfigForSeedSpec(spec)
       const existing = await ctx.db

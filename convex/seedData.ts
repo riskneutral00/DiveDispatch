@@ -16,7 +16,7 @@ const SSI_PREFS = { owDays: 3, aowDays: 2, oaDays: 4, selectedSpecialties: ['Dee
 
 export type BoatType = 'day_boat' | 'speedboat' | 'longtail' | 'liveaboard' | 'catamaran' | 'rib'
 
-export type GasMixType = 'air' | 'nitrox' | 'trimix'
+export type GasMixType = 'air' | 'nitrox'
 
 export interface SeedUser {
   slug: string
@@ -161,6 +161,7 @@ interface AgentProfile {
 
 interface InstructorProfile {
   name: string
+  role: 'DiveMaster' | 'Instructor'
   placeName: string
   country: string
   lat: number
@@ -957,7 +958,7 @@ export const SCUBA_MARKET: SeedStakeholder = {
     ...KATA,
     email: 'scuba-market@divedispatch.dev',
     phone: '+66-76-330-345',
-    gasMixes: ['air', 'nitrox', 'trimix'],
+    gasMixes: ['air', 'nitrox'],
     verified: VERIFIED,
   },
 }
@@ -1071,7 +1072,7 @@ export const UNOWNED_DIVE_SITES: SeedDiveSite[] = [
   { name: 'Kata Beach', slug: 'kata-beach', capacity: 50 },
 ]
 
-export const ALL_STAKEHOLDERS: SeedStakeholder[] = [
+export const PARKED_STAKEHOLDERS: SeedStakeholder[] = [
   HUG_OCEAN,
   NEPTUNE,
   PHUKET_DC,
@@ -1098,3 +1099,5 @@ export const ALL_STAKEHOLDERS: SeedStakeholder[] = [
   ANDAMAN_EXPLORER,
   CORAL_BAY_RESORT,
 ]
+
+export const ALL_STAKEHOLDERS: SeedStakeholder[] = []

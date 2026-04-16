@@ -19,7 +19,7 @@ export type DirectoryEntry = {
   verified: boolean
   role: StakeholderRole
   agencies?: string[]
-  credentials?: { agency: string; specialtyRatings: string[] }[]
+  credentials?: { agency: string; level: string; specialtyRatings?: string[] }[]
   boatCapacity?: number
   boatType?: string
   boatTypes?: string[]
@@ -42,7 +42,7 @@ type ProfileData = {
   country: string
   verified: boolean
   agencies?: string[]
-  credentials?: { agency: string; specialtyRatings: string[] }[]
+  credentials?: { agency: string; level: string; specialtyRatings?: string[] }[]
   boatCapacity?: number
   boatType?: string
   boatTypes?: string[]
@@ -86,11 +86,11 @@ async function fetchProfile(
 
   switch (role) {
     case 'Instructor': {
-      const creds = (p.credential ?? []) as Array<{ agency: string; specialtyRatings?: string[] }>
+      const creds = (p.credential ?? []) as Array<{ agency: string; level: string; specialtyRatings?: string[] }>
       return {
         ...base,
         agencies: creds.map((c) => c.agency),
-        credentials: creds.map((c) => ({ agency: c.agency, specialtyRatings: c.specialtyRatings ?? [] })),
+        credentials: creds.map((c) => ({ agency: c.agency, level: c.level, specialtyRatings: c.specialtyRatings })),
         teachingLanguages: p.teachingLanguages as string[] | undefined,
       }
     }

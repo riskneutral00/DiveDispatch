@@ -42,8 +42,9 @@ async function seedUser(
   })
   await ctx.db.insert('userRoles', { userId, role, createdAt: Date.now(), profileComplete: false })
   if (role === 'Instructor') {
-    await ctx.db.insert('instructors', {
+    await ctx.db.insert('diveStaff', {
       userId,
+    role: 'Instructor',
       name: `${slug} Display`,
       placeName: 'Koh Tao',
       country: 'Thailand',

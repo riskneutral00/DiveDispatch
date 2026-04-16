@@ -71,6 +71,9 @@
     "phone": "โทรศัพท์",
     "email": "อีเมล",
     "dateOfBirth": "วันเกิด",
+    "year": "ปี",
+    "month": "เดือน",
+    "day": "วัน",
     "appLanguage": "ภาษาของแอป",
     "country": "ประเทศ",
     "nationality": "สัญชาติ",
@@ -117,6 +120,7 @@
     "profileIncomplete": "กรุณากรอกโปรไฟล์ให้ครบถ้วนก่อนดำเนินการต่อ",
     "resourcesIncomplete": "กรุณากำหนดทรัพยากรที่จำเป็นทั้งหมดก่อนยืนยัน",
     "snapshotFieldImmutable": "ไม่สามารถเปลี่ยนแปลงฟิลด์นี้หลังจากสร้างแล้ว",
+    "capabilityGap": "พนักงานคนนี้ไม่สามารถดำเนินกิจกรรมนี้ได้ กรุณาตรวจสอบคุณสมบัติ",
     "rateLimited": "คำขอมากเกินไป กรุณารอสักครู่แล้วลองอีกครั้ง"
   },
   "nav": {
@@ -142,7 +146,10 @@
     "hasAccount": "มีบัญชีแล้ว?",
     "selectRole": "เลือกบทบาทของคุณ",
     "roleOrganizer": "สร้างการจอง",
-    "roleResource": "ให้บริการ"
+    "roleResource": "ให้บริการ",
+    "profileStepTitle": "กรอกข้อมูลโปรไฟล์",
+    "iAgreeToTerms": "ฉันยอมรับ<link>ข้อกำหนดและเงื่อนไข</link>",
+    "termsPageTitle": "ข้อกำหนดและเงื่อนไข"
   },
   "booking": {
     "status": {
@@ -172,7 +179,6 @@
       "cancelConfirm": "ยกเลิก",
       "cancelKeep": "เก็บไว้",
       "cancelReasonLabel": "เหตุผล",
-      "cancelReasonPlaceholder": "เช่น ลูกค้าขอยกเลิก",
       "discardDraftTitle": "ลบร่าง?",
       "discardDraftBody": "จะลบร่างและปล่อยการจองทั้งหมด",
       "bookingTitle": "การจอง",

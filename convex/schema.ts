@@ -35,6 +35,7 @@ export default defineSchema({
     savedThemeIds: v.optional(v.array(v.id('themes'))),
     onboardingComplete: v.optional(v.boolean()),
     defaultLocation: v.optional(v.string()),
+    tcAcceptedAt: v.optional(v.number()),
   })
     .index('by_tokenIdentifier', ['tokenIdentifier'])
     .index('by_slug', ['slug'])
@@ -329,8 +330,9 @@ export default defineSchema({
     verified: v.boolean(),
   }).index('by_userId', ['userId']),
 
-  instructors: defineTable({
+  diveStaff: defineTable({
     userId: v.id('users'),
+    role: v.union(v.literal('DiveMaster'), v.literal('Instructor')),
     name: v.string(),
     placeName: v.string(),
     country: v.string(),
@@ -343,7 +345,7 @@ export default defineSchema({
         agency: v.string(),
         level: v.string(),
         agencyID: v.string(),
-        specialtyRatings: v.array(v.string()),
+        specialtyRatings: v.optional(v.array(v.string())),
       }),
     ),
     teachingLanguages: v.array(v.string()),
@@ -426,6 +428,8 @@ export default defineSchema({
     email: v.string(),
     phone: v.string(),
     gasMixes: v.optional(v.array(gasMix)),
+    nitroxMin: v.optional(v.number()),
+    nitroxMax: v.optional(v.number()),
     ...accessControlFields,
     verified: v.boolean(),
   }).index('by_userId', ['userId']),
@@ -507,27 +511,6 @@ export default defineSchema({
     email: v.string(),
     phone: v.string(),
     associations: v.array(v.object({ agency: v.string(), number: v.string() })),
-    ...accessControlFields,
-    verified: v.boolean(),
-  }).index('by_userId', ['userId']),
-
-  diveMasters: defineTable({
-    userId: v.id('users'),
-    name: v.string(),
-    placeName: v.string(),
-    country: v.string(),
-    lat: v.number(),
-    lng: v.number(),
-    email: v.string(),
-    phone: v.string(),
-    credential: v.array(
-      v.object({
-        agency: v.string(),
-        level: v.string(),
-        agencyID: v.string(),
-      }),
-    ),
-    teachingLanguages: v.array(v.string()),
     ...accessControlFields,
     verified: v.boolean(),
   }).index('by_userId', ['userId']),
