@@ -51,7 +51,6 @@ const diveCenterFromMe = (
   defaults: DiveCenterMergedContactFormState,
 ): DiveCenterMergedContactFormState => ({
   ...defaults,
-  name: (u.businessName as string) ?? '',
   email: (u.email as string) ?? '',
   phone: (u.phone as string) ?? '',
 })

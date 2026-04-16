@@ -72,3 +72,9 @@ html {
 html[data-mode="dark"] {
   color-scheme: dark;
 }
+
+input[type="checkbox"],
+input[type="radio"] {
+  color: initial;
+  background-color: initial;
+}

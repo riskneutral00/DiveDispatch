@@ -286,7 +286,7 @@ export function BookingWizard({
           customerName={c0.name}
           email={emailForResend}
           operatorName={
-            convexUserForPortal?.businessName ?? "Operator"
+            existingBooking?.operatorName ?? "Operator"
           }
           contactType={contactType}
           contactValue={contactValue || undefined}

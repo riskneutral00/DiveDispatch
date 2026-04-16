@@ -84,7 +84,6 @@ function BasicStepInner({ role, mutations, onSaved, onBack }: BasicStepInnerProp
 
   const fromMe = (u: Record<string, unknown>, defaults: ContactFormState): ContactFormState => ({
     ...defaults,
-    name: (u.businessName as string) ?? '',
     email: (u.email as string) ?? '',
   })
 

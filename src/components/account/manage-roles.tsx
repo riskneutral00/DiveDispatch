@@ -11,7 +11,6 @@ import type { Id } from "../../../convex/_generated/dataModel";
 interface RoleEntry {
   _id: Id<"userRoles">;
   role: ClerkRole;
-  profileComplete: boolean;
   createdAt: number;
 }
 

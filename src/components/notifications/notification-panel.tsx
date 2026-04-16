@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import { toast } from 'sonner'
 import { useTranslations } from 'next-intl'
 import { Spinner } from '@/components/ui/spinner'
@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { NotificationItem } from './notification-item'
 import { useOptimisticNotifications } from '@/lib/hooks/use-optimistic-notifications'
-import { useFocusTrap } from '@/lib/hooks/use-focus-trap'
 
 const OP_LABELS: Record<string, string> = {
   markAsRead: 'mark as read',
@@ -18,11 +17,9 @@ const OP_LABELS: Record<string, string> = {
 
 interface NotificationPanelProps {
   userId: string
-  onClose: () => void
 }
 
-export function NotificationPanel({ userId, onClose }: NotificationPanelProps) {
-  const panelRef = useRef<HTMLDivElement>(null)
+export function NotificationPanel({ userId }: NotificationPanelProps) {
   const [liveMessage, setLiveMessage] = useState('')
   const t = useTranslations('common')
 
@@ -37,8 +34,6 @@ export function NotificationPanel({ userId, onClose }: NotificationPanelProps) {
     handleClearAll,
   } = useOptimisticNotifications({ userId, limit: 20, onError })
 
-  useFocusTrap(panelRef, { onClose })
-
   const announce = useCallback((message: string) => {
     setLiveMessage(message)
   }, [])
@@ -46,7 +41,6 @@ export function NotificationPanel({ userId, onClose }: NotificationPanelProps) {
   async function handleItemClick(id: string) {
     announce('Marking notification as read...')
     await handleMarkAsRead(id)
-    onClose()
   }
 
   async function handleItemDelete(id: string) {
@@ -64,10 +58,8 @@ export function NotificationPanel({ userId, onClose }: NotificationPanelProps) {
 
   return (
     <div
-      ref={panelRef}
-      className="absolute right-0 top-full mt-2 z-[var(--z-dropdown)] w-80 max-w-[calc(100vw-2rem)] max-h-[28rem] flex flex-col overflow-hidden shadow-xl glass-elevated rounded-theme"
-      role="dialog"
-      aria-modal="true"
+      className="w-80 max-w-[calc(100%-2rem)] max-h-[28rem] flex flex-col overflow-hidden"
+      role="group"
       aria-label="Notifications"
     >
       <div

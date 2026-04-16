@@ -16,7 +16,7 @@ export interface UseProfileFormOptions<
   TPayload = Record<string, unknown>,
 > {
   profile: ProfileRecord | null | undefined
-  me?: { businessName?: string; email?: string; phone?: string; customerLanguages?: string[]; defaultLocation?: string } | null | undefined
+  me?: { email?: string; phone?: string; customerLanguages?: string[]; defaultLocation?: string } | null | undefined
   schema: z.ZodType<unknown>
   defaults: TForm
   fromProfile: (profile: ProfileRecord, me?: NonNullable<UseProfileFormOptions<TForm, TPayload>['me']>) => TForm

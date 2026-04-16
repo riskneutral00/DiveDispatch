@@ -10,7 +10,7 @@ export function buildParentContactDefaults(
 ): Record<string, unknown> {
   const defaultLoc = me?.defaultLocation as LocationLike | undefined
   return {
-    name: (me?.businessName as string | undefined) ?? '',
+    name: '',
     placeName: defaultLoc?.placeName ?? '',
     country: defaultLoc?.country ?? '',
     lat: defaultLoc?.lat ?? 0,
