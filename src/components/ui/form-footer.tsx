@@ -40,7 +40,7 @@ export function FormFooter({
       <BottomActionBar>
         {onCancel ? (
           <div className="grid grid-cols-2 gap-3"> {/* design-ok */}
-            <Button variant="ghost" onClick={onCancel} disabled={saving}>
+            <Button variant="secondary" onClick={onCancel} disabled={saving}>
               {t('cancel')}
             </Button>
             <SaveButton

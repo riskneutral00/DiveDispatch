@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { NICOLE_DC, ALL_STAKEHOLDERS, type SeedInventoryLine } from '../../convex/seedData'
+import { NICOLE_DC, PARKED_STAKEHOLDERS, type SeedInventoryLine } from '../../convex/seedData'
 import {
   SCUBAPRO_WETSUITS, SCUBAPRO_BCDS,
   AQUALUNG_WETSUITS, AQUALUNG_BCDS,
@@ -106,7 +106,7 @@ describe('Nicole inventoryOverrides', () => {
 })
 
 describe('Other EMs', () => {
-  const otherEMs = ALL_STAKEHOLDERS.filter(
+  const otherEMs = PARKED_STAKEHOLDERS.filter(
     (s) => s.equipment?.manufacturersByGearType && s.user.slug !== NICOLE_DC.user.slug,
   )
 
@@ -117,7 +117,7 @@ describe('Other EMs', () => {
   })
 
   it('Nicole is the only EM with inventoryOverrides', () => {
-    const withOverrides = ALL_STAKEHOLDERS.filter((s) => s.equipment?.inventoryOverrides)
+    const withOverrides = PARKED_STAKEHOLDERS.filter((s) => s.equipment?.inventoryOverrides)
     expect(withOverrides).toHaveLength(1)
     expect(withOverrides[0].user.slug).toBe(NICOLE_DC.user.slug)
   })

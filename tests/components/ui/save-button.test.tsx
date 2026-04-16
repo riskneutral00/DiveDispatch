@@ -9,9 +9,9 @@ describe('SaveButton', () => {
     expect(screen.getByText('Save')).toBeTruthy()
   })
 
-  it('shows "Create Profile" for new profiles', () => {
+  it('shows "Save" for new profiles', () => {
     render(<SaveButton saving={false} saved={false} isDirty={false} isUpdate={false} />)
-    expect(screen.getByText('Create Profile')).toBeTruthy()
+    expect(screen.getByText('Save')).toBeTruthy()
   })
 
   it('shows custom label when provided', () => {

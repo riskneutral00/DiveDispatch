@@ -1,17 +1,20 @@
 import type { ReactNode } from 'react'
 import { cn } from '@/lib/utils/cn'
+import { RequiredAsterisk } from '@/components/ui/required-asterisk'
 
 interface FormSectionHeaderProps {
   label: ReactNode
   note?: ReactNode
   action?: ReactNode
+  required?: boolean
   className?: string
 }
 
-export function FormSectionHeader({ label, note, action, className }: FormSectionHeaderProps) {
+export function FormSectionHeader({ label, note, action, required, className }: FormSectionHeaderProps) {
   const heading = (
     <h2 className={cn('font-semibold uppercase text-secondary text-section-header tracking-wide', !action && !note && className)}>
       {label}
+      {required && <RequiredAsterisk />}
     </h2>
   )
 

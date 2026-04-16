@@ -5,7 +5,6 @@ import { LocationPicker, type LocationValue } from '@/components/profiles/locati
 
 interface ProfileBasicInfoProps {
   nameLabel?: string
-  namePlaceholder?: string
   nameValue: string
   nameError?: string
   onNameChange: (value: string) => void
@@ -32,7 +31,6 @@ interface ProfileBasicInfoProps {
 
 export function ProfileBasicInfo({
   nameLabel = 'Name',
-  namePlaceholder = 'Your name',
   nameValue,
   nameError,
   onNameChange,
@@ -56,7 +54,6 @@ export function ProfileBasicInfo({
       <NameField
         scope="organization"
         label={nameLabel}
-        placeholder={namePlaceholder}
         value={nameValue}
         onChange={onNameChange}
         error={nameError}
@@ -82,7 +79,6 @@ export function ProfileBasicInfo({
       {onEmailChange !== undefined && (
         <EmailField
           label="Email"
-          placeholder="info@example.com"
           value={emailValue ?? ''}
           onChange={onEmailChange}
           error={emailError}

@@ -16,6 +16,10 @@ import { FormSectionHeader } from '@/components/ui/form-section-header'
 import { Card } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
+import {
+  AccessControlSection,
+  INITIAL_ACCESS_CONTROL,
+} from '@/components/profiles/access-control-section'
 import { SectionDivider } from '@/components/ui/section-divider'
 import {
   PreferredInstructorList,
@@ -75,8 +79,8 @@ export type ResourceSubTab =
 const defaultFormData = (): PrefsFormData => ({
   acceptanceMode: 'Auto',
   commonLanguageCodes: ['en'],
-  confirmOnAccept: false,
-  confirmOnDecline: false,
+  confirmOnAccept: true,
+  confirmOnDecline: true,
   preferredInstructorSlugs: [],
   preferredVenueSlugs: [],
   preferredEquipmentSlugs: [],
@@ -210,10 +214,10 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp,
     fromProfile: (profile) => {
       const typed = profile as Partial<PrefsFormData>
       return {
-        acceptanceMode: (typed.acceptanceMode as AcceptanceMode) ?? 'Auto',
+        acceptanceMode: 'Auto',
         commonLanguageCodes: typed.commonLanguageCodes ?? ['en'],
-        confirmOnAccept: typed.confirmOnAccept ?? false,
-        confirmOnDecline: typed.confirmOnDecline ?? false,
+        confirmOnAccept: true,
+        confirmOnDecline: true,
         preferredInstructorSlugs: typed.preferredInstructorSlugs ?? [],
         preferredVenueSlugs: typed.preferredVenueSlugs ?? [],
         preferredEquipmentSlugs: typed.preferredEquipmentSlugs ?? [],
@@ -315,7 +319,17 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp,
         {section === 'booking' && (
           <>
             <Card padding="sm" className="reading-plane">
-              <FormSectionHeader className="mb-4" label={tBooking('acceptanceMode')} />
+              <AccessControlSection value={INITIAL_ACCESS_CONTROL} onChange={() => {}} />
+            </Card>
+
+            <SectionDivider show />
+
+            <Card padding="sm" className="reading-plane">
+              <FormSectionHeader
+                className="mb-4"
+                label={tBooking('acceptanceMode')}
+                required
+              />
               <div className="space-y-2">
                 {ACCEPTANCE_MODES.map(({ value, label, description }) => (
                   <Checkbox
@@ -326,8 +340,9 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp,
                     value={value}
                     label={label}
                     description={description}
-                    checked={form.acceptanceMode === value}
-                    onChange={() => setField('acceptanceMode', value)}
+                    checked={value === 'Auto'}
+                    onChange={() => {}}
+                    disabled
                   />
                 ))}
               </div>
@@ -352,7 +367,11 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp,
             <SectionDivider show />
 
             <Card padding="sm" className="reading-plane">
-              <FormSectionHeader className="mb-4" label={tBooking('confirmationAlerts')} />
+              <FormSectionHeader
+                className="mb-4"
+                label={tBooking('confirmationAlerts')}
+                required
+              />
               <div className="space-y-3">
                 {(
                   [
@@ -363,8 +382,9 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp,
                   <Checkbox
                     key={key}
                     label={label}
-                    checked={form[key]}
-                    onChange={(v) => setField(key, v)}
+                    checked
+                    onChange={() => {}}
+                    disabled
                   />
                 ))}
               </div>

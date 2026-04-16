@@ -17,6 +17,7 @@ export {
   seedAgent,
   seedVenue,
   seedInstructorProfile,
+  seedDiveMasterProfile,
   seedBoatProfile,
   seedEquipmentProfile,
 } from './seedProfiles'

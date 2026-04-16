@@ -24,6 +24,7 @@ export { Select } from "./select";
 export type { SelectOption } from "./select";
 export { RoleIcon } from "./role-icon";
 export { SimpleSelect } from "./simple-select";
+export { NumberPicker } from "./number-picker";
 export { ErrorCard } from "./error-card";
 export { Checkbox } from "./checkbox";
 export { CheckboxGroup } from "./checkbox-group";

@@ -8,7 +8,6 @@ import { ProfileFormHeader } from '@/components/profiles/profile-form-header'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import { SectionDivider } from '@/components/ui/section-divider'
 import {
-  AccessControlSection,
   INITIAL_ACCESS_CONTROL,
   accessFromProfile,
   accessToPayload,
@@ -94,20 +93,13 @@ export type PersonalCredentialsFormState = {
   credential: PersonalCredential[]
 }
 
-export function makeEmptyDmCredential(): DmCredential {
-  return { agency: '', level: '', agencyID: '' }
+export function makeEmptyCredential(variant: PersonalVariant): PersonalCredential {
+  const base = { agency: '', level: '', agencyID: '' }
+  return variant === 'instructor' ? { ...base, specialtyRatings: [] } : base
 }
 
-export function makeEmptyInstCredential(): InstCredential {
-  return { agency: '', level: '', agencyID: '', specialtyRatings: [] }
-}
-
-export const INITIAL_DM_CREDENTIALS_FORM: PersonalCredentialsFormState = {
-  credential: [makeEmptyDmCredential()],
-}
-
-export const INITIAL_INST_CREDENTIALS_FORM: PersonalCredentialsFormState = {
-  credential: [makeEmptyInstCredential()],
+export function getInitialCredentialsForm(variant: PersonalVariant): PersonalCredentialsFormState {
+  return { credential: [makeEmptyCredential(variant)] }
 }
 
 export function credentialsFromProfile(
@@ -119,7 +111,7 @@ export function credentialsFromProfile(
     credential:
       creds.length > 0
         ? creds
-        : [variant === 'divemaster' ? makeEmptyDmCredential() : makeEmptyInstCredential()],
+        : [makeEmptyCredential(variant)],
   }
 }
 
@@ -147,7 +139,6 @@ export function PersonalContactSection({
   onClose,
 }: PersonalContactSectionProps) {
   const isDm = variant === 'divemaster'
-  const namePlaceholder = isDm ? 'Your name' : 'Ariel Nemo'
 
   const {
     form,
@@ -201,7 +192,6 @@ export function PersonalContactSection({
           onNameChange={(val) => setField('name', val)}
           nameError={errors.name}
           nameLabel="Full Name"
-          namePlaceholder={namePlaceholder}
           nameRequired
           locationValue={form.location}
           onLocationChange={onLocationChange}
@@ -224,13 +214,6 @@ export function PersonalContactSection({
           value={form.teachingLanguages}
           onChange={(langs) => setField('teachingLanguages', langs)}
         />
-
-        <SectionDivider variant="soft" />
-
-        <AccessControlSection
-          value={form.access}
-          onChange={(next) => setField('access', next)}
-        />
       </div>
     </ProfileFormShell>
   )
@@ -245,7 +228,7 @@ export function PersonalCredentialsSection({
 }: PersonalCredentialsSectionProps) {
   const schema = variant === 'divemaster' ? diveMasterCredentialsSchema : instructorCredentialsSchema
   const initialDefaults =
-    variant === 'divemaster' ? INITIAL_DM_CREDENTIALS_FORM : INITIAL_INST_CREDENTIALS_FORM
+    getInitialCredentialsForm(variant)
   const {
     form,
     setField,
@@ -311,12 +294,17 @@ export function PersonalProfileForm({
   variant: PersonalVariant
   section?: PersonalSection
 }) {
+  const wrappedCreate = create
+    ? (payload: Record<string, unknown>) =>
+        create({ ...payload, role: variant === 'divemaster' ? 'DiveMaster' : 'Instructor' })
+    : undefined
+
   if (section === 'credentials')
     return (
       <PersonalCredentialsSection
         variant={variant}
         profile={profile}
-        create={create}
+        create={wrappedCreate}
         update={update}
         onClose={onClose}
       />
@@ -326,7 +314,7 @@ export function PersonalProfileForm({
       variant={variant}
       profile={profile}
       me={me}
-      create={create}
+      create={wrappedCreate}
       update={update}
       onClose={onClose}
     />

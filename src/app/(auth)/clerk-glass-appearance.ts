@@ -1,20 +1,20 @@
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Appearance = Record<string, any>
 
-const TEXT_PRIMARY = 'rgba(255, 255, 255, 0.95)'
-const TEXT_SECONDARY = 'rgba(255, 255, 255, 0.6)'
-const TEXT_MUTED = 'rgba(255, 255, 255, 0.4)'
+const TEXT_PRIMARY = 'rgba(0, 0, 0, 0.90)'
+const TEXT_SECONDARY = 'rgba(0, 0, 0, 0.55)'
+const TEXT_MUTED = 'rgba(0, 0, 0, 0.35)'
 const PRIMARY = '#60a5fa'
 const DESTRUCTIVE = '#dc2626'
 const RADIUS = '16px'      // card / container radius
 const RADIUS_SM = '10px'   // component radius (buttons, inputs, badges)
 const FONT = "'Inter', -apple-system, BlinkMacSystemFont, sans-serif"
 
-const INPUT_BG = 'rgba(255, 255, 255, 0.10)'
-const INPUT_BORDER = 'rgba(255, 255, 255, 0.25)'
-const SOCIAL_BG = 'rgba(255, 255, 255, 0.08)'
-const SOCIAL_BORDER = 'rgba(255, 255, 255, 0.2)'
-const DIVIDER = 'rgba(255, 255, 255, 0.1)'
+const INPUT_BG = 'rgba(0, 0, 0, 0.05)'
+const INPUT_BORDER = 'rgba(0, 0, 0, 0.18)'
+const SOCIAL_BG = 'rgba(0, 0, 0, 0.04)'
+const SOCIAL_BORDER = 'rgba(0, 0, 0, 0.14)'
+const DIVIDER = 'rgba(0, 0, 0, 0.12)'
 
 const glassInput = {
   background: INPUT_BG,
@@ -24,7 +24,7 @@ const glassInput = {
   borderRadius: RADIUS_SM,
   color: TEXT_PRIMARY,
   fontSize: '14px',
-  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08)',
+  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.50)',
   transition: 'all 0.3s ease',
 }
 
@@ -33,7 +33,7 @@ export const clerkGlassAppearance: Appearance = {
     colorPrimary: PRIMARY,
     colorText: TEXT_PRIMARY,
     colorTextSecondary: TEXT_SECONDARY,
-    colorTextOnPrimaryButton: '#ffffff',
+    colorTextOnPrimaryButton: '#000000',
     colorBackground: 'transparent',
     colorInputBackground: INPUT_BG,
     colorInputText: TEXT_PRIMARY,
@@ -79,7 +79,7 @@ export const clerkGlassAppearance: Appearance = {
 
     formButtonPrimary: {
       background: PRIMARY,
-      color: '#ffffff',
+      color: '#000000',
       border: `1px solid ${PRIMARY}`,
       borderRadius: RADIUS_SM,
       fontWeight: '600',
@@ -94,7 +94,7 @@ export const clerkGlassAppearance: Appearance = {
       WebkitBackdropFilter: 'blur(12px)',
       border: `1px solid ${SOCIAL_BORDER}`,
       borderRadius: '12px',
-      boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.06)',
+      boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.40)',
       transition: 'all 0.3s ease',
     },
     socialButtonsBlockButton: {
@@ -104,7 +104,7 @@ export const clerkGlassAppearance: Appearance = {
       border: `1px solid ${SOCIAL_BORDER}`,
       borderRadius: '12px',
       color: TEXT_PRIMARY,
-      boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.06)',
+      boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.40)',
       transition: 'all 0.3s ease',
     },
     socialButtonsBlockButtonText: {

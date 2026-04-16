@@ -6,6 +6,7 @@ import { getLocale, getMessages } from "next-intl/server"
 import { ConvexClerkProvider } from "../lib/convex"
 import { LocaleSyncProvider } from "../lib/hooks/locale-sync-provider"
 import { ThemeProvider } from "../themes/theme-provider"
+import { getThemeBootstrapScript } from "../themes/theme-bootstrap"
 import { AppToaster } from "../components/ui/app-toaster"
 import { OfflineIndicator } from "../components/pwa/offline-indicator"
 import { PostHogProvider } from "../lib/posthog"
@@ -27,7 +28,10 @@ export default async function RootLayout({
   const messages = await getMessages()
 
   return (
-    <html lang={locale} data-theme="skin-light-4" data-mode="light">
+    <html lang={locale} suppressHydrationWarning>
+      <head>
+        <script>{getThemeBootstrapScript()}</script>
+      </head>
       <body className={inter.className}>
         <ClerkProvider
           signInUrl="/sign-in"

@@ -86,7 +86,7 @@ export function SimpleSelect({
             ? "field-underline"
             : cn(
                 "bg-transparent border-0 border-b-0 outline-none",
-                "focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]",
+                "focus-visible:ring-2",
                 error
                   ? "focus-visible:ring-[var(--color-destructive)]"
                   : "focus-visible:ring-[var(--color-primary)]",

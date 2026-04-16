@@ -33,8 +33,8 @@ const EQUIPMENT: DirectoryEntry[] = [
 ]
 
 const COMPRESSORS: DirectoryEntry[] = [
-  { slug: 'air-station', name: 'Air Station', placeName: 'Phuket', country: 'TH', verified: true, role: 'Compressor', gasMixes: ['air', 'nitrox'] },
-  { slug: 'deep-fills', name: 'Deep Fills', placeName: 'Koh Tao', country: 'TH', verified: true, role: 'Compressor', gasMixes: ['air', 'nitrox', 'trimix'] },
+  { slug: 'air-station', name: 'Air Station', placeName: 'Phuket', country: 'TH', verified: true, role: 'Compressor', gasMixes: ['air'] },
+  { slug: 'deep-fills', name: 'Deep Fills', placeName: 'Koh Tao', country: 'TH', verified: true, role: 'Compressor', gasMixes: ['air', 'nitrox'] },
 ]
 
 // ─── Convex mock — return role-specific entries ─────────────────────────────
@@ -154,7 +154,7 @@ describe('PreferredCompressorList', () => {
     expect(screen.getByText('Deep Fills')).toBeInTheDocument()
     expect(screen.getByText('Air')).toBeInTheDocument()
     expect(screen.getByText('Nitrox')).toBeInTheDocument()
-    expect(screen.getByText('Trimix')).toBeInTheDocument()
+    expect(screen.queryByText('Trimix')).not.toBeInTheDocument()
   })
 
   it('shows all compressors in overlay by default', () => {
@@ -168,8 +168,8 @@ describe('PreferredCompressorList', () => {
   it('filters by gas mix chip', () => {
     render(<PreferredCompressorList slugs={[]} onChange={() => {}} />)
     fireEvent.click(screen.getByRole('button', { name: /add compressor/i }))
-    const trimixChips = screen.getAllByText('Trimix')
-    fireEvent.click(trimixChips[0])
+    const nitroxChips = screen.getAllByText('Nitrox')
+    fireEvent.click(nitroxChips[0])
     expect(screen.getByText('Deep Fills')).toBeInTheDocument()
     expect(screen.queryByText('Air Station')).not.toBeInTheDocument()
   })

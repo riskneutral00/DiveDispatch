@@ -29,7 +29,6 @@ export function PoolContactSection({ create, ...props }: PoolSectionProps) {
       create={create}
       createOverride={(payload) => create(buildPoolCreatePayload(payload))}
       nameLabel="Business Name"
-      namePlaceholder="Blue Lagoon Training Pool"
       schema={contactSchema}
     />
   )
@@ -68,6 +67,7 @@ export function PoolCapabilitiesSection(props: PoolSectionProps) {
       fromProfile={poolCapabilitiesFromProfile}
       toPayload={poolCapabilitiesToPayload}
       venueType="pool"
+      wrapCreatePayload={buildPoolCreatePayload}
       depthPlaceholder="5"
       capacityPlaceholder="15"
     />
@@ -83,6 +83,6 @@ export function PoolProfileForm({
   onSaved,
 }: PoolSectionProps & { section?: PoolProfileSection }) {
   if (section === 'capabilities')
-    return <PoolCapabilitiesSection profile={profile} create={create} update={update} />
+    return <PoolCapabilitiesSection profile={profile} me={me} create={create} update={update} />
   return <PoolContactSection profile={profile} me={me} create={create} update={update} onSaved={onSaved} />
 }

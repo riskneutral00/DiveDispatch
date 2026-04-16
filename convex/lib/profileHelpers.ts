@@ -93,7 +93,11 @@ export async function profileUpdate(
   }
 
   const effectiveRole = role === 'diveStaff'
-    ? ((profile as unknown as Record<string, unknown>).role as string) ?? 'Instructor'
+    ? (() => {
+        const profileRole = (profile as unknown as Record<string, unknown>).role as string
+        if (!profileRole) throw new ConvexError({ code: ErrorCode.INVALID_STATE })
+        return profileRole
+      })()
     : role
   if (effectiveRole) {
     await assertProfileCompletenessInvariant(

@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button'
 import { SectionDivider } from '@/components/ui/section-divider'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import {
-  AccessControlSection,
   INITIAL_ACCESS_CONTROL,
   accessFromProfile,
   accessToPayload,
@@ -135,7 +134,6 @@ export function DiveCenterContactSection(props: DiveCenterSectionProps) {
           onNameChange={(val) => setField('name', val)}
           nameError={errors.name}
           nameLabel="Business Name"
-          namePlaceholder="Ms. Mermaids' DC"
           nameRequired
           locationValue={form.location}
           onLocationChange={(loc) => setField('location', loc)}
@@ -157,13 +155,6 @@ export function DiveCenterContactSection(props: DiveCenterSectionProps) {
           variant="customer"
           value={form.customerLanguages}
           onChange={(langs) => setField('customerLanguages', langs)}
-        />
-
-        <SectionDivider variant="soft" />
-
-        <AccessControlSection
-          value={form.access}
-          onChange={(next) => setField('access', next)}
         />
       </div>
     </ProfileFormShell>

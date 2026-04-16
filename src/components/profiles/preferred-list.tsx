@@ -85,8 +85,8 @@ function InstructorFilterBar({
         <span className="text-label text-secondary mr-1">Agency</span>
         {agencies.map((agency) => {
           const isActive = activeAgency === agency
-          return ( /* design-ok */
-            <button
+          return (
+            <button /* design-ok: filter chip */
               key={agency}
               type="button"
               onClick={() => onAgencyChange(isActive ? null : agency)}
@@ -112,8 +112,8 @@ function InstructorFilterBar({
           <span className="text-label text-secondary mr-1">Specialties</span>
           {specialties.map((spec) => {
             const isActive = activeSpecialties.has(spec)
-            return ( /* design-ok */
-              <button
+            return (
+              <button /* design-ok: filter chip */
                 key={spec}
                 type="button"
                 onClick={() => onSpecialtyToggle(spec)}
@@ -521,8 +521,8 @@ export function PreferredInstructorList(props: ListProps) {
 }
 
 function Chip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
-  return ( /* design-ok */
-    <button
+  return (
+    <button /* design-ok: chip control */
       type="button"
       onClick={onClick}
       className={chipBase}

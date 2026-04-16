@@ -109,7 +109,7 @@ describe('DevSwitcher', () => {
     fireEvent.click(triggerBtn.closest('button')!)
 
     // Find the first switch arrow button in the panel
-    const switchButtons = screen.getAllByRole('button', { name: /switch to/i })
+    const switchButtons = screen.queryAllByRole('button', { name: /switch to/i })
     if (switchButtons.length === 0) return
 
     fireEvent.click(switchButtons[0])

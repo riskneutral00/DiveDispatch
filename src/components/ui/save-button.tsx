@@ -36,7 +36,7 @@ export function SaveButton({ saving, saved, isDirty, isUpdate, disabled, label, 
         ) : (
           <>
             <Save size={16} aria-hidden />
-            {label ?? (isUpdate ? t('save') : t('createProfile'))}
+            {label ?? t('save')}
           </>
         )}
       </Button>

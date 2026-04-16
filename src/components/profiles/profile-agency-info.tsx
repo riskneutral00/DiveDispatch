@@ -210,7 +210,6 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
         />
         <Input
           label="Agency Member ID"
-          placeholder="e.g. 12345678"
           value={String((item as AgencyRow).number ?? "")}
           onChange={(e) => handleUpdate(idx, { number: e.target.value })}
           error={errors[`associations.${idx}.number`]}
@@ -243,11 +242,6 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
           />
           <Input
             label="Certification Level"
-            placeholder={
-              variant === "instructor"
-                ? "e.g. Open Water Instructor"
-                : "e.g. Divemaster"
-            }
             value={String((item as AgencyRow).level ?? "")}
             onChange={(e) => handleUpdate(idx, { level: e.target.value })}
             error={errors[`credential.${idx}.level`]}
@@ -260,7 +254,6 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
                 ? "Agency Instructor ID"
                 : "Agency Member ID"
             }
-            placeholder="e.g. 12345678"
             value={String((item as AgencyRow).agencyID ?? "")}
             onChange={(e) => handleUpdate(idx, { agencyID: e.target.value })}
             error={errors[`credential.${idx}.agencyID`]}

@@ -60,7 +60,6 @@ export function CancelBookingDialog({
         value={reason}
         onChange={(e) => setReason(e.target.value)}
         rows={DEFAULT_TEXTAREA_ROWS}
-        placeholder={tDialogs('cancelReasonPlaceholder')}
       />
     </ConfirmActionDialog>
   )

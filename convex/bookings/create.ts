@@ -257,14 +257,11 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
     ? [...new Set(args.bookingData.divers.flatMap((d) => d.activityType))]
     : (booking as BookingDoc).activityType as CourseCode[]
 
-  const instructorResources = resources.filter(
-    (r) =>
-      r.resourceType === 'Instructor' &&
-      r.resourceId &&
-      (r.roleType ?? 'Instructor') !== 'DiveMaster',
+  const gateResources = resources.filter(
+    (r) => r.resourceType === 'Instructor' && r.resourceId,
   )
 
-  for (const ir of instructorResources) { // batch-exempt: sequential per-resource gate
+  for (const ir of gateResources) { // batch-exempt: sequential per-resource gate
     const instructor = await profileBySlug(ctx, ir.resourceId!, 'diveStaff') as Doc<'diveStaff'> | null
     if (!instructor) continue
 

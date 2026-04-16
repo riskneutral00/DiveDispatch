@@ -224,7 +224,7 @@ describe('EquipmentInventoryTable', () => {
     expect(screen.getByLabelText('Total units for wetsuit M')).toBeInTheDocument()
   })
 
-  it('calls onUpdateUnits on blur when value changes', async () => {
+  it('calls onUpdateUnits when dropdown selection changes', async () => {
     const user = userEvent.setup()
     const onUpdate = vi.fn().mockResolvedValue(undefined)
 
@@ -238,11 +238,11 @@ describe('EquipmentInventoryTable', () => {
       />,
     )
 
-    const input = screen.getByLabelText('Total units for wetsuit M')
-    await user.clear(input)
-    await user.type(input, '10')
-    await user.tab()
+    const select = screen.getByLabelText('Total units for wetsuit M')
+    await user.selectOptions(select, '10')
 
-    expect(onUpdate).toHaveBeenCalledWith('1', 10)
+    await vi.waitFor(() => {
+      expect(onUpdate).toHaveBeenCalledWith('1', 10)
+    })
   })
 })

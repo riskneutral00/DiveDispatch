@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { IconButton } from '@/components/ui/icon-button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
+import { NumberPicker } from '@/components/ui/number-picker'
 import { SimpleSelect } from '@/components/ui/simple-select'
 import { Dialog } from '@/components/ui/dialog'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
@@ -211,24 +212,6 @@ function InventoryTableRow({
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
 
-  const commitUnits = useCallback(async () => {
-    const parsed = parseInt(localUnits, 10)
-    if (isNaN(parsed) || parsed < 1 || parsed === item.totalUnits) {
-      setLocalUnits(String(item.totalUnits))
-      return
-    }
-    setIsSaving(true)
-    setSaveError('')
-    try {
-      await onUpdateUnits(item._id, parsed)
-    } catch (err: unknown) {
-      setSaveError(err instanceof Error ? err.message : String(err))
-      setLocalUnits(String(item.totalUnits))
-    } finally {
-      setIsSaving(false)
-    }
-  }, [localUnits, item._id, item.totalUnits, onUpdateUnits])
-
   const gearLabel = item.gearType.charAt(0).toUpperCase() + item.gearType.slice(1)
 
   return (
@@ -246,18 +229,28 @@ function InventoryTableRow({
         {item.diopter != null ? item.diopter : '—'}
       </td>
       <td className="px-4 py-2.5">
-        <Input
-          type="number"
-          inputMode="numeric"
+        <NumberPicker
           min={1}
-          value={localUnits}
-          onChange={(e) => setLocalUnits(e.target.value)}
-          onBlur={commitUnits}
-          onKeyDown={(e) => { if (e.key === 'Enter') commitUnits() }}
+          max={500}
+          value={localUnits === '' ? undefined : Number(localUnits)}
+          onChange={async (v) => {
+            if (v === undefined || v === item.totalUnits) return
+            setLocalUnits(String(v))
+            setIsSaving(true)
+            setSaveError('')
+            try {
+              await onUpdateUnits(item._id, v)
+            } catch (err) {
+              setSaveError(err instanceof Error ? err.message : String(err))
+              setLocalUnits(String(item.totalUnits))
+            } finally {
+              setIsSaving(false)
+            }
+          }}
           disabled={isSaving}
           error={saveError || undefined}
           aria-label={`Total units for ${item.gearType} ${item.size ?? ''}`}
-          className="w-16 text-center"
+          className="w-20"
         />
       </td>
       <td className="px-4 py-2.5 text-center">
@@ -374,23 +367,22 @@ function AddItemDialog({
           </label>
         </div>
         {isPrescription && (
-          <Input
+          <NumberPicker
             label="Diopter"
-            type="number"
-            inputMode="decimal"
-            step="0.5"
-            value={diopter}
-            onChange={(e) => setDiopter(e.target.value)}
-            placeholder="e.g. -3.5"
+            min={-6}
+            max={3}
+            step={0.5}
+            decimals={1}
+            value={diopter === '' ? undefined : Number(diopter)}
+            onChange={(v) => setDiopter(v === undefined ? '' : String(v))}
           />
         )}
-        <Input
+        <NumberPicker
           label="Total Units"
-          type="number"
-          inputMode="numeric"
           min={1}
-          value={totalUnits}
-          onChange={(e) => setTotalUnits(e.target.value)}
+          max={500}
+          value={totalUnits === '' ? undefined : Number(totalUnits)}
+          onChange={(v) => setTotalUnits(v === undefined ? '' : String(v))}
           required
         />
         {error && <InlineError>{error}</InlineError>}

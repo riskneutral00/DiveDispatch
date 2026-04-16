@@ -7,13 +7,16 @@ import {
   seedDiveCenterProfile,
   seedAgent,
   seedInstructorProfile,
+  seedDiveMasterProfile,
   seedBoatProfile,
   seedEquipmentProfile,
+  seedBooking,
   seedBookingTemplate,
   seedStakeholderPreferences,
   seedVenue,
   type SeedCtx,
 } from './fixtures'
+import { testDate } from './helpers/dates'
 import { makeT, expectConvexError } from './helpers/convex-helpers'
 
 // ─── Composite helper: complete DC with coverage ─────────────────────────────
@@ -228,5 +231,160 @@ describe('booking gate: per-active-role completeness', () => {
         .mutation(api.bookingDraftMutations.createDraftShell, { activeRole: 'Agent' }),
       ErrorCode.PROFILE_INCOMPLETE,
     )
+  })
+})
+
+// ─── Capability gate: DiveMaster rank enforcement ───────────────────────────
+
+const startDate = testDate(5)
+const endDate = testDate(7)
+
+function makeDiver(activityType: string[]) {
+  return {
+    name: 'Alice',
+    abbrev: 'AL',
+    flag: { code: 'en', label: 'English' },
+    startDate,
+    endDate,
+    activityType,
+  }
+}
+
+describe('booking gate: capability gate blocks DM from OW+', () => {
+  it('DiveMaster assigned to OW booking throws CAPABILITY_GAP', async () => {
+    const t = makeT()
+
+    const bookingId = await t.run(async (ctx) => {
+      await seedUser(ctx, {
+        slug: 'dc-cap',
+        tokenIdentifier: 'clerk|dc-cap',
+        role: 'DiveCenter',
+        email: 'dc-cap@test.com',
+        name: 'DC Cap',
+        firstName: 'DC',
+        lastName: 'Cap',
+        businessName: 'Cap DC',
+      })
+      const instUserId = await seedUser(ctx, {
+        slug: 'inst-cap',
+        tokenIdentifier: 'clerk|inst-cap',
+        role: 'Instructor',
+        email: 'inst-cap@test.com',
+        name: 'Inst Cap',
+        firstName: 'Inst',
+        lastName: 'Cap',
+      })
+      await seedInstructorProfile(ctx, instUserId)
+
+      const dmUserId = await seedUser(ctx, {
+        slug: 'dm-cap',
+        tokenIdentifier: 'clerk|dm-cap',
+        role: 'DiveMaster',
+        email: 'dm-cap@test.com',
+        name: 'DM Cap',
+        firstName: 'DM',
+        lastName: 'Cap',
+      })
+      await seedDiveMasterProfile(ctx, dmUserId)
+
+      return seedBooking(ctx, {
+        ownerId: 'dc-cap',
+        activityType: ['OW'],
+        bookingFormComplete: false,
+        divers: [],
+      })
+    })
+
+    await expectConvexError(
+      t.withIdentity({ tokenIdentifier: 'clerk|dc-cap' }).mutation(
+        api.bookings.create.submitToDraft,
+        {
+          bookingId,
+          sessions: [],
+          bookingData: {
+            activityType: ['OW'],
+            startDate,
+            endDate,
+            portalContact: false,
+            portalMedical: false,
+            portalWaiver: false,
+            resources: [
+              { resourceType: 'Instructor', resourceId: 'inst-cap', roleType: 'Instructor' },
+              { resourceType: 'Instructor', resourceId: 'dm-cap', roleType: 'DiveMaster' },
+            ],
+            divers: [makeDiver(['OW'])],
+          },
+        },
+      ),
+      ErrorCode.CAPABILITY_GAP,
+    )
+  })
+
+  it('DiveMaster assigned to DSD booking passes gate (trojan horse)', async () => {
+    const t = makeT()
+
+    const bookingId = await t.run(async (ctx) => {
+      await seedUser(ctx, {
+        slug: 'dc-cap2',
+        tokenIdentifier: 'clerk|dc-cap2',
+        role: 'DiveCenter',
+        email: 'dc-cap2@test.com',
+        name: 'DC Cap2',
+        firstName: 'DC',
+        lastName: 'Cap2',
+        businessName: 'Cap DC2',
+      })
+      const instUserId = await seedUser(ctx, {
+        slug: 'inst-cap2',
+        tokenIdentifier: 'clerk|inst-cap2',
+        role: 'Instructor',
+        email: 'inst-cap2@test.com',
+        name: 'Inst Cap2',
+        firstName: 'Inst',
+        lastName: 'Cap2',
+      })
+      await seedInstructorProfile(ctx, instUserId)
+
+      const dmUserId = await seedUser(ctx, {
+        slug: 'dm-cap2',
+        tokenIdentifier: 'clerk|dm-cap2',
+        role: 'DiveMaster',
+        email: 'dm-cap2@test.com',
+        name: 'DM Cap2',
+        firstName: 'DM',
+        lastName: 'Cap2',
+      })
+      await seedDiveMasterProfile(ctx, dmUserId)
+
+      return seedBooking(ctx, {
+        ownerId: 'dc-cap2',
+        activityType: ['DSD'],
+        bookingFormComplete: false,
+        divers: [],
+      })
+    })
+
+    await expect(
+      t.withIdentity({ tokenIdentifier: 'clerk|dc-cap2' }).mutation(
+        api.bookings.create.submitToDraft,
+        {
+          bookingId,
+          sessions: [],
+          bookingData: {
+            activityType: ['DSD'],
+            startDate,
+            endDate,
+            portalContact: false,
+            portalMedical: false,
+            portalWaiver: false,
+            resources: [
+              { resourceType: 'Instructor', resourceId: 'inst-cap2', roleType: 'Instructor' },
+              { resourceType: 'Instructor', resourceId: 'dm-cap2', roleType: 'DiveMaster' },
+            ],
+            divers: [makeDiver(['DSD'])],
+          },
+        },
+      ),
+    ).resolves.toBeDefined()
   })
 })

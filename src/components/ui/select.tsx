@@ -300,7 +300,7 @@ export function Select({
       error={error}
       helperText={helperText}
       className={cn(
-        "relative flex flex-col gap-1.5 w-full rounded-none border-0 bg-transparent p-0 shadow-none",
+        "relative flex flex-col gap-1.5 w-full rounded-none border-0 bg-transparent p-0 shadow-none", /* design-ok: trigger inherits chrome from FieldShell parent */
         className,
       )}
     >

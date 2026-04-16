@@ -76,8 +76,8 @@ describe('OrganizerBasicStep', () => {
     mockMe = { email: 'test@test.com', businessName: 'Test Dive' }
     render(<OrganizerBasicStep role="DiveCenter" onSaved={vi.fn()} />)
     expect(screen.getByText('Basic Information')).toBeInTheDocument()
-    expect(screen.getByPlaceholderText('e.g. Ocean Explorer Dive Center')).toBeInTheDocument()
-    expect(screen.getByPlaceholderText('dive@example.com')).toBeInTheDocument()
+    expect(screen.getByLabelText(/business name/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/contact email/i)).toBeInTheDocument()
     expect(screen.getByText(/contact phone/i)).toBeInTheDocument()
   })
 
@@ -105,13 +105,13 @@ describe('OrganizerBasicStep', () => {
 
     render(<OrganizerBasicStep role="DiveCenter" onSaved={onSaved} />)
 
-    const nameInput = screen.getByPlaceholderText('e.g. Ocean Explorer Dive Center')
+    const nameInput = screen.getByLabelText(/business name/i)
     await user.clear(nameInput)
     await user.type(nameInput, 'Deep Blue Diving')
 
     await user.click(screen.getByTestId('location-picker'))
 
-    const emailInput = screen.getByPlaceholderText('dive@example.com')
+    const emailInput = screen.getByLabelText(/contact email/i)
     await user.clear(emailInput)
     await user.type(emailInput, 'info@deepblue.com')
 
@@ -139,11 +139,11 @@ describe('OrganizerBasicStep', () => {
 
     render(<OrganizerBasicStep role="DiveCenter" onSaved={onSaved} />)
 
-    const nameInput = screen.getByPlaceholderText('e.g. Ocean Explorer Dive Center')
+    const nameInput = screen.getByLabelText(/business name/i)
     await user.clear(nameInput)
     await user.type(nameInput, 'Deep Blue')
     await user.click(screen.getByTestId('location-picker'))
-    const emailInput = screen.getByPlaceholderText('dive@example.com')
+    const emailInput = screen.getByLabelText(/contact email/i)
     await user.clear(emailInput)
     await user.type(emailInput, 'fail@test.com')
     const phoneInput = screen.getAllByRole('textbox').find((el) => (el as HTMLInputElement).name === 'phone' || el.getAttribute('autocomplete') === 'tel')

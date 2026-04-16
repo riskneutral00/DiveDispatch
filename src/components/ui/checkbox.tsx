@@ -1,9 +1,12 @@
+import { RequiredAsterisk } from '@/components/ui/required-asterisk'
+
 interface CheckboxProps {
   label: string | React.ReactNode
   description?: string
   checked: boolean
   onChange: (checked: boolean) => void
   disabled?: boolean
+  required?: boolean
   className?: string
   as?: 'checkbox' | 'radio'
   name?: string
@@ -17,6 +20,7 @@ export function Checkbox({
   checked,
   onChange,
   disabled,
+  required,
   className,
   as = 'checkbox',
   name,
@@ -46,7 +50,10 @@ export function Checkbox({
           style={{ accentColor: 'var(--color-primary)' }}
         />
         <div className="min-w-0">
-          <p className="text-body font-medium text-primary">{label}</p>
+          <p className="text-body font-medium text-primary">
+            {label}
+            {required && <RequiredAsterisk />}
+          </p>
           {description && (
             <p className="text-label mt-0.5 text-secondary">{description}</p>
           )}
@@ -66,10 +73,14 @@ export function Checkbox({
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
         disabled={disabled}
+        required={required}
         className={`${shape} focus-visible:ring-2 focus-visible:ring-[var(--color-primary-glow)]`}
         style={{ accentColor: 'var(--color-primary)' }}
       />
-      <span>{label}</span>
+      <span>
+        {label}
+        {required && <RequiredAsterisk />}
+      </span>
     </label>
   )
 }

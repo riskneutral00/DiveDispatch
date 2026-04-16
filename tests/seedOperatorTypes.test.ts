@@ -2,25 +2,25 @@
 // and have correct structure for seeding.
 
 import { describe, it, expect } from 'vitest'
-import { ALL_STAKEHOLDERS } from '../convex/seedData'
+import { PARKED_STAKEHOLDERS } from '../convex/seedData'
 import { BOOKING_CONFIGS } from '../convex/seedBookingData'
 import packageJson from '../package.json'
 
 describe('Non-DiveCenter operator seed data', () => {
-  const liveaboardStakeholder = ALL_STAKEHOLDERS.find(
+  const liveaboardStakeholder = PARKED_STAKEHOLDERS.find(
     (s) => s.roles?.some((r) => r.role === 'Liveaboard'),
   )
 
-  const diveResortStakeholder = ALL_STAKEHOLDERS.find(
+  const diveResortStakeholder = PARKED_STAKEHOLDERS.find(
     (s) => s.roles?.some((r) => r.role === 'DiveResort'),
   )
 
-  const agentStakeholder = ALL_STAKEHOLDERS.find(
+  const agentStakeholder = PARKED_STAKEHOLDERS.find(
     (s) => s.roles?.some((r) => r.role === 'Agent'),
   )
 
   describe('Liveaboard operator', () => {
-    it('exists in ALL_STAKEHOLDERS', () => {
+    it('exists in PARKED_STAKEHOLDERS', () => {
       expect(liveaboardStakeholder).toBeTruthy()
     })
 
@@ -67,7 +67,7 @@ describe('Non-DiveCenter operator seed data', () => {
   })
 
   describe('DiveResort operator', () => {
-    it('exists in ALL_STAKEHOLDERS', () => {
+    it('exists in PARKED_STAKEHOLDERS', () => {
       expect(diveResortStakeholder).toBeTruthy()
     })
 
@@ -114,7 +114,7 @@ describe('Non-DiveCenter operator seed data', () => {
   })
 
   describe('Agent operator', () => {
-    it('exists in ALL_STAKEHOLDERS', () => {
+    it('exists in PARKED_STAKEHOLDERS', () => {
       expect(agentStakeholder).toBeTruthy()
     })
 
@@ -173,14 +173,14 @@ describe('Non-DiveCenter operator seed data', () => {
 
   describe('All stakeholder slugs are unique', () => {
     it('no duplicate slugs', () => {
-      const slugs = ALL_STAKEHOLDERS.map((s) => s.user.slug)
+      const slugs = PARKED_STAKEHOLDERS.map((s) => s.user.slug)
       expect(new Set(slugs).size).toBe(slugs.length)
     })
   })
 
   describe('All stakeholder emails are unique', () => {
     it('no duplicate emails', () => {
-      const emails = ALL_STAKEHOLDERS.map((s) => s.user.email)
+      const emails = PARKED_STAKEHOLDERS.map((s) => s.user.email)
       expect(new Set(emails).size).toBe(emails.length)
     })
   })

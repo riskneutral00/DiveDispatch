@@ -9,7 +9,7 @@ const mockLoadGoogleFonts = vi.fn();
 const mockInjectVars = vi.fn();
 const mockClearInjectedVars = vi.fn();
 const mockThemeToVars = vi.fn((_theme: unknown) => ({
-  "--color-text-primary": "#fff",
+  "--color-text-primary": "#000000",
 }));
 
 vi.mock("convex/react", async (importOriginal) => {

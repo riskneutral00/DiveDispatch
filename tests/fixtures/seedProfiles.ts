@@ -125,6 +125,38 @@ export async function seedInstructorProfile(
   })
 }
 
+export async function seedDiveMasterProfile(
+  ctx: SeedCtx,
+  userId: Id<'users'>,
+  overrides: {
+    name?: string
+    placeName?: string
+    country?: string
+    email?: string
+    phone?: string
+    credential?: Array<{ agency: string; level: string; agencyID: string }>
+    verified?: boolean
+    teachingLanguages?: string[]
+  } = {},
+) {
+  return ctx.db.insert('diveStaff', {
+    userId,
+    role: 'DiveMaster',
+    name: overrides.name ?? 'Test DiveMaster',
+    placeName: overrides.placeName ?? 'Koh Tao',
+    country: overrides.country ?? 'Thailand',
+    lat: 10.0957,
+    lng: 99.8408,
+    email: overrides.email ?? 'dm@test.com',
+    phone: overrides.phone ?? '+66123456789',
+    credential: overrides.credential ?? [
+      { agency: 'PADI', level: 'Divemaster', agencyID: '67890' },
+    ],
+    verified: overrides.verified ?? true,
+    teachingLanguages: overrides.teachingLanguages ?? ['en'],
+  })
+}
+
 export async function seedBoatProfile(
   ctx: SeedCtx,
   userId: Id<'users'>,

@@ -79,7 +79,7 @@ describe('PreferencesEditor — booking section', () => {
     expect(screen.getByText(/confirmation alerts/i)).toBeInTheDocument()
   })
 
-  it('calls upsert mutation on save with valid form', async () => {
+  it('locks acceptance mode and confirmation alert controls', () => {
     mockPrefs = {
       acceptanceMode: 'Auto',
       confirmOnAccept: false,
@@ -93,26 +93,17 @@ describe('PreferencesEditor — booking section', () => {
       autoAssignPreferred: true,
     }
 
-    const userEvent = await import('@testing-library/user-event')
-    const user = userEvent.default.setup()
-
     render(<PreferencesEditor section="booking" roleSlug="dive-center" />)
 
-    // Switch acceptance mode to dirty the form
-    const prePayRadio = screen.getByDisplayValue('PrePayRequired')
-    await user.click(prePayRadio)
-
-    const saveBtn = screen.getByRole('button', { name: /save/i })
-    await user.click(saveBtn)
-
-    const { waitFor } = await import('@testing-library/react')
-    await waitFor(() => {
-      expect(mockUpsert).toHaveBeenCalled()
-    })
-
-    expect(mockUpsert).toHaveBeenCalledWith(
-      expect.objectContaining({ acceptanceMode: 'PrePayRequired' }),
-    )
+    const autoRadio = screen.getByDisplayValue('Auto') as HTMLInputElement
+    const prePayRadio = screen.getByDisplayValue('PrePayRequired') as HTMLInputElement
+    const postPayRadio = screen.getByDisplayValue('PostPayAllowed') as HTMLInputElement
+    expect(autoRadio.disabled).toBe(true)
+    expect(autoRadio.checked).toBe(true)
+    expect(prePayRadio.disabled).toBe(true)
+    expect(prePayRadio.checked).toBe(false)
+    expect(postPayRadio.disabled).toBe(true)
+    expect(postPayRadio.checked).toBe(false)
   })
 })
 

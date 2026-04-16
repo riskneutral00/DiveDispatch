@@ -60,6 +60,17 @@ describe('Skin WCAG contrast compliance', () => {
             4.5,
           )
         })
+
+        it('tooltipText vs tooltipBg blended over bodyBg meets AA (4.5:1)', () => {
+          const blended = blendRgbaOverHex(palette.tooltipBg, palette.bodyBg)
+          expect(blended, 'blendRgbaOverHex tooltip').toBeTruthy()
+          assertContrast(
+            'tooltipText / tooltipBg over bodyBg',
+            palette.tooltipText,
+            blended!,
+            4.5,
+          )
+        })
       })
     }
   }

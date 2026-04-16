@@ -30,7 +30,7 @@
   --color-accent: #9333ea;
   --color-text-primary: #1e3a5f;
   --color-text-secondary: #64748b;
-  --color-text-on-primary: #ffffff;
+  --color-text-on-primary: #000000;
   --color-surface: #f5f3ff;
   --color-surface-elevated: #faf5ff;
   --color-success: #34d399;
@@ -194,8 +194,8 @@
 }
 
 [data-luminance="bright"] {
-  --color-tooltip-bg: rgba(0, 0, 0, 0.85);
-  --color-tooltip-text: #f8fafc;
+  --color-tooltip-bg: rgba(255, 255, 255, 0.92);
+  --color-tooltip-text: #000000;
 }
 
 /* ── Semantic text color utilities ──────────────────────────────────────────

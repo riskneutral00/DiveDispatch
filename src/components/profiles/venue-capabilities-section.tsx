@@ -1,11 +1,12 @@
 'use client'
 
 import { Checkbox } from '@/components/ui/checkbox'
-import { Input } from '@/components/ui/input'
+import { NumberPicker } from '@/components/ui/number-picker'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
-import { ProfileIncompleteGuard } from '@/components/profiles/profile-incomplete-guard'
-import { type BaseProfileSectionProps } from '@/lib/profile-form'
-import { parseNumber } from '@/lib/utils/numbers'
+import {
+  buildParentContactDefaults,
+  type BaseProfileSectionProps,
+} from '@/lib/profile-form'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 import type { ZodType } from 'zod'
 
@@ -21,7 +22,7 @@ interface VenueCapabilitiesSectionProps<T extends VenueCapabilitiesFormState = V
   fromProfile: (p: Record<string, unknown>) => T
   toPayload: (f: T) => Record<string, unknown>
   venueType: 'pool' | 'diveSite'
-  incompleteMessage?: string
+  wrapCreatePayload?: (payload: Record<string, unknown>) => Record<string, unknown>
   capabilitiesLabel?: string
   depthPlaceholder?: string
   capacityPlaceholder?: string
@@ -29,6 +30,7 @@ interface VenueCapabilitiesSectionProps<T extends VenueCapabilitiesFormState = V
 
 export function VenueCapabilitiesSection<T extends VenueCapabilitiesFormState>({
   profile: existing,
+  me,
   create,
   update,
   onClose,
@@ -37,11 +39,16 @@ export function VenueCapabilitiesSection<T extends VenueCapabilitiesFormState>({
   fromProfile,
   toPayload,
   venueType,
-  incompleteMessage,
+  wrapCreatePayload,
   capabilitiesLabel = 'Venue Capabilities',
   depthPlaceholder = '5',
   capacityPlaceholder = '15',
 }: VenueCapabilitiesSectionProps<T>) {
+  const createOverride = (payload: Record<string, unknown>) => {
+    const merged = { ...buildParentContactDefaults(me), ...payload }
+    return create(wrapCreatePayload ? wrapCreatePayload(merged) : merged)
+  }
+
   const { form, setField, errors, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit, resetToBaseline } =
     useProfileForm({
       profile: existing,
@@ -49,11 +56,9 @@ export function VenueCapabilitiesSection<T extends VenueCapabilitiesFormState>({
       defaults,
       fromProfile,
       toPayload,
-      create,
+      create: createOverride,
       update,
     })
-
-  if (!existing) return <ProfileIncompleteGuard message={incompleteMessage} />
 
   return (
     <ProfileFormShell
@@ -86,29 +91,26 @@ export function VenueCapabilitiesSection<T extends VenueCapabilitiesFormState>({
         )}
 
         <div className="flex flex-wrap gap-3">
-          <Input
-            label="Max Depth (m)"
-            type="number"
-            inputMode="decimal"
-            min="0.1"
-            step="0.1"
-            value={form.maxDepth || ''}
-            onChange={(e) => setField('maxDepth', parseNumber(e.target.value, false))}
+          <NumberPicker
+            label="Max Depth"
+            value={form.maxDepth || undefined}
+            onChange={(v) => setField('maxDepth', v ?? 0)}
+            min={1}
+            max={60}
+            step={0.5}
+            decimals={1}
+            suffix="m"
             error={errors.maxDepth}
-            placeholder={depthPlaceholder}
             className="field-number"
           />
-          <Input
+          <NumberPicker
             label="Max Capacity"
-            type="number"
-            inputMode="numeric"
-            min="1"
-            step="1"
-            value={form.maxCapacity || ''}
-            onChange={(e) => setField('maxCapacity', parseNumber(e.target.value, true))}
-            error={errors.maxCapacity}
-            placeholder={capacityPlaceholder}
+            value={form.maxCapacity || undefined}
+            onChange={(v) => setField('maxCapacity', v ?? 0)}
+            min={1}
+            max={100}
             required={venueType === 'pool'}
+            error={errors.maxCapacity}
             className="field-number"
           />
         </div>

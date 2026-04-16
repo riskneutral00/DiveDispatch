@@ -22,17 +22,21 @@ import {
   resolveThemePalette,
   themeToVars,
 } from "./theme-utils";
-
-/** Bumped when bootstrap ThemeConfig shape changes (e.g. JPEG → gradient) so stale cache cannot reference removed assets. */
-const CACHE_KEY = "divedispatch-theme-cache-v2";
-const MODE_KEY = "divedispatch-theme-pref";
+import {
+  BOOTSTRAP_APPLIED_VARS_GLOBAL,
+  THEME_CACHE_STORAGE_KEY as CACHE_KEY,
+  THEME_META_STORAGE_KEY,
+  THEME_MODE_STORAGE_KEY as MODE_KEY,
+  THEME_VARS_STORAGE_KEY,
+  type ThemeMetaCache,
+} from "./theme-bootstrap";
 
 export const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function useTheme(): ThemeContextValue {
   const ctx = useContext(ThemeContext);
   if (!ctx) {
-    throw new Error("useTheme must be used inside <ThemeProvider>");
+    throw new Error("useTheme must be used inside <ThemeProvider>"); // error-ok
   }
   return ctx;
 }
@@ -63,9 +67,7 @@ interface ThemeProviderProps {
 export function ThemeProvider({ children }: ThemeProviderProps) {
   const [theme, setThemeState] = useState<ThemeConfig>(loadCachedTheme);
   const [mode, setModeState] = useState<ThemeMode>(loadCachedMode);
-  /** Increments on each user moon/sun toggle so we select the first skin for the new mode. */
   const [modeSwitchGeneration, setModeSwitchGeneration] = useState(0);
-  /** null = pre-measure / SSR; responsive bg skins use small-screen `--bg-size` until set. */
   const [viewportWidth, setViewportWidth] = useState<number | null>(null);
 
   const { isAuthenticated } = useConvexAuth();
@@ -91,10 +93,12 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   }, [isAuthenticated, mySkins, mode]);
   const selectThemeMutation = useMutation(api.themes.selectTheme);
 
-  const prevVarsRef = useRef<Record<string, string> | null>(null);
+  const prevVarsRef = useRef<Record<string, string> | null>(
+    typeof window !== "undefined"
+      ? window[BOOTSTRAP_APPLIED_VARS_GLOBAL] ?? null
+      : null,
+  );
   const lastPaletteSwitchGenerationRef = useRef(0);
-  /** Flips to true after the first successful initial alignment; prevents the
-   *  alignment effect from fighting user-driven mode toggles. */
   const initialAlignmentDoneRef = useRef(false);
 
   const [prevThemeConfig, setPrevThemeConfig] = useState(themeConfig);
@@ -157,6 +161,15 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     );
 
     document.documentElement.removeAttribute("data-hover-effect");
+
+    try {
+      localStorage.setItem(THEME_VARS_STORAGE_KEY, JSON.stringify(vars));
+      const meta: ThemeMetaCache = {
+        id: theme.id,
+        luminance: palette.luminanceClass,
+      };
+      localStorage.setItem(THEME_META_STORAGE_KEY, JSON.stringify(meta));
+    } catch {}
   }, [theme, mode, viewportWidth]);
 
   useEffect(() => {
@@ -189,7 +202,6 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     [isAuthenticated, selectThemeMutation],
   );
 
-  /** After a moon/sun toggle, apply the first skin in the new mode's list once (per toggle). */
   useEffect(() => {
     if (!isAuthenticated || !storeForMode?.length) return;
     if (modeSwitchGeneration === 0) return;
@@ -204,15 +216,11 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     selectThemeMutation,
   ]);
 
-  /** Initial load only: align mode to the selected theme's appearance.
-   *  Runs once when Convex data first arrives, then yields all mode-driven
-   *  skin changes to the modeSwitchGeneration effect above. */
   useEffect(() => {
     if (initialAlignmentDoneRef.current) return;
     if (!isAuthenticated || !mySkins?.length) return;
-    if (selectedThemeDoc === undefined) return; // still loading
+    if (selectedThemeDoc === undefined) return;
 
-    // Missing or deleted theme → pick first skin for current mode
     if (!currentUser?.selectedThemeId || selectedThemeDoc === null) {
       const appearance = mode === "light" ? "light" : "dark";
       const bucket = mySkins.filter((t) => t.appearance === appearance);
@@ -223,7 +231,6 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
       return;
     }
 
-    // Theme exists — sync mode to its appearance ("theme wins" rule)
     const app = selectedThemeDoc.appearance;
     if (app === "light" || app === "dark") {
       if (app !== mode) {

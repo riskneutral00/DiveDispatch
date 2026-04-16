@@ -144,10 +144,11 @@
                 "name": { "type": "string" },
                 "email": { "type": "string", "format": "email" },
                 "phone": { "type": "string" },
-                "gasMixes": { "type": "array", "items": { "type": "string", "enum": ["air", "nitrox", "trimix"] }, "minItems": 1 },
+                "gasMixes": { "type": "array", "items": { "type": "string", "enum": ["air", "nitrox"] }, "minItems": 1 },
                 "gasMixes_initial": { "type": "array", "items": { "type": "string" }, "maxItems": 0 },
-                "gasMixes_completed": { "type": "array", "items": { "type": "string", "enum": ["air", "nitrox", "trimix"] }, "minItems": 1 },
-                "nitroxO2Percent": { "type": "integer", "minimum": 22, "maximum": 40, "description": "Required when gasMixes includes 'nitrox'. Schema P0-3." },
+                "gasMixes_completed": { "type": "array", "items": { "type": "string", "enum": ["air", "nitrox"] }, "minItems": 1 },
+                "nitroxMin": { "type": "integer", "minimum": 22, "maximum": 40, "description": "Lower bound of nitrox O2% range. Required when gasMixes includes 'nitrox'." },
+                "nitroxMax": { "type": "integer", "minimum": 22, "maximum": 40, "description": "Upper bound of nitrox O2% range. Required when gasMixes includes 'nitrox'. Must be >= nitroxMin." },
                 "autoAccept": { "const": true, "description": "Compressor auto-accepts (row-level boolean, disabled FE checkbox). P0-3 adds schema column." },
                 "verified": { "type": "boolean" }
               }

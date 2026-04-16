@@ -28,7 +28,6 @@ describe('StepRoleSelection', () => {
   const defaultProps = {
     selectedRoles: [] as typeof ORGANIZER_ROLES,
     onToggle: vi.fn(),
-    onBack: vi.fn(),
     onContinue: vi.fn(),
   }
 

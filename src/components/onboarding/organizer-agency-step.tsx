@@ -118,7 +118,6 @@ function AgencyStepInner({ roleApi, onSaved, onBack }: AgencyStepInnerProps) {
                 value={assoc.number}
                 onChange={(e) => updateRow(idx, 'number', e.target.value)}
                 className="field-text-short"
-                placeholder="e.g. TH-0012345"
               />
             </div>
             {associations.length > 1 && (

@@ -9,7 +9,6 @@ import { NameField } from '@/components/ui/name-field'
 import { EmailField } from '@/components/ui/email-field'
 import { PhoneField } from '@/components/ui/phone-field'
 import { BirthdayField } from '@/components/ui/birthday-field'
-import { SectionDivider } from '@/components/ui/section-divider'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 import { ALL_LANGUAGES, languageToCode } from '@/lib/constants/dive-languages'
@@ -138,8 +137,6 @@ export function ProfileTab({ onClose }: { onClose?: () => void }) {
           />
         </div>
 
-        <SectionDivider variant="soft" />
-
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <NameField
             scope="nickname"
@@ -155,8 +152,6 @@ export function ProfileTab({ onClose }: { onClose?: () => void }) {
           />
         </div>
 
-        <SectionDivider variant="soft" />
-
         <EmailField
           label={t('email')}
           value={form.email}
@@ -164,15 +159,12 @@ export function ProfileTab({ onClose }: { onClose?: () => void }) {
           required
         />
 
-        <SectionDivider variant="soft" />
-
         <BirthdayField
           label={t('dateOfBirth')}
           value={form.dateOfBirth || null}
           onChange={(v) => setField('dateOfBirth', v ?? '')}
+          required
         />
-
-        <SectionDivider variant="soft" />
 
         <LanguageField
           variant="app"

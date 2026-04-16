@@ -24,7 +24,6 @@ import { DragOverlayPill } from '@/components/booking/drag-overlay-pill'
 import { DiverEquipmentWidget } from '@/components/booking/diver-equipment-widget'
 import { getVesselColor } from '@/lib/constants/vessel-colors'
 import { BoatManifestWidget } from '@/components/booking/boat-manifest-widget'
-import { PendingRequestsList } from '@/components/booking/pending-requests-list'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
 import { LoadingCard } from '@/components/ui/loading-card'
 import { api } from '@/lib/convex-generated'
@@ -247,13 +246,6 @@ function DashboardContentInner({ roleConfig, slug, roleSlug }: DashboardContentI
         </DragDropProvider>
       ) : (
         calendarWithSkin
-      )}
-
-      {isResourceOnly && (
-        <div className="space-y-2">
-          <FormSectionHeader label="Pending Requests" />
-          <PendingRequestsList requests={dashboardData?.requests ?? []} />
-        </div>
       )}
 
       {isEquipmentRole && visibleRange && (

@@ -75,7 +75,6 @@ export function AddCustomerDialog({
                 setName(v)
                 if (nameError) setNameError('')
               }}
-              placeholder="e.g. Sara Kim"
               error={nameError}
             />
             <div className="flex flex-col gap-2">

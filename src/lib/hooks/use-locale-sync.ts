@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useCurrentUser } from "./use-current-user";
-import { SUPPORTED_LOCALES, DEFAULT_LOCALE } from "../constants/locales";
+import { normalizeLocale } from "../constants/locales";
 
 const COOKIE_NAME = "dd-locale";
 
@@ -14,10 +14,7 @@ export function useLocaleSync() {
   useEffect(() => {
     if (!user) return;
 
-    const rawLocale = user.appLanguage ?? DEFAULT_LOCALE;
-
-    const supported: ReadonlyArray<string> = SUPPORTED_LOCALES;
-    const locale = supported.includes(rawLocale) ? rawLocale : DEFAULT_LOCALE;
+    const locale = normalizeLocale(user.appLanguage);
 
     const currentCookie = document.cookie
       .split("; ")

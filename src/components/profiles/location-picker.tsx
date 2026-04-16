@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect, useId, useRef, useReducer } from 'rea
 import { useTranslations } from 'next-intl'
 import { APIProvider, Map, useApiIsLoaded, useMap, type MapMouseEvent } from '@vis.gl/react-google-maps'
 import usePlacesAutocomplete from 'use-places-autocomplete'
-import { MapPin, X, Locate, Search } from 'lucide-react'
+import { MapPin, X, Locate } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils/cn'
 import { Dialog } from '@/components/ui/dialog'
@@ -233,11 +233,6 @@ function LocationPickerModalInner({ value, onConfirm, onCancel }: ModalInnerProp
       >
         <div className="flex gap-2">
           <div className="relative flex-1">
-            <span
-              className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-secondary"
-            >
-              <Search size={15} />
-            </span>
             <input /* design-ok: compound picker search filter */
               ref={inputRef}
               id={inputId}
@@ -267,7 +262,7 @@ function LocationPickerModalInner({ value, onConfirm, onCancel }: ModalInnerProp
                 if (blurTimerRef.current) clearTimeout(blurTimerRef.current)
                 blurTimerRef.current = setTimeout(() => { setSuggestionsOpen(false); kbDispatch({ type: 'CLOSE' }) }, 150)
               }}
-              className="field-underline w-full text-body py-2.5 pl-6 pr-0 placeholder:opacity-60 text-primary"
+              className="field-underline w-full text-body py-2.5 px-0 placeholder:opacity-60 text-primary"
               style={{ caretColor: 'var(--color-accent)' }}
             />
           </div>
@@ -415,16 +410,11 @@ function LocationPickerTrigger({ value, onOpen, onClear, error, label, required,
   return (
     <div className={cn("relative", className?.includes('field-') || className?.includes('w-') ? '' : 'w-full', className)}>
       <div className="relative">
-        <span
-          className={cn("absolute pointer-events-none text-secondary", label ? "left-0 top-4" : "left-3 top-1/2 -translate-y-1/2")}
-        >
-          <MapPin size={16} />
-        </span>
         <button /* design-ok: field-underline trigger for location picker */
           id={inputId}
           type="button"
           onClick={onOpen}
-          className={cn("field-underline w-full text-body text-left truncate cursor-pointer", label ? "pt-4 pb-1.5 pl-5 pr-6" : "py-2.5 pl-6 pr-6")}
+          className={cn("field-underline w-full text-body text-left truncate cursor-pointer pr-6", label ? "pt-4 pb-1.5" : "py-2.5")}
           style={{
             color: value ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
             ...(error

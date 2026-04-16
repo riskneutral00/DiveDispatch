@@ -4,7 +4,6 @@ export { GAS_MIXES, type GasMix } from '../../../convex/shared/gasMixes'
 export const GAS_MIX_LABELS: Record<string, string> = {
   air: 'Air',
   nitrox: 'Nitrox',
-  trimix: 'Trimix',
 }
 
 export const GAS_MIX_OPTIONS: { value: GasMix; label: string }[] =
@@ -13,5 +12,9 @@ export const GAS_MIX_OPTIONS: { value: GasMix; label: string }[] =
 export const GAS_MIX_COLORS: Record<string, string> = {
   air: 'var(--color-info, var(--color-secondary))',
   nitrox: 'var(--color-success)',
-  trimix: 'var(--color-warning)',
 }
+
+export const NITROX_MIN_PERCENT = 22
+export const NITROX_MAX_PERCENT = 40
+export const NITROX_DEFAULT_MIN = 32
+export const NITROX_DEFAULT_MAX = 36

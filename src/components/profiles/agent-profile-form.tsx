@@ -8,7 +8,6 @@ import { LanguageField } from '@/components/ui/language-field'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import {
-  AccessControlSection,
   INITIAL_ACCESS_CONTROL,
   accessFromProfile,
   accessToPayload,
@@ -181,7 +180,6 @@ export function AgentContactSection({ profile, me, create, update, updateProfile
           onNameChange={(val) => setField('name', val)}
           nameError={errors.name}
           nameLabel="Agent / Business Name"
-          namePlaceholder="Your name or agency"
           nameRequired
           locationValue={form.location}
           onLocationChange={onLocationChange}
@@ -215,13 +213,6 @@ export function AgentContactSection({ profile, me, create, update, updateProfile
         variant="customer"
         value={form.customerLanguages}
         onChange={(langs) => setField('customerLanguages', langs)}
-      />
-
-      <SectionDivider variant="soft" />
-
-      <AccessControlSection
-        value={form.access}
-        onChange={(next) => setField('access', next)}
       />
     </ProfileFormShell>
   )

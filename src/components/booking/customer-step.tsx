@@ -128,7 +128,6 @@ function InlineCustomerForm({ customer, index, canRemove, totalCustomers, dispat
           label="Name"
           value={customer.name}
           onChange={handleNameChange}
-          placeholder="e.g. Sara Kim"
           required
           className="flex-1"
         />
@@ -194,7 +193,7 @@ function ContactValidationHint({ contactType, value }: { contactType: ContactTyp
 
   const hint =
     contactType === 'email' ? 'Enter a valid email address' :
-    contactType === 'whatsapp' ? 'Enter a valid phone number (e.g. +66 81 234 5678)' :
+    contactType === 'whatsapp' ? 'Enter a valid phone number' :
     'LINE ID must be at least 4 characters (letters, numbers, dots, underscores)'
 
   return (

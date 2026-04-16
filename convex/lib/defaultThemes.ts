@@ -41,8 +41,8 @@ const GLASS_BRIGHT = {
   opacityWatermark: 0.55,
   opacitySubtle: 0.10,
   opacityMuted: 0.70,
-  tooltipBg: "rgba(15, 23, 42, 0.92)",
-  tooltipText: "#f8fafc",
+  tooltipBg: "rgba(255, 255, 255, 0.92)",
+  tooltipText: "#000000",
   glassDialogBg: "rgba(255, 255, 255, 0.70)",
   glassDialogBorder: "rgba(0, 0, 0, 0.12)",
   glassDialogBlur: 28,
@@ -243,7 +243,7 @@ export function themeConfigForSeedSpec(spec: SeedThemeRowSpec) {
         accent: l,
         textPrimary: "#1e3a5f",
         textSecondary: "#64748b",
-        textOnPrimary: "#ffffff",
+        textOnPrimary: "#000000",
         ...GLASS_BRIGHT,
         success: "#059669",
         warning: "#d97706",
@@ -275,4 +275,4 @@ export function themeConfigForSeedSpec(spec: SeedThemeRowSpec) {
 
 export const DEFAULT_THEMES = SEED_THEME_SPECS.map(themeConfigForSeedSpec)
 
-export const DEFAULT_SELECTED_THEME_SLUG = "skin-light-4" as const
+export const DEFAULT_SELECTED_THEME_SLUG = "skin-light-0" as const

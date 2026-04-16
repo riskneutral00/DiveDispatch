@@ -206,6 +206,7 @@ export async function seedBookingResource(
     resourceType: Doc<'bookingResources'>['resourceType']
     resourceId?: string
     externalName?: string
+    roleType?: 'Instructor' | 'DiveMaster'
   },
 ) {
   return ctx.db.insert('bookingResources', {
@@ -213,6 +214,7 @@ export async function seedBookingResource(
     resourceType: overrides.resourceType,
     ...(overrides.resourceId !== undefined ? { resourceId: overrides.resourceId } : {}),
     ...(overrides.externalName !== undefined ? { externalName: overrides.externalName } : {}),
+    ...(overrides.roleType !== undefined ? { roleType: overrides.roleType } : {}),
   })
 }
 

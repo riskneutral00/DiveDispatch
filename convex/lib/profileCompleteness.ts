@@ -18,15 +18,10 @@ export async function checkProfileCompleteness(
   const str = (v: unknown) => typeof v === 'string' && v.trim().length > 0
   const arr = (v: unknown) => Array.isArray(v) && v.length > 0
 
-  const isDiveMasterCredentialDeepValid = (entries: unknown[]) =>
+  const isCredentialDeepValid = (entries: unknown[], requireSpecialties: boolean) =>
     entries.every((e) => {
       const c = e as Record<string, unknown>
-      return str(c.agency) && str(c.level) && str(c.agencyID)
-    })
-  const isInstructorCredentialDeepValid = (entries: unknown[]) =>
-    entries.every((e) => {
-      const c = e as Record<string, unknown>
-      if (!Array.isArray(c.specialtyRatings)) return false
+      if (requireSpecialties && !Array.isArray(c.specialtyRatings)) return false
       return str(c.agency) && str(c.level) && str(c.agencyID)
     })
   const isAssociationDeepValid = (entries: unknown[], checkRole: string) =>
@@ -105,9 +100,7 @@ export async function checkProfileCompleteness(
       if (!arr(value)) {
         incomplete.push(field)
       } else if (field === 'credential') {
-        if (role === 'Instructor' && !isInstructorCredentialDeepValid(value)) {
-          incomplete.push(field)
-        } else if (role === 'DiveMaster' && !isDiveMasterCredentialDeepValid(value)) {
+        if ((role === 'Instructor' || role === 'DiveMaster') && !isCredentialDeepValid(value, role === 'Instructor')) {
           incomplete.push(field)
         }
       } else if (field === 'associations' && !isAssociationDeepValid(value, role)) {

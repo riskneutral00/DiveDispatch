@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { api } from '../convex/_generated/api'
 import { makeT } from './helpers/convex-helpers'
+import { createUserDefaults } from './helpers/createUser'
 
 describe('submitSupportRequest', () => {
   it('persists a support request for authenticated user', async () => {
@@ -8,6 +9,7 @@ describe('submitSupportRequest', () => {
     const identity = { tokenIdentifier: 'clerk|support-req-1' }
     vi.useFakeTimers({ now: Date.now() })
     await t.withIdentity(identity).mutation(api.users.createUser, {
+      ...createUserDefaults,
       role: 'DiveCenter',
       businessName: 'Support Test DC',
     })
@@ -35,6 +37,7 @@ describe('submitSupportRequest', () => {
     const identity = { tokenIdentifier: 'clerk|support-short-msg' }
     vi.useFakeTimers({ now: Date.now() })
     await t.withIdentity(identity).mutation(api.users.createUser, {
+      ...createUserDefaults,
       role: 'DiveCenter',
       businessName: 'Short Msg DC',
     })

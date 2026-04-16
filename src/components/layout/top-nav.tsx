@@ -4,9 +4,10 @@ import { useClerk, useUser } from '@clerk/nextjs'
 import { useQuery } from 'convex/react'
 import { LogOut, User } from 'lucide-react'
 import { useTranslations } from 'next-intl'
+import { useParams } from 'next/navigation'
 import { Button, Menu, MenuItem, MenuTrigger, Popover } from 'react-aria-components'
 import { api } from '@/lib/convex-generated'
-import { ROLE_BY_CLERK_ROLE, type ClerkRole } from '@/lib/constants/roles'
+import { ROLE_BY_CLERK_ROLE, ROLE_BY_KEY, type ClerkRole, type RoleKey } from '@/lib/constants/roles'
 import { ICON_BUTTON_SIZE } from '@/lib/constants/button-sizes'
 import { useCurrentUser } from '@/lib/hooks/use-current-user'
 import { ProfileCompletionPill } from '../profiles/profile-completion-pill'
@@ -33,10 +34,42 @@ export function TopNav({ onOpenOverlay, profileCompletion }: TopNavProps) {
     .map((r) => ROLE_BY_CLERK_ROLE[r.role as ClerkRole])
     .filter(Boolean)
 
-  const displayName =
-    convexUser?.businessName || clerkUser?.fullName || clerkUser?.username || '…'
-  const initials = displayName.slice(0, 2).toUpperCase()
-  const subLabel = convexUser?.nickname ?? null
+  const params = useParams() as Record<string, string | string[] | undefined> | null
+  const rawRoleSlug = params?.roleSlug
+  const activeRoleSlug = typeof rawRoleSlug === 'string' ? rawRoleSlug : undefined
+  const activeClerkRole = activeRoleSlug ? ROLE_BY_KEY[activeRoleSlug as RoleKey]?.clerkRole : undefined
+
+  const diveCenterProfile = useQuery(api.diveCenters.mine, activeClerkRole === 'DiveCenter' ? {} : 'skip')
+  const agentProfile = useQuery(api.agents.mine, activeClerkRole === 'Agent' ? {} : 'skip')
+  const boatProfile = useQuery(api.boats.mine, activeClerkRole === 'Boat' ? {} : 'skip')
+  const equipmentProfile = useQuery(api.equipment.mine, activeClerkRole === 'Equipment' ? {} : 'skip')
+  const compressorProfile = useQuery(api.compressors.mine, activeClerkRole === 'Compressor' ? {} : 'skip')
+  const venueProfile = useQuery(
+    api.venues.mine,
+    activeClerkRole === 'Pool' || activeClerkRole === 'DiveSite' ? {} : 'skip',
+  )
+
+  const activeProfile =
+    diveCenterProfile ?? agentProfile ?? boatProfile ?? equipmentProfile ?? compressorProfile ?? venueProfile ?? null
+  const activeBusinessName =
+    activeProfile && typeof (activeProfile as { name?: unknown }).name === 'string'
+      ? ((activeProfile as { name: string }).name)
+      : null
+
+  const firstName = convexUser?.firstName ?? ''
+  const lastName = convexUser?.lastName ?? ''
+  const nickname = convexUser?.nickname ?? ''
+  const isPersonalRole = activeClerkRole === 'Instructor' || activeClerkRole === 'DiveMaster'
+
+  const displayName = isPersonalRole
+    ? (firstName || nickname || clerkUser?.fullName || clerkUser?.username || '…')
+    : (activeBusinessName || convexUser?.businessName || firstName || clerkUser?.fullName || clerkUser?.username || '…')
+
+  const subLabel = isPersonalRole
+    ? (nickname || lastName || null)
+    : (nickname || firstName || null)
+
+  const initials = (displayName.charAt(0) || '…').toUpperCase()
 
   function handleSignOut() {
     document.cookie = 'dd-locale=; path=/; max-age=0'
@@ -69,7 +102,7 @@ export function TopNav({ onOpenOverlay, profileCompletion }: TopNavProps) {
         {/* design-ok: react-aria Button required as MenuTrigger anchor */}
         <Button
           aria-label={tNav('userMenu')}
-          className={`${ICON_BUTTON_SIZE} rounded-full flex items-center justify-center text-label font-bold flex-shrink-0 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-glow)] bg-primary text-on-primary`}
+          className={`${ICON_BUTTON_SIZE} rounded-full flex items-center justify-center text-label font-bold flex-shrink-0 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-glow)] bg-primary-solid text-on-primary`}
         >
           {initials}
         </Button>

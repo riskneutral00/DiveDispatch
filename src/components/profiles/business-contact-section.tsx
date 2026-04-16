@@ -5,7 +5,6 @@ import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import { SectionDivider } from '@/components/ui/section-divider'
 import {
-  AccessControlSection,
   INITIAL_ACCESS_CONTROL,
   accessFromProfile,
   accessToPayload,
@@ -31,7 +30,6 @@ const INITIAL_BUSINESS_CONTACT: BusinessContactWithAccess = {
 
 interface BusinessContactSectionProps extends BaseProfileSectionProps {
   nameLabel: string
-  namePlaceholder: string
   schema: ZodType
   fromMe?: (user: Record<string, unknown>, defaults: ContactFormState) => ContactFormState
   createOverride?: (payload: Record<string, unknown>) => Promise<unknown>
@@ -45,7 +43,6 @@ export function BusinessContactSection({
   onSaved,
   onClose,
   nameLabel,
-  namePlaceholder,
   schema,
   fromMe: fromMeOverride,
   createOverride,
@@ -89,7 +86,6 @@ export function BusinessContactSection({
           onNameChange={(val) => setField('name', val)}
           nameError={errors.name}
           nameLabel={nameLabel}
-          namePlaceholder={namePlaceholder}
           nameRequired
           locationValue={form.location}
           onLocationChange={onLocationChange}
@@ -103,13 +99,6 @@ export function BusinessContactSection({
           onPhoneChange={(val) => setField('phone', val)}
           phoneError={errors.phone}
           phoneRequired
-        />
-
-        <SectionDivider variant="soft" />
-
-        <AccessControlSection
-          value={form.access}
-          onChange={(next) => setField('access', next)}
         />
       </div>
     </ProfileFormShell>

@@ -16,11 +16,9 @@ import {
   languagesToPayloadPersonal,
   credentialsFromProfile,
   credentialsToPayload,
-  makeEmptyDmCredential,
-  makeEmptyInstCredential,
+  makeEmptyCredential,
+  getInitialCredentialsForm,
   INITIAL_LANGUAGES_FORM,
-  INITIAL_DM_CREDENTIALS_FORM,
-  INITIAL_INST_CREDENTIALS_FORM,
 } from '../personal-profile-form'
 import type {
   PersonalLanguagesFormState,
@@ -270,13 +268,13 @@ describe('credentialsFromProfile — divemaster variant', () => {
   it('returns one empty DM credential when array is empty', () => {
     const form = credentialsFromProfile({ credential: [] }, 'divemaster')
     expect(form.credential).toHaveLength(1)
-    expect(form.credential[0]).toEqual(makeEmptyDmCredential())
+    expect(form.credential[0]).toEqual(makeEmptyCredential('divemaster'))
   })
 
   it('returns one empty DM credential when credential is missing', () => {
     const form = credentialsFromProfile({}, 'divemaster')
     expect(form.credential).toHaveLength(1)
-    expect(form.credential[0]).toEqual(makeEmptyDmCredential())
+    expect(form.credential[0]).toEqual(makeEmptyCredential('divemaster'))
   })
 })
 
@@ -295,13 +293,13 @@ describe('credentialsFromProfile — instructor variant', () => {
   it('returns one empty instructor credential when array is empty', () => {
     const form = credentialsFromProfile({ credential: [] }, 'instructor')
     expect(form.credential).toHaveLength(1)
-    expect(form.credential[0]).toEqual(makeEmptyInstCredential())
+    expect(form.credential[0]).toEqual(makeEmptyCredential('instructor'))
   })
 
   it('empty instructor credential has specialtyRatings: []', () => {
-    const empty = makeEmptyInstCredential()
+    const empty = makeEmptyCredential('instructor')
     expect(empty).toHaveProperty('specialtyRatings')
-    expect(empty.specialtyRatings).toEqual([])
+    expect((empty as { specialtyRatings: string[] }).specialtyRatings).toEqual([])
   })
 })
 
@@ -328,23 +326,21 @@ describe('credentialsToPayload', () => {
   })
 })
 
-describe('makeEmptyDmCredential', () => {
-  it('has agency, level, agencyID as empty strings — no specialtyRatings field', () => {
-    const cred = makeEmptyDmCredential()
+describe('makeEmptyCredential', () => {
+  it('divemaster: has agency, level, agencyID as empty strings — no specialtyRatings field', () => {
+    const cred = makeEmptyCredential('divemaster')
     expect(cred.agency).toBe('')
     expect(cred.level).toBe('')
     expect(cred.agencyID).toBe('')
     expect(cred).not.toHaveProperty('specialtyRatings')
   })
-})
 
-describe('makeEmptyInstCredential', () => {
-  it('has agency, level, agencyID as empty strings — specialtyRatings is empty array', () => {
-    const cred = makeEmptyInstCredential()
+  it('instructor: has agency, level, agencyID as empty strings — specialtyRatings is empty array', () => {
+    const cred = makeEmptyCredential('instructor')
     expect(cred.agency).toBe('')
     expect(cred.level).toBe('')
     expect(cred.agencyID).toBe('')
-    expect(cred.specialtyRatings).toEqual([])
+    expect((cred as { specialtyRatings: string[] }).specialtyRatings).toEqual([])
   })
 })
 
@@ -363,16 +359,16 @@ describe('INITIAL_LANGUAGES_FORM', () => {
   })
 })
 
-describe('INITIAL_DM_CREDENTIALS_FORM', () => {
-  it('starts with one empty DM credential', () => {
-    expect(INITIAL_DM_CREDENTIALS_FORM.credential).toHaveLength(1)
-    expect(INITIAL_DM_CREDENTIALS_FORM.credential[0]).toEqual(makeEmptyDmCredential())
+describe('getInitialCredentialsForm', () => {
+  it('divemaster: starts with one empty DM credential', () => {
+    const form = getInitialCredentialsForm('divemaster')
+    expect(form.credential).toHaveLength(1)
+    expect(form.credential[0]).toEqual(makeEmptyCredential('divemaster'))
   })
-})
 
-describe('INITIAL_INST_CREDENTIALS_FORM', () => {
-  it('starts with one empty instructor credential (with specialtyRatings: [])', () => {
-    expect(INITIAL_INST_CREDENTIALS_FORM.credential).toHaveLength(1)
-    expect(INITIAL_INST_CREDENTIALS_FORM.credential[0]).toEqual(makeEmptyInstCredential())
+  it('instructor: starts with one empty instructor credential (with specialtyRatings: [])', () => {
+    const form = getInitialCredentialsForm('instructor')
+    expect(form.credential).toHaveLength(1)
+    expect(form.credential[0]).toEqual(makeEmptyCredential('instructor'))
   })
 })

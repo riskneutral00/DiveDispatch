@@ -39,6 +39,7 @@ export default clerkMiddleware(async (auth, req) => {
     if (claimsSlug && claimsRoleConfig) {
       return NextResponse.redirect(new URL(`/${claimsSlug}/${claimsRoleConfig.key}/dashboard`, req.url))
     }
+    return NextResponse.redirect(new URL('/sign-up', req.url))
   }
 
   const dashboardPath = /^\/([^/]+)\/([^/]+)(\/.*)?$/.exec(req.nextUrl.pathname)

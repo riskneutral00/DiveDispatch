@@ -4,9 +4,8 @@ import { Moon, Sun } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { IconButton } from '@/components/ui/icon-button'
 import { useTheme } from '@/themes/theme-provider'
+import { THEME_MODE_STORAGE_KEY as STORAGE_KEY } from '@/themes/theme-bootstrap'
 import type { ThemeMode } from '@/themes/theme-types'
-
-const STORAGE_KEY = 'divedispatch-theme-pref'
 
 export function ThemeSwitcher() {
   const { setMode } = useTheme()

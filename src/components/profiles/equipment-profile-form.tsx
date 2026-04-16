@@ -4,7 +4,6 @@ import { Plus, X } from 'lucide-react'
 import { useState } from 'react'
 
 import { BusinessContactSection } from '@/components/profiles/business-contact-section'
-import { ProfileIncompleteGuard } from '@/components/profiles/profile-incomplete-guard'
 import { Card } from '@/components/ui/card'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
 import { Badge } from '@/components/ui/badge'
@@ -17,6 +16,7 @@ import {
   equipmentGearCatalogSchema,
 } from '@/lib/schemas/profile-shared'
 import {
+  buildParentContactDefaults,
   type BaseProfileSectionProps,
 } from '@/lib/profile-form'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
@@ -31,7 +31,6 @@ export function EquipmentContactSection(props: EquipmentSectionProps) {
     <BusinessContactSection
       {...props}
       nameLabel="Business Name"
-      namePlaceholder="e.g. Phuket Gear Rental"
       schema={contactSchema}
     />
   )
@@ -68,7 +67,10 @@ export function equipmentGearCatalogToPayload(f: EquipmentGearCatalogFormState):
   }
 }
 
-export function EquipmentGearCatalogSection({ profile: existing, create, update, onClose }: EquipmentSectionProps) {
+export function EquipmentGearCatalogSection({ profile: existing, me, create, update, onClose }: EquipmentSectionProps) {
+  const createOverride = (payload: Record<string, unknown>) =>
+    create({ ...buildParentContactDefaults(me), ...payload })
+
   const { form, setForm, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit, resetToBaseline } =
     useProfileForm({
       profile: existing,
@@ -76,13 +78,11 @@ export function EquipmentGearCatalogSection({ profile: existing, create, update,
       defaults: INITIAL_EQUIPMENT_GEAR_CATALOG_FORM,
       fromProfile: equipmentGearCatalogFromProfile,
       toPayload: equipmentGearCatalogToPayload,
-      create,
+      create: createOverride,
       update,
     })
 
   const [mfrInputs, setMfrInputs] = useState<Partial<Record<GearType, string>>>({})
-
-  if (!existing) return <ProfileIncompleteGuard />
 
   function toggleGearType(gt: GearType) {
     setForm((prev) => {
@@ -199,6 +199,6 @@ export function EquipmentProfileForm({
   onClose,
 }: EquipmentSectionProps & { section?: EquipmentProfileSection }) {
   if (section === 'gear-catalog')
-    return <EquipmentGearCatalogSection profile={profile} create={create} update={update} onClose={onClose} />
+    return <EquipmentGearCatalogSection profile={profile} me={me} create={create} update={update} onClose={onClose} />
   return <EquipmentContactSection profile={profile} me={me} create={create} update={update} onSaved={onSaved} onClose={onClose} />
 }

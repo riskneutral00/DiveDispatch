@@ -130,10 +130,11 @@ export function BoatIcon(props: RoleIconProps) {
 export function EquipmentIcon(props: RoleIconProps) {
   return (
     <IconBase {...props}>
-      <rect x="8" y="6" width="8" height="14" rx="3" />
-      <path d="M10 6V4h4v2" />
-      <path d="M9 3h6" />
-      <path d="M9 20h6" />
+      <circle cx="8" cy="11" r="3" />
+      <circle cx="16" cy="11" r="3" />
+      <path d="M11 11h2" />
+      <path d="M5 8c-1 0-2.5 0.5-3 1" />
+      <path d="M19 8c1 0 2.5 0.5 3 1" />
     </IconBase>
   )
 }
@@ -151,10 +152,10 @@ export function PoolIcon(props: RoleIconProps) {
 export function CompressorIcon(props: RoleIconProps) {
   return (
     <IconBase {...props}>
-      <circle cx="10" cy="10" r="3" />
-      <path d="M10 4v2.5M16 10h-2.5M10 16v-2.5M4 10h2.5M14.2 5.8l-2.1 2.1M14.2 14.2l-2.1-2.1M5.8 14.2l2.1-2.1M5.8 5.8l2.1 2.1" />
-      <circle cx="18" cy="18" r="2" />
-      <path d="M18 14.5v1.5M21.5 18h-1.5M18 21.5v-1.5M14.5 18h1.5" />
+      <path d="M9 3h6" />
+      <path d="M12 3v3" />
+      <path d="M8 9c0-2 2-3 4-3s4 1 4 3v11a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1z" />
+      <path d="M8 11h8" />
     </IconBase>
   )
 }

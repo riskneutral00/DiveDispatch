@@ -1,17 +1,4 @@
-export const MIN_BIRTH_YEAR = 1900
-export const MIN_AGE_YEARS = 13
 export const MIN_SIGNUP_AGE_YEARS = 18
-
-export function maxBirthDate(now: Date = new Date(), minAge: number = MIN_AGE_YEARS): string {
-  const year = now.getUTCFullYear() - minAge
-  const month = String(now.getUTCMonth() + 1).padStart(2, '0')
-  const day = String(now.getUTCDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
-
-export function minBirthDate(): string {
-  return `${MIN_BIRTH_YEAR}-01-01`
-}
 
 export function ageInYears(isoDate: string, now: Date = new Date()): number {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(isoDate)) return NaN

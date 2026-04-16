@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { api } from '../convex/_generated/api'
 import { seedUser, seedDiveCenterProfile, seedStakeholderPreferences } from './fixtures'
 import { makeT } from './helpers/convex-helpers'
+import { createUserDefaults } from './helpers/createUser'
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
@@ -10,7 +11,7 @@ describe('onboarding schema', () => {
     const t = makeT()
     vi.useFakeTimers({ now: Date.now() })
     const userId = await t.withIdentity({ tokenIdentifier: 'clerk|new-dc' })
-      .mutation(api.users.createUser, { role: 'DiveCenter', businessName: 'Test DC' })
+      .mutation(api.users.createUser, { ...createUserDefaults, role: 'DiveCenter', businessName: 'Test DC' })
 
     await t.finishAllScheduledFunctions(vi.runAllTimers)
     vi.useRealTimers()

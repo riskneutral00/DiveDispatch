@@ -26,6 +26,7 @@ Governance: `.claude/rules/existing-components-first.md` + `.claude/rules/dry-fi
 | `Input` | `@/components/ui/input` | Raw `<input type="text\|number\|password\|search">`. Supports floating label, error, helper, leading/trailing icons. |
 | `Textarea` | `@/components/ui/textarea` | Raw `<textarea>`. |
 | `SimpleSelect` | `@/components/ui/simple-select` | Raw `<select>` when options are a flat list. |
+| `NumberPicker` | `@/components/ui/number-picker` | Numeric dropdown — SimpleSelect with auto-generated options from min/max/step. Use for any bounded numeric field (ranges, counts, percentages, depths, passengers, days). Matches BirthdayField's dropdown pattern for app-wide consistency. |
 | `Select` | `@/components/ui/select` | Rich select with search, custom rendering, keyboard nav. |
 | `Checkbox` | `@/components/ui/checkbox` | Raw `<input type="checkbox">`. |
 | `CheckboxGroup` | `@/components/ui/checkbox-group` | Multiple checkboxes sharing a label. |
@@ -138,7 +139,6 @@ Role-agnostic building blocks for stakeholder profile forms (`PatternLibrary/one
 | `ProfileBasicInfo` | `@/components/profiles/profile-basic-info` | Name + location + email + phone inputs. Used by every role's contact section. |
 | `ProfileAgencyInfo` | `@/components/profiles/profile-agency-info` | Agency/certification info block (generic over row type). |
 | `ProfileOverlay` | `@/components/profiles/profile-overlay` | Full-screen profile editor overlay. |
-| `ProfileIncompleteGuard` | `@/components/profiles/profile-incomplete-guard` | Gate that blocks actions until profile is complete. |
 | `ProfileCompletionPill` | `@/components/profiles/profile-completion-pill` | % completion badge that opens the overlay. |
 | `BusinessContactSection` | `@/components/profiles/business-contact-section` | Contact fields for business roles (name, location, email, phone). |
 | `AccessControlSection` | `@/components/profiles/access-control-section` | allow/not-allow controls. Exports `accessFromProfile`, `accessToPayload`, `INITIAL_ACCESS_CONTROL`. |

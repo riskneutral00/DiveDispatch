@@ -1,6 +1,6 @@
 import { v, type Infer } from 'convex/values'
 
-export const GAS_MIXES = ['air', 'nitrox', 'trimix'] as const
+export const GAS_MIXES = ['air', 'nitrox'] as const
 
 export type GasMix = (typeof GAS_MIXES)[number]
 

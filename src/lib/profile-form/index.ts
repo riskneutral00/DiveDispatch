@@ -12,6 +12,8 @@ export {
   contactToPayload,
 } from './location'
 
+export { buildParentContactDefaults } from './create-override'
+
 export type { Language } from '@/lib/types/language'
 export {
   languageEntrySchema,

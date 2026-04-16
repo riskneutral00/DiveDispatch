@@ -40,10 +40,10 @@ describe('NameField', () => {
     expect(onChange).toHaveBeenCalledWith('星野')
   })
 
-  it('renders required asterisk when required', () => {
+  it('forwards required to the underlying input', () => {
     const { container } = render(
       <NameField scope="given" label="First name" value="" onChange={() => {}} required />,
     )
-    expect(container.querySelector('[data-required-asterisk]') ?? container.textContent).toMatch(/\*/)
+    expect(container.querySelector('input')?.hasAttribute('required')).toBe(true)
   })
 })

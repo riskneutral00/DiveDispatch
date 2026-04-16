@@ -63,3 +63,11 @@
 .bg-base {
   --bg-image: none;
 }
+
+html {
+  color-scheme: light;
+}
+
+html[data-mode="dark"] {
+  color-scheme: dark;
+}

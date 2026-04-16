@@ -3,7 +3,7 @@
 import { useMutation, useQuery } from 'convex/react'
 import { useState, useEffect } from 'react'
 import { api } from '@/lib/convex-generated'
-import { Input, InlineError } from '@/components/ui'
+import { InlineError, NumberPicker } from '@/components/ui'
 import { LoadingCard } from '@/components/ui/loading-card'
 import { resolveLanguages } from '@/lib/constants/dive-languages'
 import { MAX_COURSE_DAYS } from '@/lib/constants/form-config'
@@ -148,35 +148,26 @@ function LanguagesStepInner({ role, roleApi, onSaved, onBack }: LanguagesStepInn
                   Used when creating bookings.
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <Input
+                  <NumberPicker
                     label="OW Days"
-                    type="number"
-                    inputMode="numeric"
                     min={1}
                     max={MAX_COURSE_DAYS}
-                    value={owDays}
-                    onChange={(e) => setOwDays(e.target.value)}
-                    placeholder="4"
+                    value={owDays === '' ? undefined : Number(owDays)}
+                    onChange={(v) => setOwDays(v === undefined ? '' : String(v))}
                   />
-                  <Input
+                  <NumberPicker
                     label="AOW Days"
-                    type="number"
-                    inputMode="numeric"
                     min={1}
                     max={MAX_COURSE_DAYS}
-                    value={aowDays}
-                    onChange={(e) => setAowDays(e.target.value)}
-                    placeholder="2"
+                    value={aowDays === '' ? undefined : Number(aowDays)}
+                    onChange={(v) => setAowDays(v === undefined ? '' : String(v))}
                   />
-                  <Input
+                  <NumberPicker
                     label="Adv. Days"
-                    type="number"
-                    inputMode="numeric"
                     min={1}
                     max={MAX_COURSE_DAYS}
-                    value={oaDays}
-                    onChange={(e) => setOaDays(e.target.value)}
-                    placeholder="1"
+                    value={oaDays === '' ? undefined : Number(oaDays)}
+                    onChange={(v) => setOaDays(v === undefined ? '' : String(v))}
                   />
                 </div>
               </div>

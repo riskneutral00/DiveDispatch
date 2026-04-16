@@ -135,10 +135,10 @@ describe('SaveButton', () => {
     expect(screen.getByText('Save')).toBeTruthy()
   })
 
-  it('shows Create Profile for create mode', async () => {
+  it('shows Save for create mode', async () => {
     const { SaveButton } = await import('@/components/ui/save-button')
     render(<SaveButton saving={false} saved={false} isDirty={true} isUpdate={false} />)
-    expect(screen.getByText('Create Profile')).toBeTruthy()
+    expect(screen.getByText('Save')).toBeTruthy()
   })
 
   it('shows Saved when saved is true', async () => {

@@ -5,6 +5,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { api } from '../../convex/_generated/api'
 import { makeT } from '../helpers/convex-helpers'
+import { createUserDefaults } from '../helpers/createUser'
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
@@ -14,7 +15,7 @@ describe('createUser (post sign-up)', () => {
 
     vi.useFakeTimers({ now: Date.now() })
     const userId = await t.withIdentity({ tokenIdentifier: 'clerk|signup-dc-01' })
-      .mutation(api.users.createUser, { role: 'DiveCenter', businessName: 'Test DC' })
+      .mutation(api.users.createUser, { ...createUserDefaults, role: 'DiveCenter', businessName: 'Test DC' })
     await t.finishAllScheduledFunctions(vi.runAllTimers)
     vi.useRealTimers()
 
@@ -28,10 +29,10 @@ describe('createUser (post sign-up)', () => {
 
     vi.useFakeTimers({ now: Date.now() })
     const id1 = await t.withIdentity({ tokenIdentifier: 'clerk|signup-dc-02' })
-      .mutation(api.users.createUser, { role: 'DiveCenter', businessName: 'First Call' })
+      .mutation(api.users.createUser, { ...createUserDefaults, role: 'DiveCenter', businessName: 'First Call' })
     await t.finishAllScheduledFunctions(vi.runAllTimers)
     const id2 = await t.withIdentity({ tokenIdentifier: 'clerk|signup-dc-02' })
-      .mutation(api.users.createUser, { role: 'Instructor', businessName: 'Second Call' })
+      .mutation(api.users.createUser, { ...createUserDefaults, role: 'Instructor', businessName: 'Second Call' })
     await t.finishAllScheduledFunctions(vi.runAllTimers)
     vi.useRealTimers()
 
@@ -42,7 +43,7 @@ describe('createUser (post sign-up)', () => {
     const t = makeT()
 
     await expect(
-      t.mutation(api.users.createUser, { role: 'DiveCenter', businessName: 'X' }),
+      t.mutation(api.users.createUser, { ...createUserDefaults, role: 'DiveCenter', businessName: 'X' }),
     ).rejects.toMatchObject({ data: expect.stringContaining('UNAUTHENTICATED') })
   })
 
@@ -51,7 +52,7 @@ describe('createUser (post sign-up)', () => {
 
     vi.useFakeTimers({ now: Date.now() })
     const userId = await t.withIdentity({ tokenIdentifier: 'clerk|signup-dc-03' })
-      .mutation(api.users.createUser, { role: 'DiveCenter', businessName: 'Fresh DC' })
+      .mutation(api.users.createUser, { ...createUserDefaults, role: 'DiveCenter', businessName: 'Fresh DC' })
     await t.finishAllScheduledFunctions(vi.runAllTimers)
     vi.useRealTimers()
 

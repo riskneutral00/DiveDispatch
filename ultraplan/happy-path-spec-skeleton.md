@@ -343,16 +343,15 @@ Five Acts partition the run: **I Onboarding · II Booking Convergence · III Var
 - **Source:** Stop 1 audit (this skeleton — per Lesson #1).
 - **Impact:** Compressor canonical JSON declares both fields (`autoAccept: true`, `nitroxO2Percent: 32`). Schema rejects these writes today. Stop 1 UI run cannot complete without the columns.
 - **Action:**
-  - Schema: add `compressors.autoAccept: v.boolean()` (default `true` server-side) and `compressors.nitroxO2Percent: v.optional(v.number())` (integer, range 22–40, required in mutation iff `gasMixes` includes `'nitrox'`).
+  - Schema: add `compressors.autoAccept: v.boolean()` (default `true` server-side) and `compressors.nitroxMin: v.optional(v.number())` + `compressors.nitroxMax: v.optional(v.number())` (integer, range 22–40, both required in mutation iff `gasMixes` includes `'nitrox'`, min ≤ max).
   - Update `convex/compressors.ts:17-34` create + update args.
   - Update `convex/seedData.ts` compressor fixtures.
   - Extend zod validators in `src/lib/profile-form/profile-shared.ts`.
 
-### P0-4 — Seed `SCUBA_MARKET.gasMixes` includes `'trimix'`
+### P0-4 — Seed `SCUBA_MARKET.gasMixes` includes `'trimix'` ✅ RESOLVED
 
 - **Source:** Stop 1 audit (this skeleton — per Lesson #1).
-- **Impact:** Happy-path canonical scope is air + nitrox only. Seed fixture is richer and pollutes any test that reads the compressor seed expecting canonical parity.
-- **Action:** One-line strip at `convex/seedData.ts:965`. Bundle with P0-3 ticket.
+- **Resolution:** Trimix removed from canonical `GAS_MIXES` and seed data. Only `'air'` and `'nitrox'` remain. Nitrox gains a min/max range (22–40%) instead.
 
 ### P0-5 — Compressor profile form missing nitrox dropdown + auto-accept display
 

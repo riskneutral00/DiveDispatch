@@ -1,4 +1,4 @@
-import { getEndDateDefault, calculateComboDates } from '@/lib/booking/course-validation'
+import { getEndDateDefault, calculateComboDates } from '@/lib/booking/activity-validation'
 import type { OperatorDefaults } from '@/lib/hooks/use-operator-defaults'
 import type { BookingPreFill } from '@/lib/booking/wizard-state'
 

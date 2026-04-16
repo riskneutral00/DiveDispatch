@@ -12,14 +12,12 @@ import { RoleTile } from '@/components/ui/role-tile'
 interface StepRoleSelectionProps {
   selectedRoles: RoleConfig[]
   onToggle: (role: RoleConfig) => void
-  onBack: () => void
   onContinue: () => void
 }
 
 export function StepRoleSelection({
   selectedRoles,
   onToggle,
-  onBack,
   onContinue,
 }: StepRoleSelectionProps) {
   const selectedSet = new Set(selectedRoles.map((r) => r.key))
@@ -64,14 +62,7 @@ export function StepRoleSelection({
         ))}
       </div>
 
-      <div className="flex gap-3 w-full" data-testid="wizard-nav">
-        <Button
-          variant="secondary"
-          fullWidth
-          onClick={onBack}
-        >
-          Back
-        </Button>
+      <div className="w-full" data-testid="wizard-nav">
         <Button
           variant="primary"
           fullWidth
@@ -82,18 +73,21 @@ export function StepRoleSelection({
         </Button>
       </div>
 
-      {selectedRoles.length > 0 && (
-        <div className="mt-3 flex flex-col gap-1">
-          {selectedRoles.map((role) => (
-            <p key={role.key} className="text-label text-secondary">
-              <span className="font-medium text-primary">
-                {role.label}:
-              </span>{' '}
-              {role.description}
-            </p>
-          ))}
-        </div>
-      )}
+      <div
+        className={`mt-3 h-32 overflow-y-auto overflow-x-hidden flex flex-col gap-1 transition-opacity ${
+          selectedRoles.length > 0 ? 'opacity-100' : 'opacity-0'
+        }`}
+        aria-hidden={selectedRoles.length === 0}
+      >
+        {selectedRoles.map((role) => (
+          <p key={role.key} className="text-label text-secondary">
+            <span className="font-medium text-primary">
+              {role.label}:
+            </span>{' '}
+            {role.description}
+          </p>
+        ))}
+      </div>
     </>
   )
 }

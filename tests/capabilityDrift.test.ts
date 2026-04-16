@@ -15,18 +15,27 @@ function parseCols(line: string): string[] {
   return line.split('|').map((c) => c.trim())
 }
 
+function headerIndex(headers: string[], name: string): number {
+  const idx = headers.findIndex((h) => h.toLowerCase().includes(name.toLowerCase()))
+  if (idx === -1) throw new Error(`Column "${name}" not found in header: ${headers.join(' | ')}`)
+  return idx
+}
+
 function parseSpecialtyMatrix(): string[] {
   const content = readFileSync(VAULT_PATH, 'utf-8')
   const lines = content.split('\n')
   const matrixStart = lines.findIndex((l) => l.startsWith('| Category'))
   if (matrixStart === -1) throw new Error('Cannot find matrix header in SpecialtyMatrix.md')
 
+  const headers = parseCols(lines[matrixStart])
+  const topicIdx = headerIndex(headers, 'Specialty Topic')
+
   const rows: string[] = []
   for (let i = matrixStart + 2; i < lines.length; i++) {
     const line = lines[i].trim()
     if (!line.startsWith('|')) break
     const cols = parseCols(line)
-    if (cols[2]) rows.push(cols[2])
+    if (cols[topicIdx]) rows.push(cols[topicIdx])
   }
   return rows
 }
@@ -37,13 +46,18 @@ function parseAutomaticAuthority(): Array<{ topic: string; adventureDive: string
   const matrixStart = lines.findIndex((l) => l.startsWith('| Category'))
   if (matrixStart === -1) return []
 
+  const headers = parseCols(lines[matrixStart])
+  const topicIdx = headerIndex(headers, 'Specialty Topic')
+  const advIdx = headerIndex(headers, 'PADI: Standard Instructor')
+  const specIdx = headerIndex(headers, 'PADI: "Specialty Instructor"')
+
   const authority: Array<{ topic: string; adventureDive: string }> = []
   for (let i = matrixStart + 2; i < lines.length; i++) {
     const line = lines[i].trim()
     if (!line.startsWith('|')) break
     const cols = parseCols(line)
-    if (cols[4]?.includes('(Automatic Authority)')) {
-      if (cols[2]) authority.push({ topic: cols[2], adventureDive: cols[3] || '' })
+    if (cols[specIdx]?.includes('(Automatic Authority)')) {
+      if (cols[topicIdx]) authority.push({ topic: cols[topicIdx], adventureDive: cols[advIdx] || '' })
     }
   }
   return authority

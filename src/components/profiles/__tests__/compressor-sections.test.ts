@@ -62,7 +62,7 @@ describe('compressorGasMixesSchema', () => {
   })
 
   it('accepts all valid gas mixes', () => {
-    expect(compressorGasMixesSchema.safeParse({ gasMixes: ['air', 'nitrox', 'trimix'] }).success).toBe(true)
+    expect(compressorGasMixesSchema.safeParse({ gasMixes: ['air', 'nitrox'], nitroxMin: 28, nitroxMax: 36 }).success).toBe(true)
   })
 
   it('rejects empty gas mixes array', () => {
@@ -73,8 +73,29 @@ describe('compressorGasMixesSchema', () => {
     expect(compressorGasMixesSchema.safeParse({ gasMixes: ['helium'] }).success).toBe(false)
   })
 
+  it('rejects trimix now that it is removed', () => {
+    expect(compressorGasMixesSchema.safeParse({ gasMixes: ['trimix'] }).success).toBe(false)
+  })
+
+  it('requires nitrox range when nitrox is selected', () => {
+    expect(compressorGasMixesSchema.safeParse({ gasMixes: ['nitrox'] }).success).toBe(false)
+  })
+
+  it('rejects nitrox range below 22 or above 40', () => {
+    expect(compressorGasMixesSchema.safeParse({ gasMixes: ['nitrox'], nitroxMin: 20, nitroxMax: 36 }).success).toBe(false)
+    expect(compressorGasMixesSchema.safeParse({ gasMixes: ['nitrox'], nitroxMin: 28, nitroxMax: 45 }).success).toBe(false)
+  })
+
+  it('rejects min greater than max', () => {
+    expect(compressorGasMixesSchema.safeParse({ gasMixes: ['nitrox'], nitroxMin: 38, nitroxMax: 28 }).success).toBe(false)
+  })
+
+  it('accepts air-only without nitrox range', () => {
+    expect(compressorGasMixesSchema.safeParse({ gasMixes: ['air'] }).success).toBe(true)
+  })
+
   it('does not require contact fields', () => {
-    const result = compressorGasMixesSchema.safeParse({ gasMixes: ['nitrox'] })
+    const result = compressorGasMixesSchema.safeParse({ gasMixes: ['nitrox'], nitroxMin: 28, nitroxMax: 36 })
     expect(result.success).toBe(true)
   })
 })
@@ -167,13 +188,27 @@ describe('compressorGasMixesFromProfile', () => {
 
 describe('compressorGasMixesToPayload', () => {
   it('serialises gasMixes array', () => {
-    const form: CompressorGasMixesFormState = { gasMixes: ['air', 'trimix'] }
+    const form: CompressorGasMixesFormState = { gasMixes: ['air'], nitroxMin: undefined, nitroxMax: undefined }
     const payload = compressorGasMixesToPayload(form)
-    expect(payload.gasMixes).toEqual(['air', 'trimix'])
+    expect(payload.gasMixes).toEqual(['air'])
+  })
+
+  it('includes nitroxMin/nitroxMax when nitrox selected', () => {
+    const form: CompressorGasMixesFormState = { gasMixes: ['nitrox'], nitroxMin: 28, nitroxMax: 36 }
+    const payload = compressorGasMixesToPayload(form)
+    expect(payload.nitroxMin).toBe(28)
+    expect(payload.nitroxMax).toBe(36)
+  })
+
+  it('omits nitroxMin/nitroxMax when nitrox not selected', () => {
+    const form: CompressorGasMixesFormState = { gasMixes: ['air'], nitroxMin: 28, nitroxMax: 36 }
+    const payload = compressorGasMixesToPayload(form)
+    expect(payload).not.toHaveProperty('nitroxMin')
+    expect(payload).not.toHaveProperty('nitroxMax')
   })
 
   it('does not include contact fields', () => {
-    const form: CompressorGasMixesFormState = { gasMixes: ['nitrox'] }
+    const form: CompressorGasMixesFormState = { gasMixes: ['nitrox'], nitroxMin: 28, nitroxMax: 36 }
     const payload = compressorGasMixesToPayload(form)
     expect(payload).not.toHaveProperty('name')
     expect(payload).not.toHaveProperty('email')
@@ -191,7 +226,9 @@ describe('INITIAL_COMPRESSOR_CONTACT_FORM', () => {
 })
 
 describe('INITIAL_COMPRESSOR_GAS_MIXES_FORM', () => {
-  it('starts with empty gasMixes', () => {
+  it('starts with empty gasMixes and undefined nitrox range', () => {
     expect(INITIAL_COMPRESSOR_GAS_MIXES_FORM.gasMixes).toEqual([])
+    expect(INITIAL_COMPRESSOR_GAS_MIXES_FORM.nitroxMin).toBeUndefined()
+    expect(INITIAL_COMPRESSOR_GAS_MIXES_FORM.nitroxMax).toBeUndefined()
   })
 })

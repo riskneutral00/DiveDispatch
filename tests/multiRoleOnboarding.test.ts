@@ -8,6 +8,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { api } from '../convex/_generated/api'
 import { makeT } from './helpers/convex-helpers'
+import { createUserDefaults } from './helpers/createUser'
 
 const IDENTITY = { tokenIdentifier: 'clerk|multi-role-user' }
 
@@ -17,7 +18,7 @@ describe('createUser with roles array (DD-032)', () => {
     vi.useFakeTimers({ now: Date.now() })
     const userId = await t
       .withIdentity(IDENTITY)
-      .mutation(api.users.createUser, {
+      .mutation(api.users.createUser, { ...createUserDefaults,
         role: 'DiveCenter',
         roles: ['DiveCenter', 'Boat', 'Equipment'],
         businessName: 'Multi DC',
@@ -42,7 +43,7 @@ describe('createUser with roles array (DD-032)', () => {
     vi.useFakeTimers({ now: Date.now() })
     const userId = await t
       .withIdentity(IDENTITY)
-      .mutation(api.users.createUser, {
+      .mutation(api.users.createUser, { ...createUserDefaults,
         role: 'Boat',
         roles: ['Boat', 'Instructor'],
         businessName: 'Boat First',
@@ -67,7 +68,7 @@ describe('createUser with roles array (DD-032)', () => {
     vi.useFakeTimers({ now: Date.now() })
     const userId = await t
       .withIdentity(IDENTITY)
-      .mutation(api.users.createUser, {
+      .mutation(api.users.createUser, { ...createUserDefaults,
         role: 'Equipment',
         roles: ['Equipment', 'Compressor'],
         businessName: 'Equip Co',
@@ -91,7 +92,7 @@ describe('createUser with roles array (DD-032)', () => {
     vi.useFakeTimers({ now: Date.now() })
     const userId = await t
       .withIdentity(IDENTITY)
-      .mutation(api.users.createUser, {
+      .mutation(api.users.createUser, { ...createUserDefaults,
         role: 'DiveCenter',
         businessName: 'Single DC',
       })
@@ -113,7 +114,7 @@ describe('createUser with roles array (DD-032)', () => {
     vi.useFakeTimers({ now: Date.now() })
     const userId = await t
       .withIdentity(IDENTITY)
-      .mutation(api.users.createUser, {
+      .mutation(api.users.createUser, { ...createUserDefaults,
         role: 'Instructor',
         roles: ['Instructor'],
         businessName: 'Solo Instructor',

@@ -4,10 +4,10 @@ import { LocationPicker, type LocationValue } from '@/components/profiles/locati
 import { SectionDivider } from '@/components/ui/section-divider'
 import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
+import { FormSectionHeader } from '@/components/ui/form-section-header'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import { VenueCapabilitiesSection } from '@/components/profiles/venue-capabilities-section'
 import {
-  AccessControlSection,
   INITIAL_ACCESS_CONTROL,
   accessFromProfile,
   accessToPayload,
@@ -121,7 +121,6 @@ export function DiveSiteDetailsSection({ profile: existing, me, create, update, 
         <div className="grid grid-cols-6 gap-x-3 gap-y-4 sm:flex sm:flex-wrap sm:gap-4 w-full"> {/* design-ok */}
           <Input
             label="Site Name"
-            placeholder="Shark Bay Reef"
             value={form.name}
             onChange={(e) => setField('name', e.target.value)}
             error={errors.name}
@@ -141,7 +140,7 @@ export function DiveSiteDetailsSection({ profile: existing, me, create, update, 
         <SectionDivider show />
 
         <div className="flex flex-col gap-2">
-          <span className="text-body font-medium text-secondary">Site Types</span>
+          <FormSectionHeader label="Site Types" required />
           <div className="flex flex-wrap gap-3">
             {DIVE_SITE_TYPES.map((subtype) => (
               <Checkbox
@@ -156,13 +155,6 @@ export function DiveSiteDetailsSection({ profile: existing, me, create, update, 
             <span className="text-label text-destructive">{errors.diveSiteTypes}</span>
           )}
         </div>
-
-        <SectionDivider variant="soft" />
-
-        <AccessControlSection
-          value={form.access}
-          onChange={(next) => setField('access', next)}
-        />
       </div>
     </ProfileFormShell>
   )
@@ -205,7 +197,7 @@ export function DiveSiteCapabilitiesSection(props: DiveSiteSectionProps) {
       fromProfile={diveSiteCapabilitiesFromProfile}
       toPayload={diveSiteCapabilitiesToPayload}
       venueType="diveSite"
-      incompleteMessage="Complete details first"
+      wrapCreatePayload={buildDiveSiteCreatePayload}
       capabilitiesLabel="Site Capabilities"
       depthPlaceholder="18"
       capacityPlaceholder="20"
@@ -223,6 +215,6 @@ export function DiveSiteProfileForm({
   onClose,
 }: DiveSiteSectionProps & { section?: DiveSiteProfileSection }) {
   if (section === 'capabilities')
-    return <DiveSiteCapabilitiesSection profile={profile} create={create} update={update} onClose={onClose} />
+    return <DiveSiteCapabilitiesSection profile={profile} me={me} create={create} update={update} onClose={onClose} />
   return <DiveSiteDetailsSection profile={profile} me={me} create={create} update={update} onSaved={onSaved} onClose={onClose} />
 }

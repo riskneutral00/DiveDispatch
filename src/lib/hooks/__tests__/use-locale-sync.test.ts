@@ -118,4 +118,28 @@ describe('useLocaleSync', () => {
     expect(mockRefresh).toHaveBeenCalledTimes(1)
     expect(getCookie('dd-locale')).toBe('zh-CN')
   })
+
+  it.each([
+    ['ko-KR', 'ko'],
+    ['fr-FR', 'fr'],
+    ['th-TH', 'th'],
+    ['en-GB', 'en'],
+    ['en-US', 'en'],
+  ])('strips BCP-47 region from %s to %s', (raw, expected) => {
+    mockCurrentUser.mockReturnValue({
+      user: { appLanguage: raw },
+      isLoading: false,
+    })
+    renderHook(() => useLocaleSync())
+    expect(getCookie('dd-locale')).toBe(expected)
+  })
+
+  it('preserves zh-CN and zh-TW (both supported distinctly)', () => {
+    mockCurrentUser.mockReturnValue({
+      user: { appLanguage: 'zh-TW' },
+      isLoading: false,
+    })
+    renderHook(() => useLocaleSync())
+    expect(getCookie('dd-locale')).toBe('zh-TW')
+  })
 })

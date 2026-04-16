@@ -180,8 +180,7 @@ export function FlagPill({ lang, active, disabled, onToggle }: FlagPillProps) {
   const isText = Boolean(scriptLabel);
 
   return (
-    /* design-ok */
-    <button
+    <button /* design-ok */
       type="button"
       onClick={onToggle}
       disabled={disabled}
@@ -191,14 +190,16 @@ export function FlagPill({ lang, active, disabled, onToggle }: FlagPillProps) {
       translate="no"
       className={
         isText
-          ? "h-7 px-1.5 rounded-[var(--border-radius-button)] flex items-center justify-center text-[11px] font-medium leading-none transition-colors duration-theme border outline-none glass-field"
-          : FLAG_TILE
+          ? `h-7 px-1.5 rounded-[var(--border-radius-button)] flex items-center justify-center text-[11px] font-medium leading-none transition-all duration-theme border glass-field`
+          : `${FLAG_TILE.replace(" transition-colors ", " transition-all ")}${active ? " scale-110" : ""}`
       }
       style={{
         background: active ? "var(--color-primary-muted)" : "transparent",
         borderColor: active
-          ? "var(--color-primary-border)"
+          ? "var(--color-primary)"
           : "var(--color-glass-border)",
+        outline: active ? "2px solid var(--color-primary)" : "none",
+        outlineOffset: active ? "1px" : "0",
         color: isText ? "var(--color-text-primary)" : undefined,
         opacity: disabled ? 0.7 : 1,
         cursor: disabled ? "not-allowed" : "pointer",

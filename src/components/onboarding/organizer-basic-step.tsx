@@ -122,12 +122,11 @@ function BasicStepInner({ role, mutations, onSaved, onBack }: BasicStepInnerProp
       loading={saving}
       disabled={!isValid}
     >
-      <div className="flex flex-col gap-4" data-testid="wizard-content">
+      <div className="space-y-4" data-testid="wizard-content">
         <Input
           label={t('businessName')}
           value={form.name}
           onChange={(e) => setField('name', e.target.value)}
-          placeholder="e.g. Ocean Explorer Dive Center"
           required
           error={errors.name}
         />
@@ -137,21 +136,22 @@ function BasicStepInner({ role, mutations, onSaved, onBack }: BasicStepInnerProp
           onChange={(loc) => setField('location', loc)}
           error={errors.location}
         />
-        <EmailField
-          label={t('contactEmail')}
-          value={form.email}
-          onChange={(v) => setField('email', v)}
-          placeholder="dive@example.com"
-          required
-          error={errors.email}
-        />
-        <PhoneField
-          label={t('contactPhone')}
-          value={form.phone}
-          onChange={(v) => setField('phone', v)}
-          required
-          error={errors.phone}
-        />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <EmailField
+            label={t('contactEmail')}
+            value={form.email}
+            onChange={(v) => setField('email', v)}
+            required
+            error={errors.email}
+          />
+          <PhoneField
+            label={t('contactPhone')}
+            value={form.phone}
+            onChange={(v) => setField('phone', v)}
+            required
+            error={errors.phone}
+          />
+        </div>
       </div>
     </OrganizerStepCard>
   )

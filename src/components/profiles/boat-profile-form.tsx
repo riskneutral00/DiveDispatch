@@ -1,7 +1,6 @@
 'use client'
 
 import { Plus } from 'lucide-react'
-import { parseNumber, parseOptionalInt } from '@/lib/utils/numbers'
 import { BusinessContactSection } from '@/components/profiles/business-contact-section'
 
 import { FormSectionHeader } from '@/components/ui/form-section-header'
@@ -9,15 +8,16 @@ import { DayToggleGroup } from '@/components/ui/day-toggle-group'
 import { Button } from '@/components/ui/button'
 import { FormGrid, FormField } from '@/components/ui/form-grid'
 import { Input } from '@/components/ui/input'
+import { NumberPicker } from '@/components/ui/number-picker'
 import { SimpleSelect } from '@/components/ui/simple-select'
 import { ItemCard } from '@/components/ui/item-card'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
-import { ProfileIncompleteGuard } from '@/components/profiles/profile-incomplete-guard'
 import {
   contactSchema,
   boatFleetSchema,
 } from '@/lib/schemas/profile-shared'
 import {
+  buildParentContactDefaults,
   type BaseProfileSectionProps,
 } from '@/lib/profile-form'
 import { BoatType, BOAT_TYPE_OPTIONS } from '@/lib/constants/boat-types'
@@ -54,7 +54,6 @@ export function BoatContactSection(props: BoatSectionProps) {
     <BusinessContactSection
       {...props}
       nameLabel="Business Name"
-      namePlaceholder="Phuket Boat Co."
       schema={contactSchema}
     />
   )
@@ -98,23 +97,10 @@ export function boatFleetToPayload(f: BoatFleetFormState): Record<string, unknow
   }
 }
 
-export function BoatFleetSection({ profile: existing, create, update, onClose }: BoatSectionProps) {
-  if (!existing) return <ProfileIncompleteGuard message="Complete contact info first before setting up the fleet." />
+export function BoatFleetSection({ profile: existing, me, create, update, onClose }: BoatSectionProps) {
+  const createOverride = (payload: Record<string, unknown>) =>
+    create({ ...buildParentContactDefaults(me), ...payload })
 
-  return <BoatFleetSectionForm profile={existing} create={create} update={update} onClose={onClose} />
-}
-
-function BoatFleetSectionForm({
-  profile: existing,
-  create,
-  update,
-  onClose,
-}: {
-  profile: Record<string, unknown>
-  create: (payload: Record<string, unknown>) => Promise<unknown>
-  update: (payload: Record<string, unknown>) => Promise<unknown>
-  onClose?: () => void
-}) {
   const { form, setField, errors, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit, resetToBaseline } =
     useProfileForm({
       profile: existing,
@@ -122,7 +108,7 @@ function BoatFleetSectionForm({
       defaults: INITIAL_BOAT_FLEET_FORM,
       fromProfile: boatFleetFromProfile,
       toPayload: boatFleetToPayload,
-      create,
+      create: createOverride,
       update,
     })
 
@@ -232,7 +218,7 @@ function FleetEntryCard({ vessel, fleetIdx: fi, errors, canRemove, onUpdate, onR
 
       <FormGrid className="mb-5">
         <FormField size="lg">
-          <Input label="Boat Name" required value={vessel.boatName} onChange={(e) => onUpdate({ boatName: e.target.value })} error={errors[`fleet.${fi}.boatName`]} placeholder="Sea Breeze" />
+          <Input label="Boat Name" required value={vessel.boatName} onChange={(e) => onUpdate({ boatName: e.target.value })} error={errors[`fleet.${fi}.boatName`]} />
         </FormField>
         <FormField size="lg">
           <SimpleSelect
@@ -246,13 +232,35 @@ function FleetEntryCard({ vessel, fleetIdx: fi, errors, canRemove, onUpdate, onR
           />
         </FormField>
         <FormField size="lg">
-          <Input label="Max Passengers" required type="number" inputMode="numeric" min={1} value={vessel.maxPax || ''} onChange={(e) => onUpdate({ maxPax: parseNumber(e.target.value, true) })} error={errors[`fleet.${fi}.maxPax`]} placeholder="20" />
+          <NumberPicker
+            label="Max Passengers"
+            required
+            min={1}
+            max={100}
+            value={vessel.maxPax || undefined}
+            onChange={(v) => onUpdate({ maxPax: v ?? 0 })}
+            error={errors[`fleet.${fi}.maxPax`]}
+          />
         </FormField>
         <FormField size="lg">
-          <Input label="Min Passengers" type="number" inputMode="numeric" min={1} value={vessel.minPax ?? ''} onChange={(e) => onUpdate({ minPax: parseOptionalInt(e.target.value) })} error={errors[`fleet.${fi}.minPax`]} placeholder="4" />
+          <NumberPicker
+            label="Min Passengers"
+            min={1}
+            max={100}
+            value={vessel.minPax}
+            onChange={(v) => onUpdate({ minPax: v })}
+            error={errors[`fleet.${fi}.minPax`]}
+          />
         </FormField>
         <FormField size="full">
-          <Input label="Cutoff Hours" type="number" inputMode="numeric" min={0} value={vessel.cutoffHours ?? ''} onChange={(e) => onUpdate({ cutoffHours: parseOptionalInt(e.target.value) })} error={errors[`fleet.${fi}.cutoffHours`]} helperText="Hours before departure when bookings close" placeholder="24" />
+          <NumberPicker
+            label="Cutoff Hours"
+            min={0}
+            max={168}
+            value={vessel.cutoffHours}
+            onChange={(v) => onUpdate({ cutoffHours: v })}
+            error={errors[`fleet.${fi}.cutoffHours`]}
+          />
         </FormField>
       </FormGrid>
 
@@ -294,7 +302,7 @@ interface RouteRowProps {
 function RouteRow({ route, fleetIdx: fi, routeIdx: ri, errors, onUpdate, onRemove, onToggleDay }: RouteRowProps) {
   return (
     <ItemCard onRemove={onRemove} canRemove={true} aria-label="Remove route">
-      <Input value={route.diveSite} onChange={(e) => onUpdate({ diveSite: e.target.value })} error={errors[`fleet.${fi}.routes.${ri}.diveSite`]} placeholder="Dive site name (e.g. Shark Point)" />
+      <Input value={route.diveSite} onChange={(e) => onUpdate({ diveSite: e.target.value })} error={errors[`fleet.${fi}.routes.${ri}.diveSite`]} placeholder="Dive site name" />
       <DayToggleGroup
         selected={route.daysOfWeek}
         onChange={(newDays) => {
@@ -318,6 +326,6 @@ export function BoatProfileForm({
   onSaved,
 }: BoatSectionProps & { section?: BoatProfileSection }) {
   if (section === 'fleet')
-    return <BoatFleetSection profile={profile} create={create} update={update} />
+    return <BoatFleetSection profile={profile} me={me} create={create} update={update} />
   return <BoatContactSection profile={profile} me={me} create={create} update={update} onSaved={onSaved} />
 }

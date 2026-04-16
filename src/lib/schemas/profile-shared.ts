@@ -83,13 +83,15 @@ export const personalLanguagesSchema = z.object({
 
 export const personalContactMergedSchema = personalContactSchema.merge(personalLanguagesSchema)
 
-export const diveMasterCredentialsSchema = z.object({
-  credential: z.array(credentialSchema).min(1, 'At least one credential is required'),
-})
+function makeCredentialsSchema(inner: typeof credentialSchema | typeof instructorCredentialSchema) {
+  return z.object({
+    credential: z.array(inner).min(1, 'At least one credential is required'),
+  })
+}
 
-export const instructorCredentialsSchema = z.object({
-  credential: z.array(instructorCredentialSchema).min(1, 'At least one credential is required'),
-})
+export const diveMasterCredentialsSchema = makeCredentialsSchema(credentialSchema)
+
+export const instructorCredentialsSchema = makeCredentialsSchema(instructorCredentialSchema)
 
 const BOAT_TYPES_TUPLE = BOAT_TYPES
 
@@ -125,9 +127,21 @@ export const boatFleetSchema = z.object({
   fleet: z.array(boatFleetEntrySchema),
 })
 
-export const compressorGasMixesSchema = z.object({
-  gasMixes: z.array(z.enum(GAS_MIXES)).min(1, 'Select at least one gas mix'),
-})
+export const compressorGasMixesSchema = z
+  .object({
+    gasMixes: z.array(z.enum(GAS_MIXES)).min(1, 'Select at least one gas mix'),
+    nitroxMin: z.number().int().min(22).max(40).optional(),
+    nitroxMax: z.number().int().min(22).max(40).optional(),
+  })
+  .refine(
+    (data) => {
+      if (!data.gasMixes.includes('nitrox')) return true
+      if (data.nitroxMin === undefined || data.nitroxMax === undefined)
+        return false
+      return data.nitroxMin <= data.nitroxMax
+    },
+    { message: 'Nitrox range required (min ≤ max, 22–40%)', path: ['nitroxMin'] },
+  )
 
 export const equipmentGearCatalogSchema = z.object({
   manufacturersByGearType: z.record(z.string(), z.array(z.string())),

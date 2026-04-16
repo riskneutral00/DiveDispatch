@@ -11,6 +11,17 @@ export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
 
 export const DEFAULT_LOCALE: SupportedLocale = "en";
 
+export function normalizeLocale(input: string | undefined | null): SupportedLocale {
+  if (!input) return DEFAULT_LOCALE;
+  const supported: ReadonlyArray<string> = SUPPORTED_LOCALES;
+  if (supported.includes(input)) return input as SupportedLocale;
+  const base = input.split("-")[0];
+  if (supported.includes(base)) return base as SupportedLocale;
+  const baseMatch = SUPPORTED_LOCALES.find((s) => s.startsWith(`${base}-`));
+  if (baseMatch) return baseMatch;
+  return DEFAULT_LOCALE;
+}
+
 export function resolveLocale(
   cookieValue: string | undefined,
   acceptLanguage: string | undefined,

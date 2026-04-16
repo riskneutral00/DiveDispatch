@@ -6,6 +6,7 @@ import { Card } from '../ui/card'
 import { FieldLabel } from '../ui/field-shell'
 import { InlineError } from '../ui/inline-error'
 import { Input } from '../ui/input'
+import { NumberPicker } from '../ui/number-picker'
 import { Button } from '../ui/button'
 import { ButtonGroup } from '../ui/button-group'
 import { Textarea } from '../ui/textarea'
@@ -260,17 +261,18 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
             <legend className="sr-only">Height</legend>
             <FieldLabel className="block mb-1.5">{t('height')}</FieldLabel>
             <div className="flex gap-2 items-center">
-              <Input
-                type="number"
-                inputMode="decimal"
-                placeholder={heightUnit === 'cm' ? '175' : '5.9'}
-                value={heightValue}
-                onChange={(e) => setHeightValue(e.target.value)}
-                min="0"
-                className="flex-1 min-w-0"
-                aria-label="Height value"
-                error={displayErrors.heightCm}
-              />
+              <div className="flex-1 min-w-0">
+                <NumberPicker
+                  value={heightValue === '' ? undefined : Number(heightValue)}
+                  onChange={(v) => setHeightValue(v === undefined ? '' : String(v))}
+                  min={heightUnit === 'cm' ? 100 : 36}
+                  max={heightUnit === 'cm' ? 230 : 90}
+                  step={heightUnit === 'cm' ? 1 : 1}
+                  suffix={heightUnit === 'cm' ? ' cm' : ' in'}
+                  aria-label="Height value"
+                  error={displayErrors.heightCm}
+                />
+              </div>
               <ToggleGroup
                 options={['cm', 'in'] as const}
                 value={heightUnit}
@@ -284,17 +286,18 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
             <legend className="sr-only">Weight</legend>
             <FieldLabel className="block mb-1.5">{t('weight')}</FieldLabel>
             <div className="flex gap-2 items-center">
-              <Input
-                type="number"
-                inputMode="decimal"
-                placeholder={weightUnit === 'kg' ? '70' : '154'}
-                value={weightValue}
-                onChange={(e) => setWeightValue(e.target.value)}
-                min="0"
-                className="flex-1 min-w-0"
-                aria-label="Weight value"
-                error={displayErrors.weightKg}
-              />
+              <div className="flex-1 min-w-0">
+                <NumberPicker
+                  value={weightValue === '' ? undefined : Number(weightValue)}
+                  onChange={(v) => setWeightValue(v === undefined ? '' : String(v))}
+                  min={weightUnit === 'kg' ? 30 : 66}
+                  max={weightUnit === 'kg' ? 200 : 440}
+                  step={1}
+                  suffix={weightUnit === 'kg' ? ' kg' : ' lbs'}
+                  aria-label="Weight value"
+                  error={displayErrors.weightKg}
+                />
+              </div>
               <ToggleGroup
                 options={['kg', 'lbs'] as const}
                 value={weightUnit}
@@ -383,7 +386,6 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
               label={`${t('prescriptionDetails')}${rentalChecklist.mask === 'rent' ? ' *' : ''}`}
               value={prescriptionDetails}
               onChange={(e) => setPrescriptionDetails(e.target.value)}
-              placeholder="L: −2.00 / R: −2.50"
               rows={DEFAULT_TEXTAREA_ROWS}
               error={displayErrors.prescriptionStrength}
             />
@@ -436,7 +438,6 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
             <Input
               label={t('maskPrescription')}
               type="text"
-              placeholder="L: −2.00 / R: −2.50"
               value={maskPrescription}
               onChange={(e) => setMaskPrescription(e.target.value)}
               helperText={t('helperMaskPrescription')}
