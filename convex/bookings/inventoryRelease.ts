@@ -216,13 +216,10 @@ export const findExpiredDrafts = internalQuery({
     const now = Date.now()
     const staleDrafts = await ctx.db
       .query('bookings')
-      .withIndex('by_status', (q) => q.eq('status', BOOKING_STATUS.Draft))
-      .filter((q) =>
-        q.and(
-          q.neq(q.field('expiresAt'), undefined),
-          q.lt(q.field('expiresAt'), now),
-        ),
+      .withIndex('by_status_expiresAt', (q) =>
+        q.eq('status', BOOKING_STATUS.Draft).lt('expiresAt', now),
       )
+      .filter((q) => q.neq(q.field('expiresAt'), undefined))
       .take(BATCH_SIZE)
 
     return staleDrafts.map((b) => ({ bookingId: b._id }))

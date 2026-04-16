@@ -117,6 +117,7 @@ export default defineSchema({
     .index('by_ownerId_ownerType', ['ownerId', 'ownerType'])
     .index('by_ownerId_status', ['ownerId', 'status'])
     .index('by_status', ['status'])
+    .index('by_status_expiresAt', ['status', 'expiresAt'])
     .index('by_referrerId_referrerType', ['referrerId', 'referrerType']),
 
   bookingSessions: defineTable({
@@ -176,8 +177,7 @@ export default defineSchema({
     languages: v.optional(v.array(v.string())),
     createdAt: v.number(),
   })
-    .index('by_email', ['email'])
-    .index('by_clerkUserId', ['clerkUserId']),
+    .index('by_email', ['email']),
 
   customerProfiles: defineTable({
     bookingId: v.id('bookings'),
@@ -203,8 +203,6 @@ export default defineSchema({
     physicianClearanceFileId: v.optional(v.id('_storage')),
   })
     .index('by_bookingId', ['bookingId'])
-    .index('by_bookingId_customerId', ['bookingId', 'customerId'])
-    .index('by_customerId', ['customerId'])
     .index('by_linkToken', ['linkToken']),
 
   bookingLinks: defineTable({
@@ -448,10 +446,8 @@ export default defineSchema({
     damageReportedBy: v.optional(v.string()),
   })
     .index('by_equipmentManagerId', ['equipmentManagerId'])
-    .index('by_equipmentManagerId_status', ['equipmentManagerId', 'status'])
     .index('by_status', ['status'])
-    .index('by_bookingId', ['bookingId'])
-    .index('by_bagNumber', ['bagNumber']),
+    .index('by_bookingId', ['bookingId']),
 
   gearSizingLookup: defineTable({
     manufacturer: v.string(),
@@ -465,8 +461,7 @@ export default defineSchema({
     shoeSizeUnit: v.optional(shoeSizeUnit),
     createdBy: v.optional(v.string()),
   })
-    .index('by_manufacturer_gearType', ['manufacturer', 'gearType'])
-    .index('by_gearType', ['gearType']),
+    .index('by_manufacturer_gearType', ['manufacturer', 'gearType']),
 
   equipmentInventory: defineTable({
     inventoryUnitId: v.id('inventoryUnits'),
@@ -478,8 +473,7 @@ export default defineSchema({
     isPrescription: v.optional(v.boolean()),
   })
     .index('by_inventoryUnitId', ['inventoryUnitId'])
-    .index('by_equipmentManagerId', ['equipmentManagerId'])
-    .index('by_equipmentManagerId_gearType', ['equipmentManagerId', 'gearType']),
+    .index('by_equipmentManagerId', ['equipmentManagerId']),
 
   userRoles: defineTable({
     userId: v.id('users'),
@@ -610,7 +604,7 @@ export default defineSchema({
     status: v.union(v.literal('success'), v.literal('failure')),
     error: v.optional(v.string()),
     runAt: v.number(),
-  }).index('by_jobName_runAt', ['jobName', 'runAt']),
+  }),
 
   idempotencyLog: defineTable({
     key: v.string(),
