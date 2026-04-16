@@ -1,7 +1,7 @@
 ---
 name: gate
-description: "Pre-commit quality gate. Dispatches review skills + invariant sweep, aggregates findings, invokes /escalate once, auto-fixes fixable CRITICAL/HIGH (max 2 cycles). Emits .patrol-ran sentinel. Single escalator — review-* skills return findings only."
-allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Skill, Agent
+description: "Pre-commit quality gate. Dispatches review skills + invariant sweep, aggregates findings, invokes /escalate once (tickets open in_progress), fixes ALL CRITICAL/HIGH same-session via three routes (AUTO/OPUS-BLIND/INTERVIEW, max 2 cycles). Gate-sourced tickets close same session — no deferral. Emits .patrol-ran sentinel."
+allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Skill, Agent, AskUserQuestion
 user-invocable: true
 ---
 
@@ -272,40 +272,29 @@ Ready for /vault: {YES or NO}
 
 ### Threshold
 
-- **NO-GO** → Any CRITICAL or HIGH finding from any dispatched skill OR tests fail. Verdict = `BLOCKED`.
+- **NO-GO** → Any CRITICAL or HIGH finding from any dispatched skill OR tests fail. Verdict = `BLOCKED` (pending Phase 7 resolution).
 - **GO** → No CRITICAL or HIGH findings. Verdict = `CLEAN` or `CLEAN_UNREVIEWED` (if unreviewed merges exist).
 
 **If GO** → skip to Write Sentinel.
-**If NO-GO** → pass the aggregated CRITICAL + HIGH + MEDIUM + LOW findings to `/escalate` in a single call (source: `gate`, reviewers: list of skills that fired). `/escalate` handles the CRITICAL/HIGH → ticket + MEDIUM/LOW → vault log split. Then fall through to Phase 7 (Auto-Fix Loop).
+**If NO-GO** → pass the aggregated CRITICAL + HIGH + MEDIUM + LOW findings to `/escalate` in a single call (source: `gate`, reviewers: list of skills that fired). `/escalate` writes CRITICAL/HIGH tickets with `status: in_progress` + `started_at` (audit paper trail; MEDIUM/LOW → vault log, no ticket). Record each ticket's `DD-N` → finding mapping for Phase 7 close-tracking. Then fall through to Phase 7 (Same-Session Fix Loop).
 
 ---
 
-## Phase 7: Auto-Fix Loop (NO-GO only)
+## Phase 7: Same-Session Fix Loop (NO-GO only)
 
-Gate stays an orchestrator — all code changes are delegated to spawned fix agents. Max **2 fix-verify cycles**.
+Gate stays an orchestrator — all code changes are delegated to spawned fix agents or Matt-directed fixes. Max **2 fix-verify cycles**. **Every CRITICAL and HIGH finding gets a fix attempt — no finding is skipped.** Tickets opened by Phase 6 (`status: in_progress`) must close to `.tickets/done/` by end of this phase or Matt explicitly dismisses them.
 
-### Step 7a — Fixability Triage
+### Step 7a — Route Classification
 
-Classify each CRITICAL and HIGH finding as `AUTO` or `MANUAL`:
+Classify each CRITICAL and HIGH finding into exactly one of three routes:
 
-**AUTO** — all of these must be true:
-- Has a specific `file:line` reference
-- Has a concrete fix description (single action: rename, add call, add guard)
-- Targets ≤ 3 files
-- Severity is LOW or MEDIUM only (style, type, or structural issues)
-- Does NOT involve: schema migration, new table/index creation, multi-file architectural refactor, product intent decision
+| Route | Criteria | Handler |
+|-------|----------|---------|
+| **AUTO** | All of: specific `file:line`, concrete single-action fix (rename, add call, add guard), targets ≤ 3 files, not security/schema/FSM | Step 7c — Sonnet fix agent |
+| **OPUS-BLIND** | Clear `file:line` + concrete fix BUT multi-file refactor OR non-trivial logic change OR involves cross-file implications; not security/schema/FSM/product-intent | Step 7c — Opus fix agent |
+| **INTERVIEW** | Any of: security (auth bypass, ownership gap, role escalation), schema migration / new index, FSM transition in `convex/bookings/`, product intent decision, invariant-adjacent (Phase 3), no `file:line` reference, spans > 2 buckets | Step 7c — inline `AskUserQuestion` → Matt picks approach → Opus fix agent executes chosen direction |
 
-**MANUAL** — any of these:
-- Severity is CRITICAL or HIGH
-- Finding category is `security` (auth bypass, ownership gap, role escalation — never auto-fix security)
-- No file:line reference (general/architectural concern)
-- Fix requires schema migration, new tables, or new indexes
-- Finding is invariant-adjacent (from Phase 3 invariant sweep)
-- Fix requires product intent decision ("should this notify the customer?")
-- Finding spans files across > 2 buckets
-- Finding involves state machine transitions in `convex/bookings/`
-
-If **ALL** findings are MANUAL → skip fix loop entirely. Report them and proceed to Write Sentinel as BLOCKED.
+No finding is allowed to skip the loop. Every CRITICAL/HIGH has a route.
 
 ### Step 7b — Fix Test Failures First
 
@@ -317,26 +306,63 @@ If tests failed in Phase 0:
    - If tests **still fail** → exit loop. Proceed to Step 7f (Report) as BLOCKED.
    - If tests **pass** → write timestamp to `.vitest-last-pass`, continue to Step 7c.
 
-### Step 7c — Fix Review Findings
+### Step 7c — Fix Review Findings (three routes)
 
-Group `AUTO` findings by the review skill that produced them:
+Process routes in order: INTERVIEW first (blocks for Matt), then AUTO + OPUS-BLIND in parallel.
 
-| Skill | Fix Agent Scope |
-|-------|----------------|
-| `/review-backend-schema` | Schema + data integrity fixes |
-| `/review-backend-auth` | Auth, role gate, validator fixes |
-| `/review-backend-mutations` | Performance, side effect fixes |
-| `/review-tests` | Test health fixes |
+#### 7c.1 — INTERVIEW route (blocks until Matt answers)
 
-For each bucket with `AUTO` findings, spawn **1 fix agent in parallel** (`model: "sonnet"`).
+For each `INTERVIEW` finding, use `AskUserQuestion` to present the finding inline:
+
+```
+Q: "{severity} {skill-name}: {finding summary}
+
+{file}:{line} — {description}
+
+Proposed approaches:
+  A (recommended): {first proposed fix}
+  B: {alternative approach, if applicable}
+  C: {dismiss with reason — false positive or intentional}"
+
+header: "Fix approach"
+```
+
+For security/schema/FSM findings, include at least two concrete approach options when possible. When Matt picks an option:
+- **A or B** → spawn Opus fix agent with the chosen direction (see dispatch template below). Record Matt's choice on the ticket (append `fix_direction: A|B|matt-text` to the ticket body).
+- **C (dismiss)** → update ticket `status: dismissed`, `dismissed_reason: <Matt's reason>`, move to `.tickets/done/`. No fix agent spawned. Count as resolved for Step 7e.
+
+#### 7c.2 — AUTO + OPUS-BLIND routes (parallel spawn)
+
+Group findings by route × review-skill bucket:
+
+| Skill | AUTO Fix Agent Scope | OPUS-BLIND Fix Agent Scope |
+|-------|---------------------|---------------------------|
+| `/review-backend-schema` | Single-file schema tweaks, type fixes | Multi-file schema changes, migration helpers |
+| `/review-backend-auth` | Single-mutation validator fixes | Cross-mutation auth refactors (non-security) |
+| `/review-backend-mutations` | Single `.take()` bounds, side-effect guards | Multi-file performance refactors |
+| `/review-tests` | Single test fix | Cross-file test restructuring |
+| `/review-frontend-dry` | Single-file dedupe | Multi-file component extraction |
+
+For each non-empty (skill × route) bucket, spawn **1 fix agent** (`model: "sonnet"` for AUTO, `model: "opus"` for OPUS-BLIND and INTERVIEW). All non-INTERVIEW agents spawn in a single message to run in parallel.
 
 Each fix agent receives:
-- The list of findings for its bucket (severity, file:line, description, fix instruction)
+- The list of findings for its bucket (severity, file:line, description, fix instruction, ticket ID)
+- For INTERVIEW findings: Matt's chosen `fix_direction` (A/B/free-text)
 - `CLAUDE.md` context (invariants, dependency direction)
-- Instruction: **"Apply each fix. Minimal diff. Run `npx tsc --noEmit` after all fixes to verify type safety. Do not change unrelated code."**
+- Instruction: **"Apply each fix. Minimal diff. Run `npx tsc --noEmit` after all fixes to verify type safety. Do not change unrelated code. Return a line `FIXED: DD-N, DD-M` listing which tickets you resolved."**
 
 After **all** fix agents complete, run `npx vitest run` once to check for regressions.
 - If tests fail → treat as a test failure for the next cycle (Step 7b handles it).
+
+#### 7c.3 — Close resolved tickets
+
+For each ticket listed in agent `FIXED:` responses, update the ticket file:
+```
+status: done
+completed_at: <ISO-8601>
+fix_agent: {auto-sonnet | opus-blind | opus-interview}
+```
+Then move the file to `.tickets/done/DD-N.md`. If multiple findings mapped to one ticket (consolidation), close only when all findings are FIXED.
 
 ### Step 7d — Re-Verify
 
@@ -352,34 +378,47 @@ Collect new CRITICAL/HIGH counts. Merge with MANUAL findings carried forward.
 ### Step 7e — Loop or Exit
 
 ```
-remaining_critical = new CRITICAL count + MANUAL CRITICAL count
-remaining_high = new HIGH count + MANUAL HIGH count
+remaining_critical = new CRITICAL count from Step 7d
+remaining_high = new HIGH count from Step 7d
 
 if remaining_critical == 0 AND remaining_high == 0:
-    → verdict = GO (auto-fixed)
-    → exit loop → Write Sentinel
+    → verdict = GO (all fixed same-session)
+    → exit loop → Step 7f → Write Sentinel
 elif cycle < 2:
     → cycle++
-    → goto Step 7a with new findings
+    → goto Step 7a with new findings (re-classify remaining)
 else:
+    → 2 cycles exhausted. For each still-open gate ticket:
+        - Update ticket: status: ready, human_required: true, cycles_exhausted: 2
+        - Leave in .tickets/ (do NOT move to done/)
+        - Append finding details to ticket body if missing
     → verdict = BLOCKED
     → exit loop → Step 7f → Write Sentinel
 ```
 
-### Step 7f — Auto-Fix Report
+Tickets updated to `human_required: true` are the escape valve — they're the only gate-sourced tickets allowed to survive a session. `/vault` will still block commit on them (verdict = BLOCKED).
+
+### Step 7f — Same-Session Fix Report
 
 Append to the Phase 6 verdict output:
 
 ```
-AUTO-FIX REPORT:
+FIX REPORT:
 ───────────────────────
 Cycles: {N}/2
-Fixed: {N} findings ({comma-separated list})
-Remaining: {N} findings ({comma-separated list})
+Route breakdown:
+  AUTO: {N} attempted, {N} fixed
+  OPUS-BLIND: {N} attempted, {N} fixed
+  INTERVIEW: {N} attempted, {N} fixed, {N} dismissed
 
-{If MANUAL findings exist:}
-REQUIRES HUMAN:
-  [{skill-name}] {summary} — {reason it cannot be auto-fixed}
+Tickets closed:
+  DD-N: done — {finding summary}
+  DD-M: dismissed — {reason}
+
+{If cycles exhausted with remaining:}
+TICKETS FLAGGED human_required (will block /vault):
+  DD-X: {severity} {summary} — 2 cycles failed
+  DD-Y: {severity} {summary} — 2 cycles failed
 
 {Updated verdict: GO | BLOCKED}
 Ready for /vault: {YES or NO}
@@ -389,11 +428,19 @@ Ready for /vault: {YES or NO}
 
 ## Write Sentinel
 
-After printing the verdict, write `.patrol-ran` with cache data for incremental reuse:
+After printing the verdict, count any gate-sourced tickets still open in `.tickets/`:
+
+```bash
+OPEN_GATE_TICKETS=$(grep -l 'source: gate' .tickets/DD-*.md 2>/dev/null | xargs grep -l 'status: in_progress\|status: ready' 2>/dev/null | wc -l | tr -d ' ')
+```
+
+Then write `.patrol-ran` with cache data for incremental reuse:
 
 ```bash
 VERDICT="CLEAN"
 if [ {CRITICAL_COUNT} -gt 0 ] || [ {HIGH_COUNT} -gt 0 ] || [ {TESTS_FAIL} = true ]; then
+    VERDICT="BLOCKED"
+elif [ "$OPEN_GATE_TICKETS" -gt 0 ]; then
     VERDICT="BLOCKED"
 elif [ {UNREVIEWED_COUNT} -gt 0 ]; then
     VERDICT="CLEAN_UNREVIEWED"
@@ -401,6 +448,8 @@ fi
 
 FILE_HASH=$(git log --oneline -1 --format=%h 2>/dev/null || echo "unknown")
 ```
+
+Any gate-sourced ticket still `in_progress` OR escalated to `human_required: true, status: ready` blocks `/vault`. Dismissed tickets (moved to `.tickets/done/`) do not count.
 
 **If Phase 7 ran**, recompute `DIFF_HASH` and bucket hashes — the fix agents changed files:
 
@@ -421,8 +470,10 @@ Write the sentinel as JSON with these fields:
   "tests": true,
   "invariants": true,
   "fixCycles": 0,
-  "fixedFindings": [],
-  "manualFindings": [],
+  "fixedTickets": [],
+  "dismissedTickets": [],
+  "humanRequiredTickets": [],
+  "openGateTickets": 0,
   "bucketHashes": {
     "schema": "{SCHEMA_HASH}",
     "backend": "{BACKEND_HASH}",
@@ -435,9 +486,11 @@ Write the sentinel as JSON with these fields:
 }
 ```
 
-- `fixCycles`: number of auto-fix cycles executed (0 if Phase 7 did not run)
-- `fixedFindings`: list of finding descriptions that were resolved by auto-fix
-- `manualFindings`: list of finding descriptions classified as MANUAL (require human)
+- `fixCycles`: number of Phase 7 cycles executed (0 if Phase 7 did not run)
+- `fixedTickets`: ticket IDs closed to `.tickets/done/` with `status: done` this run
+- `dismissedTickets`: ticket IDs closed via INTERVIEW route dismissal this run
+- `humanRequiredTickets`: ticket IDs escalated to `human_required: true` after 2 cycles (these block `/vault`)
+- `openGateTickets`: count of gate-sourced tickets still `in_progress` or `human_required` (blocks `/vault` if > 0)
 
 `skillResults` includes both freshly-dispatched and cached skill results (merged). This is what future gate runs read for incremental dispatch.
 

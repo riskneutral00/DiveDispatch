@@ -49,11 +49,23 @@ DIFF_HASH=$( (git diff; git diff --cached; git ls-files --others --exclude-stand
 GATE=$(cat .patrol-ran 2>/dev/null)
 ```
 
-1. If `.patrol-ran` exists AND `verdict` is `BLOCKED` → stop: `Build/test failure detected. Fix before vaulting.`
-2. If `.patrol-ran` exists AND `diffHash` matches `$DIFF_HASH` AND verdict is `CLEAN` or `CLEAN_UNREVIEWED` → proceed silently (gate is current). Continue to Job 0.
+1. If `.patrol-ran` exists AND `verdict` is `BLOCKED` → stop: `Build/test failure OR open gate tickets detected. Fix before vaulting.`
+2. If `.patrol-ran` exists AND `diffHash` matches `$DIFF_HASH` AND verdict is `CLEAN` or `CLEAN_UNREVIEWED` → proceed to open-gate-ticket check (step 4). Continue to Job 0 only if that passes.
 3. Otherwise (missing OR stale — `diffHash` doesn't match) → invoke `/gate` via the Skill tool. `/gate`'s "Resume Contract" section guarantees it will write `.patrol-ran` and return control to /vault Job 0 within the same turn after emitting `Gate complete (verdict: ...). Resuming /vault Job 0.`
-   - When you see that resume line, continue to Job 0 immediately.
+   - When you see that resume line, proceed to open-gate-ticket check (step 4).
    - If `/gate` reports BLOCKED, stop without entering Job 0.
+4. **Open-gate-ticket check** — before Job 0, scan for gate-sourced tickets still open:
+   ```bash
+   OPEN=$(grep -l 'source: gate' .tickets/DD-*.md 2>/dev/null | xargs grep -l 'status: in_progress\|status: ready' 2>/dev/null)
+   ```
+   If non-empty, stop with:
+   ```
+   ⚠ Gate tickets still open:
+     DD-X: {title}
+     DD-Y: {title}
+   Fix in same session (re-run /gate to resume Phase 7), or run /board dismiss <ID> "<reason>".
+   ```
+   Do NOT enter Job 0. Matt must resolve before commit.
 
 **Critical:** `Skill()` is conversational substitution, not a function call. After /gate's instructions execute and write the sentinel, /vault's instructions remain visible in conversation context — you (the LLM) are responsible for continuing through Jobs 0-7 in the same turn. Do not treat the `Skill(gate)` call as a stopping point.
 
@@ -230,9 +242,10 @@ Source of truth: `.tickets/DD-*.md` files. Vault mirror: `~/Desktop/RiskNeutral/
 1. Read `.tickets/` in Round 1 (parallel with other reads).
 2. If nothing completed, no status changes needed — skip.
 3. Otherwise: update ticket YAML frontmatter (status, assigned_to, updated date). Move completed tickets to `.tickets/done/`.
-4. Run vault mirror sync: regenerate TODO.md from `.tickets/` state (same logic as `/board sync`).
-5. Session file's Resume Point should match the first ready ticket.
-6. Write ticket updates via Edit in Round 2 (parallel with other writes). Vault mirror sync via Bash heredoc.
+4. **Gate-sourced closures:** gate Phase 7 already moves `done`/`dismissed` gate tickets to `.tickets/done/`. Verify they're there; if any are still in `.tickets/` with `source: gate` AND `status: done|dismissed`, move them now.
+5. Run vault mirror sync: regenerate TODO.md from `.tickets/` state (same logic as `/board sync`).
+6. Session file's Resume Point should match the first ready ticket (exclude gate-sourced tickets — those are audit artifacts, not work queue).
+7. Write ticket updates via Edit in Round 2 (parallel with other writes). Vault mirror sync via Bash heredoc. `.tickets/done/` changes commit in the Board bucket (Phase C).
 
 ### Job 3: Memory Management
 

@@ -119,6 +119,21 @@ Read and display the full ticket file.
 5. **Auto-sync vault mirror:** Run the same logic as `/board sync` — regenerate `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Product/TODO.md` from current `.tickets/` state.
 6. Print: `Done: DD-{NNN} archived. Vault mirror synced.`
 
+### `/board dismiss DD-{NNN} "{reason}"` — Dismiss a gate ticket
+
+Escape valve for gate-sourced tickets that cannot be fixed same-session (false positives, intentional invariant exceptions, tracked-elsewhere issues). Required arg: `reason` in quotes.
+
+1. Read the ticket file. Require `source: gate` (dismiss is only for gate tickets — product tickets use `/board done`).
+2. Update:
+   - `status: dismissed`
+   - `dismissed_at: {today-ISO}`
+   - `dismissed_reason: "{reason}"`
+   - `updated: {today}`
+3. Move file from `.tickets/DD-{NNN}.md` to `.tickets/done/DD-{NNN}.md`.
+4. Skip auto-unblock (dismissed tickets don't unblock others — they're audit records).
+5. Auto-sync vault mirror.
+6. Print: `Dismissed: DD-{NNN} — {reason}. Vault mirror synced.`
+
 ### `/board block DD-{NNN}` — Mark ticket blocked
 
 1. Update: `status: blocked`, `updated: {today}`

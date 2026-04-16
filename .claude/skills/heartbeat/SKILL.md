@@ -148,6 +148,8 @@ updated: {YYYY-MM-DD}
 
 **CRITICAL findings (Tier 0-2) get immediate escalation:** After creating the item file, invoke `/escalate` with source `heartbeat` to ensure CRITICAL findings are set to `priority: P0` or `P1` and `status: ready` immediately. CRITICAL items must not sit in backlog.
 
+**Heartbeat vs gate lifecycle:** heartbeat is a full-sweep diagnostic (not pre-commit) — its tickets open `status: ready` and legitimately queue as backlog for Matt to pick via `/post-spec`. Gate-sourced tickets follow a different lifecycle (`status: in_progress`, must close same session). See `.claude/rules/workflow-skills.md` → "Gate tickets close same session".
+
 ### 3c. Field classification
 
 When creating tickets, classify the new fields:
