@@ -135,7 +135,6 @@ export const addRole = mutation({
       userId: user._id,
       role,
       createdAt: Date.now(),
-      profileComplete: false,
     })
   },
 })

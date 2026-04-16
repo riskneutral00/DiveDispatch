@@ -188,7 +188,6 @@ async function insertUser(ctx: MutationCtx, s: SeedStakeholder) {
     name: s.user.name,
     firstName: s.user.firstName,
     lastName: s.user.lastName,
-    businessName: s.user.businessName,
     isSeeded: true,
     appLanguage: s.user.appLanguage,
     phone: s.user.phone,
@@ -198,7 +197,6 @@ async function insertUser(ctx: MutationCtx, s: SeedStakeholder) {
       : s.user.customerLanguages
         ? { customerLanguages: s.user.customerLanguages }
         : {}),
-    onboardingComplete: true,
   })
 }
 
@@ -261,7 +259,6 @@ export const seedUserRoles = internalMutation({
           userId: user._id,
           role: r.role,
           createdAt: Date.now(),
-          profileComplete: true,
         })
       }
     }
@@ -620,7 +617,6 @@ export const patchTokenIdentifiers = internalMutation({
 export const seedDefaultTheme = internalMutation({
   args: {},
   handler: async (ctx) => {
-    // Patches existing theme rows from convex/lib/defaultThemes.ts — re-run after palette token edits.
     for (const spec of SEED_THEME_SPECS) {
       const config = themeConfigForSeedSpec(spec)
       const existing = await ctx.db

@@ -8,6 +8,7 @@ import {
 import { logBookingChange } from '../lib/auditLog'
 import { batchDelete } from '../lib/batch'
 import { ErrorCode } from '../lib/errorCodes'
+import { notifyReleasedInventory } from '../notifications'
 import { checkIdempotency } from '../lib/idempotency'
 import { BOOKING_STATUS, VACATED_REASON } from '../shared/statuses'
 
@@ -35,7 +36,8 @@ export const editBooking = mutation({
       })
     }
 
-    await releaseBookingReservations(ctx, args.bookingId, VACATED_REASON.OperatorEdit)
+    const vacated = await releaseBookingReservations(ctx, args.bookingId, VACATED_REASON.OperatorEdit)
+    await notifyReleasedInventory(ctx, args.bookingId, vacated)
 
     const sessions = await ctx.db
       .query('bookingSessions')

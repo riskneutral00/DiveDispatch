@@ -41,7 +41,6 @@ export const CONFIG_JSON_MAX = 10_000
 export const SUPPORT_MESSAGE_MAX = 5000
 
 export const USER_FIELDS: FieldConfig = {
-  businessName: NAME_MAX,
   firstName: NAME_MAX,
   lastName: NAME_MAX,
   name: NAME_MAX,

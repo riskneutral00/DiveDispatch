@@ -2,7 +2,7 @@ import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import { internal } from './_generated/api'
 import { authorize, authorizeWithRole, getAuthUser, getRequiredUserBySlug, HOLD_TTL_MS } from './lib/auth'
-import { profileByUserId } from './lib/profileHelpers'
+import { profileByUserId, getProfileName } from './lib/profileHelpers'
 import { getAllUserRoles } from './lib/userRoleHelpers'
 import { requireRoleReadiness } from './userRoles'
 import { OPERATOR_ROLE_SET } from './lib/auth'
@@ -89,7 +89,7 @@ export const createDraftShell = mutation({
         divers: [],
         referrerId: user.slug as string,
         referrerType: args.activeRole as OperatorType,
-        operatorName: sanitizeString(targetUser.businessName ?? '', NAME_MAX),
+        operatorName: sanitizeString(await getProfileName(ctx, targetUser._id, targetOperatorRole.role), NAME_MAX),
         portalContact: true,
         portalMedical: true,
         portalWaiver: true,
@@ -102,7 +102,7 @@ export const createDraftShell = mutation({
         userId: targetUser.slug as string,
         type: NOTIFICATION_TYPE.BookingReferred,
         bookingId,
-        message: `New referral from ${sanitizeString(user.businessName ?? user.slug, NAME_MAX)}`,
+        message: `New referral from ${sanitizeString(await getProfileName(ctx, user._id, args.activeRole) || user.slug, NAME_MAX)}`,
       })
 
       await logBookingChange(ctx, {
@@ -175,7 +175,7 @@ export const createDraftShell = mutation({
       startDate: args.startDate ?? '',
       endDate: args.endDate ?? '',
       divers: [],
-      operatorName: sanitizeString(user.businessName ?? '', NAME_MAX),
+      operatorName: sanitizeString(await getProfileName(ctx, user._id, args.activeRole), NAME_MAX),
       portalContact: true,
       portalMedical: true,
       portalWaiver: true,
@@ -231,7 +231,7 @@ export const returnReferralToReferrer = mutation({
     await ctx.db.patch(args.bookingId, {
       ownerId: newOwnerId,
       ownerType: newOwnerType,
-      operatorName: sanitizeString(referrerUser.businessName ?? '', NAME_MAX),
+      operatorName: sanitizeString(await getProfileName(ctx, referrerUser._id, booking.referrerType), NAME_MAX),
       returnedToReferrerAt: Date.now(),
     })
 
@@ -239,7 +239,7 @@ export const returnReferralToReferrer = mutation({
       userId: newOwnerId,
       type: NOTIFICATION_TYPE.BookingReferred,
       bookingId: args.bookingId,
-      message: `Referral returned by ${sanitizeString(user.businessName ?? user.slug, NAME_MAX)}`,
+      message: `Referral returned by ${sanitizeString(await getProfileName(ctx, user._id, booking.ownerType) || user.slug, NAME_MAX)}`,
     })
 
     await logBookingChange(ctx, {

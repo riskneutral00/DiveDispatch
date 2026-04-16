@@ -14,19 +14,19 @@ function validateRanges(
   if (minHeight < 0 || minWeight < 0) {
     throw new ConvexError({
       code: ErrorCode.VALIDATION,
-      message: 'minHeight and minWeight must be non-negative',
+      reason: 'minHeight and minWeight must be non-negative',
     })
   }
   if (minHeight >= maxHeight) {
     throw new ConvexError({
       code: ErrorCode.VALIDATION,
-      message: 'minHeight must be less than maxHeight',
+      reason: 'minHeight must be less than maxHeight',
     })
   }
   if (minWeight >= maxWeight) {
     throw new ConvexError({
       code: ErrorCode.VALIDATION,
-      message: 'minWeight must be less than maxWeight',
+      reason: 'minWeight must be less than maxWeight',
     })
   }
 }
@@ -59,7 +59,7 @@ export const addSizingEntry = mutation({
     if (duplicate) {
       throw new ConvexError({
         code: ErrorCode.CONFLICT,
-        message: `Entry for ${args.manufacturer} ${args.gearType} size ${args.size} already exists`,
+        reason: `Entry for ${args.manufacturer} ${args.gearType} size ${args.size} already exists`,
       })
     }
 
@@ -94,7 +94,7 @@ export const updateSizingEntry = mutation({
 
     const entry = await ctx.db.get(args.entryId)
     if (!entry) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
-    if (entry.createdBy !== undefined) assertOwnership({ ownerId: entry.createdBy }, user)
+    assertOwnership({ ownerId: entry.createdBy ?? '' }, user)
 
     if (args.size !== undefined && args.size !== entry.size) {
       const siblings = await ctx.db
@@ -107,7 +107,7 @@ export const updateSizingEntry = mutation({
       if (conflict) {
         throw new ConvexError({
           code: ErrorCode.CONFLICT,
-          message: `Entry for ${entry.manufacturer} ${entry.gearType} size ${args.size} already exists`,
+          reason: `Entry for ${entry.manufacturer} ${entry.gearType} size ${args.size} already exists`,
         })
       }
     }
@@ -138,7 +138,7 @@ export const removeSizingEntry = mutation({
 
     const entry = await ctx.db.get(args.entryId)
     if (!entry) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
-    if (entry.createdBy !== undefined) assertOwnership({ ownerId: entry.createdBy }, user)
+    assertOwnership({ ownerId: entry.createdBy ?? '' }, user)
 
     await ctx.db.delete(args.entryId)
   },

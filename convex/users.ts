@@ -41,7 +41,6 @@ export const createUser = mutation({
   args: {
     role: stakeholderType,
     roles: v.optional(v.array(stakeholderType)),
-    businessName: v.optional(v.string()),
     firstName: v.string(),
     lastName: v.string(),
     dateOfBirth: v.string(),
@@ -74,12 +73,10 @@ export const createUser = mutation({
 
     const name = identity.name ?? ''
     const email = identity.email ?? ''
-    const businessName = args.businessName ?? name
     const now = Date.now()
 
     if (existing) {
       await ctx.db.patch(existing._id, {
-        businessName,
         firstName: args.firstName,
         lastName: args.lastName,
         ...(existing.dateOfBirth === undefined && { dateOfBirth: args.dateOfBirth }),
@@ -106,7 +103,6 @@ export const createUser = mutation({
       tcVersion: args.tcVersion,
       ...(args.nickname !== undefined && { nickname: args.nickname }),
       ...(args.phone !== undefined && { phone: args.phone }),
-      businessName,
       customerLanguages: args.customerLanguages,
       isSeeded: false,
       appLanguage: args.appLanguage ?? 'en',
@@ -120,7 +116,6 @@ export const createUser = mutation({
           userId,
           role: uniqueRoles[i],
           createdAt: now,
-          profileComplete: false,
         })
       }
     }
@@ -129,7 +124,7 @@ export const createUser = mutation({
       await ctx.scheduler.runAfter(0, internal.demoBookings.scheduleDemoBookings, {
         slug,
         role: args.role,
-        operatorName: businessName,
+        operatorName: name,
       })
     }
 
@@ -139,7 +134,6 @@ export const createUser = mutation({
 
 export const updateProfile = mutation({
   args: {
-    businessName: v.optional(v.string()),
     email: v.optional(v.string()),
     firstName: v.optional(v.string()),
     lastName: v.optional(v.string()),
@@ -153,8 +147,11 @@ export const updateProfile = mutation({
     const { user } = await authorize(ctx, null, 'profile:manage', { type: 'profile' })
     const sanitized = sanitizeFields(args, USER_FIELDS)
 
+    if (args.dateOfBirth !== undefined && !isAdult(args.dateOfBirth)) {
+      throw new ConvexError({ code: ErrorCode.VALIDATION, reason: `Must be at least ${MIN_SIGNUP_AGE_YEARS} years old` })
+    }
+
     await ctx.db.patch(user._id, {
-      ...(sanitized.businessName !== undefined && { businessName: sanitized.businessName }),
       ...(sanitized.email !== undefined && { email: sanitized.email }),
       ...(sanitized.firstName !== undefined && { firstName: sanitized.firstName }),
       ...(sanitized.lastName !== undefined && { lastName: sanitized.lastName }),
@@ -163,34 +160,6 @@ export const updateProfile = mutation({
       ...(args.dateOfBirth !== undefined && { dateOfBirth: args.dateOfBirth }),
       ...(args.appLanguage !== undefined && { appLanguage: args.appLanguage }),
       ...(args.customerLanguages !== undefined && { customerLanguages: args.customerLanguages }),
-    })
-  },
-})
-
-export const updateBusinessInfo = mutation({
-  args: {
-    businessName: v.string(),
-  },
-  handler: async (ctx, args) => {
-    const { user } = await authorize(ctx, null, 'profile:manage', { type: 'profile' })
-    const sanitized = sanitizeFields(args, USER_FIELDS)
-
-    await ctx.db.patch(user._id, {
-      businessName: sanitized.businessName as string,
-    })
-  },
-})
-
-export const setRole = mutation({
-  args: {
-    role: stakeholderType,
-    businessName: v.string(),
-  },
-  handler: async (ctx, args) => {
-    const { user } = await authorize(ctx, null, 'profile:manage', { type: 'profile' })
-
-    await ctx.db.patch(user._id, {
-      businessName: args.businessName,
     })
   },
 })
@@ -311,19 +280,6 @@ export const getAccountDefaults = query({
   },
 })
 
-export const completeOnboarding = mutation({
-  args: {},
-  handler: async (ctx) => {
-    const { user } = await authorize(ctx, null, 'profile:manage', { type: 'profile' })
-
-    if (!user.name || user.name.trim() === '') {
-      throw new ConvexError({ code: ErrorCode.VALIDATION, reason: 'Profile must be completed before finishing onboarding.' })
-    }
-
-    await ctx.db.patch(user._id, { onboardingComplete: true })
-  },
-})
-
 export const upsertFromWebhook = internalMutation({
   args: {
     tokenIdentifier: v.string(),
@@ -370,7 +326,6 @@ export const upsertFromWebhook = internalMutation({
       name: args.name,
       firstName: args.firstName,
       lastName: args.lastName,
-      businessName: '',
       isSeeded: false,
       appLanguage: 'en',
     })
@@ -379,7 +334,6 @@ export const upsertFromWebhook = internalMutation({
       userId,
       role: 'DiveCenter',
       createdAt: Date.now(),
-      profileComplete: false,
     })
 
     return userId

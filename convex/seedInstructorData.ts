@@ -24,7 +24,6 @@ function buildInstructor(def: InstructorDef, index: number): SeedStakeholder {
     name: `${def.firstName} ${def.lastName}`,
     firstName: def.firstName,
     lastName: def.lastName,
-    businessName: `${def.firstName} ${def.lastName}`,
     appLanguage: 'en',
     phone,
   }

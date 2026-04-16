@@ -2,7 +2,6 @@ import { ConvexError, v } from 'convex/values'
 import { internalMutation, mutation, query } from './_generated/server'
 import { sanitizeFields, THEME_FIELDS } from './lib/sanitize'
 import { authorize } from './lib/auth'
-import { requireAuth } from './lib/auth'
 import { ErrorCode } from './lib/errorCodes'
 import { compareThemeSortOrder } from './lib/themeOrdering'
 
@@ -130,7 +129,7 @@ export const byId = query({
 export const selectTheme = mutation({
   args: { themeId: v.id('themes') },
   handler: async (ctx, args) => {
-    const { user } = await requireAuth(ctx) // auth-ok: self-operation; patch targets caller's own user record only
+    const { user } = await authorize(ctx, null, 'profile:manage', { type: 'profile' })
     const theme = await ctx.db.get(args.themeId)
     if (!theme) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
     await ctx.db.patch(user._id, { selectedThemeId: args.themeId })

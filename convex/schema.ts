@@ -25,7 +25,6 @@ export default defineSchema({
     firstName: v.string(),
     lastName: v.string(),
     nickname: v.optional(v.string()),
-    businessName: v.string(),
     appLanguage: v.string(),
     customerLanguages: v.optional(v.array(v.string())),
     phone: v.optional(v.string()),
@@ -33,7 +32,6 @@ export default defineSchema({
     isSeeded: v.boolean(),
     selectedThemeId: v.optional(v.id('themes')),
     savedThemeIds: v.optional(v.array(v.id('themes'))),
-    onboardingComplete: v.optional(v.boolean()),
     defaultLocation: v.optional(v.string()),
     tcAcceptedAt: v.optional(v.number()),
     tcVersion: v.optional(v.string()),
@@ -480,7 +478,7 @@ export default defineSchema({
     userId: v.id('users'),
     role: stakeholderType,
     createdAt: v.number(),
-    profileComplete: v.boolean(),
+    profileComplete: v.optional(v.boolean()),
   })
     .index('by_userId', ['userId'])
     .index('by_userId_role', ['userId', 'role'])

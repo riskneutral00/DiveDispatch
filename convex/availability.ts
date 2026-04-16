@@ -1,6 +1,7 @@
 import { ConvexError, v } from 'convex/values'
 import { internalMutation, mutation, query } from './_generated/server'
 import { requireAuth, authorize, type DbCtx } from './lib/auth'
+import { getProfileName } from './lib/profileHelpers'
 import type { MutationCtx } from './_generated/server'
 import type { Id } from './_generated/dataModel'
 import { releaseBookingReservations, isFullDayResource, restoreSnapshotUnits, getAvailabilitySnapshot } from './bookings/_shared'
@@ -180,14 +181,28 @@ export async function _listInventoryByType(
     uniqueOwnerIds.map((slug, i) => [slug, ownerDocs[i]]),
   )
 
+  const ownerToRole = new Map<string, string>()
+  for (const unit of units) {
+    ownerToRole.set(unit.ownerId as string, unit.resourceType as string)
+  }
+  const profileNameMap = new Map<string, string>()
+  await Promise.all(
+    uniqueOwnerIds.map(async (slug, i) => {
+      const owner = ownerDocs[i]
+      if (!owner) return
+      const role = ownerToRole.get(slug) ?? ''
+      const profileName = await getProfileName(ctx, owner._id, role)
+      profileNameMap.set(slug, profileName || owner.name || '')
+    }),
+  )
+
   return units.map((unit) => {
-    const owner = ownerMap.get(unit.ownerId as string)
     return {
       id: unit._id,
       name: unit.displayName,
       type: unit.resourceType as ResourceOwnerType,
       ownerId: unit.ownerId,
-      ownerName: owner?.businessName ?? unit.displayName,
+      ownerName: profileNameMap.get(unit.ownerId as string) || unit.displayName,
     }
   })
 }

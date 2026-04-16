@@ -523,7 +523,7 @@ export async function _getBookingDetail(
       if (u) {
         userProfileMap.set(slug, {
           name: u.name as string,
-          displaySub: (u.nickname as string | undefined) ?? (u.businessName as string) ?? undefined,
+          displaySub: (u.nickname as string | undefined) ?? undefined,
         })
       }
     }),
