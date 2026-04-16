@@ -33,6 +33,7 @@ export interface CustomerContact {
 export interface CourseEntry {
   id: string
   activityCode: string
+  specialtyCode?: string
   dates: string[]
   agency: string
 }

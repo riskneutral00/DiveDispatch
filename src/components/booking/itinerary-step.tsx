@@ -230,6 +230,11 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
     return map
   }, [instructors, diveMasters])
 
+  const allSpecialtyCodes = useMemo(
+    () => [...new Set(customers.flatMap((c) => (c.courseEntries ?? []).filter((e) => e.activityCode === 'SPECIALTY' && e.specialtyCode).map((e) => e.specialtyCode!)))],
+    [customers],
+  )
+
   const capabilityWarnings = useMemo(() => {
     const warnings: Record<number, string> = {}
     for (let i = 0; i < days.length; i++) {
@@ -239,16 +244,29 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
       const creds = credentialsBySlug.get(slug)
       if (!creds || creds.length === 0) continue
       const dayCodes = [...new Set(day.dives.map((d) => d.courseCode))] as ActivityCode[]
+      let warned = false
       for (const code of dayCodes) {
-        const result = staffCanConductActivity(creds, code)
-        if (!result.allowed) {
-          warnings[i] = result.reason?.detail ?? 'Credential mismatch'
-          break
+        if (code === 'SPECIALTY' && allSpecialtyCodes.length > 0) {
+          for (const sc of allSpecialtyCodes) {
+            const result = staffCanConductActivity(creds, code, sc)
+            if (!result.allowed) {
+              warnings[i] = result.reason?.detail ?? 'Credential mismatch'
+              warned = true
+              break
+            }
+          }
+        } else {
+          const result = staffCanConductActivity(creds, code)
+          if (!result.allowed) {
+            warnings[i] = result.reason?.detail ?? 'Credential mismatch'
+            warned = true
+          }
         }
+        if (warned) break
       }
     }
     return warnings
-  }, [days, credentialsBySlug])
+  }, [days, credentialsBySlug, allSpecialtyCodes])
 
   const instructorInventory = useQuery(api.availability.listInventoryByType, { type: 'Instructor' }) ?? []
   const boatInventory = useQuery(api.availability.listInventoryByType, { type: 'Boat' }) ?? []

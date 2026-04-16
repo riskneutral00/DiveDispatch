@@ -22,6 +22,7 @@ export interface DiverEntry {
   endDate: string
   agency: string
   activityType: CourseCode[]
+  specialtyCodes?: string[]
   contactType?: 'email' | 'whatsapp' | 'line'
   contactValue?: string
 }
@@ -147,6 +148,10 @@ export function buildSubmitPayload(state: WizardState): SubmitPayload {
     const contactValue =
       c.contact?.whatsapp ?? c.contact?.line ?? c.contact?.email
 
+    const specialtyCodes = (c.courseEntries ?? [])
+      .filter((e) => e.activityCode === 'SPECIALTY' && e.specialtyCode)
+      .map((e) => e.specialtyCode!)
+
     return {
       name: c.name,
       abbrev: c.name.charAt(0).toUpperCase(),
@@ -155,6 +160,7 @@ export function buildSubmitPayload(state: WizardState): SubmitPayload {
       endDate: firstEntry?.dates[1] ?? firstEntry?.dates[0] ?? endDate,
       agency: firstEntry?.agency ?? '',
       activityType: allCodes as CourseCode[],
+      ...(specialtyCodes.length > 0 ? { specialtyCodes } : {}),
       ...(contactType && contactValue ? { contactType, contactValue } : {}),
     }
   })
