@@ -136,8 +136,19 @@ Vault path: `~/Desktop/RiskNeutral/Vaults/RiskNeutral/`
    - **Lessons format:** `## Title — YYYY-MM-DD` with subsections: what happened, root cause, the fix, rule. Cross-ref line.
    - **Failures format:** Append to `DiveDispatch/Failures/YYYY-MM-DD.md`. Each entry is a `##` section following the template in `Failures/.template.md`: Context, What failed, What was tried, Root cause, Proposed rule, Frequency, Severity, Tags. One file per day, multiple entries append. Failures differ from Lessons — failures are raw structured data for `/distill` to cluster; lessons are curated narratives.
    - **Patterns format:** `## The smell`, `## Why it's a problem`, `## The fix`, `## Prevention checklist`, `## Where this came from`.
-   - **Session format:**
+   - **Session format** (frontmatter is MANDATORY — `raw/wiki/` lint enforces it via `frontmatter-schema.md`):
      ```
+     ---
+     type: raw
+     tier: episodic
+     summary: "Session — <one-line summary of what happened>"
+     tags: [session, <topic>, <topic>]
+     updated: YYYY-MM-DD
+     decay: 365d
+     status: active
+     source: /vault
+     ---
+
      # Session: YYYY-MM-DD — <Title>
      **Date:** YYYY-MM-DD
 
