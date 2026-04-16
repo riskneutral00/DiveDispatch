@@ -24,7 +24,7 @@ describe('DraggablePill', () => {
   let onSelect: (courses: CourseCode[]) => void
 
   beforeEach(() => {
-    onSelect = vi.fn() as unknown as (courses: CourseCode[]) => void
+    onSelect = vi.fn<(courses: CourseCode[]) => void>()
   })
 
   it('renders the template label', () => {

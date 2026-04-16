@@ -91,7 +91,7 @@ describe('boatWidget.getVesselCalendarData', () => {
         ownerId: BOAT_SLUG,
         ownerType: 'Boat',
       })
-      unitId = uid as unknown as string
+      unitId = uid
 
       await seedUser(ctx, {
         tokenIdentifier: TEST_TOKENS.diveCenter,

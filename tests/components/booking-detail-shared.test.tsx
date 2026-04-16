@@ -47,13 +47,18 @@ vi.mock('@/components/booking/send-portal-link', () => ({
 
 // ── Fixtures ────────────────────────────────────────────────────────────────────
 
-function makeBooking(overrides: Record<string, unknown> = {}) {
+function makeBooking(overrides: Record<string, unknown> = {}): BookingDetailBodyProps['booking'] {
   return {
     _id: 'booking-xyz',
+    ownerId: 'owner-1',
+    ownerType: 'DiveCenter',
     status: 'Upcoming',
     activityType: ['DSD'],
     startDate: testDate(16),
     endDate: testDate(16),
+    holdTTL: 900000,
+    expiresAt: undefined,
+    createdAt: Date.now(),
     divers: [
       {
         name: 'Alice',
@@ -73,17 +78,28 @@ function makeBooking(overrides: Record<string, unknown> = {}) {
     portalContact: false,
     portalMedical: false,
     portalWaiver: false,
+    instructorId: undefined,
+    boatId: undefined,
+    equipmentManagerId: undefined,
+    poolId: undefined,
+    compressorId: undefined,
+    instructorName: undefined,
+    boatName: undefined,
+    equipmentManagerName: undefined,
+    poolName: undefined,
+    compressorName: undefined,
     sessions: [],
-    stakeholders: [],
     reservations: [],
     customerProfiles: [],
+    stakeholders: [],
+    auditLog: [],
     ...overrides,
   }
 }
 
 function makeProps(overrides: Partial<BookingDetailBodyProps> = {}): BookingDetailBodyProps {
   return {
-    booking: makeBooking() as unknown as BookingDetailBodyProps['booking'],
+    booking: makeBooking(),
     bookingId: 'booking-xyz',
     portalLink: undefined,
     layout: 'page',

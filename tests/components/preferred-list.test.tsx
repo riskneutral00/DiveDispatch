@@ -42,7 +42,7 @@ const ENTRIES: DirectoryEntry[] = [
     verified: true,
     role: 'Instructor',
     agencies: ['PADI'],
-    credentials: [{ agency: 'PADI', specialtyRatings: ['Deep', 'Wreck'] }],
+    credentials: [{ agency: 'PADI', level: 'OWSI', specialtyRatings: ['Deep', 'Wreck'] }],
     languages: ['en', 'fr'],
   },
   {
@@ -53,7 +53,7 @@ const ENTRIES: DirectoryEntry[] = [
     verified: true,
     role: 'Instructor',
     agencies: ['SSI'],
-    credentials: [{ agency: 'SSI', specialtyRatings: ['Deep'] }],
+    credentials: [{ agency: 'SSI', level: 'OWI', specialtyRatings: ['Deep'] }],
     languages: ['ko'],
   },
   {
@@ -64,7 +64,7 @@ const ENTRIES: DirectoryEntry[] = [
     verified: true,
     role: 'Instructor',
     agencies: ['PADI'],
-    credentials: [{ agency: 'PADI', specialtyRatings: ['Wreck'] }],
+    credentials: [{ agency: 'PADI', level: 'IDC Staff', specialtyRatings: ['Wreck'] }],
     languages: ['ja'],
   },
 ]

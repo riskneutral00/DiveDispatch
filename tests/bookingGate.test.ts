@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { api } from '../convex/_generated/api'
 import { ErrorCode } from '../convex/lib/errorCodes'
+import type { ActivityCode } from '../convex/shared/activityCatalog'
 import { assertRoleReadiness } from '../convex/userRoles'
 import {
   seedUser,
@@ -239,7 +240,7 @@ describe('booking gate: per-active-role completeness', () => {
 const startDate = testDate(5)
 const endDate = testDate(7)
 
-function makeDiver(activityType: string[]) {
+function makeDiver(activityType: ActivityCode[]) {
   return {
     name: 'Alice',
     abbrev: 'AL',

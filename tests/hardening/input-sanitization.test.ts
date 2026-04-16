@@ -336,7 +336,7 @@ describe('sanitizeFields — object sanitization', () => {
   })
 
   it('handles undefined string values gracefully', () => {
-    const input = { name: undefined as unknown as string, email: 'test@test.com' }
+    const input = { name: undefined, email: 'test@test.com' }
     const config = { name: 200, email: 254 }
     const result = sanitizeFields(input, config)
     // undefined is not a string, so it passes through

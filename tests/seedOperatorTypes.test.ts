@@ -2,172 +2,152 @@
 // and have correct structure for seeding.
 
 import { describe, it, expect } from 'vitest'
-import { PARKED_STAKEHOLDERS } from '../convex/seedData'
+import { PARKED_STAKEHOLDERS, ANDAMAN_EXPLORER, CORAL_BAY_RESORT, AMANDA } from '../convex/seedData'
 import { BOOKING_CONFIGS } from '../convex/seedBookingData'
 import packageJson from '../package.json'
 
 describe('Non-DiveCenter operator seed data', () => {
-  const liveaboardStakeholder = PARKED_STAKEHOLDERS.find(
-    (s) => s.roles?.some((r) => r.role === 'Liveaboard'),
-  )
-
-  const diveResortStakeholder = PARKED_STAKEHOLDERS.find(
-    (s) => s.roles?.some((r) => r.role === 'DiveResort'),
-  )
-
-  const agentStakeholder = PARKED_STAKEHOLDERS.find(
-    (s) => s.roles?.some((r) => r.role === 'Agent'),
-  )
 
   describe('Liveaboard operator', () => {
     it('exists in PARKED_STAKEHOLDERS', () => {
-      expect(liveaboardStakeholder).toBeTruthy()
+      expect(PARKED_STAKEHOLDERS).toContainEqual(
+        expect.objectContaining({ user: expect.objectContaining({ slug: ANDAMAN_EXPLORER.user.slug }) }),
+      )
     })
 
     it('has a user record with all required fields', () => {
-      const user = liveaboardStakeholder!.user
-      expect(user.slug).toBeTruthy()
-      expect(user.email).toContain('@divedispatch.dev')
-      expect(user.name).toBeTruthy()
-      expect(user.firstName).toBeTruthy()
-      expect(user.lastName).toBeTruthy()
-      expect(user.businessName).toBeTruthy()
-      expect(user.phone).toBeTruthy()
+      const user = ANDAMAN_EXPLORER.user
+      expect(user.slug).toBe('k8lv3a')
+      expect(user.email).toBe('andaman-explorer+clerk_test@divedispatch.dev')
+      expect(user.name).toBe('Chaiwat Meesuk')
+      expect(user.firstName).toBe('Chaiwat')
+      expect(user.lastName).toBe('Meesuk')
+      expect(user.businessName).toBe('Andaman Explorer')
+      expect(user.phone).toBe('+66-81-234-5011')
     })
 
     it('has the Liveaboard role assigned', () => {
-      const roles = liveaboardStakeholder!.roles!
-      expect(roles).toContainEqual({ role: 'Liveaboard' })
+      expect(ANDAMAN_EXPLORER.roles).toContainEqual({ role: 'Liveaboard' })
     })
 
     it('has a liveaboard profile with required fields', () => {
-      const profile = liveaboardStakeholder!.liveaboard
-      expect(profile).toBeTruthy()
-      expect(profile!.name).toBeTruthy()
-      expect(profile!.placeName).toBeTruthy()
-      expect(profile!.country).toBeTruthy()
-      expect(typeof profile!.lat).toBe('number')
-      expect(typeof profile!.lng).toBe('number')
-      expect(profile!.email).toContain('@divedispatch.dev')
-      expect(profile!.phone).toBeTruthy()
-      expect(profile!.verified).toBe(true)
+      const profile = ANDAMAN_EXPLORER.liveaboard!
+      expect(profile.name).toBe('Andaman Explorer')
+      expect(profile.placeName).toBe('Phuket')
+      expect(profile.country).toBe('Thailand')
+      expect(profile.lat).toBe(7.8804)
+      expect(profile.lng).toBe(98.3923)
+      expect(profile.email).toBe('andaman-explorer@divedispatch.dev')
+      expect(profile.phone).toBe('+66-76-392-001')
+      expect(profile.verified).toBe(true)
     })
 
     it('has at least one booking config', () => {
-      const slug = liveaboardStakeholder!.user.slug
-      const configs = BOOKING_CONFIGS.filter((c) => c.ownerSlug === slug)
+      const configs = BOOKING_CONFIGS.filter((c) => c.ownerSlug === ANDAMAN_EXPLORER.user.slug)
       expect(configs.length).toBeGreaterThanOrEqual(1)
     })
 
     it('booking config uses Liveaboard ownerType', () => {
-      const slug = liveaboardStakeholder!.user.slug
-      const config = BOOKING_CONFIGS.find((c) => c.ownerSlug === slug)
+      const config = BOOKING_CONFIGS.find((c) => c.ownerSlug === ANDAMAN_EXPLORER.user.slug)
       expect(config!.ownerType).toBe('Liveaboard')
     })
   })
 
   describe('DiveResort operator', () => {
     it('exists in PARKED_STAKEHOLDERS', () => {
-      expect(diveResortStakeholder).toBeTruthy()
+      expect(PARKED_STAKEHOLDERS).toContainEqual(
+        expect.objectContaining({ user: expect.objectContaining({ slug: CORAL_BAY_RESORT.user.slug }) }),
+      )
     })
 
     it('has a user record with all required fields', () => {
-      const user = diveResortStakeholder!.user
-      expect(user.slug).toBeTruthy()
-      expect(user.email).toContain('@divedispatch.dev')
-      expect(user.name).toBeTruthy()
-      expect(user.firstName).toBeTruthy()
-      expect(user.lastName).toBeTruthy()
-      expect(user.businessName).toBeTruthy()
-      expect(user.phone).toBeTruthy()
+      const user = CORAL_BAY_RESORT.user
+      expect(user.slug).toBe('j2dn9f')
+      expect(user.email).toBe('coral-bay-resort+clerk_test@divedispatch.dev')
+      expect(user.name).toBe('Supattra Laohakul')
+      expect(user.firstName).toBe('Supattra')
+      expect(user.lastName).toBe('Laohakul')
+      expect(user.businessName).toBe('Coral Bay Resort')
+      expect(user.phone).toBe('+66-81-234-5012')
     })
 
     it('has the DiveResort role assigned', () => {
-      const roles = diveResortStakeholder!.roles!
-      expect(roles).toContainEqual({ role: 'DiveResort' })
+      expect(CORAL_BAY_RESORT.roles).toContainEqual({ role: 'DiveResort' })
     })
 
     it('has a diveResort profile with required fields', () => {
-      const profile = diveResortStakeholder!.diveResort
-      expect(profile).toBeTruthy()
-      expect(profile!.name).toBeTruthy()
-      expect(profile!.placeName).toBeTruthy()
-      expect(profile!.country).toBeTruthy()
-      expect(typeof profile!.lat).toBe('number')
-      expect(typeof profile!.lng).toBe('number')
-      expect(profile!.email).toContain('@divedispatch.dev')
-      expect(profile!.phone).toBeTruthy()
-      expect(profile!.verified).toBe(true)
+      const profile = CORAL_BAY_RESORT.diveResort!
+      expect(profile.name).toBe('Coral Bay Resort')
+      expect(profile.placeName).toBe('Phuket')
+      expect(profile.country).toBe('Thailand')
+      expect(profile.lat).toBe(7.8804)
+      expect(profile.lng).toBe(98.3923)
+      expect(profile.email).toBe('coral-bay-resort@divedispatch.dev')
+      expect(profile.phone).toBe('+66-76-393-001')
+      expect(profile.verified).toBe(true)
     })
 
     it('has at least one booking config', () => {
-      const slug = diveResortStakeholder!.user.slug
-      const configs = BOOKING_CONFIGS.filter((c) => c.ownerSlug === slug)
+      const configs = BOOKING_CONFIGS.filter((c) => c.ownerSlug === CORAL_BAY_RESORT.user.slug)
       expect(configs.length).toBeGreaterThanOrEqual(1)
     })
 
     it('booking config uses DiveResort ownerType', () => {
-      const slug = diveResortStakeholder!.user.slug
-      const config = BOOKING_CONFIGS.find((c) => c.ownerSlug === slug)
+      const config = BOOKING_CONFIGS.find((c) => c.ownerSlug === CORAL_BAY_RESORT.user.slug)
       expect(config!.ownerType).toBe('DiveResort')
     })
   })
 
   describe('Agent operator', () => {
     it('exists in PARKED_STAKEHOLDERS', () => {
-      expect(agentStakeholder).toBeTruthy()
+      expect(PARKED_STAKEHOLDERS).toContainEqual(
+        expect.objectContaining({ user: expect.objectContaining({ slug: AMANDA.user.slug }) }),
+      )
     })
 
     it('has a user record with all required fields', () => {
-      const user = agentStakeholder!.user
+      const user = AMANDA.user
       expect(user.slug).toBe('r5yz4q')
-      expect(user.email).toContain('@divedispatch.dev')
-      expect(user.name).toBeTruthy()
-      expect(user.firstName).toBeTruthy()
-      expect(user.lastName).toBeTruthy()
-      expect(user.businessName).toBeTruthy()
-      expect(user.phone).toBeTruthy()
+      expect(user.email).toBe('amanda+clerk_test@divedispatch.dev')
+      expect(user.name).toBe('Amanda Chen')
+      expect(user.firstName).toBe('Amanda')
+      expect(user.lastName).toBe('Chen')
+      expect(user.businessName).toBe('Amanda')
+      expect(user.phone).toBe('+66-81-234-5010')
     })
 
     it('has the Agent role assigned', () => {
-      const roles = agentStakeholder!.roles!
-      expect(roles).toContainEqual({ role: 'Agent' })
+      expect(AMANDA.roles).toContainEqual({ role: 'Agent' })
     })
 
     it('has an agent profile with required fields', () => {
-      const profile = agentStakeholder!.agent
-      expect(profile).toBeTruthy()
-      expect(profile!.name).toBeTruthy()
-      expect(profile!.placeName).toBeTruthy()
-      expect(profile!.country).toBeTruthy()
-      expect(typeof profile!.lat).toBe('number')
-      expect(typeof profile!.lng).toBe('number')
-      expect(profile!.email).toContain('@divedispatch.dev')
-      expect(profile!.phone).toBeTruthy()
-      expect(profile!.verified).toBe(true)
+      const profile = AMANDA.agent!
+      expect(profile.name).toBe('Amanda')
+      expect(profile.placeName).toBe('Phuket')
+      expect(profile.country).toBe('Thailand')
+      expect(profile.lat).toBe(7.8804)
+      expect(profile.lng).toBe(98.3923)
+      expect(profile.email).toBe('amanda@divedispatch.dev')
+      expect(profile.phone).toBe('+66-81-555-0012')
+      expect(profile.verified).toBe(true)
     })
 
     it('has at least one booking config', () => {
-      const slug = agentStakeholder!.user.slug
-      const configs = BOOKING_CONFIGS.filter((c) => c.ownerSlug === slug)
+      const configs = BOOKING_CONFIGS.filter((c) => c.ownerSlug === AMANDA.user.slug)
       expect(configs.length).toBeGreaterThanOrEqual(1)
     })
 
     it('booking config uses Agent ownerType', () => {
-      const slug = agentStakeholder!.user.slug
-      const config = BOOKING_CONFIGS.find((c) => c.ownerSlug === slug)
+      const config = BOOKING_CONFIGS.find((c) => c.ownerSlug === AMANDA.user.slug)
       expect(config!.ownerType).toBe('Agent')
     })
 
     it('booking config is structurally valid', () => {
-      const slug = agentStakeholder!.user.slug
-      const config = BOOKING_CONFIGS.find((c) => c.ownerSlug === slug)
-      expect(config!.ownerName).toBeTruthy()
-      expect(config!.count).toBeGreaterThanOrEqual(1)
-      expect(config!.activityMix).toBeTruthy()
-      expect(Object.keys(config!.activityMix).length).toBeGreaterThanOrEqual(1)
-      expect(config!.statusMix).toBeTruthy()
-      expect(Object.keys(config!.statusMix).length).toBeGreaterThanOrEqual(1)
+      const config = BOOKING_CONFIGS.find((c) => c.ownerSlug === AMANDA.user.slug)!
+      expect(config.ownerName).toBe('Amanda')
+      expect(config.count).toBeGreaterThanOrEqual(1)
+      expect(Object.keys(config.activityMix).length).toBeGreaterThanOrEqual(1)
+      expect(Object.keys(config.statusMix).length).toBeGreaterThanOrEqual(1)
     })
   })
 
