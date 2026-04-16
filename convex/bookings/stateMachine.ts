@@ -51,6 +51,7 @@ export type BookingData = {
     endDate: string
     agency?: string
     activityType: CourseCode[]
+    specialtyCodes?: string[]
     contactType?: 'email' | 'whatsapp' | 'line'
     contactValue?: string
   }>
@@ -108,6 +109,7 @@ export const bookingDataValidator = v.object({
       endDate: v.string(),
       agency: v.optional(v.string()),
       activityType: v.array(courseCodeValidator),
+      specialtyCodes: v.optional(v.array(v.string())),
       contactType: v.optional(v.union(v.literal('email'), v.literal('whatsapp'), v.literal('line'))),
       contactValue: v.optional(v.string()),
     }),

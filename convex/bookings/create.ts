@@ -253,9 +253,11 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
     )
   }
 
+  const divers = args.bookingData?.divers ?? []
   const bookingCourses: CourseCode[] = args.bookingData
-    ? [...new Set(args.bookingData.divers.flatMap((d) => d.activityType))]
+    ? [...new Set(divers.flatMap((d) => d.activityType))]
     : (booking as BookingDoc).activityType as CourseCode[]
+  const bookingSpecialtyCodes = [...new Set(divers.flatMap((d) => d.specialtyCodes ?? []))]
 
   const gateResources = resources.filter(
     (r) => r.resourceType === 'Instructor' && r.resourceId,
@@ -266,17 +268,36 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
     if (!instructor) continue
 
     for (const activityCode of bookingCourses) {
-      const result = staffCanConductActivity(
-        instructor.credential as Credential[],
-        activityCode as ActivityCode,
-      )
-      if (!result.allowed) {
-        throw new ConvexError({
-          code: ErrorCode.CAPABILITY_GAP,
-          ...(result.reason ?? {}),
-          instructorSlug: ir.resourceId,
-          activityCode,
-        })
+      if (activityCode === 'SPECIALTY' && bookingSpecialtyCodes.length > 0) {
+        for (const sc of bookingSpecialtyCodes) {
+          const result = staffCanConductActivity(
+            instructor.credential as Credential[],
+            activityCode as ActivityCode,
+            sc,
+          )
+          if (!result.allowed) {
+            throw new ConvexError({
+              code: ErrorCode.CAPABILITY_GAP,
+              ...(result.reason ?? {}),
+              instructorSlug: ir.resourceId,
+              activityCode,
+              specialtyCode: sc,
+            })
+          }
+        }
+      } else {
+        const result = staffCanConductActivity(
+          instructor.credential as Credential[],
+          activityCode as ActivityCode,
+        )
+        if (!result.allowed) {
+          throw new ConvexError({
+            code: ErrorCode.CAPABILITY_GAP,
+            ...(result.reason ?? {}),
+            instructorSlug: ir.resourceId,
+            activityCode,
+          })
+        }
       }
     }
   }

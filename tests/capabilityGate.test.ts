@@ -187,4 +187,30 @@ describe('staffCanConductActivity — multi-credential', () => {
   it('empty credentials fail', () => {
     expect(staffCanConductActivity([], 'FD').allowed).toBe(false)
   })
+
+  it('SPECIALTY with Deep passes when one credential has Deep rating', () => {
+    const credentials: Credential[] = [
+      { agency: 'PADI', level: 'Divemaster' },
+      { agency: 'PADI', level: 'OWSI', specialtyRatings: ['Deep'] },
+    ]
+    expect(staffCanConductActivity(credentials, 'SPECIALTY', 'Deep').allowed).toBe(true)
+  })
+
+  it('SPECIALTY with Wreck fails when no credential has Wreck rating', () => {
+    const credentials: Credential[] = [
+      { agency: 'PADI', level: 'OWSI', specialtyRatings: ['Deep', 'Navigation'] },
+    ]
+    const result = staffCanConductActivity(credentials, 'SPECIALTY', 'Wreck')
+    expect(result.allowed).toBe(false)
+    expect(result.reason?.kind).toBe('rating')
+  })
+
+  it('cross-agency credentials: PADI Deep + SSI Wreck both pass', () => {
+    const credentials: Credential[] = [
+      { agency: 'PADI', level: 'OWSI', specialtyRatings: ['Deep'] },
+      { agency: 'SSI', level: 'OWI', specialtyRatings: ['Wreck'] },
+    ]
+    expect(staffCanConductActivity(credentials, 'SPECIALTY', 'Deep').allowed).toBe(true)
+    expect(staffCanConductActivity(credentials, 'SPECIALTY', 'Wreck').allowed).toBe(true)
+  })
 })

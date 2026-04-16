@@ -92,6 +92,7 @@ export default defineSchema({
         endDate: v.string(),
         agency: v.optional(v.string()),
         activityType: v.array(courseCode),
+        specialtyCodes: v.optional(v.array(v.string())),
         contactType: v.optional(v.union(v.literal('email'), v.literal('whatsapp'), v.literal('line'))),
         contactValue: v.optional(v.string()),
       }),

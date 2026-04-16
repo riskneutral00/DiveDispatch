@@ -251,6 +251,137 @@ function makeDiver(activityType: ActivityCode[]) {
   }
 }
 
+function makeDiverWithSpecialty(specialtyCodes: string[]) {
+  return {
+    name: 'Alice',
+    abbrev: 'AL',
+    flag: { code: 'en', label: 'English' },
+    startDate,
+    endDate,
+    activityType: ['SPECIALTY' as ActivityCode],
+    specialtyCodes,
+  }
+}
+
+describe('booking gate: specialty rating enforcement', () => {
+  it('instructor without Deep rating assigned to SPECIALTY(Deep) throws CAPABILITY_GAP', async () => {
+    const t = makeT()
+
+    const bookingId = await t.run(async (ctx) => {
+      await seedUser(ctx, {
+        slug: 'dc-spec',
+        tokenIdentifier: 'clerk|dc-spec',
+        role: 'DiveCenter',
+        email: 'dc-spec@test.com',
+        name: 'DC Spec',
+        firstName: 'DC',
+        lastName: 'Spec',
+        businessName: 'Spec DC',
+      })
+      const instUserId = await seedUser(ctx, {
+        slug: 'inst-spec',
+        tokenIdentifier: 'clerk|inst-spec',
+        role: 'Instructor',
+        email: 'inst-spec@test.com',
+        name: 'Inst Spec',
+        firstName: 'Inst',
+        lastName: 'Spec',
+      })
+      await seedInstructorProfile(ctx, instUserId, {
+        credential: [{ agency: 'PADI', level: 'OWSI', agencyID: '99999', specialtyRatings: ['Navigation'] }],
+      })
+
+      return seedBooking(ctx, {
+        ownerId: 'dc-spec',
+        activityType: ['SPECIALTY'],
+        bookingFormComplete: false,
+        divers: [],
+      })
+    })
+
+    await expectConvexError(
+      t.withIdentity({ tokenIdentifier: 'clerk|dc-spec' }).mutation(
+        api.bookings.create.submitToDraft,
+        {
+          bookingId,
+          sessions: [],
+          bookingData: {
+            activityType: ['SPECIALTY'],
+            startDate,
+            endDate,
+            portalContact: false,
+            portalMedical: false,
+            portalWaiver: false,
+            resources: [
+              { resourceType: 'Instructor', resourceId: 'inst-spec', roleType: 'Instructor' },
+            ],
+            divers: [makeDiverWithSpecialty(['Deep'])],
+          },
+        },
+      ),
+      ErrorCode.CAPABILITY_GAP,
+    )
+  })
+
+  it('instructor with Deep rating assigned to SPECIALTY(Deep) passes gate', async () => {
+    const t = makeT()
+
+    const bookingId = await t.run(async (ctx) => {
+      await seedUser(ctx, {
+        slug: 'dc-spec2',
+        tokenIdentifier: 'clerk|dc-spec2',
+        role: 'DiveCenter',
+        email: 'dc-spec2@test.com',
+        name: 'DC Spec2',
+        firstName: 'DC',
+        lastName: 'Spec2',
+        businessName: 'Spec DC2',
+      })
+      const instUserId = await seedUser(ctx, {
+        slug: 'inst-spec2',
+        tokenIdentifier: 'clerk|inst-spec2',
+        role: 'Instructor',
+        email: 'inst-spec2@test.com',
+        name: 'Inst Spec2',
+        firstName: 'Inst',
+        lastName: 'Spec2',
+      })
+      await seedInstructorProfile(ctx, instUserId, {
+        credential: [{ agency: 'PADI', level: 'OWSI', agencyID: '99998', specialtyRatings: ['Deep', 'Navigation'] }],
+      })
+
+      return seedBooking(ctx, {
+        ownerId: 'dc-spec2',
+        activityType: ['SPECIALTY'],
+        bookingFormComplete: false,
+        divers: [],
+      })
+    })
+
+    await expect(
+      t.withIdentity({ tokenIdentifier: 'clerk|dc-spec2' }).mutation(
+        api.bookings.create.submitToDraft,
+        {
+          bookingId,
+          sessions: [],
+          bookingData: {
+            activityType: ['SPECIALTY'],
+            startDate,
+            endDate,
+            portalContact: false,
+            portalMedical: false,
+            portalWaiver: false,
+            resources: [
+              { resourceType: 'Instructor', resourceId: 'inst-spec2', roleType: 'Instructor' },
+            ],
+            divers: [makeDiverWithSpecialty(['Deep'])],
+          },
+        },
+      ),
+    ).resolves.toBeDefined()
+  })
+})
+
 describe('booking gate: capability gate blocks DM from OW+', () => {
   it('DiveMaster assigned to OW booking throws CAPABILITY_GAP', async () => {
     const t = makeT()
