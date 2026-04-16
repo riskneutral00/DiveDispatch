@@ -18,6 +18,7 @@ import {
   type ContactFormState as DiveCenterContactFormState,
   INITIAL_CONTACT_FORM,
   INITIAL_CUSTOMER_LANGUAGES,
+  buildParentContactDefaults,
   contactFromProfile,
   contactToPayload,
   languagesFromProfile,
@@ -76,6 +77,9 @@ export function languagesToPayloadDC(f: DiveCenterLanguagesFormState): Record<st
 export function DiveCenterContactSection(props: DiveCenterSectionProps) {
   const { profile, me, create, update, onSaved, onClose } = props
 
+  const createOverride = (payload: Record<string, unknown>) =>
+    create({ ...payload, associations: [] })
+
   const {
     form,
     setField,
@@ -105,7 +109,7 @@ export function DiveCenterContactSection(props: DiveCenterSectionProps) {
       ...languagesToPayloadDC(f),
       ...accessToPayload(f.access),
     }),
-    create,
+    create: createOverride,
     update,
     onSaved,
   })
@@ -218,7 +222,10 @@ export function affiliationsToPayload(f: DiveCenterAffiliationsFormState): Recor
   }
 }
 
-export function DiveCenterAffiliationsSection({ profile: existing, create, update, onClose }: DiveCenterSectionProps) {
+export function DiveCenterAffiliationsSection({ profile: existing, me, create, update, onClose }: DiveCenterSectionProps) {
+  const createOverride = (payload: Record<string, unknown>) =>
+    create({ ...buildParentContactDefaults(me), ...payload })
+
   const { form, setField, errors, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit, resetToBaseline } =
     useProfileForm({
       profile: existing,
@@ -226,7 +233,7 @@ export function DiveCenterAffiliationsSection({ profile: existing, create, updat
       defaults: INITIAL_AFFILIATIONS_FORM,
       fromProfile: affiliationsFromProfile,
       toPayload: affiliationsToPayload,
-      create,
+      create: createOverride,
       update,
     })
 
@@ -285,7 +292,7 @@ export function DiveCenterProfileForm({
   onClose,
 }: DiveCenterSectionProps & { section?: DiveCenterProfileSection }) {
   if (section === 'associations')
-    return <DiveCenterAffiliationsSection profile={profile} create={create} update={update} onClose={onClose} />
+    return <DiveCenterAffiliationsSection profile={profile} me={me} create={create} update={update} onClose={onClose} />
   return (
     <DiveCenterContactSection profile={profile} me={me} create={create} update={update} onSaved={onSaved} onClose={onClose} />
   )

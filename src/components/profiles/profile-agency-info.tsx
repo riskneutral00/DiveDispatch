@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { SimpleSelect } from "@/components/ui/simple-select";
 import { ItemCard } from "@/components/ui/item-card";
 import { Select } from "@/components/ui/select";
+import { useStableKeys } from "@/lib/hooks/use-stable-keys";
 import {
   AGENCIES,
   AGENCY_CODES,
@@ -52,16 +53,11 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
     ? "No credentials yet. Tap Add to get started."
     : "No affiliations yet. Tap Add to get started.";
 
-  let keyCounter = 0;
-  function nextKey() {
-    return `item-${Date.now()}-${++keyCounter}`;
-  }
+  const keys = useStableKeys(items);
 
   function makeDefaultItem() {
-    const _key = nextKey();
     if (isCenter) {
       return {
-        _key,
         agency: "",
         number: "",
         owDays: COURSE_DAY_RANGES.OW.min,
@@ -71,18 +67,17 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
       };
     }
     if (isAgent) {
-      return { _key, agency: "", number: "" };
+      return { agency: "", number: "" };
     }
     if (variant === "instructor") {
       return {
-        _key,
         agency: "",
         level: "",
         agencyID: "",
         specialtyRatings: [],
       };
     }
-    return { _key, agency: "", level: "", agencyID: "" };
+    return { agency: "", level: "", agencyID: "" };
   }
 
   function handleAdd() {
@@ -322,7 +317,7 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
       ) : (
         <div className="space-y-4">
           {items.map((item, idx) => (
-            <Fragment key={String((item as AgencyRow)._key ?? idx)}>
+            <Fragment key={keys[idx]}>
               <ItemCard
                 onRemove={() => handleRemove(idx)}
                 canRemove={isAgent ? true : items.length > 1}

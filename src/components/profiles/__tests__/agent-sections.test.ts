@@ -7,8 +7,6 @@ import {
 import {
   contactFromProfile,
   contactToPayload,
-  languagesFromProfileAgent,
-  languagesToPayloadAgent,
   associationsFromProfile,
   associationsToPayload,
   INITIAL_CONTACT_FORM,
@@ -164,45 +162,6 @@ describe('contactToPayload', () => {
   })
 })
 
-describe('languagesFromProfileAgent', () => {
-  it('reads customerLanguages from me (user record), not from agent profile', () => {
-    const agentProfile = { name: 'Agent', associations: [] }
-    const me = { customerLanguages: ['en'] }
-    const form = languagesFromProfileAgent(agentProfile, me)
-    expect(form.customerLanguages).toHaveLength(1)
-    expect(form.customerLanguages[0].code).toBe('en-GB')
-  })
-
-  it('returns empty array when me has no customerLanguages', () => {
-    const form = languagesFromProfileAgent({}, undefined)
-    expect(form.customerLanguages).toEqual([])
-  })
-
-  it('does not read customerLanguages from agent profile even if present', () => {
-    const profileWithLangs = { customerLanguages: ['ja'] }
-    const me = { customerLanguages: ['en'] }
-    const form = languagesFromProfileAgent(profileWithLangs, me)
-    expect(form.customerLanguages).toHaveLength(1)
-    expect(form.customerLanguages[0].code).toBe('en-GB')
-  })
-})
-
-describe('languagesToPayloadAgent', () => {
-  it('returns empty object (nothing to write to agents table)', () => {
-    const payload = languagesToPayloadAgent({
-      customerLanguages: [{ code: 'en', label: 'English' }],
-    })
-    expect(payload).toEqual({})
-  })
-
-  it('does not include customerLanguages in agents table payload', () => {
-    const payload = languagesToPayloadAgent({
-      customerLanguages: [{ code: 'en', label: 'English' }],
-    })
-    expect(payload).not.toHaveProperty('customerLanguages')
-  })
-})
-
 describe('associationsFromProfile', () => {
   it('maps associations array from profile correctly', () => {
     const profile = {
@@ -246,6 +205,18 @@ describe('associationsToPayload', () => {
     expect(payload).not.toHaveProperty('name')
     expect(payload).not.toHaveProperty('email')
     expect(payload).not.toHaveProperty('customerLanguages')
+  })
+
+  it('strips unknown fields (e.g. legacy _key) from list items', () => {
+    const form = {
+      associations: [
+        { _key: 'item-legacy-1', agency: 'PADI', number: 'ABC' } as unknown as AgentAssociationsFormState['associations'][number],
+      ],
+    } as AgentAssociationsFormState
+    const payload = associationsToPayload(form)
+    const assocs = payload.associations as Array<Record<string, unknown>>
+    expect(assocs[0]).not.toHaveProperty('_key')
+    expect(assocs[0]).toEqual({ agency: 'PADI', number: 'ABC' })
   })
 })
 

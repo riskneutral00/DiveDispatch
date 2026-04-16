@@ -324,6 +324,39 @@ describe('credentialsToPayload', () => {
     expect(payload).not.toHaveProperty('email')
     expect(payload).not.toHaveProperty('teachingLanguages')
   })
+
+  it('strips unknown fields (e.g. legacy _key) from list items', () => {
+    const form = {
+      credential: [
+        {
+          _key: 'item-legacy-1',
+          agency: 'PADI',
+          level: 'Divemaster',
+          agencyID: 'DM123',
+        } as unknown as PersonalCredentialsFormState['credential'][number],
+      ],
+    } as PersonalCredentialsFormState
+    const payload = credentialsToPayload(form)
+    const creds = payload.credential as Array<Record<string, unknown>>
+    expect(creds[0]).not.toHaveProperty('_key')
+    expect(creds[0]).toEqual({ agency: 'PADI', level: 'Divemaster', agencyID: 'DM123' })
+  })
+
+  it('preserves specialtyRatings for instructor credentials', () => {
+    const form = {
+      credential: [
+        {
+          agency: 'PADI',
+          level: 'OWSI',
+          agencyID: 'INS-1',
+          specialtyRatings: ['Nitrox', 'DeepDiver'],
+        } as PersonalCredentialsFormState['credential'][number],
+      ],
+    } as PersonalCredentialsFormState
+    const payload = credentialsToPayload(form)
+    const creds = payload.credential as Array<Record<string, unknown>>
+    expect(creds[0].specialtyRatings).toEqual(['Nitrox', 'DeepDiver'])
+  })
 })
 
 describe('makeEmptyCredential', () => {

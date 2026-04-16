@@ -17,6 +17,7 @@ import {
   type ContactFormState as PersonalContactFormState,
   INITIAL_CONTACT_FORM,
   INITIAL_TEACHING_LANGUAGES,
+  buildParentContactDefaults,
   contactFromProfile,
   contactToPayload,
   defaultFromMe,
@@ -117,7 +118,17 @@ export function credentialsFromProfile(
 
 export function credentialsToPayload(f: PersonalCredentialsFormState): Record<string, unknown> {
   return {
-    credential: f.credential,
+    credential: f.credential.map((c) => {
+      const base: Record<string, unknown> = {
+        agency: c.agency,
+        level: c.level,
+        agencyID: c.agencyID,
+      }
+      if ('specialtyRatings' in c && c.specialtyRatings !== undefined) {
+        base.specialtyRatings = c.specialtyRatings
+      }
+      return base
+    }),
   }
 }
 
@@ -125,7 +136,7 @@ export type PersonalContactSectionProps = BaseProfileSectionProps & {
   variant: PersonalVariant
 }
 
-export type PersonalCredentialsSectionProps = Pick<BaseProfileSectionProps, 'profile' | 'create' | 'update'> & {
+export type PersonalCredentialsSectionProps = Pick<BaseProfileSectionProps, 'profile' | 'me' | 'create' | 'update'> & {
   variant: PersonalVariant
   onClose?: () => void
 }
@@ -139,6 +150,9 @@ export function PersonalContactSection({
   onClose,
 }: PersonalContactSectionProps) {
   const isDm = variant === 'divemaster'
+
+  const createOverride = (payload: Record<string, unknown>) =>
+    create({ ...payload, credential: [] })
 
   const {
     form,
@@ -161,7 +175,7 @@ export function PersonalContactSection({
     fromProfile: mergedPersonalFromProfile,
     fromMe: defaultFromMe,
     toPayload: mergedPersonalToPayload,
-    create,
+    create: createOverride,
     update,
   })
 
@@ -222,6 +236,7 @@ export function PersonalContactSection({
 export function PersonalCredentialsSection({
   variant,
   profile,
+  me,
   create,
   update,
   onClose,
@@ -229,6 +244,14 @@ export function PersonalCredentialsSection({
   const schema = variant === 'divemaster' ? diveMasterCredentialsSchema : instructorCredentialsSchema
   const initialDefaults =
     getInitialCredentialsForm(variant)
+
+  const createOverride = (payload: Record<string, unknown>) =>
+    create({
+      ...buildParentContactDefaults(me),
+      teachingLanguages: [],
+      ...payload,
+    })
+
   const {
     form,
     setField,
@@ -248,7 +271,7 @@ export function PersonalCredentialsSection({
     defaults: initialDefaults,
     fromProfile: (p) => credentialsFromProfile(p, variant),
     toPayload: credentialsToPayload,
-    create,
+    create: createOverride,
     update,
   })
 
@@ -302,6 +325,7 @@ export function PersonalProfileForm({
       <PersonalCredentialsSection
         variant={variant}
         profile={profile}
+        me={me}
         create={wrappedCreate}
         update={update}
         onClose={onClose}
