@@ -7,17 +7,17 @@ import { createUserDefaults } from './helpers/createUser'
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
 describe('onboarding schema', () => {
-  it('new user created via createUser has onboardingComplete undefined', async () => {
+  it('new user created via createUser exists', async () => {
     const t = makeT()
     vi.useFakeTimers({ now: Date.now() })
     const userId = await t.withIdentity({ tokenIdentifier: 'clerk|new-dc' })
-      .mutation(api.users.createUser, { ...createUserDefaults, role: 'DiveCenter', businessName: 'Test DC' })
+      .mutation(api.users.createUser, { ...createUserDefaults, role: 'DiveCenter' })
 
     await t.finishAllScheduledFunctions(vi.runAllTimers)
     vi.useRealTimers()
 
     const user = await t.run(async (ctx) => ctx.db.get(userId))
-    expect(user?.onboardingComplete).toBeUndefined()
+    expect(user).toBeTruthy()
   })
 })
 
@@ -93,7 +93,6 @@ describe('getOnboardingStatus', () => {
         userId,
         role: 'Instructor',
         createdAt: Date.now(),
-        profileComplete: false,
       })
     })
 
@@ -106,39 +105,6 @@ describe('getOnboardingStatus', () => {
   })
 })
 
-describe('completeOnboarding', () => {
-  it('sets onboardingComplete = true on the user record', async () => {
-    const t = makeT()
-    const userId = await t.run(async (ctx) =>
-      seedUser(ctx, { slug: 'dc-ready', tokenIdentifier: 'clerk|dc-ready', role: 'DiveCenter', name: 'Ready DC' }),
-    )
-
-    await t.withIdentity({ tokenIdentifier: 'clerk|dc-ready' })
-      .mutation(api.users.completeOnboarding, {})
-
-    const user = await t.run(async (ctx) => ctx.db.get(userId))
-    expect(user?.onboardingComplete).toBe(true)
-  })
-
-  it('throws UNAUTHENTICATED when no identity', async () => {
-    const t = makeT()
-    await expect(
-      t.mutation(api.users.completeOnboarding, {}),
-    ).rejects.toMatchObject({ data: expect.stringContaining('UNAUTHENTICATED') })
-  })
-
-  it('throws VALIDATION when user name is blank', async () => {
-    const t = makeT()
-    await t.run(async (ctx) =>
-      seedUser(ctx, { slug: 'dc-noname', tokenIdentifier: 'clerk|dc-noname', role: 'DiveCenter', name: '' }),
-    )
-
-    await expect(
-      t.withIdentity({ tokenIdentifier: 'clerk|dc-noname' })
-        .mutation(api.users.completeOnboarding, {}),
-    ).rejects.toMatchObject({ data: expect.stringContaining('VALIDATION') })
-  })
-})
 
 describe('Quick Book pills (bookingTemplates)', () => {
   it('creates bookingTemplate entries from preferences step', async () => {

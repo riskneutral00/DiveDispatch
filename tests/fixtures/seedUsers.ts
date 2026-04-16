@@ -16,7 +16,6 @@ export async function seedUser(
     name?: string
     firstName?: string
     lastName?: string
-    businessName?: string
     isSeeded?: boolean
     skipUserRoles?: boolean
   } = {},
@@ -29,7 +28,6 @@ export async function seedUser(
     name: overrides.name ?? 'Test User',
     firstName: overrides.firstName ?? 'Test',
     lastName: overrides.lastName ?? 'User',
-    businessName: overrides.businessName ?? 'Test Business',
     phone: '+66812345678',
     dateOfBirth: '1990-01-01',
     isSeeded: overrides.isSeeded ?? true,
@@ -40,7 +38,6 @@ export async function seedUser(
       userId,
       role,
       createdAt: Date.now(),
-      profileComplete: false,
     })
   }
   return userId

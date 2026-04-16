@@ -14,7 +14,6 @@ async function seedInstructorUser(ctx: SeedCtx, slug: string) {
     name: `${slug} User`,
     firstName: slug,
     lastName: 'Test',
-    businessName: 'Test',
     dateOfBirth: '1990-01-01',
     isSeeded: false,
     appLanguage: 'en',
@@ -23,7 +22,6 @@ async function seedInstructorUser(ctx: SeedCtx, slug: string) {
     userId,
     role: 'Instructor',
     createdAt: Date.now(),
-    profileComplete: false,
   })
   return userId
 }
@@ -55,7 +53,6 @@ async function seedCallerUser(ctx: SeedCtx, slug: string) {
     name: `${slug} User`,
     firstName: slug,
     lastName: 'Caller',
-    businessName: 'Dive Center',
     dateOfBirth: '1990-01-01',
     isSeeded: false,
     appLanguage: 'en',
@@ -64,7 +61,6 @@ async function seedCallerUser(ctx: SeedCtx, slug: string) {
     userId,
     role: 'DiveCenter',
     createdAt: Date.now(),
-    profileComplete: false,
   })
   return userId
 }
@@ -245,7 +241,6 @@ describe('listByRole language propagation', () => {
         name: 'DC Lang',
         firstName: 'DC',
         lastName: 'Lang',
-        businessName: 'DC Business',
         dateOfBirth: '1990-01-01',
         isSeeded: false,
         appLanguage: 'en',
@@ -255,7 +250,6 @@ describe('listByRole language propagation', () => {
         userId: dcUserId,
         role: 'DiveCenter',
         createdAt: Date.now(),
-        profileComplete: false,
       })
       await ctx.db.insert('diveCenters', {
         userId: dcUserId,

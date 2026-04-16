@@ -25,7 +25,6 @@ import {
 import { api } from '../convex/_generated/api'
 import { batchGetOwnerContext, MAX_CANDIDATES } from '../convex/reservationsMutations'
 
-// ─── Unit: batchGetOwnerContext ──────────────────────────────────────────────
 
 describe('batchGetOwnerContext', () => {
   it('returns city and language maps for each slug', async () => {
@@ -40,7 +39,6 @@ describe('batchGetOwnerContext', () => {
         name: 'A',
         firstName: 'A',
         lastName: 'Test',
-        businessName: 'A Co',
       })
       await seedInstructorProfile(ctx, userId1, { placeName: 'Koh Tao', teachingLanguages: ['en-GB'] })
 
@@ -52,7 +50,6 @@ describe('batchGetOwnerContext', () => {
         name: 'B',
         firstName: 'B',
         lastName: 'Test',
-        businessName: 'B Co',
       })
       await seedInstructorProfile(ctx, userId2, { placeName: 'Koh Phi Phi', teachingLanguages: ['th-TH'] })
 
@@ -88,7 +85,6 @@ describe('batchGetOwnerContext', () => {
         name: 'NP',
         firstName: 'NP',
         lastName: 'Test',
-        businessName: 'NP Co',
       })
 
       const { cities } = await batchGetOwnerContext(ctx, ['no-profile-slug'], 'Instructor')
@@ -111,15 +107,12 @@ describe('batchGetOwnerContext', () => {
   })
 })
 
-// ─── Behavioral: decline with maxCandidates bound ───────────────────────────
 
 describe('decline with maxCandidates bound', () => {
   it('evaluates at most MAX_CANDIDATES alternatives', async () => {
     const t = makeT()
 
-    // Create declining instructor + DC + MAX_CANDIDATES+5 alternative units
     const { bookingId, unitId } = await t.run(async (ctx) => {
-      // DC user
       await seedUser(ctx, {
         tokenIdentifier: 'user|bound-dc',
         slug: 'bound-dc',
@@ -128,10 +121,8 @@ describe('decline with maxCandidates bound', () => {
         name: 'Bound DC',
         firstName: 'Bound',
         lastName: 'DC',
-        businessName: 'Bound DC Co',
       })
 
-      // Declining instructor
       await seedUser(ctx, {
         tokenIdentifier: 'user|bound-instr',
         slug: 'bound-instr',
@@ -140,7 +131,6 @@ describe('decline with maxCandidates bound', () => {
         name: 'Bound Instructor',
         firstName: 'Bound',
         lastName: 'Instr',
-        businessName: 'Bound Co',
       })
 
       const unitId = await seedInventoryUnit(ctx, {
@@ -176,9 +166,6 @@ describe('decline with maxCandidates bound', () => {
         availableUnits: 0,
       })
 
-      // Seed MAX_CANDIDATES + 5 alternative units (all with NO availability)
-      // None have snapshots, so none will be found as alternatives.
-      // The point is to verify the search is bounded.
       const totalAlts = MAX_CANDIDATES + 5
       for (let i = 0; i < totalAlts; i++) {
         const slug = `alt-instr-${i}`
@@ -190,7 +177,6 @@ describe('decline with maxCandidates bound', () => {
           name: `Alt ${i}`,
           firstName: 'Alt',
           lastName: `${i}`,
-          businessName: `Alt ${i} Co`,
         })
         await seedInventoryUnit(ctx, {
           resourceType: 'Instructor',
@@ -203,13 +189,11 @@ describe('decline with maxCandidates bound', () => {
       return { bookingId, unitId }
     })
 
-    // Decline should complete without error (bounded search)
     await t.withIdentity({ tokenIdentifier: 'user|bound-instr' }).mutation(
       api.reservationsMutations.declineReservation,
       { bookingId, inventoryUnitId: unitId },
     )
 
-    // Should send no_backup_available (none of the alts have snapshots)
     await t.run(async (ctx) => {
       const notifications = await ctx.db.query('notifications').collect()
       const noBackup = notifications.find((n) => n.type === 'no_backup_available')
@@ -221,14 +205,12 @@ describe('decline with maxCandidates bound', () => {
   })
 })
 
-// ─── Behavioral: decline still finds same-city alternative (regression) ─────
 
 describe('decline with batched city lookup preserves filtering', () => {
   it('finds same-city alternative and does not send no_backup_available', async () => {
     const t = makeT()
 
     const { bookingId, unitId } = await t.run(async (ctx) => {
-      // DC
       await seedUser(ctx, {
         tokenIdentifier: 'user|city-dc',
         slug: 'city-dc',
@@ -237,10 +219,8 @@ describe('decline with batched city lookup preserves filtering', () => {
         name: 'City DC',
         firstName: 'City',
         lastName: 'DC',
-        businessName: 'City DC Co',
       })
 
-      // Declining instructor in Koh Tao
       const declUserId = await seedUser(ctx, {
         tokenIdentifier: 'user|city-decl',
         slug: 'city-decl-instr',
@@ -249,7 +229,6 @@ describe('decline with batched city lookup preserves filtering', () => {
         name: 'Decl Instructor',
         firstName: 'Decl',
         lastName: 'Inst',
-        businessName: 'Decl Co',
       })
       await seedInstructorProfile(ctx, declUserId, { placeName: 'Koh Tao' })
 
@@ -260,7 +239,6 @@ describe('decline with batched city lookup preserves filtering', () => {
         ownerType: 'Instructor',
       })
 
-      // Alternative instructor also in Koh Tao
       const altUserId = await seedUser(ctx, {
         tokenIdentifier: 'user|city-alt',
         slug: 'city-alt-instr',
@@ -269,7 +247,6 @@ describe('decline with batched city lookup preserves filtering', () => {
         name: 'Alt Instructor',
         firstName: 'Alt',
         lastName: 'Inst',
-        businessName: 'Alt Co',
       })
       await seedInstructorProfile(ctx, altUserId, { placeName: 'Koh Tao' })
 
@@ -306,7 +283,6 @@ describe('decline with batched city lookup preserves filtering', () => {
         availableUnits: 0,
       })
 
-      // Alternative has availability
       await seedSnapshot(ctx, altUnitId, {
         date: testDate(5),
         windowStart: '08:00',
@@ -326,11 +302,9 @@ describe('decline with batched city lookup preserves filtering', () => {
 
     await t.run(async (ctx) => {
       const notifications = await ctx.db.query('notifications').collect()
-      // Should NOT have no_backup_available — same city alt exists
       const noBackup = notifications.find((n) => n.type === 'no_backup_available')
       expect(noBackup).toBeUndefined()
 
-      // Should still have hold_declined
       const holdDeclined = notifications.find((n) => n.type === 'hold_declined')
       expect(holdDeclined).toMatchObject({
         type: 'hold_declined',
@@ -343,7 +317,6 @@ describe('decline with batched city lookup preserves filtering', () => {
     const t = makeT()
 
     const { bookingId, unitId } = await t.run(async (ctx) => {
-      // DC
       await seedUser(ctx, {
         tokenIdentifier: 'user|lang-dc',
         slug: 'lang-dc',
@@ -352,10 +325,8 @@ describe('decline with batched city lookup preserves filtering', () => {
         name: 'Lang DC',
         firstName: 'Lang',
         lastName: 'DC',
-        businessName: 'Lang DC Co',
       })
 
-      // Declining instructor in Koh Tao
       const declUserId = await seedUser(ctx, {
         tokenIdentifier: 'user|lang-decl',
         slug: 'lang-decl-instr',
@@ -364,7 +335,6 @@ describe('decline with batched city lookup preserves filtering', () => {
         name: 'Decl Instructor',
         firstName: 'Decl',
         lastName: 'Inst',
-        businessName: 'Decl Co',
       })
       await seedInstructorProfile(ctx, declUserId, {
         placeName: 'Koh Tao',
@@ -378,7 +348,6 @@ describe('decline with batched city lookup preserves filtering', () => {
         ownerType: 'Instructor',
       })
 
-      // Alternative A: NO language match (French only)
       const altAUserId = await seedUser(ctx, {
         tokenIdentifier: 'user|lang-alt-a',
         slug: 'lang-alt-a',
@@ -387,7 +356,6 @@ describe('decline with batched city lookup preserves filtering', () => {
         name: 'Alt A',
         firstName: 'Alt',
         lastName: 'A',
-        businessName: 'Alt A Co',
       })
       await seedInstructorProfile(ctx, altAUserId, {
         placeName: 'Koh Tao',
@@ -400,7 +368,6 @@ describe('decline with batched city lookup preserves filtering', () => {
         ownerType: 'Instructor',
       })
 
-      // Alternative B: HAS language match (English)
       const altBUserId = await seedUser(ctx, {
         tokenIdentifier: 'user|lang-alt-b',
         slug: 'lang-alt-b',
@@ -409,7 +376,6 @@ describe('decline with batched city lookup preserves filtering', () => {
         name: 'Alt B',
         firstName: 'Alt',
         lastName: 'B',
-        businessName: 'Alt B Co',
       })
       await seedInstructorProfile(ctx, altBUserId, {
         placeName: 'Koh Tao',
@@ -422,7 +388,6 @@ describe('decline with batched city lookup preserves filtering', () => {
         ownerType: 'Instructor',
       })
 
-      // Booking with English-speaking diver (using locale code to match backend format)
       const bookingId = await seedBooking(ctx, {
         ownerId: 'lang-dc',
         startDate: testDate(5),
@@ -457,7 +422,6 @@ describe('decline with batched city lookup preserves filtering', () => {
         availableUnits: 0,
       })
 
-      // Both alternatives have availability
       await seedSnapshot(ctx, altAUnit, {
         date: testDate(5),
         windowStart: '08:00',
@@ -483,7 +447,6 @@ describe('decline with batched city lookup preserves filtering', () => {
       { bookingId, inventoryUnitId: unitId },
     )
 
-    // Language-matching alternative exists → no no_backup_available
     await t.run(async (ctx) => {
       const notifications = await ctx.db.query('notifications').collect()
       const noBackup = notifications.find((n) => n.type === 'no_backup_available')
@@ -501,7 +464,6 @@ describe('decline with batched city lookup preserves filtering', () => {
     const t = makeT()
 
     const { bookingId, unitId } = await t.run(async (ctx) => {
-      // DC
       await seedUser(ctx, {
         tokenIdentifier: 'user|diffcity-dc',
         slug: 'diffcity-dc',
@@ -510,10 +472,8 @@ describe('decline with batched city lookup preserves filtering', () => {
         name: 'DiffCity DC',
         firstName: 'DiffCity',
         lastName: 'DC',
-        businessName: 'DiffCity DC Co',
       })
 
-      // Declining instructor in Koh Tao
       const declUserId = await seedUser(ctx, {
         tokenIdentifier: 'user|diffcity-decl',
         slug: 'diffcity-decl-instr',
@@ -522,7 +482,6 @@ describe('decline with batched city lookup preserves filtering', () => {
         name: 'DiffDecl Instructor',
         firstName: 'DiffDecl',
         lastName: 'Inst',
-        businessName: 'DiffDecl Co',
       })
       await seedInstructorProfile(ctx, declUserId, { placeName: 'Koh Tao' })
 
@@ -533,7 +492,6 @@ describe('decline with batched city lookup preserves filtering', () => {
         ownerType: 'Instructor',
       })
 
-      // Alternative instructor in Koh Phi Phi (different city)
       const altUserId = await seedUser(ctx, {
         tokenIdentifier: 'user|diffcity-alt',
         slug: 'diffcity-alt-instr',
@@ -542,7 +500,6 @@ describe('decline with batched city lookup preserves filtering', () => {
         name: 'DiffAlt Instructor',
         firstName: 'DiffAlt',
         lastName: 'Inst',
-        businessName: 'DiffAlt Co',
       })
       await seedInstructorProfile(ctx, altUserId, { placeName: 'Koh Phi Phi' })
 
@@ -579,7 +536,6 @@ describe('decline with batched city lookup preserves filtering', () => {
         availableUnits: 0,
       })
 
-      // Alt has availability but is in different city
       await seedSnapshot(ctx, altUnitId, {
         date: testDate(5),
         windowStart: '08:00',
@@ -597,7 +553,6 @@ describe('decline with batched city lookup preserves filtering', () => {
       { bookingId, inventoryUnitId: unitId },
     )
 
-    // Different city alternative should be filtered out → no_backup_available sent
     await t.run(async (ctx) => {
       const notifications = await ctx.db.query('notifications').collect()
       const noBackup = notifications.find((n) => n.type === 'no_backup_available')

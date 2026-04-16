@@ -18,7 +18,6 @@ import {
   type SeedCtx,
 } from './fixtures'
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 /** Seed a standard instructor + DC + unit + booking + session + reservation + bookingResource setup */
 async function seedAcceptScenario(
@@ -57,7 +56,6 @@ async function seedAcceptScenario(
     name: opts.instrName ?? 'Instructor',
     firstName: opts.instrName?.split(' ')[0] ?? 'John',
     lastName: opts.instrName?.split(' ')[1] ?? 'Doe',
-    businessName: opts.instrBusiness ?? 'Instructor Co',
     role: 'Instructor',
   })
   if (opts.readyInstructor) {
@@ -76,7 +74,6 @@ async function seedAcceptScenario(
     name: opts.dcName ?? 'DC',
     firstName: opts.dcName?.split(' ')[0] ?? 'DC',
     lastName: opts.dcName?.split(' ')[1] ?? 'Test',
-    businessName: opts.dcBusiness ?? 'Test DC',
     role: 'DiveCenter',
   })
   const unitId = await seedInventoryUnit(ctx, {
@@ -110,14 +107,12 @@ async function seedAcceptScenario(
     status: opts.resStatus ?? 'PendingAcceptance',
     ...(opts.confirmedAt !== undefined ? { } : {}),
   })
-  // patch confirmedAt if needed (seedReservation doesn't support it)
   if (opts.confirmedAt !== undefined) {
     await ctx.db.patch(resId, { confirmedAt: opts.confirmedAt } as never)
   }
   return { unitId, bookingId, sessionId, resId, instrSlug, instrToken, dcSlug, dcToken }
 }
 
-// ─── getDateRange ─────────────────────────────────────────────────────────────
 
 describe('getDateRange', () => {
   it('returns single date when start equals end', () => {
@@ -133,7 +128,6 @@ describe('getDateRange', () => {
   })
 })
 
-// ─── acceptReservation ────────────────────────────────────────────────────────
 
 describe('acceptReservation', () => {
   it('rejects when the acting resource role is below 100% completeness', async () => {
@@ -169,7 +163,6 @@ describe('acceptReservation', () => {
       expect(res?.status).toBe('Confirmed')
       expect(res?.confirmedAt).toEqual(expect.any(Number))
 
-      // H15: audit log entry
       const logs = await ctx.db.query('bookingAuditLog').collect()
       expect(logs).toContainEqual(expect.objectContaining({
         action: 'reservation_accepted',
@@ -185,7 +178,6 @@ describe('acceptReservation', () => {
       return seedAcceptScenario(ctx, { resStatus: 'Confirmed', confirmedAt: Date.now() - 5000 })
     })
 
-    // Second accept on already-Confirmed reservation should be a no-op
     await t.withIdentity({ tokenIdentifier: 'user|123' }).mutation(
       api.reservationsMutations.acceptReservation,
       { reservationId: resId },
@@ -201,7 +193,6 @@ describe('acceptReservation', () => {
     const t = makeT()
 
     const { resId } = await t.run(async (ctx) => {
-      // Caller is "other-slug", not the unit owner
       await seedUser(ctx, {
         tokenIdentifier: 'user|456',
         slug: 'other-slug',
@@ -209,7 +200,6 @@ describe('acceptReservation', () => {
         name: 'Other',
         firstName: 'Other',
         lastName: 'User',
-        businessName: 'Other Co',
         role: 'Instructor',
       })
       const unitId = await seedInventoryUnit(ctx, {
@@ -260,7 +250,6 @@ describe('acceptReservation', () => {
   })
 })
 
-// ─── declineReservation ───────────────────────────────────────────────────────
 
 describe('declineReservation', () => {
   it('vacates the reservation with stakeholder_declined and restores the snapshot', async () => {
@@ -290,12 +279,10 @@ describe('declineReservation', () => {
       expect(res?.vacatedBy).toBe('stakeholder_declined')
       expect(res?.vacatedAt).toEqual(expect.any(Number))
 
-      // unitsRequested=1 returned to snapshot (0 → 1 available, 1 → 0 reserved)
       const snap = await ctx.db.get(snapshotId)
       expect(snap?.availableUnits).toBe(1)
       expect(snap?.reservedUnits).toBe(0)
 
-      // H15: audit log entry
       const logs = await ctx.db.query('bookingAuditLog').collect()
       expect(logs).toContainEqual(expect.objectContaining({
         action: 'reservation_declined',
@@ -351,7 +338,6 @@ describe('declineReservation', () => {
         availableUnits: 0,
       })
       return { bookingId: s.bookingId, unitId: s.unitId }
-      // No other inventoryUnits seeded — no alternatives
     })
 
     await t.withIdentity({ tokenIdentifier: 'user|123' }).mutation(
@@ -374,7 +360,6 @@ describe('declineReservation', () => {
     const t = makeT()
 
     const { bookingId, unitId } = await t.run(async (ctx) => {
-      // Caller: other-slug (does NOT own the unit)
       await seedUser(ctx, {
         tokenIdentifier: 'user|456',
         slug: 'other-slug',
@@ -382,7 +367,6 @@ describe('declineReservation', () => {
         name: 'Other',
         firstName: 'Other',
         lastName: 'User',
-        businessName: 'Other Co',
         role: 'Instructor',
       })
       const unitId = await seedInventoryUnit(ctx, {
@@ -408,7 +392,6 @@ describe('declineReservation', () => {
     const t = makeT()
 
     const { bookingId, unitId } = await t.run(async (ctx) => {
-      // DC + declining instructor
       await seedUser(ctx, {
         tokenIdentifier: 'user|h26-inst',
         slug: 'h26-instructor',
@@ -416,7 +399,6 @@ describe('declineReservation', () => {
         name: 'H26 Instructor',
         firstName: 'H26',
         lastName: 'Instructor',
-        businessName: 'H26 Co',
         role: 'Instructor',
       })
       await seedUser(ctx, {
@@ -426,11 +408,9 @@ describe('declineReservation', () => {
         name: 'H26 DC',
         firstName: 'H26',
         lastName: 'DC',
-        businessName: 'H26 DC Co',
         role: 'DiveCenter',
       })
 
-      // Declining unit
       const unitId = await seedInventoryUnit(ctx, {
         resourceType: 'Instructor',
         displayName: 'H26 Instructor',
@@ -438,7 +418,6 @@ describe('declineReservation', () => {
         ownerType: 'Instructor',
       })
 
-      // Alternative unit (same resource type, different owner)
       await seedUser(ctx, {
         tokenIdentifier: 'user|h26-alt',
         slug: 'h26-alt-instructor',
@@ -446,7 +425,6 @@ describe('declineReservation', () => {
         name: 'Alt Instructor',
         firstName: 'Alt',
         lastName: 'Instructor',
-        businessName: 'Alt Co',
         role: 'Instructor',
       })
       const altUnitId = await seedInventoryUnit(ctx, {
@@ -456,7 +434,6 @@ describe('declineReservation', () => {
         ownerType: 'Instructor',
       })
 
-      // Multi-day booking (3 days)
       const bookingId = await seedBooking(ctx, {
         ownerId: 'h26-dc',
         startDate: testDate(5),
@@ -468,7 +445,6 @@ describe('declineReservation', () => {
         resourceId: 'h26-instructor',
       })
 
-      // Sessions + reservations + snapshots for the declining unit (3 days)
       for (let day = 5; day <= 7; day++) {
         const sessionId = await seedSession(ctx, bookingId, unitId, {
           date: testDate(day),
@@ -486,7 +462,6 @@ describe('declineReservation', () => {
         await seedReservation(ctx, bookingId, unitId, sessionId)
       }
 
-      // Alternative unit has availability on ALL 3 booking dates
       for (let day = 5; day <= 7; day++) {
         await seedSnapshot(ctx, altUnitId, {
           date: testDate(day),
@@ -506,13 +481,11 @@ describe('declineReservation', () => {
       { bookingId, inventoryUnitId: unitId },
     )
 
-    // Alternative exists → should NOT send no_backup_available
     await t.run(async (ctx) => {
       const notifications = await ctx.db.query('notifications').collect()
       const noBackup = notifications.find((n) => n.type === 'no_backup_available')
       expect(noBackup).toBeUndefined()
 
-      // But hold_declined notification should still be sent
       const holdDeclined = notifications.find((n) => n.type === 'hold_declined')
       expect(holdDeclined).toMatchObject({
         type: 'hold_declined',
@@ -532,7 +505,6 @@ describe('declineReservation', () => {
         name: 'H26b Instructor',
         firstName: 'H26b',
         lastName: 'Instructor',
-        businessName: 'H26b Co',
         role: 'Instructor',
       })
       await seedUser(ctx, {
@@ -542,7 +514,6 @@ describe('declineReservation', () => {
         name: 'H26b DC',
         firstName: 'H26b',
         lastName: 'DC',
-        businessName: 'H26b DC Co',
         role: 'DiveCenter',
       })
 
@@ -553,7 +524,6 @@ describe('declineReservation', () => {
         ownerType: 'Instructor',
       })
 
-      // Alternative unit — available on day 5 and 6, but NOT day 7
       await seedUser(ctx, {
         tokenIdentifier: 'user|h26b-alt',
         slug: 'h26b-alt-instructor',
@@ -561,7 +531,6 @@ describe('declineReservation', () => {
         name: 'Alt2 Instructor',
         firstName: 'Alt2',
         lastName: 'Instructor',
-        businessName: 'Alt2 Co',
         role: 'Instructor',
       })
       const altUnitId = await seedInventoryUnit(ctx, {
@@ -599,7 +568,6 @@ describe('declineReservation', () => {
         await seedReservation(ctx, bookingId, unitId, sessionId)
       }
 
-      // Alt available on days 5-6, fully booked on day 7
       for (let day = 5; day <= 6; day++) {
         await seedSnapshot(ctx, altUnitId, {
           date: testDate(day),
@@ -627,7 +595,6 @@ describe('declineReservation', () => {
       { bookingId, inventoryUnitId: unitId },
     )
 
-    // No alternative covers all dates → should send no_backup_available
     await t.run(async (ctx) => {
       const notifications = await ctx.db.query('notifications').collect()
       const noBackup = notifications.find((n) => n.type === 'no_backup_available')
@@ -650,7 +617,6 @@ describe('declineReservation', () => {
         name: 'DD390 Instructor',
         firstName: 'DD390',
         lastName: 'Instructor',
-        businessName: 'DD390 Co',
         role: 'Instructor',
       })
       await seedUser(ctx, {
@@ -660,11 +626,8 @@ describe('declineReservation', () => {
         name: 'DD390 DC',
         firstName: 'DD390',
         lastName: 'DC',
-        businessName: 'DD390 DC Co',
         role: 'DiveCenter',
       })
-      // Neutral owner for noise units — must NOT be dd390-instructor to avoid
-      // cross-contamination in candidate filtering.
       await seedUser(ctx, {
         tokenIdentifier: 'user|dd390-noise',
         slug: 'dd390-noise-owner',
@@ -672,7 +635,6 @@ describe('declineReservation', () => {
         name: 'DD390 Noise',
         firstName: 'DD390',
         lastName: 'Noise',
-        businessName: 'DD390 Noise Co',
         role: 'DiveCenter',
       })
 
@@ -683,7 +645,6 @@ describe('declineReservation', () => {
         ownerType: 'Instructor',
       })
 
-      // Alternative instructor with available capacity on the booking date
       await seedUser(ctx, {
         tokenIdentifier: 'user|dd390-alt',
         slug: 'dd390-alt-instructor',
@@ -691,7 +652,6 @@ describe('declineReservation', () => {
         name: 'DD390 Alt',
         firstName: 'DD390',
         lastName: 'Alt',
-        businessName: 'DD390 Alt Co',
         role: 'Instructor',
       })
       const altUnitId = await seedInventoryUnit(ctx, {
@@ -717,7 +677,6 @@ describe('declineReservation', () => {
         startTime: '08:00',
         endTime: '16:00',
       })
-      // Position 1: declined instructor's snapshot (fully reserved)
       await seedSnapshot(ctx, unitId, {
         date: testDate(5),
         windowStart: '08:00',
@@ -728,8 +687,6 @@ describe('declineReservation', () => {
       })
       await seedReservation(ctx, bookingId, unitId, sessionId)
 
-      // Positions 2–501: 500 noise snapshots from distinct Boat units with neutral owner.
-      // This fills the .take(MAX_RESERVATIONS_PER_BOOKING) buffer completely.
       for (let i = 0; i < MAX_RESERVATIONS_PER_BOOKING; i++) {
         const noiseUnitId = await seedInventoryUnit(ctx, {
           resourceType: 'Boat',
@@ -747,8 +704,6 @@ describe('declineReservation', () => {
         })
       }
 
-      // Position 502: alt-instructor snapshot — inserted last, falls beyond .take(500).
-      // This is the candidate that SHOULD be found but gets silently dropped by truncation.
       await seedSnapshot(ctx, altUnitId, {
         date: testDate(5),
         windowStart: '08:00',
@@ -766,10 +721,6 @@ describe('declineReservation', () => {
       { bookingId, inventoryUnitId: unitId },
     )
 
-    // Known limitation: .take(MAX_RESERVATIONS_PER_BOOKING) truncates the by_date scan,
-    // so the alt-instructor snapshot at position 502 is never seen.
-    // The system fires no_backup_available even though a valid alternative exists.
-    // This test documents the silent-drop behavior.
     await t.run(async (ctx) => {
       const notifications = await ctx.db.query('notifications').collect()
       const noBackup = notifications.find((n) => n.type === 'no_backup_available')
@@ -784,7 +735,6 @@ describe('declineReservation', () => {
   })
 })
 
-// ─── acceptBookingReservations (bulk accept) ─────────────────────────────────
 
 describe('acceptBookingReservations', () => {
   it('bulk accept: confirms ALL days of a multi-day booking in one call', async () => {
@@ -798,7 +748,6 @@ describe('acceptBookingReservations', () => {
         name: 'Bulk Instructor',
         firstName: 'Bulk',
         lastName: 'Instructor',
-        businessName: 'Bulk Co',
         role: 'Instructor',
       })
       const instructorUser = await ctx.db
@@ -820,7 +769,6 @@ describe('acceptBookingReservations', () => {
         name: 'DC Bulk',
         firstName: 'DC',
         lastName: 'Bulk',
-        businessName: 'Bulk DC',
         role: 'DiveCenter',
       })
       const unitId = await seedInventoryUnit(ctx, {
@@ -841,7 +789,6 @@ describe('acceptBookingReservations', () => {
         resourceId: 'bulk-instructor',
       })
 
-      // 3-day booking: day 5, 6, 7
       const resIds: string[] = []
       for (let day = 5; day <= 7; day++) {
         const sessionId = await seedSession(ctx, bookingId, unitId, {
@@ -855,13 +802,11 @@ describe('acceptBookingReservations', () => {
       return { bookingId, unitId, resIds }
     })
 
-    // Single bulk accept call
     await t.withIdentity({ tokenIdentifier: 'user|bulk-inst' }).mutation(
       api.reservationsMutations.acceptBookingReservations,
       { bookingId, inventoryUnitId: unitId },
     )
 
-    // All 3 reservations confirmed
     await t.run(async (ctx) => {
       for (const resId of resIds) {
         const res = await ctx.db.get(resId as Id<'reservations'>)
@@ -869,7 +814,6 @@ describe('acceptBookingReservations', () => {
         expect(res?.confirmedAt).toEqual(expect.any(Number))
       }
 
-      // Booking should auto-advance to Upcoming (all conditions met)
       const booking = await ctx.db.get(bookingId) as Doc<'bookings'> | null
       expect(booking?.status).toBe('Upcoming')
     })
@@ -902,7 +846,6 @@ describe('acceptBookingReservations', () => {
         name: 'Selective Instructor',
         firstName: 'Selective',
         lastName: 'Instructor',
-        businessName: 'Selective Co',
         role: 'Instructor',
       })
       const instructorUser = await ctx.db
@@ -924,7 +867,6 @@ describe('acceptBookingReservations', () => {
         name: 'DC Selective',
         firstName: 'DC',
         lastName: 'Selective',
-        businessName: 'Selective DC',
         role: 'DiveCenter',
       })
       const unitId = await seedInventoryUnit(ctx, {
@@ -979,7 +921,6 @@ describe('acceptBookingReservations', () => {
         name: 'Overflow Instructor',
         firstName: 'Overflow',
         lastName: 'Instructor',
-        businessName: 'Overflow Co',
         role: 'Instructor',
       })
       await seedUser(ctx, {
@@ -989,7 +930,6 @@ describe('acceptBookingReservations', () => {
         name: 'DC Overflow',
         firstName: 'DC',
         lastName: 'Overflow',
-        businessName: 'Overflow DC',
         role: 'DiveCenter',
       })
       const unitId = await seedInventoryUnit(ctx, {
@@ -1007,7 +947,6 @@ describe('acceptBookingReservations', () => {
         resourceId: 'overflow-instructor',
       })
 
-      // Seed MAX_RESERVATIONS_PER_BOOKING + 1 reservations to trigger the limit
       for (let i = 0; i <= MAX_RESERVATIONS_PER_BOOKING; i++) {
         const sessionId = await seedSession(ctx, bookingId, unitId, {
           date: testDate(5),
@@ -1039,7 +978,6 @@ describe('acceptBookingReservations', () => {
         name: 'Idem Instructor',
         firstName: 'Idem',
         lastName: 'Instructor',
-        businessName: 'Idem Co',
         role: 'Instructor',
       })
       await seedUser(ctx, {
@@ -1049,7 +987,6 @@ describe('acceptBookingReservations', () => {
         name: 'DC Idem',
         firstName: 'DC',
         lastName: 'Idem',
-        businessName: 'Idem DC',
         role: 'DiveCenter',
       })
       const unitId = await seedInventoryUnit(ctx, {
@@ -1068,7 +1005,6 @@ describe('acceptBookingReservations', () => {
         resourceId: 'idem-instructor',
       })
 
-      // Both reservations already Confirmed
       const confirmedAt = Date.now() - 10000
       for (let day = 5; day <= 6; day++) {
         const sessionId = await seedSession(ctx, bookingId, unitId, {
@@ -1084,13 +1020,11 @@ describe('acceptBookingReservations', () => {
       return { bookingId, unitId, confirmedAt }
     })
 
-    // Second call should not throw — idempotent
     await t.withIdentity({ tokenIdentifier: 'user|idem-inst' }).mutation(
       api.reservationsMutations.acceptBookingReservations,
       { bookingId, inventoryUnitId: unitId },
     )
 
-    // Reservations still Confirmed, no state change
     await t.run(async (ctx) => {
       const reservations = await ctx.db
         .query('reservations')
@@ -1105,10 +1039,8 @@ describe('acceptBookingReservations', () => {
   })
 })
 
-// ─── decline cascade side effects ─────────────────────────────────────────────
 
 describe('decline cascade side effects', () => {
-  // ── H17: Snapshot restoration ──────────────────────────────────────────────
 
   it('H17: exclusive unit decline increments availableUnits and decrements reservedUnits by unitsRequested', async () => {
     const t = makeT()
@@ -1124,7 +1056,6 @@ describe('decline cascade side effects', () => {
         dcName: 'Snap DC',
         dcBusiness: 'Snap DC Co',
       })
-      // Snapshot starts fully reserved: availableUnits=0, reservedUnits=1
       const snapshotId = await seedSnapshot(ctx, s.unitId, {
         date: testDate(5),
         windowStart: '08:00',
@@ -1143,7 +1074,6 @@ describe('decline cascade side effects', () => {
 
     await t.run(async (ctx) => {
       const snap = await ctx.db.get(snapshotId) as Doc<'availabilitySnapshots'> | null
-      // unitsRequested=1 restored: availableUnits 0→1, reservedUnits 1→0
       expect(snap?.availableUnits).toBe(1)
       expect(snap?.reservedUnits).toBe(0)
     })
@@ -1160,7 +1090,6 @@ describe('decline cascade side effects', () => {
         name: 'Multiday Instructor',
         firstName: 'Multiday',
         lastName: 'Instructor',
-        businessName: 'Multiday Co',
         role: 'Instructor',
       })
       await seedUser(ctx, {
@@ -1170,7 +1099,6 @@ describe('decline cascade side effects', () => {
         name: 'Multiday DC',
         firstName: 'Multiday',
         lastName: 'DC',
-        businessName: 'Multiday DC Co',
         role: 'DiveCenter',
       })
       const unitId = await seedInventoryUnit(ctx, {
@@ -1189,7 +1117,6 @@ describe('decline cascade side effects', () => {
         resourceId: 'multiday-instructor',
       })
 
-      // 3 sessions across 3 days, each with their own snapshot fully reserved
       const snapshotIds: string[] = []
       for (let day = 5; day <= 7; day++) {
         const sessionId = await seedSession(ctx, bookingId, unitId, {
@@ -1236,7 +1163,6 @@ describe('decline cascade side effects', () => {
         name: 'DW Instructor',
         firstName: 'DW',
         lastName: 'Instructor',
-        businessName: 'DW Co',
         role: 'Instructor',
       })
       await seedUser(ctx, {
@@ -1246,7 +1172,6 @@ describe('decline cascade side effects', () => {
         name: 'DW DC',
         firstName: 'DW',
         lastName: 'DC',
-        businessName: 'DW DC Co',
         role: 'DiveCenter',
       })
       const unitId = await seedInventoryUnit(ctx, {
@@ -1266,7 +1191,6 @@ describe('decline cascade side effects', () => {
         resourceType: 'Instructor',
         resourceId: 'dw-instructor',
       })
-      // One session, one snapshot, TWO reservations on the same session+snapshot
       const sessionId = await seedSession(ctx, bookingId, unitId, {
         date: testDate(5),
         startTime: '08:00',
@@ -1280,20 +1204,17 @@ describe('decline cascade side effects', () => {
         availableUnits: 8,
         reservedUnits: 2,
       })
-      // Two reservations against the same snapshot (pooled: 1 unit each)
       await seedReservation(ctx, bookingId, unitId, sessionId, { unitsRequested: 1 })
       await seedReservation(ctx, bookingId, unitId, sessionId, { unitsRequested: 1 })
 
       return { bookingId, unitId, snapshotId }
     })
 
-    // Decline should succeed — aggregating 2 units and restoring the snapshot once
     await t.withIdentity({ tokenIdentifier: 'user|dw-inst' }).mutation(
       api.reservationsMutations.declineReservation,
       { bookingId, inventoryUnitId: unitId },
     )
 
-    // Verify: both reservations vacated, snapshot restored by 2 units total
     await t.run(async (ctx) => {
       const reservations = await ctx.db
         .query('reservations')
@@ -1347,7 +1268,6 @@ describe('decline cascade side effects', () => {
         .query('bookingResources')
         .withIndex('by_bookingId', (q: any) => q.eq('bookingId', bookingId))
         .collect()
-      // The Instructor junction row must be gone after decline
       const instructorRow = rows.find((r) => r.resourceType === 'Instructor')
       expect(instructorRow).toBeUndefined()
     })
@@ -1392,13 +1312,11 @@ describe('decline cascade side effects', () => {
       const booking = await ctx.db.get(bookingId) as Doc<'bookings'> | null
       expect(booking?.status).toBe('Draft')
       expect(booking?.bookingFormComplete).toBe(false)
-      // expiresAt must be set to a future timestamp (now + holdTTL)
       expect(booking?.expiresAt).toEqual(expect.any(Number))
       expect(booking?.expiresAt).toBeGreaterThan(beforeDecline)
     })
   })
 
-  // ── H20: Notification content assertions ───────────────────────────────────
 
   it('H20: hold_declined notification has correct type, recipient, bookingId, and message contains unit displayName', async () => {
     const t = makeT()
@@ -1434,13 +1352,11 @@ describe('decline cascade side effects', () => {
       const notifications = await ctx.db.query('notifications').collect()
       const declined = notifications.find((n) => n.type === 'hold_declined') as Doc<'notifications'> | undefined
 
-      // Recipient must be the booking owner (DiveCenter), NOT the resource stakeholder
       expect(declined).toMatchObject({
         type: 'hold_declined',
         userId: 'notif-dc',
         bookingId,
       })
-      // Message must contain the unit's displayName so the operator knows who declined
       expect(declined?.message).toContain('Marie Curie')
     })
   })
@@ -1459,7 +1375,6 @@ describe('decline cascade side effects', () => {
         dcName: 'NS DC',
         dcBusiness: 'NS DC Co',
         bookingStatus: 'Upcoming',
-        // Session date in the past so hasSessionStarted returns true
         startDate: testDate(-2),
         endDate: testDate(-2),
         resStatus: 'Confirmed',
@@ -1477,7 +1392,6 @@ describe('decline cascade side effects', () => {
       const notifications = await ctx.db.query('notifications').collect()
       const noshow = notifications.find((n) => n.type === 'noshow_marked') as Doc<'notifications'> | undefined
 
-      // Recipient must be the resource stakeholder (Instructor), NOT the booking owner
       expect(noshow).toMatchObject({
         type: 'noshow_marked',
         userId: 'ns-instructor',
@@ -1487,7 +1401,6 @@ describe('decline cascade side effects', () => {
   })
 })
 
-// ─── H19: Multi-reservation release atomicity ─────────────────────────────
 
 describe('H19 — releaseBookingReservations with 3+ reservations', () => {
   it('vacates all 3 active reservations and restores all 3 snapshots', async () => {
@@ -1497,7 +1410,6 @@ describe('H19 — releaseBookingReservations with 3+ reservations', () => {
       await seedUser(ctx, { slug: 'dc-h19', tokenIdentifier: 'clerk|dc-h19', role: 'DiveCenter' })
       const bookingId = await seedBooking(ctx, { ownerId: 'dc-h19', status: 'Draft' })
 
-      // 3 different units on 3 different dates
       const units = await Promise.all([
         seedInventoryUnit(ctx, { resourceType: 'Instructor', displayName: 'Unit A' }),
         seedInventoryUnit(ctx, { resourceType: 'Boat', capacityModel: 'Pooled', totalUnits: 10, displayName: 'Unit B' }),
@@ -1530,17 +1442,14 @@ describe('H19 — releaseBookingReservations with 3+ reservations', () => {
       return { bookingId, reservations, snapshots }
     })
 
-    // Cancel the booking — should release all 3 reservations
     await t.withIdentity({ tokenIdentifier: 'clerk|dc-h19' }).mutation(
       api.bookingDraftMutations.discardDraft,
       { bookingId: ids.bookingId },
     )
 
     await t.run(async (ctx) => {
-      // All 3 snapshots restored
       for (const snapId of ids.snapshots) {
         const snap = await ctx.db.get(snapId)
-        // reservedUnits should be decremented by 1 (each reservation held 1 unit)
         expect(snap?.reservedUnits).toBe(0)
       }
     })
@@ -1563,7 +1472,6 @@ describe('H19 — releaseBookingReservations with 3+ reservations', () => {
         date: testDate(10), windowStart: '08:00', windowEnd: '16:00',
         totalUnits: 1, reservedUnits: 1, availableUnits: 0,
       })
-      // Unit 2 snapshot already restored (vacated previously)
       const snap2 = await seedSnapshot(ctx, unit2, {
         date: testDate(11), windowStart: '08:00', windowEnd: '16:00',
         totalUnits: 1, reservedUnits: 0, availableUnits: 1,
@@ -1581,12 +1489,10 @@ describe('H19 — releaseBookingReservations with 3+ reservations', () => {
     )
 
     await t.run(async (ctx) => {
-      // Active unit's snapshot restored
       const snap1 = await ctx.db.get(ids.snap1)
       expect(snap1?.availableUnits).toBe(1)
       expect(snap1?.reservedUnits).toBe(0)
 
-      // Already-Vacated unit's snapshot unchanged
       const snap2 = await ctx.db.get(ids.snap2)
       expect(snap2?.availableUnits).toBe(1)
       expect(snap2?.reservedUnits).toBe(0)

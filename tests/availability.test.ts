@@ -12,6 +12,7 @@ import {
   TEST_SLUGS,
   seedUser,
   seedInventoryUnit,
+  seedInstructorProfile,
   seedSnapshot,
   seedBlockedDates,
   seedBooking,
@@ -28,7 +29,6 @@ beforeEach(() => {
   t = makeT()
 })
 
-// ─── getUnavailableUnitIdsForDates ────────────────────────────────────────────
 
 describe('_getUnavailableUnitIdsForDates', () => {
   it('returns empty set when no snapshots exist', async () => {
@@ -102,7 +102,6 @@ describe('_getUnavailableUnitIdsForDates', () => {
   it('deduplicates unit IDs when unit is unavailable on multiple queried dates', async () => {
     await t.run(async (ctx) => {
       const unitId = await seedInventoryUnit(ctx)
-      // Same unit fully booked on two different dates
       await seedSnapshot(ctx, unitId, {
         date: testDate(5),
         totalUnits: 1,
@@ -139,7 +138,6 @@ describe('_getUnavailableUnitIdsForDates', () => {
         capacityModel: 'Pooled',
         totalUnits: 10,
       })
-      // One window available, one full — unit still flagged
       await seedSnapshot(ctx, unitId, {
         windowStart: '08:00',
         windowEnd: '12:00',
@@ -161,18 +159,17 @@ describe('_getUnavailableUnitIdsForDates', () => {
   })
 })
 
-// ─── listInventoryByType ──────────────────────────────────────────────────────
 
 describe('_listInventoryByType', () => {
   it('returns all units of a given type with joined ownerName', async () => {
     await t.run(async (ctx) => {
-      await seedUser(ctx, {
+      const userId = await seedUser(ctx, {
         slug: TEST_SLUGS.instructor,
-        businessName: 'Blue Ocean Dive',
         role: 'Instructor',
         tokenIdentifier: TEST_TOKENS.instructor,
         email: 'instr@test.com',
       })
+      await seedInstructorProfile(ctx, userId, { name: 'Blue Ocean Dive' })
       const unitId = await seedInventoryUnit(ctx, {
         resourceType: 'Instructor',
         displayName: 'John Doe',
@@ -194,7 +191,6 @@ describe('_listInventoryByType', () => {
 
   it('returns empty array when no units of that type exist', async () => {
     await t.run(async (ctx) => {
-      // Insert an Instructor unit — should not appear when querying Boat
       await seedInventoryUnit(ctx, { resourceType: 'Instructor' })
 
       const result = await _listInventoryByType(ctx, { type: 'Boat' })
@@ -208,7 +204,6 @@ describe('_listInventoryByType', () => {
         resourceType: 'Instructor',
         ownerId: TEST_SLUGS.instructor,
       })
-      // Second unit with a different owner
       await seedInventoryUnit(ctx, {
         resourceType: 'Instructor',
         ownerId: 'other-instructor',
@@ -242,7 +237,6 @@ describe('_listInventoryByType', () => {
 
   it('falls back to displayName when owner user is not found', async () => {
     await t.run(async (ctx) => {
-      // Insert unit with ownerId that has NO corresponding user record
       await seedInventoryUnit(ctx, {
         resourceType: 'Instructor',
         displayName: 'John Doe',
@@ -290,7 +284,6 @@ describe('_listInventoryByType', () => {
   })
 })
 
-// ─── toggleBlockedDate ────────────────────────────────────────────────────────
 
 describe('_toggleBlockedDate', () => {
   it('blocks a date that was not previously blocked', async () => {
@@ -341,9 +334,7 @@ describe('_toggleBlockedDate', () => {
         dates: [testDate(5)],
       })
 
-      // First call unblocks
       await _toggleBlockedDate(ctx, { date: testDate(5), roleType: 'DiveCenter' })
-      // Second call blocks again
       const result = await _toggleBlockedDate(ctx, { date: testDate(5), roleType: 'DiveCenter' })
 
       expect(result).toBe(true)
@@ -378,7 +369,6 @@ describe('_toggleBlockedDate', () => {
   })
 
   it('throws NOT_FOUND when user record does not exist in Convex', async () => {
-    // Identity present but no matching user in the DB
     await t.withIdentity({ tokenIdentifier: 'test|ghost-user' }).run(async (ctx) => {
       await expect(
         _toggleBlockedDate(ctx, { date: testDate(5), roleType: 'DiveCenter' }),
@@ -446,7 +436,6 @@ describe('_toggleBlockedDate', () => {
 
       expect(result).toBe(true)
 
-      // PendingAcceptance reservation should be vacated with date_blocked reason
       const reservations = await ctx.db.query('reservations').collect()
       expect(reservations[0].status).toBe('Vacated')
       expect(reservations[0].vacatedBy).toBe('date_blocked')
@@ -472,7 +461,6 @@ describe('_toggleBlockedDate', () => {
       expect(reservations).toHaveLength(1)
       expect(reservations[0].status).toBe('Vacated')
       expect(reservations[0].vacatedBy).toBe('date_blocked')
-      // Must NOT be stakeholder_declined — that permanently blocks autoAdvance
       expect(reservations[0].vacatedBy).not.toBe('stakeholder_declined')
     })
   })
@@ -486,12 +474,10 @@ describe('_toggleBlockedDate', () => {
       })
       const unitId = await seedInventoryUnit(ctx)
 
-      // Booking 1: Confirmed
       const booking1 = await seedBooking(ctx, { status: 'Upcoming' })
       const session1 = await seedSession(ctx, booking1, unitId)
       await seedReservation(ctx, booking1, unitId, session1, { status: 'Confirmed' })
 
-      // Booking 2: PendingAcceptance
       const booking2 = await seedBooking(ctx)
       const session2 = await seedSession(ctx, booking2, unitId, { startTime: '09:00' })
       await seedReservation(ctx, booking2, unitId, session2, { status: 'PendingAcceptance' })
@@ -504,7 +490,6 @@ describe('_toggleBlockedDate', () => {
         data: { code: 'CONFIRMED_RESERVATION_EXISTS' },
       })
 
-      // Neither reservation should be touched
       const reservations = await ctx.db.query('reservations').collect()
       expect(reservations.find((r) => r.status === 'Confirmed')).toMatchObject({ status: 'Confirmed' })
       expect(reservations.find((r) => r.status === 'PendingAcceptance')).toMatchObject({ status: 'PendingAcceptance' })
@@ -524,13 +509,11 @@ describe('_toggleBlockedDate', () => {
         dates: [testDate(5)],
       })
 
-      // Unblocking should always work — no reservation check needed
       const result = await _toggleBlockedDate(ctx, { date: testDate(5), roleType: 'Instructor' })
       expect(result).toBe(false)
     })
   })
 
-  // ─── Past-date guard ────────────────────────────────────────────────────────
 
   describe('past-date guard', () => {
     afterEach(() => {
@@ -572,21 +555,18 @@ describe('_toggleBlockedDate', () => {
       vi.useFakeTimers({ now: Date.now() })
       await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter }).run(async (ctx) => {
         await seedUser(ctx)
-        // Seed a blocked date that is already in the past
         await seedBlockedDates(ctx, {
           stakeholderId: TEST_SLUGS.diveCenter,
           roleType: 'DiveCenter',
           dates: [testDate(-3)],
         })
 
-        // Unblocking past dates should always work
         const result = await _toggleBlockedDate(ctx, { date: testDate(-3), roleType: 'DiveCenter' })
         expect(result).toBe(false)
       })
     })
   })
 
-  // ─── Role isolation ─────────────────────────────────────────────────────────
 
   describe('role isolation', () => {
     it('blocking Instructor role does not affect Equipment dates for same owner', async () => {
@@ -597,10 +577,8 @@ describe('_toggleBlockedDate', () => {
           role: 'Instructor',
         })
 
-        // Block a date for Instructor role
         await _toggleBlockedDate(ctx, { date: testDate(5), roleType: 'Instructor' })
 
-        // Equipment role for same owner should have no blocked dates
         const equipDoc = await ctx.db
           .query('stakeholderBlockedDates')
           .withIndex('by_stakeholderId_roleType', (q: any) =>
@@ -615,11 +593,9 @@ describe('_toggleBlockedDate', () => {
       await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter }).run(async (ctx) => {
         await seedUser(ctx)
 
-        // Block dates for two different roles
         await _toggleBlockedDate(ctx, { date: testDate(5), roleType: 'Boat' })
         await _toggleBlockedDate(ctx, { date: testDate(5), roleType: 'DiveCenter' })
 
-        // Each role has its own isolated record
         const boatDoc = await ctx.db
           .query('stakeholderBlockedDates')
           .withIndex('by_stakeholderId_roleType', (q: any) =>
@@ -636,7 +612,6 @@ describe('_toggleBlockedDate', () => {
         expect(boatDoc?.dates).toEqual([testDate(5)])
         expect(dcDoc?.dates).toEqual([testDate(5)])
 
-        // Unblock Boat — DiveCenter should be unaffected
         await _toggleBlockedDate(ctx, { date: testDate(5), roleType: 'Boat' })
         const boatAfter = await ctx.db
           .query('stakeholderBlockedDates')
@@ -669,14 +644,12 @@ describe('_toggleBlockedDate', () => {
           totalUnits: 1,
           ownerId: TEST_SLUGS.instructor,
         })
-        // Confirmed reservation on Instructor unit
         const bookingId = await seedBooking(ctx)
         const sessionId = await seedSession(ctx, bookingId, unitId)
         await seedReservation(ctx, bookingId, unitId, sessionId, {
           status: 'Confirmed',
         })
 
-        // DiveMaster role should hit the Instructor reservation gate
         await expect(
           _toggleBlockedDate(ctx, { date: testDate(5), roleType: 'DiveMaster' }),
         ).rejects.toThrow('CONFIRMED_RESERVATION_EXISTS')
@@ -685,7 +658,6 @@ describe('_toggleBlockedDate', () => {
   })
 })
 
-// ─── getBlockedDatesForStakeholder (auth + privacy) ──────────────────────────
 
 describe('_getBlockedDatesForStakeholder', () => {
   it('returns dates for the owning stakeholder', async () => {
@@ -718,7 +690,6 @@ describe('_getBlockedDatesForStakeholder', () => {
 
   it('returns empty array for a different users slug (silent deny)', async () => {
     await t.withIdentity({ tokenIdentifier: TEST_TOKENS.instructor }).run(async (ctx) => {
-      // Seed both users
       await seedUser(ctx, {
         tokenIdentifier: TEST_TOKENS.instructor,
         slug: TEST_SLUGS.instructor,
@@ -735,7 +706,6 @@ describe('_getBlockedDatesForStakeholder', () => {
         dates: [testDate(5)],
       })
 
-      // Instructor tries to query DiveCenter's blocked dates → silent deny
       const result = await _getBlockedDatesForStakeholder(ctx, {
         stakeholderId: TEST_SLUGS.diveCenter,
         roleType: 'DiveCenter',
@@ -757,13 +727,10 @@ describe('_getBlockedDatesForStakeholder', () => {
   })
 })
 
-// ─── Full-day vs time-window overlap granularity ──────────────────────────────
 
 describe('_getUnavailableUnitIdsForDates — full-day vs time-window', () => {
   it('10 — day boat with any reservation is unavailable for the entire date', async () => {
     await t.run(async (ctx) => {
-      // Pooled day boat: capacity 2, one seat reserved — still has availableUnits > 0
-      // but full-day logic must mark it unavailable regardless
       const unitId = await ctx.db.insert('inventoryUnits', {
         resourceType: 'Boat',
         resourceId: 'day-boat-1',
@@ -774,7 +741,6 @@ describe('_getUnavailableUnitIdsForDates — full-day vs time-window', () => {
         ownerType: 'Boat',
         boatType: 'day_boat',
       })
-      // One seat reserved, one still available — but full-day blocks the whole date
       await seedSnapshot(ctx, unitId, {
         date: testDate(5),
         windowStart: '08:00',
@@ -791,8 +757,6 @@ describe('_getUnavailableUnitIdsForDates — full-day vs time-window', () => {
 
   it('11 — speedboat with morning reservation is still available for other windows', async () => {
     await t.run(async (ctx) => {
-      // Pooled speedboat: 3 seats per trip, 1 seat reserved — availableUnits > 0
-      // Time-window resource: NOT marked unavailable (capacity remains)
       const unitId = await ctx.db.insert('inventoryUnits', {
         resourceType: 'Boat',
         resourceId: 'speedboat-1',
@@ -845,7 +809,6 @@ describe('_getUnavailableUnitIdsForDates — full-day vs time-window', () => {
 
   it('boat without boatType defaults to time-window (safe fallback)', async () => {
     await t.run(async (ctx) => {
-      // No boatType set — should NOT be treated as full-day
       const unitId = await ctx.db.insert('inventoryUnits', {
         resourceType: 'Boat',
         resourceId: 'unknown-boat',
@@ -855,7 +818,6 @@ describe('_getUnavailableUnitIdsForDates — full-day vs time-window', () => {
         ownerId: 'unknown-boat',
         ownerType: 'Boat',
       })
-      // Partial reservation, availableUnits > 0
       await seedSnapshot(ctx, unitId, {
         date: testDate(5),
         windowStart: '08:00',
@@ -866,15 +828,12 @@ describe('_getUnavailableUnitIdsForDates — full-day vs time-window', () => {
       })
 
       const result = await _getUnavailableUnitIdsForDates(ctx, [testDate(5)])
-      // Time-window behavior: availableUnits > 0 → not unavailable
       expect(result.has(unitId)).toBe(false)
-      // Confirm isFullDayResource respects the safe default
       expect(isFullDayResource({ resourceType: 'Boat' })).toBe(false)
     })
   })
 })
 
-// ─── getCapacityForDates (TDD — per-date availability for resource pickers) ──
 
 describe('_getCapacityForDates', () => {
   it('Exclusive, no bookings → full capacity', async () => {
@@ -887,7 +846,6 @@ describe('_getCapacityForDates', () => {
 
       const result = await _getCapacityForDates(ctx, [testDate(5)])
       const entry = result[unitId as string]?.[testDate(5)]
-      // No snapshot → full capacity returned
       expect(entry).toEqual({ available: 1, total: 1 })
     })
   })
@@ -973,8 +931,6 @@ describe('_getCapacityForDates', () => {
         capacityModel: 'Exclusive',
         totalUnits: 1,
       })
-      // Day 1: no snapshot (available)
-      // Day 2: fully booked
       await seedSnapshot(ctx, unitId, {
         date: testDate(6),
         totalUnits: 1,
@@ -995,7 +951,6 @@ describe('_getCapacityForDates', () => {
         capacityModel: 'Pooled',
         totalUnits: 10,
       })
-      // Snapshot exists for a different date, not the queried date
       await seedSnapshot(ctx, unitId, {
         date: testDate(10),
         totalUnits: 10,
@@ -1016,7 +971,6 @@ describe('_getCapacityForDates', () => {
         capacityModel: 'Exclusive',
         totalUnits: 1,
       })
-      // Snapshot shows released (available restored)
       await seedSnapshot(ctx, unitId, {
         date: testDate(5),
         totalUnits: 1,
@@ -1054,7 +1008,6 @@ describe('_getCapacityForDates', () => {
         ownerId: 'boat-a',
         ownerType: 'Boat',
       })
-      // Instructor fully booked, boat has 15/20
       await seedSnapshot(ctx, instrId, {
         date: testDate(5),
         totalUnits: 1,
@@ -1074,7 +1027,6 @@ describe('_getCapacityForDates', () => {
     })
   })
 
-  // ─── Blocked-date inventory exclusion ─────────────────────────────────────
 
   it('blocked owner returns available=0 for blocked date', async () => {
     await t.run(async (ctx) => {
@@ -1109,7 +1061,6 @@ describe('_getCapacityForDates', () => {
         dates: [testDate(5)],
       })
 
-      // Query a different date — not blocked
       const result = await _getCapacityForDates(ctx, [testDate(7)])
       expect(result[unitId as string]?.[testDate(7)]).toEqual({ available: 1, total: 1 })
     })
@@ -1117,7 +1068,6 @@ describe('_getCapacityForDates', () => {
 
   it('blocked Instructor role does not zero Equipment units for same owner', async () => {
     await t.run(async (ctx) => {
-      // Same owner has both Instructor and Equipment inventory
       await seedInventoryUnit(ctx, {
         resourceType: 'Instructor',
         capacityModel: 'Exclusive',
@@ -1131,7 +1081,6 @@ describe('_getCapacityForDates', () => {
         ownerId: TEST_SLUGS.instructor,
         ownerType: 'Equipment',
       })
-      // Only Instructor role is blocked
       await seedBlockedDates(ctx, {
         stakeholderId: TEST_SLUGS.instructor,
         roleType: 'Instructor',
@@ -1139,14 +1088,12 @@ describe('_getCapacityForDates', () => {
       })
 
       const result = await _getCapacityForDates(ctx, [testDate(5)])
-      // Equipment capacity should be unaffected
       expect(result[equipId as string]?.[testDate(5)]).toEqual({ available: 10, total: 10 })
     })
   })
 
   it('unblocked owner unaffected by another owners block', async () => {
     await t.run(async (ctx) => {
-      // Blocked instructor
       await seedInventoryUnit(ctx, {
         resourceType: 'Instructor',
         capacityModel: 'Exclusive',
@@ -1158,7 +1105,6 @@ describe('_getCapacityForDates', () => {
         roleType: 'Instructor',
         dates: [testDate(5)],
       })
-      // Unblocked instructor
       const unblockedId = await seedInventoryUnit(ctx, {
         resourceType: 'Instructor',
         capacityModel: 'Exclusive',
@@ -1172,7 +1118,6 @@ describe('_getCapacityForDates', () => {
   })
 })
 
-// ─── H4: Snapshot Window Matching ──────────────────────────────────────────
 
 describe('H4 — Snapshot window matching via releaseBookingReservations', () => {
   it('H4-1: exact match succeeds — restore finds snapshot by unit/date/windowStart', async () => {
@@ -1200,7 +1145,6 @@ describe('H4 — Snapshot window matching via releaseBookingReservations', () =>
       })
       await seedReservation(ctx, bookingId, unitId, sessionId, { status: 'PendingAcceptance' })
 
-      // Release should find the exact snapshot and restore
       await releaseBookingReservations(ctx, bookingId, 'hold_expired')
 
       const snapshot = await ctx.db.get(snapshotId)
@@ -1217,7 +1161,6 @@ describe('H4 — Snapshot window matching via releaseBookingReservations', () =>
         capacityModel: 'Exclusive',
         totalUnits: 1,
       })
-      // Snapshot stored with zero-padded date
       await seedSnapshot(ctx, unitId, {
         date,
         windowStart: '09:00',
@@ -1228,7 +1171,6 @@ describe('H4 — Snapshot window matching via releaseBookingReservations', () =>
       })
 
       const bookingId = await seedBooking(ctx)
-      // Session with non-zero-padded date — mismatch
       const sessionId = await seedSession(ctx, bookingId, unitId, {
         date: malformedDate(date),
         startTime: '09:00',
@@ -1236,7 +1178,6 @@ describe('H4 — Snapshot window matching via releaseBookingReservations', () =>
       })
       await seedReservation(ctx, bookingId, unitId, sessionId, { status: 'PendingAcceptance' })
 
-      // Should throw MISSING_SNAPSHOT because index lookup won't match
       await expect(
         releaseBookingReservations(ctx, bookingId, 'hold_expired'),
       ).rejects.toMatchObject({
@@ -1253,7 +1194,6 @@ describe('H4 — Snapshot window matching via releaseBookingReservations', () =>
         capacityModel: 'Exclusive',
         totalUnits: 1,
       })
-      // Snapshot stored with zero-padded time
       await seedSnapshot(ctx, unitId, {
         date,
         windowStart: '09:00',
@@ -1264,7 +1204,6 @@ describe('H4 — Snapshot window matching via releaseBookingReservations', () =>
       })
 
       const bookingId = await seedBooking(ctx)
-      // Session with non-zero-padded time — now caught by assertValidTime (DD-260)
       const sessionId = await seedSession(ctx, bookingId, unitId, {
         date,
         startTime: '9:00',
@@ -1272,7 +1211,6 @@ describe('H4 — Snapshot window matching via releaseBookingReservations', () =>
       })
       await seedReservation(ctx, bookingId, unitId, sessionId, { status: 'PendingAcceptance' })
 
-      // DD-260: assertValidTime rejects malformed "9:00" before the lookup
       await expect(
         releaseBookingReservations(ctx, bookingId, 'hold_expired'),
       ).rejects.toMatchObject({
@@ -1289,7 +1227,6 @@ describe('H4 — Snapshot window matching via releaseBookingReservations', () =>
         totalUnits: 1,
       })
 
-      // Morning snapshot
       const morningSnapId = await seedSnapshot(ctx, unitId, {
         date: testDate(5),
         windowStart: '09:00',
@@ -1299,7 +1236,6 @@ describe('H4 — Snapshot window matching via releaseBookingReservations', () =>
         availableUnits: 0,
       })
 
-      // Afternoon snapshot (different booking holds this)
       const afternoonSnapId = await seedSnapshot(ctx, unitId, {
         date: testDate(5),
         windowStart: '13:00',
@@ -1309,7 +1245,6 @@ describe('H4 — Snapshot window matching via releaseBookingReservations', () =>
         availableUnits: 0,
       })
 
-      // Booking A: holds the morning slot
       const bookingA = await seedBooking(ctx)
       const sessionA = await seedSession(ctx, bookingA, unitId, {
         date: testDate(5),
@@ -1318,15 +1253,12 @@ describe('H4 — Snapshot window matching via releaseBookingReservations', () =>
       })
       await seedReservation(ctx, bookingA, unitId, sessionA, { status: 'PendingAcceptance' })
 
-      // Release booking A — only morning session
       await releaseBookingReservations(ctx, bookingA, 'hold_expired')
 
-      // Morning snapshot restored
       const morningSnap = await ctx.db.get(morningSnapId)
       expect(morningSnap!.availableUnits).toBe(1)
       expect(morningSnap!.reservedUnits).toBe(0)
 
-      // Afternoon snapshot unchanged
       const afternoonSnap = await ctx.db.get(afternoonSnapId)
       expect(afternoonSnap!.availableUnits).toBe(0)
       expect(afternoonSnap!.reservedUnits).toBe(1)
@@ -1334,7 +1266,6 @@ describe('H4 — Snapshot window matching via releaseBookingReservations', () =>
   })
 })
 
-// ─── Auth gate: listInventoryByType & listDiveSites ─────────────────────────
 
 describe('listInventoryByType auth gate', () => {
   it('throws UNAUTHENTICATED when called without identity', async () => {

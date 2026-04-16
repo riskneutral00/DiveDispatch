@@ -11,7 +11,6 @@ describe('submitSupportRequest', () => {
     await t.withIdentity(identity).mutation(api.users.createUser, {
       ...createUserDefaults,
       role: 'DiveCenter',
-      businessName: 'Support Test DC',
     })
     await t.finishAllScheduledFunctions(vi.runAllTimers)
     vi.useRealTimers()
@@ -39,7 +38,6 @@ describe('submitSupportRequest', () => {
     await t.withIdentity(identity).mutation(api.users.createUser, {
       ...createUserDefaults,
       role: 'DiveCenter',
-      businessName: 'Short Msg DC',
     })
     await t.finishAllScheduledFunctions(vi.runAllTimers)
     vi.useRealTimers()

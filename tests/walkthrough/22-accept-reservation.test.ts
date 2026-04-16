@@ -35,13 +35,11 @@ async function seedUser(
     name: `${slug} Display`,
     firstName: slug,
     lastName: 'Test',
-    businessName: `${slug} Business`,
     phone: '+66812345678',
     dateOfBirth: '1990-01-01',
     isSeeded: false,
     appLanguage: 'en',
   })
-  await ctx.db.insert('userRoles', { userId, role, createdAt: Date.now(), profileComplete: false })
   if (role === 'Instructor') {
     await ctx.db.insert('diveStaff', {
       userId,

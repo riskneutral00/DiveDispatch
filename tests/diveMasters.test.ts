@@ -29,57 +29,6 @@ async function seedDiveMasterProfile(
   })
 }
 
-describe('diveMasters.update — monotonic profileComplete invariant', () => {
-  it('allows clearing teachingLanguages while profileComplete is false (draft)', async () => {
-    const t = makeT()
-    let dmId: Awaited<ReturnType<typeof seedDiveMasterProfile>> | undefined
-    await t.run(async (ctx) => {
-      const userId = await seedUser(ctx, 'draft-dm')
-      dmId = await seedDiveMasterProfile(ctx, userId, { teachingLanguages: ['en'] })
-    })
-
-    await t.withIdentity({ tokenIdentifier: 'clerk|draft-dm' })
-      .mutation(api.diveMasters.update, { teachingLanguages: [] })
-
-    await t.run(async (ctx) => {
-      const dm = await ctx.db.get(dmId!) as Doc<'diveStaff'> | null
-      expect(dm!.teachingLanguages).toEqual([])
-    })
-  })
-
-  it('rejects clearing teachingLanguages once profileComplete is true', async () => {
-    const t = makeT()
-    await t.run(async (ctx) => {
-      const userId = await seedUser(ctx, 'done-dm')
-      await seedDiveMasterProfile(ctx, userId, { teachingLanguages: ['th', 'en'] })
-      const rr = await ctx.db.query('userRoles')
-        .withIndex('by_userId', (q) => q.eq('userId', userId))
-        .unique()
-      await ctx.db.patch(rr!._id, { profileComplete: true })
-    })
-
-    await expect(
-      t.withIdentity({ tokenIdentifier: 'clerk|done-dm' })
-        .mutation(api.diveMasters.update, { teachingLanguages: [] }),
-    ).rejects.toThrow(/PROFILE_INCOMPLETE/)
-  })
-
-  it('allows updates that keep all required fields satisfied', async () => {
-    const t = makeT()
-    await t.run(async (ctx) => {
-      const userId = await seedUser(ctx, 'happy-dm')
-      await seedDiveMasterProfile(ctx, userId, { teachingLanguages: ['en'] })
-      const rr = await ctx.db.query('userRoles')
-        .withIndex('by_userId', (q) => q.eq('userId', userId))
-        .unique()
-      await ctx.db.patch(rr!._id, { profileComplete: true })
-    })
-
-    await t.withIdentity({ tokenIdentifier: 'clerk|happy-dm' })
-      .mutation(api.diveMasters.update, { teachingLanguages: ['th', 'en'] })
-  })
-})
-
 describe('directory.listByRole — DiveMaster picker gate', () => {
   it('excludes diveMasters with empty teachingLanguages array', async () => {
     const t = makeT()

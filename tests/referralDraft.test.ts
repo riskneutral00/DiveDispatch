@@ -24,7 +24,6 @@ async function seedUser(ctx: Ctx, slug: string, role: StakeholderRole = 'Agent')
     name: `${slug} Display`,
     firstName: slug,
     lastName: 'Test',
-    businessName: `${slug} Business`,
     isSeeded: false,
   })
 }
@@ -82,7 +81,6 @@ async function seedCompleteOperator(ctx: Ctx, slug: string, role: StakeholderRol
   })
 }
 
-// ─── Tests ────────────────────────────────────────────────────────────────────
 
 describe('createReferralDraftShell', () => {
   it('rejects unauthenticated caller', async () => {
@@ -193,7 +191,7 @@ describe('createReferralDraftShell', () => {
       expect(booking!.referrerId).toBe('agent-3')
       expect(booking!.referrerType).toBe('Agent')
       expect(booking!.status).toBe('Draft')
-      expect(booking!.operatorName).toBe('target-dc Business')
+      expect(booking!.operatorName).toBe('target-dc DC')
     })
   })
 

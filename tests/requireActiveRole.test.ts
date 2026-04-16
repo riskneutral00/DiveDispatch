@@ -44,7 +44,6 @@ describe('requireActiveRole validation', () => {
         userId,
         role: 'Instructor',
         createdAt: Date.now(),
-        profileComplete: false,
       })
     })
 

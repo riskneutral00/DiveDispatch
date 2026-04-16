@@ -35,7 +35,6 @@ async function seedFullDc(ctx: SeedCtx, slug: string) {
     name: `${slug} Display`,
     firstName: slug,
     lastName: 'Test',
-    businessName: 'Test Biz',
   })
   // Set profile + settings layer fields
   await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
@@ -105,7 +104,6 @@ describe('createDraftShell — activeRole validation', () => {
         userId,
         role: 'Instructor',
         createdAt: Date.now(),
-        profileComplete: false,
       })
     })
 
@@ -160,7 +158,6 @@ describe('createDraftShell — activeRole ownership stamping', () => {
         userId,
         role: 'Agent',
         createdAt: Date.now(),
-        profileComplete: false,
       })
       await seedAgent(ctx, userId)
       await ctx.db.patch(userId, { customerLanguages: ['en-GB'] })

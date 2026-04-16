@@ -1,6 +1,3 @@
-// Tests that non-DiveCenter operator types (Liveaboard, DiveResort, Agent) exist in seed data
-// and have correct structure for seeding.
-
 import { describe, it, expect } from 'vitest'
 import { PARKED_STAKEHOLDERS, ANDAMAN_EXPLORER, CORAL_BAY_RESORT, AMANDA } from '../convex/seedData'
 import { BOOKING_CONFIGS } from '../convex/seedBookingData'
@@ -22,7 +19,6 @@ describe('Non-DiveCenter operator seed data', () => {
       expect(user.name).toBe('Chaiwat Meesuk')
       expect(user.firstName).toBe('Chaiwat')
       expect(user.lastName).toBe('Meesuk')
-      expect(user.businessName).toBe('Andaman Explorer')
       expect(user.phone).toBe('+66-81-234-5011')
     })
 
@@ -67,7 +63,6 @@ describe('Non-DiveCenter operator seed data', () => {
       expect(user.name).toBe('Supattra Laohakul')
       expect(user.firstName).toBe('Supattra')
       expect(user.lastName).toBe('Laohakul')
-      expect(user.businessName).toBe('Coral Bay Resort')
       expect(user.phone).toBe('+66-81-234-5012')
     })
 
@@ -112,7 +107,6 @@ describe('Non-DiveCenter operator seed data', () => {
       expect(user.name).toBe('Amanda Chen')
       expect(user.firstName).toBe('Amanda')
       expect(user.lastName).toBe('Chen')
-      expect(user.businessName).toBe('Amanda')
       expect(user.phone).toBe('+66-81-234-5010')
     })
 

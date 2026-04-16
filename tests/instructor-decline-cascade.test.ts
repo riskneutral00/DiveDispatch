@@ -48,7 +48,7 @@ async function setupBookingWithInstructor(ctx: Parameters<Parameters<typeof t.ru
   const date = opts?.date ?? testDate(5)
 
   await seedUser(ctx, { slug: TEST_SLUGS.diveCenter, tokenIdentifier: TEST_TOKENS.diveCenter, role: 'DiveCenter' })
-  await seedUser(ctx, { slug: instrSlug, tokenIdentifier: instrToken, role: 'Instructor', businessName: 'Instructor Co' })
+  await seedUser(ctx, { slug: instrSlug, tokenIdentifier: instrToken, role: 'Instructor' })
 
   const unitId = await seedInventoryUnit(ctx, {
     resourceType: 'Instructor',

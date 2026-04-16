@@ -721,6 +721,66 @@ describe('editBooking', () => {
     expect(snapshot!.availableUnits).toBe(1)
     expect(snapshot!.reservedUnits).toBe(0)
   })
+
+  it('edit Upcoming emits BookingCancelled notification to inventory owner', async () => {
+    const t = makeT()
+
+    const { bookingId } = await t.run(async (ctx) => {
+      await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })
+      const bookingId = await seedBooking(ctx, 'owner-slug', { status: 'Upcoming' })
+
+      const unitId = await ctx.db.insert('inventoryUnits', {
+        resourceType: 'Instructor',
+        resourceId: 'instructor-1',
+        displayName: 'Instructor One',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+        ownerId: 'instructor-1',
+        ownerType: 'Instructor',
+      })
+
+      const sessionId = await ctx.db.insert('bookingSessions', {
+        bookingId,
+        inventoryUnitId: unitId,
+        date: testDate(5),
+        startTime: '09:00',
+        endTime: '11:00',
+        timezone: 'Asia/Bangkok',
+      })
+
+      await ctx.db.insert('availabilitySnapshots', {
+        inventoryUnitId: unitId,
+        date: testDate(5),
+        windowStart: '09:00',
+        windowEnd: '11:00',
+        totalUnits: 1,
+        reservedUnits: 1,
+        availableUnits: 0,
+      })
+
+      await ctx.db.insert('reservations', {
+        bookingId,
+        inventoryUnitId: unitId,
+        bookingSessionId: sessionId,
+        unitsRequested: 1,
+        status: 'Confirmed',
+      })
+
+      return { bookingId }
+    })
+
+    await t.withIdentity({ tokenIdentifier: 'clerk|owner-slug' })
+      .mutation(api.bookings.edit.editBooking, { bookingId })
+
+    const notifications = await t.run(async (ctx) =>
+      ctx.db.query('notifications').collect(),
+    )
+
+    expect(notifications).toHaveLength(1)
+    expect(notifications[0].userId).toBe('instructor-1')
+    expect(notifications[0].type).toBe('booking_cancelled')
+    expect(notifications[0].bookingId).toBe(bookingId)
+  })
 })
 
 // ─── H7: Cancellation Side Effects (discardDraft) ───────────────────────────

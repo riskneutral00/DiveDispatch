@@ -20,7 +20,6 @@ import { HOLD_TTL_MS as HOLD_TTL } from '../../convex/lib/auth'
 import { testDate } from '../helpers/dates'
 import { makeT, expectConvexError } from '../helpers/convex-helpers'
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 type Ctx = Parameters<Parameters<ReturnType<typeof makeT>['run']>[0]>[0]
 
@@ -32,7 +31,6 @@ async function seedDcUser(ctx: Ctx, slug: string) {
     name: `${slug} DC`,
     firstName: slug,
     lastName: 'DC',
-    businessName: `${slug} Business`,
     dateOfBirth: '1990-01-01',
     isSeeded: false,
     appLanguage: 'en',
@@ -47,7 +45,6 @@ async function seedInstructorUser(ctx: Ctx, slug: string) {
     name: `${slug} Instructor`,
     firstName: slug,
     lastName: 'Instructor',
-    businessName: `${slug} Teaching`,
     dateOfBirth: '1990-01-01',
     isSeeded: false,
     appLanguage: 'en',
@@ -88,7 +85,6 @@ async function seedInstructorUnit(ctx: Ctx, ownerId: string): Promise<Id<'invent
   })
 }
 
-// ─── Tests ────────────────────────────────────────────────────────────────────
 
 describe('submitToDraft', () => {
   it('creates sessions for each day config', async () => {
@@ -102,7 +98,6 @@ describe('submitToDraft', () => {
       return { bookingId, unitId }
     })
 
-    // Submit with 4 sessions (4-day course)
     await t.withIdentity({ tokenIdentifier: 'clerk|dc-sub-1' }).mutation(
       api.bookings.create.submitToDraft,
       {
@@ -165,7 +160,6 @@ describe('submitToDraft', () => {
       const bookingId2 = await seedBooking(ctx, 'dc-sub-3')
       const unitId = await seedInstructorUnit(ctx, 'inst-sub-3')
 
-      // Pre-hold the unit — unit is fully booked on 2030-07-15
       await ctx.db.insert('availabilitySnapshots', {
         inventoryUnitId: unitId,
         date: testDate(15),
@@ -179,7 +173,6 @@ describe('submitToDraft', () => {
       return { bookingId2, unitId }
     })
 
-    // Attempt to book a fully-held unit — should throw CONFLICT
     await expectConvexError(
       t.withIdentity({ tokenIdentifier: 'clerk|dc-sub-3' }).mutation(
         api.bookings.create.submitToDraft,
@@ -193,7 +186,6 @@ describe('submitToDraft', () => {
       'CONFLICT',
     )
 
-    // Zero sessions/reservations written for the failed booking
     await t.run(async (ctx) => {
       const allSessions = await ctx.db.query('bookingSessions').collect()
       const sessions = allSessions.filter((s) => s.bookingId === bookingId2)
@@ -228,11 +220,8 @@ describe('submitToDraft', () => {
 
     await t.run(async (ctx) => {
       const booking = await ctx.db.get(bookingId)
-      // bookingFormComplete is set
       expect(booking?.bookingFormComplete).toBe(true)
-      // customerFormComplete is still false — no portal submission yet
       expect(booking?.customerFormComplete).toBe(false)
-      // status stays Draft (customerFormComplete=false prevents auto-advance)
       expect(booking?.status).toBe('Draft')
     })
   })
@@ -259,14 +248,12 @@ describe('submitToDraft', () => {
     )
 
     await t.run(async (ctx) => {
-      // Snapshot was created atomically — availableUnits decremented
       const allSnapshots = await ctx.db.query('availabilitySnapshots').collect()
       const snapshots = allSnapshots.filter((s) => s.inventoryUnitId === unitId)
       expect(snapshots).toHaveLength(1)
       expect(snapshots[0].availableUnits).toBe(0)
       expect(snapshots[0].reservedUnits).toBe(1)
 
-      // Reservation was written in the same mutation
       const allReservations = await ctx.db.query('reservations').collect()
       const reservations = allReservations.filter((r) => r.bookingId === bookingId)
       expect(reservations).toHaveLength(1)

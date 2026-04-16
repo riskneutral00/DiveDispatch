@@ -21,7 +21,6 @@ describe('resolveCallerBookings ownerType isolation', () => {
         name: 'Multi Role',
         firstName: 'Multi',
         lastName: 'Role',
-        businessName: 'Multi Business',
         phone: '+66812345678',
         dateOfBirth: '1990-01-01',
         isSeeded: false,
@@ -32,13 +31,11 @@ describe('resolveCallerBookings ownerType isolation', () => {
         userId,
         role: 'DiveCenter',
         createdAt: Date.now(),
-        profileComplete: false,
       })
       await ctx.db.insert('userRoles', {
         userId,
         role: 'Agent',
         createdAt: Date.now(),
-        profileComplete: false,
       })
 
       await ctx.db.insert('bookings', {

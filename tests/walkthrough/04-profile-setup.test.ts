@@ -8,13 +8,11 @@ import type { Id } from '../../convex/_generated/dataModel'
 import { seedUser as _seedUser, type SeedCtx } from '../fixtures'
 import { makeT } from '../helpers/convex-helpers'
 
-// ─── Seed helpers ─────────────────────────────────────────────────────────────
 
 async function seedUser(ctx: SeedCtx, slug: string) {
   return _seedUser(ctx, { tokenIdentifier: `clerk|${slug}`, slug, email: `${slug}@test.com`, name: `${slug} Display`, firstName: slug, lastName: 'Test' })
 }
 
-// ─── Tests ────────────────────────────────────────────────────────────────────
 
 describe('diveCenters.create (profile setup)', () => {
   it('writes all required fields to diveCenters', async () => {
@@ -63,7 +61,6 @@ describe('diveCenters.create (profile setup)', () => {
     const id2 = await t.withIdentity({ tokenIdentifier: 'clerk|profile-dc-02' })
       .mutation(api.diveCenters.create, { ...args, name: 'Different Name' })
 
-    // Second call returns the existing record ID unchanged
     expect(id1).toBe(id2)
   })
 
@@ -77,7 +74,6 @@ describe('diveCenters.create (profile setup)', () => {
         name: 'Inst User',
         firstName: 'Inst',
         lastName: 'Test',
-        businessName: 'Inst Biz',
         role: 'Instructor',
       }),
     )

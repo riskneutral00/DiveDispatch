@@ -162,11 +162,11 @@ describe('useProfileForm', () => {
   it('pre-fills from me when no profile exists and fromMe is provided', () => {
     const opts = makeOptions({
       profile: null,
-      me: { businessName: 'My Biz', email: 'me@test.com' },
-      fromMe: (me, defs) => ({ ...defs, name: me.businessName ?? '', email: me.email ?? '' }),
+      me: { email: 'me@test.com' },
+      fromMe: (me, defs) => ({ ...defs, name: 'prefilled', email: me.email ?? '' }),
     })
     const { result } = renderHook(() => useProfileForm(opts))
-    expect(result.current.form.name).toBe('My Biz')
+    expect(result.current.form.name).toBe('prefilled')
     expect(result.current.form.email).toBe('me@test.com')
   })
 

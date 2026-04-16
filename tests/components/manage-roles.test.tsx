@@ -28,7 +28,6 @@ vi.mock('@/lib/icons/role-icons', () => {
 interface MockRole {
   _id: Id<'userRoles'>
   role: ClerkRole
-  profileComplete: boolean
   createdAt: number
 }
 
@@ -41,7 +40,6 @@ function makeRole(role: ClerkRole, opts: Partial<MockRole> = {}): MockRole {
   return {
     _id: `role_${role}` as Id<'userRoles'>,
     role,
-    profileComplete: false,
     createdAt: Date.now(),
     ...opts,
   }
@@ -49,7 +47,7 @@ function makeRole(role: ClerkRole, opts: Partial<MockRole> = {}): MockRole {
 
 describe('ManageRoles', () => {
   const defaultProps = {
-    roles: [makeRole('DiveCenter', { profileComplete: true })],
+    roles: [makeRole('DiveCenter')],
     roleCompletions: [{ role: 'DiveCenter', percentage: 100 }] as MockRoleCompletion[],
     onAddRole: vi.fn(),
     onNavigateToOnboarding: vi.fn(),
@@ -75,10 +73,7 @@ describe('ManageRoles', () => {
     render(
       <ManageRoles
         {...defaultProps}
-        roles={[
-          makeRole('DiveCenter', { profileComplete: true }),
-          makeRole('Boat', { profileComplete: false }),
-        ]}
+        roles={[makeRole('DiveCenter'), makeRole('Instructor')]}
       />,
     )
     expect(screen.getByText('Primary')).toBeInTheDocument()
@@ -93,11 +88,7 @@ describe('ManageRoles', () => {
     render(
       <ManageRoles
         {...defaultProps}
-        roles={[
-          makeRole('Instructor', { profileComplete: false }),
-          makeRole('DiveCenter', { profileComplete: true }),
-          makeRole('Boat', { profileComplete: false }),
-        ]}
+        roles={[makeRole('Instructor'), makeRole('DiveCenter'), makeRole('Boat')]}
         roleCompletions={[
           { role: 'Instructor', percentage: 0 },
           { role: 'DiveCenter', percentage: 100 },
@@ -124,11 +115,7 @@ describe('ManageRoles', () => {
     render(
       <ManageRoles
         {...defaultProps}
-        roles={[
-          makeRole('DiveCenter', { profileComplete: true }),
-          makeRole('Instructor', { profileComplete: false }),
-          makeRole('Boat', { profileComplete: true }),
-        ]}
+        roles={[makeRole('DiveCenter'), makeRole('Instructor'), makeRole('Boat')]}
       />,
     )
     expect(screen.getByText('Dive Center')).toBeInTheDocument()
@@ -147,10 +134,7 @@ describe('ManageRoles', () => {
     render(
       <ManageRoles
         {...defaultProps}
-        roles={[
-          makeRole('DiveCenter', { profileComplete: true }),
-          makeRole('Boat', { profileComplete: false }),
-        ]}
+        roles={[makeRole('DiveCenter'), makeRole('Boat')]}
       />,
     )
     expect(screen.getByRole('button', { name: /delete dive center role/i })).toBeInTheDocument()
@@ -161,10 +145,7 @@ describe('ManageRoles', () => {
     render(
       <ManageRoles
         {...defaultProps}
-        roles={[
-          makeRole('DiveCenter', { profileComplete: true }),
-          makeRole('Instructor', { _id: 'role_Instructor' as Id<'userRoles'>, profileComplete: false }),
-        ]}
+        roles={[makeRole('DiveCenter'), makeRole('Instructor')]}
         bookingCounts={{ role_Instructor: 3 }}
       />,
     )
@@ -179,10 +160,7 @@ describe('ManageRoles', () => {
     render(
       <ManageRoles
         {...defaultProps}
-        roles={[
-          makeRole('DiveCenter', { profileComplete: true }),
-          makeRole('Boat', { profileComplete: false }),
-        ]}
+        roles={[makeRole('DiveCenter'), makeRole('Boat')]}
       />,
     )
     // Text exists in DOM (always rendered) but is not visible
@@ -194,10 +172,7 @@ describe('ManageRoles', () => {
     render(
       <ManageRoles
         {...defaultProps}
-        roles={[
-          makeRole('DiveCenter', { profileComplete: true }),
-          makeRole('Boat', { profileComplete: false }),
-        ]}
+        roles={[makeRole('DiveCenter'), makeRole('Boat')]}
       />,
     )
     await user.click(screen.getByRole('button', { name: /delete dive center role/i }))
@@ -209,10 +184,7 @@ describe('ManageRoles', () => {
     render(
       <ManageRoles
         {...defaultProps}
-        roles={[
-          makeRole('DiveCenter', { profileComplete: true }),
-          makeRole('Boat', { profileComplete: false }),
-        ]}
+        roles={[makeRole('DiveCenter'), makeRole('Boat')]}
       />,
     )
     await user.click(screen.getByRole('button', { name: /delete dive center role/i }))
@@ -227,10 +199,7 @@ describe('ManageRoles', () => {
     render(
       <ManageRoles
         {...defaultProps}
-        roles={[
-          makeRole('DiveCenter', { _id: 'role_DC' as Id<'userRoles'>, profileComplete: true }),
-          makeRole('Boat', { profileComplete: false }),
-        ]}
+        roles={[makeRole('DiveCenter', { _id: 'role_DC' as Id<'userRoles'> }), makeRole('Boat')]}
         onDeleteRole={onDeleteRole}
       />,
     )
@@ -245,18 +214,17 @@ describe('ManageRoles', () => {
     render(
       <ManageRoles
         {...defaultProps}
-        roles={[makeRole('Instructor', { profileComplete: true })]}
         roleCompletions={[{ role: 'Instructor', percentage: 60 }]}
       />,
     )
     expect(screen.getByRole('button', { name: /set up/i })).toBeInTheDocument()
   })
 
-  it('hides "Set up" when percentage === 100 (ignores stale profileComplete=false)', () => {
+  it('hides "Set up" when percentage === 100', () => {
     render(
       <ManageRoles
         {...defaultProps}
-        roles={[makeRole('Instructor', { profileComplete: false })]}
+        roles={[makeRole('Instructor')]}
         roleCompletions={[{ role: 'Instructor', percentage: 100 }]}
       />,
     )
@@ -269,7 +237,7 @@ describe('ManageRoles', () => {
     render(
       <ManageRoles
         {...defaultProps}
-        roles={[makeRole('Boat', { profileComplete: false })]}
+        roles={[makeRole('Boat')]}
         roleCompletions={[{ role: 'Boat', percentage: 33 }]}
         onNavigateToOnboarding={onNavigateToOnboarding}
       />,
@@ -289,10 +257,7 @@ describe('ManageRoles', () => {
     render(
       <ManageRoles
         {...defaultProps}
-        roles={[
-          makeRole('DiveCenter', { _id: 'role_DC' as Id<'userRoles'>, profileComplete: true }),
-          makeRole('Boat', { profileComplete: false }),
-        ]}
+        roles={[makeRole('DiveCenter'), makeRole('Boat')]}
         onDeleteRole={onDeleteRole}
       />,
     )

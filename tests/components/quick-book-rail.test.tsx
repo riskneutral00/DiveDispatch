@@ -40,7 +40,7 @@ describe('QuickBookRail', () => {
   describe('when onboarding is complete', () => {
     beforeEach(() => {
       mockCurrentUser.mockReturnValue({
-        user: { onboardingComplete: true, role: 'DiveCenter', slug: 'test' },
+        user: { role: 'DiveCenter', slug: 'test' },
         isLoading: false,
       })
       mockUseQuery.mockReturnValue({ percentage: 100, incomplete: [] })
@@ -75,7 +75,7 @@ describe('QuickBookRail', () => {
   describe('when onboarding is NOT complete', () => {
     beforeEach(() => {
       mockCurrentUser.mockReturnValue({
-        user: { onboardingComplete: false, role: 'DiveCenter', slug: 'test' },
+        user: { role: 'DiveCenter', slug: 'test' },
         isLoading: false,
       })
       mockUseQuery.mockReturnValue({ percentage: 50, incomplete: ['Business name'] })

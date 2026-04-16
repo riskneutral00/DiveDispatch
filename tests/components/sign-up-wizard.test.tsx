@@ -127,7 +127,6 @@ describe('Sign-up wizard (3-step: Clerk + Role + Profile)', () => {
   it('redirects fully completed users straight to their role dashboard (skips /dashboard hop)', () => {
     mockConvexAuth.mockReturnValue({ isLoading: false, isAuthenticated: true })
     mockUserMe = {
-      onboardingComplete: true,
       businessName: 'Deep Blue Diving',
       slug: 'deep-blue-diving',
     }
@@ -138,10 +137,9 @@ describe('Sign-up wizard (3-step: Clerk + Role + Profile)', () => {
     expect(mockReplace).not.toHaveBeenCalledWith('/dashboard')
   })
 
-  it('redirects partial users (role set, onboarding not complete) straight to their role dashboard — no /onboarding or /dashboard detour', () => {
+  it('redirects partial users (role set) straight to their role dashboard — no /onboarding or /dashboard detour', () => {
     mockConvexAuth.mockReturnValue({ isLoading: false, isAuthenticated: true })
     mockUserMe = {
-      onboardingComplete: undefined,
       businessName: 'Mike Smith',
       slug: 'mike-smith',
     }
@@ -156,7 +154,6 @@ describe('Sign-up wizard (3-step: Clerk + Role + Profile)', () => {
   it('shows Redirecting… for any user with an existing record', () => {
     mockConvexAuth.mockReturnValue({ isLoading: false, isAuthenticated: true })
     mockUserMe = {
-      onboardingComplete: true,
       businessName: 'Deep Blue Diving',
       slug: 'deep-blue-diving',
     }

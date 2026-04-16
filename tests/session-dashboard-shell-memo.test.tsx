@@ -53,7 +53,7 @@ import { useSessionRoleContext, SessionDashboardShell } from '@/components/layou
 describe('SessionDashboardShell: context value memoization', () => {
   it('context value is referentially stable across re-renders with same slug/roleSlug', () => {
     mockCurrentUser.mockReturnValue({
-      user: { slug: 'alice', role: 'DiveCenter', onboardingComplete: true },
+      user: { slug: 'alice', role: 'DiveCenter' },
       isLoading: false,
     })
     // SessionDashboardShell calls useQuery twice: api.users.me then api.userRoles.myRoles

@@ -31,7 +31,6 @@ async function seedFullDCWithCoverage(ctx: SeedCtx, slug: string) {
     name: `${slug} Display`,
     firstName: slug,
     lastName: 'Test',
-    businessName: 'Test Biz',
   })
   // Profile + settings layer
   await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
@@ -69,7 +68,6 @@ async function seedFullDCWithCoverage(ctx: SeedCtx, slug: string) {
     name: 'Test Instructor',
     firstName: 'Test',
     lastName: 'Instructor',
-    businessName: 'Test Instructor',
   })
   await seedUser(ctx, {
     slug: 'test-equipment',
@@ -79,7 +77,6 @@ async function seedFullDCWithCoverage(ctx: SeedCtx, slug: string) {
     name: 'Test Equipment',
     firstName: 'Test',
     lastName: 'Equipment',
-    businessName: 'Test Equipment',
   })
   const venueUserId = await seedUser(ctx, {
     slug: 'test-venue',
@@ -89,7 +86,6 @@ async function seedFullDCWithCoverage(ctx: SeedCtx, slug: string) {
     name: 'Test Venue',
     firstName: 'Test',
     lastName: 'Venue',
-    businessName: 'Test Venue',
   })
   await seedVenue(ctx, {
     userId: venueUserId,
@@ -105,7 +101,6 @@ async function seedFullDCWithCoverage(ctx: SeedCtx, slug: string) {
     name: 'Test Compressor',
     firstName: 'Test',
     lastName: 'Compressor',
-    businessName: 'Test Compressor',
   })
 
   return userId
@@ -135,7 +130,6 @@ describe('booking gate: profile completeness', () => {
         name: 'dc-gate-fail Display',
         firstName: 'dc-gate-fail',
         lastName: 'Test',
-        businessName: 'Test Biz',
       })
       // No phone, no appLanguage, no DiveCenter profile -> incomplete
     })
@@ -200,7 +194,6 @@ describe('booking gate: per-active-role completeness', () => {
         userId,
         role: 'Boat',
         createdAt: Date.now(),
-        profileComplete: false,
       })
     })
 
@@ -223,7 +216,6 @@ describe('booking gate: per-active-role completeness', () => {
         userId,
         role: 'Agent',
         createdAt: Date.now(),
-        profileComplete: false,
       })
     })
 
@@ -276,7 +268,6 @@ describe('booking gate: specialty rating enforcement', () => {
         name: 'DC Spec',
         firstName: 'DC',
         lastName: 'Spec',
-        businessName: 'Spec DC',
       })
       const instUserId = await seedUser(ctx, {
         slug: 'inst-spec',
@@ -335,7 +326,6 @@ describe('booking gate: specialty rating enforcement', () => {
         name: 'DC Spec2',
         firstName: 'DC',
         lastName: 'Spec2',
-        businessName: 'Spec DC2',
       })
       const instUserId = await seedUser(ctx, {
         slug: 'inst-spec2',
@@ -395,7 +385,6 @@ describe('booking gate: capability gate blocks DM from OW+', () => {
         name: 'DC Cap',
         firstName: 'DC',
         lastName: 'Cap',
-        businessName: 'Cap DC',
       })
       const instUserId = await seedUser(ctx, {
         slug: 'inst-cap',
@@ -464,7 +453,6 @@ describe('booking gate: capability gate blocks DM from OW+', () => {
         name: 'DC Cap2',
         firstName: 'DC',
         lastName: 'Cap2',
-        businessName: 'Cap DC2',
       })
       const instUserId = await seedUser(ctx, {
         slug: 'inst-cap2',

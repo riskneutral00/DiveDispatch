@@ -26,7 +26,6 @@ describe('userRoles.bookingCountForRole', () => {
         userId,
         role: 'Instructor',
         createdAt: Date.now(),
-        profileComplete: true,
       })
     })
 
@@ -47,7 +46,6 @@ describe('userRoles.bookingCountForRole', () => {
         userId,
         role: 'Instructor',
         createdAt: Date.now(),
-        profileComplete: true,
       })
 
       const draftBookingId = await seedBooking(ctx, {
@@ -86,7 +84,6 @@ describe('userRoles.bookingCountForRole', () => {
         userId,
         role: 'Instructor',
         createdAt: Date.now(),
-        profileComplete: true,
       })
 
       const completedId = await seedBooking(ctx, {
@@ -132,7 +129,6 @@ describe('userRoles.deleteRole', () => {
         userId,
         role: 'DiveCenter',
         createdAt: Date.now(),
-        profileComplete: true,
       })
     })
 
@@ -152,14 +148,12 @@ describe('userRoles.deleteRole', () => {
         userId,
         role: 'Instructor',
         createdAt: Date.now(),
-        profileComplete: true,
       })
       // Second role so LAST_ROLE guard passes
       await ctx.db.insert('userRoles', {
         userId,
         role: 'DiveCenter',
         createdAt: Date.now(),
-        profileComplete: false,
       })
 
       const b1 = await seedBooking(ctx, {
@@ -204,13 +198,11 @@ describe('userRoles.deleteRole', () => {
         userId,
         role: 'Instructor',
         createdAt: Date.now(),
-        profileComplete: true,
       })
       await ctx.db.insert('userRoles', {
         userId,
         role: 'DiveCenter',
         createdAt: Date.now(),
-        profileComplete: false,
       })
 
       // Profile record
@@ -277,13 +269,11 @@ describe('userRoles.deleteRole', () => {
         userId,
         role: 'Instructor',
         createdAt: Date.now(),
-        profileComplete: false,
       })
       await ctx.db.insert('userRoles', {
         userId,
         role: 'DiveCenter',
         createdAt: Date.now(),
-        profileComplete: false,
       })
 
       const completedId = await seedBooking(ctx, {
@@ -326,7 +316,6 @@ describe('userRoles.deleteRole', () => {
         userId,
         role: 'DiveCenter',
         createdAt: Date.now(),
-        profileComplete: false,
       })
     })
 
@@ -350,14 +339,12 @@ describe('userRoles.deleteRole', () => {
         userId: otherUserId,
         role: 'DiveCenter',
         createdAt: Date.now(),
-        profileComplete: false,
       })
       // Also give them a second role so LAST_ROLE doesn't trigger
       await ctx.db.insert('userRoles', {
         userId: otherUserId,
         role: 'Boat',
         createdAt: Date.now(),
-        profileComplete: false,
       })
 
       // Seed the caller (diveCenter user) so they exist but don't own the role

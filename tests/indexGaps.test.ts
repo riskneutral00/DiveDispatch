@@ -54,7 +54,6 @@ describe('by_bookingId_status index', () => {
         tokenIdentifier: TEST_TOKENS.diveCenter,
         slug: TEST_SLUGS.diveCenter,
         role: 'DiveCenter',
-        businessName: 'Blue Ocean DC',
       })
       await seedUser(ctx, {
         tokenIdentifier: TEST_TOKENS.instructor,
@@ -119,7 +118,6 @@ describe('by_bookingId_inventoryUnitId index', () => {
         tokenIdentifier: TEST_TOKENS.diveCenter,
         slug: TEST_SLUGS.diveCenter,
         role: 'DiveCenter',
-        businessName: 'Blue Ocean DC',
       })
       await seedUser(ctx, {
         tokenIdentifier: TEST_TOKENS.instructor,

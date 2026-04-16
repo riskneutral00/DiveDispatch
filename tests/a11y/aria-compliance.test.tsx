@@ -58,7 +58,7 @@ beforeEach(() => {
 describe('A11y: Interactive elements have accessible names', () => {
   beforeEach(() => {
     mockCurrentUser.mockReturnValue({
-      user: { role: 'DiveCenter', slug: 'test', onboardingComplete: true },
+      user: { role: 'DiveCenter', slug: 'test' },
       isLoading: false,
     })
     mockUseQuery.mockReturnValue({ percentage: 100, incomplete: [] })
@@ -114,7 +114,7 @@ describe('A11y: Color contrast documentation', () => {
 describe('A11y: Keyboard navigation patterns', () => {
   it('QuickBookRail buttons are focusable (no tabIndex=-1)', () => {
     mockCurrentUser.mockReturnValue({
-      user: { role: 'DiveCenter', slug: 'test', onboardingComplete: true },
+      user: { role: 'DiveCenter', slug: 'test' },
       isLoading: false,
     })
     mockUseQuery.mockReturnValue({ percentage: 100, incomplete: [] })
@@ -133,7 +133,7 @@ describe('A11y: Keyboard navigation patterns', () => {
 
   it('buttons have visible focus styles (focus-visible:ring class)', () => {
     mockCurrentUser.mockReturnValue({
-      user: { role: 'DiveCenter', slug: 'test', onboardingComplete: true },
+      user: { role: 'DiveCenter', slug: 'test' },
       isLoading: false,
     })
     mockUseQuery.mockReturnValue({ percentage: 100, incomplete: [] })

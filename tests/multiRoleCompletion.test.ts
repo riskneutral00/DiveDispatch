@@ -19,7 +19,6 @@ async function seedCompleteEquipment(ctx: SeedCtx, slug: string) {
     name: `${slug} Display`,
     firstName: slug,
     lastName: 'Test',
-    businessName: 'Test Biz',
   })
   // Set profile-layer and settings-layer fields on users table
   await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
@@ -38,7 +37,6 @@ async function seedCompleteDC(ctx: SeedCtx, slug: string) {
     name: `${slug} Display`,
     firstName: slug,
     lastName: 'Test',
-    businessName: 'Test Biz',
   })
   // Set profile-layer and settings-layer fields on users table
   await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
@@ -79,7 +77,6 @@ describe('getLowestProfileCompletion', () => {
         userId,
         role: 'Boat',
         createdAt: Date.now(),
-        profileComplete: false,
       })
     })
 
@@ -100,7 +97,6 @@ describe('getLowestProfileCompletion', () => {
         userId,
         role: 'Boat',
         createdAt: Date.now(),
-        profileComplete: false,
       })
 
       await ctx.db.insert('boats', {
@@ -153,7 +149,6 @@ describe('getAllRolesCompleteness', () => {
         userId,
         role: 'Boat',
         createdAt: Date.now(),
-        profileComplete: false,
       })
     })
 

@@ -16,7 +16,7 @@ const AGENT_SLUG = 'ref-agent'
 const AGENT_TOKEN = 'clerk|ref-agent'
 
 async function seedReadyReferrerAgent(ctx: Parameters<ReturnType<typeof makeT>['run']>[0] extends (c: infer C) => unknown ? C : never) {
-  const agentId = await seedUser(ctx, { slug: AGENT_SLUG, tokenIdentifier: AGENT_TOKEN, role: 'Agent', businessName: 'Ref Agent Biz' })
+  const agentId = await seedUser(ctx, { slug: AGENT_SLUG, tokenIdentifier: AGENT_TOKEN, role: 'Agent' })
   await ctx.db.patch(agentId, { customerLanguages: ['en'] })
   await seedAgent(ctx, agentId, { verified: true })
   await seedStakeholderPreferences(ctx, AGENT_SLUG, {
@@ -31,7 +31,7 @@ async function seedReadyReferrerAgent(ctx: Parameters<ReturnType<typeof makeT>['
 
 async function seedReadyReferredBooking(ctx: Parameters<ReturnType<typeof makeT>['run']>[0] extends (c: infer C) => unknown ? C : never) {
   await seedReadyReferrerAgent(ctx)
-  const dcId = await seedUser(ctx, { slug: DC_SLUG, tokenIdentifier: DC_TOKEN, role: 'DiveCenter', businessName: 'Owner DC Biz' })
+  const dcId = await seedUser(ctx, { slug: DC_SLUG, tokenIdentifier: DC_TOKEN, role: 'DiveCenter' })
   await seedDiveCenterProfile(ctx, dcId)
   await seedStakeholderPreferences(ctx, DC_SLUG, {
     stakeholderType: 'DiveCenter',
@@ -66,7 +66,7 @@ describe('returnReferralToReferrer', () => {
       const b = await ctx.db.get(bookingId)
       expect(b!.ownerId).toBe(AGENT_SLUG)
       expect(b!.ownerType).toBe('Agent')
-      expect(b!.operatorName).toBe('Ref Agent Biz')
+      expect(b!.operatorName).toBe('Test Agent')
       expect(b!.referrerId).toBe(AGENT_SLUG)
       expect(b!.returnedToReferrerAt).toBeGreaterThan(0)
 
@@ -209,7 +209,7 @@ describe('returnReferralToReferrer', () => {
     let bookingId!: Id<'bookings'>
     await t.run(async (ctx) => {
       await seedReadyReferrerAgent(ctx)
-      const dcId = await seedUser(ctx, { slug: DC_SLUG, tokenIdentifier: DC_TOKEN, role: 'DiveCenter', businessName: 'Owner DC Biz' })
+      const dcId = await seedUser(ctx, { slug: DC_SLUG, tokenIdentifier: DC_TOKEN, role: 'DiveCenter' })
       await seedDiveCenterProfile(ctx, dcId)
       bookingId = await seedBooking(ctx, {
         ownerId: DC_SLUG,

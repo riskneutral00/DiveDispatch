@@ -15,9 +15,6 @@ import {
 } from './fixtures'
 import { makeT } from './helpers/convex-helpers'
 
-// ─── Local thin wrapper ──────────────────────────────────────────────────────
-// The shared seedReservation requires a sessionId; this wrapper auto-creates
-// a session when none is provided, matching the original local helper behavior.
 
 async function seedReservationWithAutoSession(
   ctx: SeedCtx,
@@ -36,7 +33,6 @@ async function seedReservationWithAutoSession(
   return seedReservation(ctx, bookingId, inventoryUnitId, sessionId, { status })
 }
 
-// ─── Local helper for seedUser with positional slug/role pattern ─────────────
 
 async function seedTestUser(
   ctx: SeedCtx,
@@ -52,14 +48,11 @@ async function seedTestUser(
     name: `${slug} Name`,
     firstName: slug,
     lastName: 'Test',
-    businessName: 'Test Biz',
   })
 }
 
-// ─── getBookingDetail — enhanced query ────────────────────────────────────────
 
 describe('getBookingDetail', () => {
-  // ── test 1: returns all stakeholder names (in-system) ──────────────────────
   it('returns all stakeholder names for in-system IDs', async () => {
     const t = makeT()
     let bookingId: Id<'bookings'>
@@ -101,7 +94,6 @@ describe('getBookingDetail', () => {
     expect(result!.instructorName).toBe('instructor-1 Name')
     expect(result!.boatName).toBe('boat-1 Name')
 
-    // New: stakeholders array
     expect(Array.isArray(result!.stakeholders)).toBe(true)
     const instructorStakeholder = result!.stakeholders.find(
       (s) => s.role === 'Instructor',
@@ -123,7 +115,6 @@ describe('getBookingDetail', () => {
     })
   })
 
-  // ── test 2: returns external stakeholder names ─────────────────────────────
   it('returns external stakeholder names with isExternal=true', async () => {
     const t = makeT()
     let bookingId: Id<'bookings'>
@@ -180,7 +171,6 @@ describe('getBookingDetail', () => {
     })
   })
 
-  // ── test 3: returns all customer profiles with portal completion status ─────
   it('returns all customer profiles with portal completion status', async () => {
     const t = makeT()
     let bookingId: Id<'bookings'>
@@ -214,7 +204,6 @@ describe('getBookingDetail', () => {
     expect(pending).toHaveLength(2)
   })
 
-  // ── test 4: returns sessions with inventory info ───────────────────────────
   it('returns sessions with date, time, and inventory unit display name', async () => {
     const t = makeT()
     let bookingId: Id<'bookings'>
@@ -266,7 +255,6 @@ describe('getBookingDetail', () => {
     expect(result!.sessions[0].inventoryUnitName).toBe('instructor-1 Unit')
   })
 
-  // ── test 5: returns reservations with status and stakeholder name ──────────
   it('returns reservations with status, resource name, and stakeholder name', async () => {
     const t = makeT()
     let bookingId: Id<'bookings'>
@@ -314,7 +302,6 @@ describe('getBookingDetail', () => {
     expect(result!.reservations[0].stakeholderName).toBe('instructor-1 Name')
   })
 
-  // ── test 6: returns audit log ──────────────────────────────────────────────
   it('returns audit log entries sorted by timestamp descending', async () => {
     const t = makeT()
     let bookingId: Id<'bookings'>
@@ -337,7 +324,6 @@ describe('getBookingDetail', () => {
         ],
       })
     })
-    // Insert audit entries
     await t
       .withIdentity({ tokenIdentifier: 'clerk|dc-1' })
       .run(async (ctx) => {
@@ -363,12 +349,10 @@ describe('getBookingDetail', () => {
     expect(result).not.toBeNull()
     expect(Array.isArray(result!.auditLog)).toBe(true)
     expect(result!.auditLog).toHaveLength(2)
-    // Sorted descending: most recent first
     expect(result!.auditLog[0].action).toBe('edited')
     expect(result!.auditLog[1].action).toBe('created')
   })
 
-  // ── test 7: overview fields present ───────────────────────────────────────
   it('returns overview fields: status, dates, activityType, operatorName', async () => {
     const t = makeT()
     let bookingId: Id<'bookings'>
@@ -405,7 +389,6 @@ describe('getBookingDetail', () => {
     expect(result!.operatorName).toBe('Test DC')
   })
 
-  // ── test 8: stakeholders include isExternal flag ──────────────────────────
   it('stakeholders have isExternal flag distinguishing in-system vs external', async () => {
     const t = makeT()
     let bookingId: Id<'bookings'>
@@ -451,7 +434,6 @@ describe('getBookingDetail', () => {
     expect(external[0].name).toBe('Charter Express')
   })
 
-  // ── test 9: reservation status values ────────────────────────────────────
   it('returns reservation with PendingAcceptance status', async () => {
     const t = makeT()
     let bookingId: Id<'bookings'>
@@ -495,7 +477,6 @@ describe('getBookingDetail', () => {
     expect(result!.reservations[0].status).toBe('PendingAcceptance')
   })
 
-  // ── test 10: customer portal status shown via submittedAt ─────────────────
   it('customer profiles reflect portal completion via submittedAt', async () => {
     const t = makeT()
     let bookingId: Id<'bookings'>
@@ -529,7 +510,6 @@ describe('getBookingDetail', () => {
     expect(result!.customerProfiles[0].submittedAt).toBe(submittedTime)
   })
 
-  // ── test 11: auditLog array present ──────────────────────────────────────
   it('auditLog field is always present (empty if no entries)', async () => {
     const t = makeT()
     let bookingId: Id<'bookings'>
@@ -562,7 +542,6 @@ describe('getBookingDetail', () => {
     expect(result!.auditLog).toHaveLength(0)
   })
 
-  // ── test 12: stakeholder reservation status propagated ────────────────────
   it('stakeholder reservationStatus reflects their inventory unit status', async () => {
     const t = makeT()
     let bookingId: Id<'bookings'>

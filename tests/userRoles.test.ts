@@ -41,19 +41,16 @@ describe('userRoles.myRoles', () => {
         userId,
         role: 'DiveCenter',
         createdAt: t0,
-        profileComplete: true,
       })
       await ctx.db.insert('userRoles', {
         userId,
         role: 'Boat',
         createdAt: t0 + 1000,
-        profileComplete: false,
       })
       await ctx.db.insert('userRoles', {
         userId,
         role: 'Equipment',
         createdAt: t0 + 2000,
-        profileComplete: false,
       })
     })
 
@@ -78,13 +75,11 @@ describe('userRoles.myRoles', () => {
         userId: dcUserId,
         role: 'DiveCenter',
         createdAt: now,
-        profileComplete: true,
       })
       await ctx.db.insert('userRoles', {
         userId: instrUserId,
         role: 'Instructor',
         createdAt: now,
-        profileComplete: true,
       })
     })
 
@@ -108,7 +103,6 @@ describe('userRoles.hasRole', () => {
         userId,
         role: 'DiveCenter',
         createdAt: Date.now(),
-        profileComplete: true,
       })
     })
 
@@ -126,7 +120,6 @@ describe('userRoles.hasRole', () => {
         userId,
         role: 'DiveCenter',
         createdAt: Date.now(),
-        profileComplete: true,
       })
     })
 
@@ -161,7 +154,6 @@ describe('userRoles.addRole', () => {
       .query(api.userRoles.myRoles, {})
     expect(roles).toHaveLength(1)
     expect(roles[0].role).toBe('Boat')
-    expect(roles[0].profileComplete).toBe(false)
   })
 
   it('rejects duplicate role for the same user', async () => {
@@ -172,7 +164,6 @@ describe('userRoles.addRole', () => {
         userId,
         role: 'DiveCenter',
         createdAt: Date.now(),
-        profileComplete: true,
       })
     })
 
@@ -200,7 +191,6 @@ describe('userRoles.hasAnyOperatorRole', () => {
         userId,
         role: 'DiveCenter',
         createdAt: Date.now(),
-        profileComplete: true,
       })
     })
 
@@ -218,7 +208,6 @@ describe('userRoles.hasAnyOperatorRole', () => {
         userId,
         role: 'Instructor',
         createdAt: Date.now(),
-        profileComplete: true,
       })
     })
 
@@ -241,13 +230,11 @@ describe('userRoles.primaryRole', () => {
         userId,
         role: 'Boat',
         createdAt: now,
-        profileComplete: true,
       })
       await ctx.db.insert('userRoles', {
         userId,
         role: 'DiveCenter',
         createdAt: now,
-        profileComplete: true,
       })
     })
 

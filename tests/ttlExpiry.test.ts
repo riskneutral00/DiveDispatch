@@ -270,7 +270,6 @@ describe('expireBooking', () => {
         name: 'DC One',
         firstName: 'DC',
         lastName: 'One',
-        businessName: 'Test DC',
       })
       await seedBooking(ctx, {
         ownerId: 'dc-1',
@@ -310,7 +309,6 @@ describe('expireBooking', () => {
         name: 'DC One',
         firstName: 'DC',
         lastName: 'One',
-        businessName: 'Test DC',
       })
       await seedBooking(ctx, {
         ownerId: 'dc-1',
@@ -592,7 +590,6 @@ describe('checkAndExpireBooking', () => {
         name: 'Intruder',
         firstName: 'In',
         lastName: 'Truder',
-        businessName: 'Evil Corp',
       })
 
       return seedBooking(ctx, {
@@ -623,7 +620,6 @@ describe('checkAndExpireBooking', () => {
         name: 'Owner DC',
         firstName: 'Owner',
         lastName: 'DC',
-        businessName: 'Owner DC',
       })
 
       return seedBooking(ctx, {
@@ -655,7 +651,6 @@ describe('checkAndExpireBooking', () => {
         name: 'Owner DC2',
         firstName: 'Owner',
         lastName: 'DC2',
-        businessName: 'Owner DC2',
       })
 
       return seedBooking(ctx, {
@@ -846,7 +841,6 @@ describe('toggleBlockedDate auto-cancels Draft bookings', () => {
           name: 'Instructor One',
           firstName: 'Instructor',
           lastName: 'One',
-          businessName: 'Inst One Diving',
           role: 'Instructor',
         })
 
@@ -950,7 +944,6 @@ describe('toggleBlockedDate auto-cancels Draft bookings', () => {
         name: 'Instructor Two',
         firstName: 'Instructor',
         lastName: 'Two',
-        businessName: 'Inst Two Diving',
         role: 'Instructor',
       })
 
@@ -1028,7 +1021,6 @@ describe('toggleBlockedDate auto-cancels Draft bookings', () => {
         name: 'DC One',
         firstName: 'DC',
         lastName: 'One',
-        businessName: 'Test DC',
       })
 
       const unitId = await seedInventoryUnit(ctx, {
@@ -1222,7 +1214,6 @@ describe('token invalidation', () => {
         name: 'Test DC',
         firstName: 'Test',
         lastName: 'DC',
-        businessName: 'Test DC',
       })
       return seedPortalFixture(ctx, {
         booking: {
@@ -1293,7 +1284,6 @@ describe('token invalidation', () => {
         name: 'Regen DC',
         firstName: 'Regen',
         lastName: 'DC',
-        businessName: 'Regen DC',
       })
 
       const bookingId = await seedBooking(ctx, {

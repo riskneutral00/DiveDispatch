@@ -296,7 +296,6 @@ describe('checkAllRolesCompleteness', () => {
         userId,
         role: 'Instructor',
         createdAt: Date.now(),
-        profileComplete: false,
       })
 
       const result = await checkAllRolesCompleteness(ctx, userId)

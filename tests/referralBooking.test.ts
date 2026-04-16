@@ -94,9 +94,9 @@ describe('createDraftShell — referral mode', () => {
     const t = makeT()
     await t.run(async (ctx) => {
       await seedReadyAgent(ctx, 'referral-agent')
-      const dcId = await seedUser(ctx, { slug: 'target-dc', tokenIdentifier: 'clerk|target-dc', role: 'DiveCenter', businessName: 'Target DC Biz' })
+      const dcId = await seedUser(ctx, { slug: 'target-dc', tokenIdentifier: 'clerk|target-dc', role: 'DiveCenter' })
       await ctx.db.patch(dcId, { phone: '+66800000000' })
-      await seedDiveCenterProfile(ctx, dcId)
+      await seedDiveCenterProfile(ctx, dcId, { name: 'Target DC Biz' })
       await seedStakeholderPreferences(ctx, 'target-dc', {
         stakeholderType: 'DiveCenter',
         preferredInstructorSlugs: ['i'],
@@ -148,7 +148,7 @@ describe('createDraftShell — referral mode', () => {
     const t = makeT()
     await t.run(async (ctx) => {
       await seedReadyAgent(ctx, 'agent-lb')
-      const lbId = await seedUser(ctx, { slug: 'target-lb', tokenIdentifier: 'clerk|target-lb', role: 'Liveaboard', businessName: 'LB Biz' })
+      const lbId = await seedUser(ctx, { slug: 'target-lb', tokenIdentifier: 'clerk|target-lb', role: 'Liveaboard' })
       await ctx.db.patch(lbId, { phone: '+66800000000' })
       await seedStakeholderPreferences(ctx, 'target-lb', {
         stakeholderType: 'Liveaboard',

@@ -8,7 +8,6 @@ import {
 } from './fixtures'
 import { makeT } from './helpers/convex-helpers'
 
-// ─── Local thin wrapper for positional seedUser ─────────────────────────────
 
 async function seedTestUser(
   ctx: SeedCtx,
@@ -23,11 +22,9 @@ async function seedTestUser(
     name: `${slug} Display`,
     firstName: slug,
     lastName: 'Test',
-    businessName: 'Test Biz',
   })
 }
 
-// ─── getResourcesForBookings (batch helper) ─────────────────────────────────
 
 describe('getResourcesForBookings', () => {
   it('returns empty map for empty booking IDs array', async () => {
@@ -78,7 +75,6 @@ describe('getResourcesForBookings', () => {
       await seedBookingResource(ctx, b1, { resourceType: 'Instructor', resourceId: 'instr-1' })
       await seedBookingResource(ctx, b2, { resourceType: 'Boat', resourceId: 'boat-1' })
       await seedBookingResource(ctx, b2, { resourceType: 'Instructor', resourceId: 'instr-2' })
-      // b3 has no resources
 
       const map = await getResourcesForBookings(ctx, [b1 as string, b2 as string, b3 as string])
       return {

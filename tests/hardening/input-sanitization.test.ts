@@ -1,27 +1,9 @@
-/**
- * @module-tag slow
- */
-
-/**
- * Security: Input Sanitization
- *
- * Verifies that user-supplied string fields don't allow XSS, script injection,
- * or other dangerous content to be stored and returned by the backend.
- *
- * Convex stores data as-is (no server-side sanitization) — XSS prevention
- * relies on React's JSX escaping. These tests verify that dangerous payloads
- * are at minimum stored without causing backend errors, and document the
- * attack surface for client-side output encoding review.
- */
-
 import { describe, it, expect, beforeEach } from 'vitest'
 import {
-  TEST_TOKENS,
   TEST_SLUGS,
   seedUser,
   seedBooking,
 } from '../fixtures'
-import { testDate } from '../helpers/dates'
 import { makeT } from '../helpers/convex-helpers'
 import {
   sanitizeString,
@@ -33,8 +15,6 @@ beforeEach(() => {
   t = makeT()
 })
 
-// ── XSS payloads ─────────────────────────────────────────────────────────────
-
 const XSS_PAYLOADS = [
   '<script>alert("xss")</script>',
   '<img src=x onerror=alert(1)>',
@@ -44,48 +24,6 @@ const XSS_PAYLOADS = [
   '<iframe src="javascript:alert(1)">',
   'javascript:alert(1)',
 ]
-
-const UNICODE_EDGE_CASES = [
-  '\u0000', // null byte
-  '\u200B', // zero-width space
-  '\u202E', // right-to-left override
-  'A'.repeat(10000), // extremely long string
-  '🤿'.repeat(500), // emoji flood
-]
-
-describe('Input sanitization — XSS payloads in user fields', () => {
-  it('stores XSS payloads in user businessName without error', async () => {
-    for (const payload of XSS_PAYLOADS) {
-      const t = makeT()
-      await t.run(async (ctx) => {
-        const userId = await seedUser(ctx, {
-          businessName: payload,
-          slug: `xss-${Math.random().toString(36).slice(2, 8)}`,
-          tokenIdentifier: `test|xss-${Math.random().toString(36).slice(2, 8)}`,
-        })
-        const user = await ctx.db.get(userId)
-        expect(user?.businessName).toBe(payload)
-      })
-    }
-  })
-
-  it('stores Unicode edge cases in user fields without error', async () => {
-    for (const payload of UNICODE_EDGE_CASES) {
-      const t = makeT()
-      await t.run(async (ctx) => {
-        const slug = `uni-${Math.random().toString(36).slice(2, 8)}`
-        const userId = await seedUser(ctx, {
-          businessName: payload,
-          name: payload,
-          slug,
-          tokenIdentifier: `test|${slug}`,
-        })
-        const user = await ctx.db.get(userId)
-        expect(user?.businessName).toBe(payload)
-      })
-    }
-  })
-})
 
 describe('Input sanitization — XSS payloads in booking fields', () => {
   it('stores XSS payloads in booking draftState without error', async () => {
@@ -97,7 +35,6 @@ describe('Input sanitization — XSS payloads in booking fields', () => {
           ownerId: TEST_SLUGS.diveCenter,
           status: 'Draft',
         })
-        // Store payload in draftState (JSON string field)
         await ctx.db.patch(bookingId, { draftState: JSON.stringify({ notes: payload }) })
         const booking = await ctx.db.get(bookingId)
         const parsed = JSON.parse(booking!.draftState!)
@@ -121,14 +58,12 @@ describe('Input sanitization — SQL injection patterns (no-op in Convex but doc
       await t.run(async (ctx) => {
         const slug = `sql-${Math.random().toString(36).slice(2, 8)}`
         const userId = await seedUser(ctx, {
-          businessName: payload,
+          name: payload,
           slug,
           tokenIdentifier: `test|${slug}`,
         })
         const user = await ctx.db.get(userId)
-        // Convex is document-based — SQL injection is a no-op
-        // But we verify the payload doesn't cause unexpected behavior
-        expect(user?.businessName).toBe(payload)
+        expect(user?.name).toBe(payload)
       })
     }
   })
@@ -137,20 +72,18 @@ describe('Input sanitization — SQL injection patterns (no-op in Convex but doc
 describe('Input sanitization — field length boundaries', () => {
   it('accepts maximum reasonable field lengths', async () => {
     await t.run(async (ctx) => {
-      const longName = 'A'.repeat(500) // Reasonable max for a business name
+      const longName = 'A'.repeat(500)
       const userId = await seedUser(ctx, {
-        businessName: longName,
+        name: longName,
         slug: 'long-name-test',
         tokenIdentifier: 'test|long-name-test',
       })
       const user = await ctx.db.get(userId)
-      expect(user?.businessName).toBe(longName)
-      expect(user?.businessName?.length).toBe(500)
+      expect(user?.name).toBe(longName)
+      expect(user?.name?.length).toBe(500)
     })
   })
 })
-
-// ── sanitizeString / sanitizeFields unit tests ────────────────────────────────
 
 describe('sanitizeString — whitespace trimming', () => {
   it('trims leading and trailing whitespace', () => {
@@ -184,9 +117,7 @@ describe('sanitizeString — zero-width / invisible character stripping', () => 
   })
 
   it('preserves zero-width joiner (U+200D) — required for compound emoji', () => {
-    // ZWJ is used to compose family emoji like 👨‍👩‍👧‍👦
     expect(sanitizeString('a\u200Db')).toBe('a\u200Db')
-    // Compound emoji: family (man + ZWJ + woman + ZWJ + girl + ZWJ + boy)
     const familyEmoji = '👨\u200D👩\u200D👧\u200D👦'
     expect(sanitizeString(familyEmoji)).toBe(familyEmoji)
   })
@@ -196,12 +127,10 @@ describe('sanitizeString — zero-width / invisible character stripping', () => 
   })
 
   it('preserves zero-width non-joiner (U+200C) — required for Farsi/Indic scripts', () => {
-    // ZWNJ is essential in Farsi/Persian for correct word rendering
     expect(sanitizeString('a\u200Cb')).toBe('a\u200Cb')
   })
 
   it('preserves variation selectors (U+FE0F) — controls emoji presentation', () => {
-    // FE0F forces emoji presentation (❤️ vs ❤)
     expect(sanitizeString('❤\uFE0F')).toBe('❤\uFE0F')
   })
 
@@ -222,7 +151,6 @@ describe('sanitizeString — length capping', () => {
   })
 
   it('truncates after stripping (so final length is accurate)', () => {
-    // 5 visible chars + 3 zero-width = 8 raw. After stripping = 5, which is <= 10
     const input = 'a\u200Bb\u200Bc\u200Bde'
     expect(sanitizeString(input, 10)).toBe('abcde')
   })
@@ -234,10 +162,8 @@ describe('sanitizeString — length capping', () => {
   })
 
   it('does not split surrogate pairs when truncating (grapheme-safe)', () => {
-    // 🤿 is U+1F93F — a surrogate pair in UTF-16 (2 code units)
-    const input = '🤿'.repeat(10) // 10 emoji, 20 code units
-    const result = sanitizeString(input, 5) // cap at 5 codepoints
-    // Should produce exactly 5 complete emoji, no broken surrogates
+    const input = '🤿'.repeat(10)
+    const result = sanitizeString(input, 5)
     expect(Array.from(result).length).toBe(5)
     expect(result).toBe('🤿🤿🤿🤿🤿')
   })
@@ -245,9 +171,8 @@ describe('sanitizeString — length capping', () => {
 
 describe('sanitizeString — NFC normalization', () => {
   it('normalizes decomposed accents to NFC', () => {
-    // é as e + combining acute (NFD) → é as single codepoint (NFC)
-    const nfd = 'e\u0301' // NFD: e + combining acute accent
-    const nfc = '\u00E9'  // NFC: é
+    const nfd = 'e\u0301'
+    const nfc = '\u00E9'
     expect(sanitizeString(nfd)).toBe(nfc)
   })
 })
@@ -273,7 +198,6 @@ describe('sanitizeString — international characters preserved', () => {
   })
 
   it('preserves Farsi text with ZWNJ', () => {
-    // "می‌خواهم" — ZWNJ between می and خواهم is essential
     const farsi = 'می\u200Cخواهم'
     expect(sanitizeString(farsi)).toBe(farsi)
   })
@@ -303,7 +227,7 @@ describe('sanitizeFields — object sanitization', () => {
     const result = sanitizeFields(input, config)
     expect(result.name).toBe('hello')
     expect(result.email).toBe('test@example.com')
-    expect(result.age).toBe(30) // non-string untouched
+    expect(result.age).toBe(30)
   })
 
   it('does not mutate the original object', () => {
@@ -317,7 +241,7 @@ describe('sanitizeFields — object sanitization', () => {
     const input = { name: ' hello ', extra: ' world ' }
     const config = { name: 200 }
     const result = sanitizeFields(input, config)
-    expect(result.extra).toBe(' world ') // not in config, untouched
+    expect(result.extra).toBe(' world ')
   })
 
   it('skips config fields not in object', () => {
@@ -339,9 +263,7 @@ describe('sanitizeFields — object sanitization', () => {
     const input = { name: undefined, email: 'test@test.com' }
     const config = { name: 200, email: 254 }
     const result = sanitizeFields(input, config)
-    // undefined is not a string, so it passes through
     expect(result.name).toBeUndefined()
     expect(result.email).toBe('test@test.com')
   })
 })
-

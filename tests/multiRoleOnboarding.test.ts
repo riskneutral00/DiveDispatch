@@ -21,7 +21,6 @@ describe('createUser with roles array (DD-032)', () => {
       .mutation(api.users.createUser, { ...createUserDefaults,
         role: 'DiveCenter',
         roles: ['DiveCenter', 'Boat', 'Equipment'],
-        businessName: 'Multi DC',
       })
     await t.finishAllScheduledFunctions(vi.runAllTimers)
     vi.useRealTimers()
@@ -46,7 +45,6 @@ describe('createUser with roles array (DD-032)', () => {
       .mutation(api.users.createUser, { ...createUserDefaults,
         role: 'Boat',
         roles: ['Boat', 'Instructor'],
-        businessName: 'Boat First',
       })
     await t.finishAllScheduledFunctions(vi.runAllTimers)
     vi.useRealTimers()
@@ -71,7 +69,6 @@ describe('createUser with roles array (DD-032)', () => {
       .mutation(api.users.createUser, { ...createUserDefaults,
         role: 'Equipment',
         roles: ['Equipment', 'Compressor'],
-        businessName: 'Equip Co',
       })
     await t.finishAllScheduledFunctions(vi.runAllTimers)
     vi.useRealTimers()
@@ -94,7 +91,6 @@ describe('createUser with roles array (DD-032)', () => {
       .withIdentity(IDENTITY)
       .mutation(api.users.createUser, { ...createUserDefaults,
         role: 'DiveCenter',
-        businessName: 'Single DC',
       })
     await t.finishAllScheduledFunctions(vi.runAllTimers)
     vi.useRealTimers()
@@ -117,7 +113,6 @@ describe('createUser with roles array (DD-032)', () => {
       .mutation(api.users.createUser, { ...createUserDefaults,
         role: 'Instructor',
         roles: ['Instructor'],
-        businessName: 'Solo Instructor',
       })
     await t.finishAllScheduledFunctions(vi.runAllTimers)
     vi.useRealTimers()
@@ -130,7 +125,6 @@ describe('createUser with roles array (DD-032)', () => {
     )
     expect(roles).toHaveLength(1)
     expect(roles[0].role).toBe('Instructor')
-    expect(roles[0].profileComplete).toBe(false)
   })
 
 })

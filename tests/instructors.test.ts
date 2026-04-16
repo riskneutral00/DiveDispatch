@@ -109,57 +109,6 @@ describe('instructors.update', () => {
   })
 })
 
-describe('instructors.update — monotonic profileComplete invariant', () => {
-  it('allows clearing teachingLanguages while profileComplete is false (draft)', async () => {
-    const t = makeT()
-    let instrId: Awaited<ReturnType<typeof seedInstructorProfile>> | undefined
-    await t.run(async (ctx) => {
-      const userId = await seedUser(ctx, 'draft-instr')
-      instrId = await seedInstructorProfile(ctx, userId, { teachingLanguages: ['en'] })
-    })
-
-    await t.withIdentity({ tokenIdentifier: 'clerk|draft-instr' })
-      .mutation(api.instructors.update, { teachingLanguages: [] })
-
-    await t.run(async (ctx) => {
-      const instr = await ctx.db.get(instrId!) as Doc<'diveStaff'> | null
-      expect(instr!.teachingLanguages).toEqual([])
-    })
-  })
-
-  it('rejects clearing teachingLanguages once profileComplete is true', async () => {
-    const t = makeT()
-    await t.run(async (ctx) => {
-      const userId = await seedUser(ctx, 'done-instr')
-      await seedInstructorProfile(ctx, userId, { teachingLanguages: ['en', 'zh-CN'] })
-      const rr = await ctx.db.query('userRoles')
-        .withIndex('by_userId', (q) => q.eq('userId', userId))
-        .unique()
-      await ctx.db.patch(rr!._id, { profileComplete: true })
-    })
-
-    await expect(
-      t.withIdentity({ tokenIdentifier: 'clerk|done-instr' })
-        .mutation(api.instructors.update, { teachingLanguages: [] }),
-    ).rejects.toThrow(/PROFILE_INCOMPLETE/)
-  })
-
-  it('allows updates that keep all required fields satisfied', async () => {
-    const t = makeT()
-    await t.run(async (ctx) => {
-      const userId = await seedUser(ctx, 'happy-instr')
-      await seedInstructorProfile(ctx, userId, { teachingLanguages: ['en'] })
-      const rr = await ctx.db.query('userRoles')
-        .withIndex('by_userId', (q) => q.eq('userId', userId))
-        .unique()
-      await ctx.db.patch(rr!._id, { profileComplete: true })
-    })
-
-    await t.withIdentity({ tokenIdentifier: 'clerk|happy-instr' })
-      .mutation(api.instructors.update, { teachingLanguages: ['en', 'zh-TW'] })
-  })
-})
-
 describe('directory.listByRole — Instructor picker gate', () => {
   it('excludes instructors with empty teachingLanguages array', async () => {
     const t = makeT()

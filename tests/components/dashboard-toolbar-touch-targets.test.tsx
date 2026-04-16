@@ -89,7 +89,7 @@ function hasMinTouchTarget(el: HTMLElement): boolean {
 beforeEach(() => {
   vi.clearAllMocks()
   mockCurrentUser.mockReturnValue({
-    user: { slug: 'test-user', role: 'DiveCenter', onboardingComplete: true },
+    user: { slug: 'test-user', role: 'DiveCenter' },
     isLoading: false,
   })
 })

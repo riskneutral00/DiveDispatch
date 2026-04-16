@@ -100,7 +100,6 @@ describe('ManageRolesConnected', () => {
   })
 
   it('renders ManageRoles section heading once data loads', () => {
-    mockRoles = [{ _id: 'role_DC', role: 'DiveCenter', profileComplete: true, createdAt: 0 }]
     mockBookingCounts = {}
     mockRoleCompleteness = { roles: [{ role: 'DiveCenter', percentage: 100 }] }
 
@@ -110,7 +109,6 @@ describe('ManageRolesConnected', () => {
   })
 
   it('renders the Add Role button when data is loaded', () => {
-    mockRoles = [{ _id: 'role_DC', role: 'DiveCenter', profileComplete: true, createdAt: 0 }]
     mockBookingCounts = {}
     mockRoleCompleteness = { roles: [] }
 
@@ -120,7 +118,6 @@ describe('ManageRolesConnected', () => {
   })
 
   it('shows RoleOnboarding immediately after a successful addRole mutation', async () => {
-    mockRoles = [{ _id: 'role_DC', role: 'DiveCenter', profileComplete: true, createdAt: 0 }]
     mockBookingCounts = {}
     mockRoleCompleteness = { roles: [{ role: 'DiveCenter', percentage: 100 }] }
 
@@ -145,7 +142,6 @@ describe('ManageRolesConnected', () => {
   })
 
   it('displays error when addRole throws DUPLICATE_ROLE', async () => {
-    mockRoles = [{ _id: 'role_DC', role: 'DiveCenter', profileComplete: true, createdAt: 0 }]
     mockBookingCounts = {}
     mockRoleCompleteness = { roles: [] }
 

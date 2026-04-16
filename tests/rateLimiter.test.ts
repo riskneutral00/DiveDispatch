@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { ConvexError } from 'convex/values'
+import { internal } from '../convex/_generated/api'
 import { makeT } from './helpers/convex-helpers'
 import { checkRateLimit } from '../convex/lib/rateLimiter'
 
@@ -121,5 +122,43 @@ describe('checkRateLimit', () => {
         expect((err as ConvexError<{ code: string }>).data.code).toBe('RATE_LIMITED')
       }
     })
+  })
+})
+
+describe('purgeStaleRateLimits', () => {
+  it('deletes records whose lastRefill is older than 2x the max window', async () => {
+    await t.run(async (ctx) => {
+      await ctx.db.insert('rateLimits', {
+        key: 'submitSupportRequest:user-stale',
+        tokens: 3,
+        lastRefill: Date.now() - 300_000,
+      })
+    })
+
+    const deleted = await t.mutation(internal.lib.rateLimiter.purgeStaleRateLimits, {})
+    expect(deleted).toBe(1)
+
+    const remaining = await t.run(async (ctx) =>
+      ctx.db.query('rateLimits').collect(),
+    )
+    expect(remaining).toHaveLength(0)
+  })
+
+  it('preserves records whose lastRefill is within the retention window', async () => {
+    await t.run(async (ctx) => {
+      await ctx.db.insert('rateLimits', {
+        key: 'submitSupportRequest:user-fresh',
+        tokens: 3,
+        lastRefill: Date.now(),
+      })
+    })
+
+    const deleted = await t.mutation(internal.lib.rateLimiter.purgeStaleRateLimits, {})
+    expect(deleted).toBe(0)
+
+    const remaining = await t.run(async (ctx) =>
+      ctx.db.query('rateLimits').collect(),
+    )
+    expect(remaining).toHaveLength(1)
   })
 })

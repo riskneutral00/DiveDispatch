@@ -12,7 +12,6 @@ import {
 } from './fixtures'
 import { makeT } from './helpers/convex-helpers'
 
-// ─── Local thin wrapper for positional seedUser ─────────────────────────────
 
 async function seedTestUser(
   ctx: SeedCtx,
@@ -27,13 +26,9 @@ async function seedTestUser(
     name: `${slug} Display`,
     firstName: slug,
     lastName: 'Test',
-    businessName: 'Test Biz',
   })
 }
 
-// ─── Resource field splitting helper ─────────────────────────────────────────
-// Test-specific logic: splits convenience fields like `instructorId` into
-// seedBookingResource calls, keeping the seedBooking call clean.
 
 const RESOURCE_FIELD_MAP: Record<string, Doc<'bookingResources'>['resourceType']> = {
   instructorId: 'Instructor',
@@ -55,7 +50,6 @@ async function seedBookingWithResources(
   ownerId: string,
   overrides: Record<string, unknown> = {},
 ) {
-  // Separate resource fields from booking fields
   const bookingOverrides = { ...overrides }
   const resourceEntries: { type: Doc<'bookingResources'>['resourceType']; slug?: string; ext?: string }[] = []
 
@@ -89,7 +83,6 @@ async function seedBookingWithResources(
     },
   })
 
-  // Insert bookingResources rows using typed factory
   for (const entry of resourceEntries) {
     await seedBookingResource(ctx, bookingId, {
       resourceType: entry.type,
@@ -101,7 +94,6 @@ async function seedBookingWithResources(
   return bookingId
 }
 
-// ─── buildInstructorNameMap ───────────────────────────────────────────────────
 
 describe('buildInstructorNameMap', () => {
   it('returns empty map for empty slug list', async () => {
@@ -158,7 +150,6 @@ describe('buildInstructorNameMap', () => {
   })
 })
 
-// ─── listByOwner ──────────────────────────────────────────────────────────────
 
 describe('listByOwner', () => {
   it('throws UNAUTHENTICATED when no identity', async () => {
@@ -296,7 +287,6 @@ describe('listByOwner', () => {
   })
 })
 
-// ─── listByStatus ─────────────────────────────────────────────────────────────
 
 describe('listByStatus', () => {
   it('throws UNAUTHENTICATED when no identity', async () => {
@@ -390,7 +380,6 @@ describe('listByStatus', () => {
   })
 })
 
-// ─── listByResource ───────────────────────────────────────────────────────────
 
 describe('listByResource', () => {
   it('throws UNAUTHENTICATED when no identity', async () => {
@@ -512,7 +501,6 @@ describe('listByResource', () => {
   })
 })
 
-// ─── myDashboard ──────────────────────────────────────────────────────────────
 
 describe('myDashboard', () => {
   it('throws UNAUTHENTICATED when no identity', async () => {
@@ -664,7 +652,6 @@ describe('myDashboard', () => {
         timezone: 'Asia/Bangkok',
       })
 
-      // Second session same day
       await ctx.db.insert('bookingSessions', {
         bookingId,
         inventoryUnitId: unitId,
@@ -803,7 +790,6 @@ describe('myDashboard', () => {
       await seedTestUser(ctx, 'instructor-1', 'Instructor')
       const unitId = await seedInventoryUnit(ctx, { ownerId: 'instructor-1', resourceType: 'Instructor', ownerType: 'Instructor', displayName: 'instructor-1 unit' })
 
-      // Create a booking, get its id, then delete it
       const bookingId = await seedBookingWithResources(ctx, 'dc-1', { status: 'Draft' })
       const sessionId = await ctx.db.insert('bookingSessions', {
         bookingId,
@@ -820,7 +806,6 @@ describe('myDashboard', () => {
         unitsRequested: 1,
         status: 'PendingAcceptance',
       })
-      // Now delete the booking to simulate orphaned reservation
       await ctx.db.delete(bookingId)
     })
 
@@ -847,7 +832,6 @@ describe('myDashboard', () => {
         timezone: 'Asia/Bangkok',
       })
 
-      // Confirmed reservation — should NOT appear in requests
       await ctx.db.insert('reservations', {
         bookingId,
         inventoryUnitId: unitId,
@@ -879,7 +863,6 @@ describe('myDashboard', () => {
   })
 })
 
-// ─── activeRole validation (requireActiveRole gate) ─────────────────────────
 
 describe('listByStatus — activeRole validation', () => {
   it('rejects with ROLE_NOT_HELD when caller claims a role they do not hold', async () => {

@@ -6,7 +6,6 @@ import { testDate } from './helpers/dates'
 import { logBookingChange } from '../convex/bookingAuditLog'
 import { makeT } from './helpers/convex-helpers'
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 async function seedUser(ctx: unknown, slug = 'dc-test') {
   const c = ctx as { db: { insert: (table: string, doc: unknown) => Promise<string> } }
@@ -17,7 +16,6 @@ async function seedUser(ctx: unknown, slug = 'dc-test') {
     name: slug,
     firstName: 'Test',
     lastName: 'User',
-    businessName: 'Test DC',
     isSeeded: false,
     appLanguage: 'en',
   })
@@ -63,7 +61,6 @@ async function seedInventoryUnit(ctx: unknown): Promise<Id<'inventoryUnits'>> {
   })
 }
 
-// ─── 1: logBookingChange creates audit entry ───────────────────────────────────
 
 describe('logBookingChange creates audit entry', () => {
   afterEach(() => vi.restoreAllMocks())
@@ -100,7 +97,6 @@ describe('logBookingChange creates audit entry', () => {
   })
 })
 
-// ─── 2: getAuditLog returns entries sorted by timestamp desc ───────────────────
 
 describe('getAuditLog returns entries sorted by timestamp desc', () => {
   it('newest entry first', async () => {
@@ -111,7 +107,6 @@ describe('getAuditLog returns entries sorted by timestamp desc', () => {
       return seedBooking(ctx)
     })
 
-    // Insert 3 entries with different timestamps
     await t.run(async (ctx) => {
       const c = ctx as { db: { insert: (table: string, doc: unknown) => Promise<string> } }
       await c.db.insert('bookingAuditLog', {
@@ -148,7 +143,6 @@ describe('getAuditLog returns entries sorted by timestamp desc', () => {
   })
 })
 
-// ─── 3: getAuditLog scoped to bookingId ────────────────────────────────────────
 
 describe('getAuditLog scoped to bookingId', () => {
   it('only returns entries for the requested booking', async () => {
@@ -176,7 +170,6 @@ describe('getAuditLog scoped to bookingId', () => {
   })
 })
 
-// ─── 4: submitToDraft creates audit entries ────────────────────────────────────
 
 describe('submitToDraft creates audit entries', () => {
   it("creates 'created' and 'submitted' entries on first submit", async () => {
@@ -224,7 +217,6 @@ describe('submitToDraft creates audit entries', () => {
   })
 })
 
-// ─── 5: cancel creates audit entry ────────────────────────────────────────────
 
 describe('cancel creates audit entry', () => {
   it("creates 'cancelled' entry with actorSlug", async () => {
@@ -232,7 +224,6 @@ describe('cancel creates audit entry', () => {
 
     const bookingId = await t.run(async (ctx) => {
       await seedUser(ctx)
-      // Create an Upcoming booking (cancelBooking requires non-Cancelled)
       return seedBooking(ctx, { status: 'Upcoming' })
     })
 
@@ -256,7 +247,6 @@ describe('cancel creates audit entry', () => {
   })
 })
 
-// ─── 6: expire creates audit entry ────────────────────────────────────────────
 
 describe('expire creates audit entry', () => {
   afterEach(() => vi.restoreAllMocks())
@@ -292,7 +282,6 @@ describe('expire creates audit entry', () => {
   })
 })
 
-// ─── 7: complete creates audit entry ──────────────────────────────────────────
 
 describe('complete creates audit entry', () => {
   afterEach(() => vi.restoreAllMocks())
@@ -300,7 +289,6 @@ describe('complete creates audit entry', () => {
   it("creates 'completed' entry with actorType 'system'", async () => {
     const t = makeT()
 
-    // Mock: time is well after session end
     vi.spyOn(Date, 'now').mockReturnValue(new Date(testDate(6) + 'T10:00:00Z').getTime())
 
     const bookingId = await t.run(async (ctx) => {
@@ -336,7 +324,6 @@ describe('complete creates audit entry', () => {
   })
 })
 
-// ─── 8: audit entries are immutable ───────────────────────────────────────────
 
 describe('audit entries are immutable', () => {
   it('bookingAuditLog only exposes getAuditLog — no write mutations for clients', async () => {
@@ -347,7 +334,6 @@ describe('audit entries are immutable', () => {
       return seedBooking(ctx)
     })
 
-    // Insert an entry
     await t.run(async (ctx) => {
       await logBookingChange(ctx, {
         bookingId,
@@ -357,32 +343,24 @@ describe('audit entries are immutable', () => {
       })
     })
 
-    // Verify getAuditLog is the only public-facing API
     expect(typeof api.bookingAuditLog.getAuditLog).toBe('object')
 
-    // Verify the entry cannot be mutated via the public api (no patch/delete exposed)
-    // Structural assertion: bookingAuditLog module has only getAuditLog in public api
     const publicKeys = Object.keys(
       Object.getOwnPropertyDescriptors(
         Object.getPrototypeOf(api.bookingAuditLog) ?? api.bookingAuditLog,
       ),
     ).filter((k) => k !== 'constructor')
 
-    // The module path itself should not expose mutation functions
-    // (confirmed by TypeScript: only getAuditLog is typed in api.bookingAuditLog)
     const entry = await t
       .withIdentity({ tokenIdentifier: 'clerk|dc-test' })
       .query(api.bookingAuditLog.getAuditLog, { bookingId })
 
     expect(entry).toHaveLength(1)
-    // Direct db patch is not accessible via public api
-    // (no api.bookingAuditLog.patchAuditLog or deleteAuditLog exists in TypeScript types)
     expect(publicKeys.includes('patchAuditLog')).toBe(false)
     expect(publicKeys.includes('deleteAuditLog')).toBe(false)
   })
 })
 
-// ─── 11: getAuditLog rejects non-owner/non-resource caller ───────────────────
 
 describe('getAuditLog ownership check (A5)', () => {
   it('throws FORBIDDEN when caller has no ownership or reservation on the booking', async () => {
