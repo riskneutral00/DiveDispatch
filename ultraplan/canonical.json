@@ -31,8 +31,8 @@
         "name": "Prawit Suksawat",
         "firstName": "Prawit",
         "lastName": "Suksawat",
-        "businessName": "Scuba Market Thailand",
         "appLanguage": "th",
+        "dateOfBirth": "1975-08-12",
         "phone": "+66-76-330-345",
         "isSeeded": false,
         "onboardingComplete": true
@@ -43,10 +43,11 @@
         "country": "Thailand",
         "lat": 7.8202,
         "lng": 98.3062,
-        "email": "scuba-market@divedispatch.dev",
+        "email": "scuba-market+clerk_test@divedispatch.dev",
         "phone": "+66-76-330-345",
         "gasMixes": ["air", "nitrox"],
-        "nitroxO2Percent": 32,
+        "nitroxMin": 32,
+        "nitroxMax": 32,
         "autoAccept": true,
         "verified": false
       }
@@ -59,8 +60,8 @@
         "name": "Sombat Charoensuk",
         "firstName": "Sombat",
         "lastName": "Charoensuk",
-        "businessName": "Compressor Shop Chalong Pier",
         "appLanguage": "th",
+        "dateOfBirth": "1982-04-20",
         "phone": "+66-81-234-5014",
         "isSeeded": false,
         "onboardingComplete": true
@@ -71,11 +72,12 @@
         "country": "Thailand",
         "lat": 7.8386,
         "lng": 98.3519,
-        "email": "compressor-chalong@divedispatch.dev",
+        "email": "compressor-chalong+clerk_test@divedispatch.dev",
         "phone": "+66-76-395-001",
         "gasMixes_initial": [],
         "gasMixes_completed": ["air", "nitrox"],
-        "nitroxO2Percent": 32,
+        "nitroxMin": 32,
+        "nitroxMax": 32,
         "autoAccept": true,
         "verified": false
       }
@@ -89,8 +91,8 @@
         "name": "Somchai Prasert",
         "firstName": "Somchai",
         "lastName": "Prasert",
-        "businessName": "Hug Ocean",
         "appLanguage": "zh-CN",
+        "dateOfBirth": "1980-01-15",
         "phone": "+66-81-234-5001",
         "isSeeded": false,
         "onboardingComplete": true
@@ -101,7 +103,7 @@
         "country": "Thailand",
         "lat": 7.8804,
         "lng": 98.3923,
-        "email": "hug-ocean@divedispatch.dev",
+        "email": "hug-ocean+clerk_test@divedispatch.dev",
         "phone": "+66-76-381-103",
         "manufacturersByGearType": {
           "wetsuit": ["ScubaPro", "Aqua Lung", "Mares"],
@@ -124,8 +126,8 @@
         "firstName": "Anong",
         "lastName": "Petcharat",
         "nickname": "Ta",
-        "businessName": "Scuba Revolution Phuket",
         "appLanguage": "th",
+        "dateOfBirth": "1990-06-03",
         "phone": "+66-76-330-678",
         "isSeeded": false,
         "onboardingComplete": true
@@ -136,7 +138,7 @@
         "country": "Thailand",
         "lat": 7.8207,
         "lng": 98.3425,
-        "email": "scuba-revolution@divedispatch.dev",
+        "email": "scuba-revolution+clerk_test@divedispatch.dev",
         "phone": "+66-76-330-678",
         "manufacturersByGearType": {
           "wetsuit": ["ScubaPro", "Aqua Lung", "Mares"],
@@ -158,8 +160,8 @@
         "name": "Nicole Huang",
         "firstName": "Nicole",
         "lastName": "Huang",
-        "businessName": "Nicole Dive Center",
         "appLanguage": "zh-TW",
+        "dateOfBirth": "1987-11-28",
         "phone": "+66-81-234-5004",
         "isSeeded": false,
         "onboardingComplete": true
@@ -170,7 +172,7 @@
         "country": "Thailand",
         "lat": 7.8804,
         "lng": 98.3923,
-        "email": "nicole-dive-center@divedispatch.dev",
+        "email": "nicole-dive-center+clerk_test@divedispatch.dev",
         "phone": "+66-76-386-002",
         "manufacturersByGearType": {
           "wetsuit": ["ScubaPro", "Aqua Lung", "Mares"],
@@ -193,7 +195,7 @@
         "country": "Thailand",
         "lat": 7.8804,
         "lng": 98.3923,
-        "email": "hug-ocean@divedispatch.dev",
+        "email": "hug-ocean+clerk_test@divedispatch.dev",
         "phone": "+66-76-381-101",
         "vessels": [
           {
@@ -219,8 +221,8 @@
         "name": "Kittisak Charoen",
         "firstName": "Kittisak",
         "lastName": "Charoen",
-        "businessName": "Phuket Dive Center",
         "appLanguage": "th",
+        "dateOfBirth": "1978-09-05",
         "phone": "+66-81-234-5003",
         "isSeeded": false,
         "onboardingComplete": true
@@ -231,7 +233,7 @@
         "country": "Thailand",
         "lat": 7.8804,
         "lng": 98.3923,
-        "email": "phuket-dive-center@divedispatch.dev",
+        "email": "phuket-dive-center+clerk_test@divedispatch.dev",
         "phone": "+66-76-385-002",
         "vessels_initial": [],
         "vessels_completed": [
@@ -272,8 +274,8 @@
         "name": "Ryan Clarke",
         "firstName": "Ryan",
         "lastName": "Clarke",
-        "businessName": "Ryan Clarke",
         "appLanguage": "en",
+        "dateOfBirth": "1985-03-22",
         "phone": "+66-81-600-1000",
         "isSeeded": false,
         "onboardingComplete": true
@@ -310,8 +312,8 @@
         "name": "Li Ming",
         "firstName": "Li",
         "lastName": "Ming",
-        "businessName": "Li Ming",
         "appLanguage": "en",
+        "dateOfBirth": "1991-07-14",
         "phone": "+66-81-603-1003",
         "isSeeded": false,
         "onboardingComplete": true
@@ -349,8 +351,8 @@
         "name": "Wei Chen",
         "firstName": "Wei",
         "lastName": "Chen",
-        "businessName": "Wei Chen",
         "appLanguage": "en",
+        "dateOfBirth": "1989-02-10",
         "phone": "+66-81-602-1002",
         "isSeeded": false,
         "onboardingComplete": true
@@ -388,8 +390,8 @@
         "name": "Arisa Kanchanaburi",
         "firstName": "Arisa",
         "lastName": "Kanchanaburi",
-        "businessName": "Arisa Kanchanaburi",
         "appLanguage": "en",
+        "dateOfBirth": "1993-12-01",
         "phone": "+66-81-615-1015",
         "isSeeded": false,
         "onboardingComplete": true
@@ -426,7 +428,7 @@
         "country": "Thailand",
         "lat": 7.8804,
         "lng": 98.3923,
-        "email": "hug-ocean@divedispatch.dev",
+        "email": "hug-ocean+clerk_test@divedispatch.dev",
         "phone": "+66-76-381-102",
         "venueCategory": "pool",
         "hasCompressor": false,
@@ -448,8 +450,8 @@
         "name": "Wei Lin",
         "firstName": "Wei",
         "lastName": "Lin",
-        "businessName": "Neptune",
         "appLanguage": "zh-CN",
+        "dateOfBirth": "1983-05-18",
         "phone": "+66-81-234-5002",
         "isSeeded": false,
         "onboardingComplete": true
@@ -460,7 +462,7 @@
         "country": "Thailand",
         "lat": 7.8804,
         "lng": 98.3923,
-        "email": "neptune@divedispatch.dev",
+        "email": "neptune+clerk_test@divedispatch.dev",
         "phone": "+66-76-383-002",
         "venueCategory": "pool",
         "hasCompressor": false,
@@ -482,8 +484,8 @@
         "name": "Niran Jantarakul",
         "firstName": "Niran",
         "lastName": "Jantarakul",
-        "businessName": "Water Pro",
         "appLanguage": "th",
+        "dateOfBirth": "1977-10-30",
         "phone": "+66-76-394-001",
         "isSeeded": false,
         "onboardingComplete": true
@@ -494,7 +496,7 @@
         "country": "Thailand",
         "lat": 7.8804,
         "lng": 98.3923,
-        "email": "water-pro@divedispatch.dev",
+        "email": "water-pro+clerk_test@divedispatch.dev",
         "phone": "+66-76-394-001",
         "venueCategory": "pool",
         "hasCompressor": false,
@@ -516,8 +518,8 @@
         "name": "Kittisak Wongsawat",
         "firstName": "Kittisak",
         "lastName": "Wongsawat",
-        "businessName": "Shark Bites",
         "appLanguage": "th",
+        "dateOfBirth": "1986-08-25",
         "phone": "+66-76-394-002",
         "isSeeded": false,
         "onboardingComplete": true
@@ -528,7 +530,7 @@
         "country": "Thailand",
         "lat": 7.8804,
         "lng": 98.3923,
-        "email": "shark-bites@divedispatch.dev",
+        "email": "shark-bites+clerk_test@divedispatch.dev",
         "phone": "+66-76-394-002",
         "venueCategory": "pool",
         "hasCompressor": false,
@@ -551,7 +553,7 @@
         "country": "Thailand",
         "lat": 7.896,
         "lng": 98.298,
-        "email": "hug-ocean@divedispatch.dev",
+        "email": "hug-ocean+clerk_test@divedispatch.dev",
         "phone": "+66-76-381-100",
         "associations": [
           {
@@ -579,7 +581,7 @@
         "country": "Thailand",
         "lat": 7.8804,
         "lng": 98.3923,
-        "email": "nicole-dive-center@divedispatch.dev",
+        "email": "nicole-dive-center+clerk_test@divedispatch.dev",
         "phone": "+66-76-386-001",
         "associations_initial": [],
         "associations_completed": [
@@ -691,8 +693,8 @@
         "name": "Alex Walker",
         "firstName": "Alex",
         "lastName": "Walker",
-        "businessName": "Alex Walker",
         "appLanguage": "en",
+        "dateOfBirth": "1992-04-17",
         "customerLanguages": ["en"],
         "phone": "+66 81 900 1234",
         "isSeeded": false,

@@ -55,14 +55,13 @@
     "usersBlock": {
       "description": "Canonical per-user record. Mirrors `users` table but omits runtime-assigned tokenIdentifier/slug.",
       "type": "object",
-      "required": ["email", "firstName", "lastName", "businessName", "appLanguage", "isSeeded", "onboardingComplete"],
+      "required": ["email", "firstName", "lastName", "appLanguage", "dateOfBirth", "isSeeded", "onboardingComplete"],
       "properties": {
         "email": { "type": "string", "format": "email" },
         "name": { "type": "string" },
         "firstName": { "type": "string", "minLength": 1 },
         "lastName": { "type": "string", "minLength": 1 },
         "nickname": { "type": "string" },
-        "businessName": { "type": "string", "minLength": 1 },
         "appLanguage": { "type": "string", "enum": ["en", "th", "zh-CN", "zh-TW", "ko", "ja"] },
         "customerLanguages": { "type": "array", "items": { "type": "string" } },
         "phone": { "type": "string" },
