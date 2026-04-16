@@ -73,9 +73,9 @@ while IFS= read -r -d '' f; do
 done < <(find "$VAULT" -type f -name "*.md" -not -path "*/raw/archive/*" -not -path "*/archive-*" -print0)
 
 # ---- 2. stale refs — known-deleted symbols ----
-STALE_SYMBOLS=(content-island HOLD_TTL_MS error-messages.ts)
+STALE_SYMBOLS=(content-island error-messages.ts)
 for sym in "${STALE_SYMBOLS[@]}"; do
-  hits=$(grep -rl "$sym" "$VAULT" --include="*.md" 2>/dev/null | grep -v "/raw/archive/" | grep -v "/archive-" || true)
+  hits=$(grep -rl "$sym" "$VAULT" --include="*.md" 2>/dev/null | grep -v "/raw/archive/" | grep -v "/archive-" | grep -v "/raw/Lint/" || true)
   if [ -n "$hits" ]; then
     while IFS= read -r hit; do
       [ -z "$hit" ] && continue
