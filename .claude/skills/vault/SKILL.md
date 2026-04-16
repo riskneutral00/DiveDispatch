@@ -285,7 +285,7 @@ Read `git status --porcelain` output. Assign each file to exactly one bucket. **
 |-----|--------|--------------|----------------|
 | 0 | **Renames** | `D` + `??` pair in same dir, similar basename | `refactor:` |
 | 1 | **Tooling** | `.claude/**`, `.gitignore`, `scripts/**` | `chore:` |
-| 2 | **Infra** | `package.json`, `package-lock.json`, `convex/_generated/**` | `chore:` |
+| 2 | **Infra** | `package.json`, `package-lock.json` | `chore:` |
 | 3 | **Booking backend** | `convex/bookings/**`, `convex/availability.ts`, `convex/bookingDraftMutations.ts` | varies |
 | 4 | **Backend (other)** | `convex/**` (everything else) | varies |
 | 5 | **Booking UI** | `src/components/booking/**`, `src/lib/booking/**` | varies |
@@ -293,15 +293,18 @@ Read `git status --porcelain` output. Assign each file to exactly one bucket. **
 | 7 | **UI (other)** | `src/components/**`, `src/lib/**`, `src/app/**` | varies |
 | 8 | **E2E** | `e2e/**` | `test:` |
 | 9 | **Tests** | `tests/**`, `src/**/__tests__/**` | `test:` |
-| 10 | **Board** | `.tickets/**` | `chore:` |
+| 10 | **Board** | `.tickets/**` | — (never staged — symlink to vault) |
 
-**Always exclude** from staging: `.env*`, `credentials*.json`, `*.pem`, `*.key`, `playwright-report/`, `test-results/`
+**Always exclude** from staging: `.env*`, `credentials*.json`, `*.pem`, `*.key`, `playwright-report/`, `test-results/`, `convex/_generated/**`, `.tickets/**`
+
+**Why `.tickets/` and `convex/_generated/` are excluded:**
+- `.tickets/` is a symlink → `../Vaults/DiveDispatch/wiki/Tickets`. `git add` fails with `fatal: pathspec is beyond a symbolic link`. Ticket moves (`mv .tickets/DD-N.md .tickets/done/`) modify vault files outside the repo — they don't need staging.
+- `convex/_generated/` is gitignored. It appears in `git status` output but `git add` rejects it.
 
 #### Phase B: Merge & pair
 
 1. **Test pairing** — move test files to their source bucket if a matching source exists there. Strip `tests/`, `tests/components/`, `__tests__/` prefix and `.test.` suffix → compare basename AND parent directory path (e.g., `tests/components/booking/quick-book.test.tsx` matches `src/components/booking/`, not `convex/bookings/`). If exactly one bucket has a path-level match, merge the test there. If multiple buckets match by basename alone, prefer the one whose source path shares the most directory segments. Unpaired tests stay in Tests bucket.
 2. **Cross-cutting files:**
-   - `convex/_generated/api.d.ts` → first backend bucket
    - `package.json` / `package-lock.json` → Infra, unless only 1 other bucket exists (merge there)
    - Seed cluster (`seed.ts`, `seedFixture.ts`, `seed-clerk.ts`, `e2e/helpers/seed.ts`) → merge into a backend bucket if one exists, otherwise own bucket
 3. **Tiny buckets** — if a bucket has only 1 modified (not new) file, merge into nearest same-domain bucket (`convex/` → any backend, `src/` → any UI)
