@@ -2,6 +2,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '../helpers/render'
 import { DiverEquipmentWidget } from '@/components/booking/diver-equipment-widget'
+import { testDate } from '../helpers/dates'
 
 const useQueryMock = vi.fn()
 
@@ -21,7 +22,7 @@ describe('DiverEquipmentWidget feedback states', () => {
 
   it('shows empty-state message when equipment profile is missing', () => {
     useQueryMock.mockReturnValueOnce(null)
-    render(<DiverEquipmentWidget visibleRange={{ start: '2026-04-01', end: '2026-04-08' }} />)
+    render(<DiverEquipmentWidget visibleRange={{ start: testDate(-14), end: testDate(-7) }} />)
     expect(screen.getByText('Equipment profile not set up.')).toBeInTheDocument()
   })
 
@@ -32,7 +33,7 @@ describe('DiverEquipmentWidget feedback states', () => {
       inventory: [],
       manufacturersByGearType: {},
     })
-    render(<DiverEquipmentWidget visibleRange={{ start: '2026-04-01', end: '2026-04-08' }} />)
+    render(<DiverEquipmentWidget visibleRange={{ start: testDate(-14), end: testDate(-7) }} />)
     expect(screen.getByText('No bookings in this date range.')).toBeInTheDocument()
   })
 })

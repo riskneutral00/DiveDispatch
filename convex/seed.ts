@@ -192,6 +192,7 @@ async function insertUser(ctx: MutationCtx, s: SeedStakeholder) {
     isSeeded: true,
     appLanguage: s.user.appLanguage,
     phone: s.user.phone,
+    dateOfBirth: s.user.dateOfBirth ?? '1990-01-01',
     ...(s.diveCenter?.customerLanguages
       ? { customerLanguages: s.diveCenter.customerLanguages }
       : s.user.customerLanguages

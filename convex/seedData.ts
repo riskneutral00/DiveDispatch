@@ -27,6 +27,7 @@ export interface SeedUser {
   businessName: string
   appLanguage: string
   phone: string
+  dateOfBirth?: string
   customerLanguages?: string[]
 }
 

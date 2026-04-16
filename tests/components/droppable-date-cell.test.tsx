@@ -2,6 +2,7 @@
 import React from 'react'
 import { describe, it, expect, vi } from 'vitest'
 import { render } from '../helpers/render'
+import { testDate } from '../helpers/dates'
 
 // Mock dnd-kit
 const mockIsDropTarget = vi.fn(() => false)
@@ -18,7 +19,7 @@ import { DroppableDateCell } from '@/components/booking/droppable-date-cell'
 describe('DroppableDateCell', () => {
   it('renders children', () => {
     const { getByText } = render(
-      <DroppableDateCell dateString="2026-04-01" disabled={false}>
+      <DroppableDateCell dateString={testDate(-14)} disabled={false}>
         <span>Day Content</span>
       </DroppableDateCell>,
     )
@@ -28,7 +29,7 @@ describe('DroppableDateCell', () => {
   it('applies highlight style when isDropTarget is true', () => {
     mockIsDropTarget.mockReturnValue(true)
     const { container } = render(
-      <DroppableDateCell dateString="2026-04-01" disabled={false}>
+      <DroppableDateCell dateString={testDate(-14)} disabled={false}>
         <span>Day</span>
       </DroppableDateCell>,
     )
@@ -39,7 +40,7 @@ describe('DroppableDateCell', () => {
   it('does NOT apply highlight when disabled even if isDropTarget', () => {
     mockIsDropTarget.mockReturnValue(true)
     const { container } = render(
-      <DroppableDateCell dateString="2026-04-01" disabled>
+      <DroppableDateCell dateString={testDate(-14)} disabled>
         <span>Day</span>
       </DroppableDateCell>,
     )

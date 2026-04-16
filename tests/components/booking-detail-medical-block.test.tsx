@@ -11,6 +11,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render } from '../helpers/render'
 import { screen, fireEvent } from '@testing-library/react'
+import { testDate } from '../helpers/dates'
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 
@@ -79,14 +80,14 @@ function makeBooking(overrides: Record<string, unknown> = {}) {
     _id: 'booking123',
     status: 'Draft',
     activityType: ['DSD'],
-    startDate: '2026-04-01',
-    endDate: '2026-04-01',
+    startDate: testDate(-14),
+    endDate: testDate(-14),
     divers: [{
       name: 'Test Diver',
       abbrev: 'TD',
       flag: { code: 'us', label: 'United States' },
-      startDate: '2026-04-01',
-      endDate: '2026-04-01',
+      startDate: testDate(-14),
+      endDate: testDate(-14),
       activityType: ['DSD'],
     }],
     operatorName: 'Test Center',

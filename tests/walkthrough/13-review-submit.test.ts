@@ -33,6 +33,7 @@ async function seedDcUser(ctx: Ctx, slug: string) {
     firstName: slug,
     lastName: 'DC',
     businessName: `${slug} Business`,
+    dateOfBirth: '1990-01-01',
     isSeeded: false,
     appLanguage: 'en',
   })
@@ -47,6 +48,7 @@ async function seedInstructorUser(ctx: Ctx, slug: string) {
     firstName: slug,
     lastName: 'Instructor',
     businessName: `${slug} Teaching`,
+    dateOfBirth: '1990-01-01',
     isSeeded: false,
     appLanguage: 'en',
   })

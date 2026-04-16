@@ -13,6 +13,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '../helpers/render'
 import { ReviewStep } from '@/components/booking/review-step'
+import { testDate } from '../helpers/dates'
 import type { WizardState, WizardAction } from '@/lib/booking/wizard-state'
 import type { Dispatch } from 'react'
 
@@ -43,18 +44,18 @@ function makeState(overrides: Partial<WizardState> = {}): WizardState {
         id: 'c1',
         name: 'Alice Diver',
         flags: [{ code: 'us', label: 'English' }],
-        courseEntries: [{ id: 'e1', activityCode: 'DSD', dates: ['2026-04-10'], agency: 'PADI' }],
+        courseEntries: [{ id: 'e1', activityCode: 'DSD', dates: [testDate(-5)], agency: 'PADI' }],
       },
     ],
     activeCustomerIdx: 0,
     draftCreating: false,
     selectedCourses: ['DSD'],
-    startDate: '2026-04-10',
-    endDate: '2026-04-10',
+    startDate: testDate(-5),
+    endDate: testDate(-5),
     agency: 'PADI',
     days: [
       {
-        date: '2026-04-10',
+        date: testDate(-5),
         venueType: 'boat',
         dives: [],
         divesPerDay: 2,
@@ -99,7 +100,7 @@ describe('ReviewStep', () => {
   it('renders the date range in the Overview card', () => {
     render(<ReviewStep state={makeState()} dispatch={dispatch} />)
     // The date appears in multiple places (schedule card + overview card); confirm at least one exists
-    expect(screen.getAllByText(/2026-04-10/).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(new RegExp(testDate(-5))).length).toBeGreaterThan(0)
   })
 
   it('disables the Submit button when there are no customers', () => {

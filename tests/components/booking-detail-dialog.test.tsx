@@ -11,6 +11,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '../helpers/render'
 import { BookingDetailDialog } from '@/components/booking/booking-detail-dialog'
+import { testDate } from '../helpers/dates'
 
 // ── jsdom polyfill for HTMLDialogElement ───────────────────────────────────────
 // jsdom doesn't implement showModal/close — patch once at module scope
@@ -81,8 +82,8 @@ function makeBooking(overrides: Record<string, unknown> = {}) {
     _id: 'booking-abc',
     status: 'Draft',
     activityType: ['DSD'],
-    startDate: '2026-05-01',
-    endDate: '2026-05-01',
+    startDate: testDate(16),
+    endDate: testDate(16),
     divers: [],
     operatorName: 'Test Center',
     bookingFormComplete: false,

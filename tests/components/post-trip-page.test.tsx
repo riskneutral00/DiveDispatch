@@ -6,11 +6,12 @@
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '../helpers/render'
 import { PostTripPage } from '@/components/portal/post-trip-page'
+import { testDate } from '../helpers/dates'
 
 const baseProps = {
   operatorName: 'Blue Ocean Dive Center',
-  startDate: '2026-03-20',
-  endDate: '2026-03-25',
+  startDate: testDate(-26),
+  endDate: testDate(-21),
 }
 
 describe('PostTripPage', () => {
@@ -51,8 +52,8 @@ describe('PostTripPage', () => {
     const { container } = render(
       <PostTripPage
         operatorName="Sea Explorer Dive Center"
-        startDate="2026-03-10"
-        endDate="2026-03-12"
+        startDate={testDate(-36)}
+        endDate={testDate(-34)}
       />,
     )
     expect(container.querySelector('[data-testid="post-trip-page"]')).toBeInTheDocument()

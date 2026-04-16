@@ -12,6 +12,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '../helpers/render'
 import { BookingDetailBody } from '@/components/booking/booking-detail-shared'
 import type { BookingDetailBodyProps } from '@/components/booking/booking-detail-shared'
+import { testDate } from '../helpers/dates'
 
 // ── Mocks ──────────────────────────────────────────────────────────────────────
 
@@ -51,15 +52,15 @@ function makeBooking(overrides: Record<string, unknown> = {}) {
     _id: 'booking-xyz',
     status: 'Upcoming',
     activityType: ['DSD'],
-    startDate: '2026-05-01',
-    endDate: '2026-05-01',
+    startDate: testDate(16),
+    endDate: testDate(16),
     divers: [
       {
         name: 'Alice',
         abbrev: 'A',
         flag: { code: 'us', label: 'United States' },
-        startDate: '2026-05-01',
-        endDate: '2026-05-01',
+        startDate: testDate(16),
+        endDate: testDate(16),
         activityType: ['DSD'],
         contactType: 'email' as const,
         contactValue: 'alice@example.com',

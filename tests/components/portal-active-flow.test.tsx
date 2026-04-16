@@ -11,6 +11,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, act } from '../helpers/render'
 import { PortalActiveFlow } from '@/components/portal/portal-active-flow'
+import { testDate } from '../helpers/dates'
 
 // ── Mocks ──────────────────────────────────────────────────────────────────────
 
@@ -63,8 +64,8 @@ const defaultProps = {
   customerName: 'Alice Diver',
   operatorName: 'Ocean Center',
   activityType: ['DSD'],
-  startDate: '2026-05-01',
-  endDate: '2026-05-03',
+  startDate: testDate(16),
+  endDate: testDate(18),
   diverCount: 1,
   progress: null,
 }

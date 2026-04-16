@@ -14,6 +14,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '../helpers/render'
 import { PendingRequestsList } from '@/components/booking/pending-requests-list'
 import type { RequestItem } from '../../convex/bookings'
+import { testDate } from '../helpers/dates'
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 
@@ -41,7 +42,7 @@ function makeRequest(overrides: Partial<RequestItem> = {}): RequestItem {
     _id: 'req-1',
     bookingId: 'booking-1',
     activityType: ['DSD'],
-    dates: ['2026-04-10'],
+    dates: [testDate(-5)],
     status: 'pending',
     ownerName: 'Coral Dive Center',
     ...overrides,

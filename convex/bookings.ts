@@ -234,7 +234,7 @@ async function resolveCallerBookings(ctx: QueryCtx, user: UserDoc, activeRole: s
     const [owned, referred] = await Promise.all([
       ctx.db
         .query('bookings')
-        .withIndex('by_ownerId_ownerType', (q) => q.eq('ownerId', slug))
+        .withIndex('by_ownerId_ownerType', (q) => q.eq('ownerId', slug).eq('ownerType', role as OperatorType))
         .collect(), // bounded: per-booking joins
       ctx.db
         .query('bookings')

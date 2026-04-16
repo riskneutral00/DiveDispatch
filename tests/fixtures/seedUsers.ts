@@ -31,6 +31,7 @@ export async function seedUser(
     lastName: overrides.lastName ?? 'User',
     businessName: overrides.businessName ?? 'Test Business',
     phone: '+66812345678',
+    dateOfBirth: '1990-01-01',
     isSeeded: overrides.isSeeded ?? true,
     appLanguage: 'en',
   })

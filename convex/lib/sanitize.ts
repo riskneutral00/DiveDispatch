@@ -48,6 +48,7 @@ export const USER_FIELDS: FieldConfig = {
   nickname: SHORT_TEXT_MAX,
   phone: PHONE_MAX,
   email: EMAIL_MAX,
+  dateOfBirth: SHORT_TEXT_MAX,
 }
 
 export const PROFILE_FIELDS: FieldConfig = {

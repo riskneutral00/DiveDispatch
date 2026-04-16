@@ -462,6 +462,7 @@ export default defineSchema({
     maxWeight: v.number(),
     shoeSize: v.optional(v.number()),
     shoeSizeUnit: v.optional(shoeSizeUnit),
+    createdBy: v.optional(v.string()),
   })
     .index('by_manufacturer_gearType', ['manufacturer', 'gearType'])
     .index('by_gearType', ['gearType']),
@@ -673,17 +674,4 @@ export default defineSchema({
     .index('by_bookingId', ['bookingId'])
     .index('by_bookingId_timestamp', ['bookingId', 'timestamp']),
 
-  relationships: defineTable({
-    subjectType: v.string(),
-    subjectId: v.string(),
-    relation: v.string(),
-    objectType: v.string(),
-    objectId: v.string(),
-    createdAt: v.number(),
-    bookingId: v.optional(v.id('bookings')),
-  })
-    .index('by_subjectId_objectType', ['subjectId', 'objectType'])
-    .index('by_objectId_relation', ['objectId', 'relation'])
-    .index('by_subjectId_relation_objectId', ['subjectId', 'relation', 'objectId'])
-    .index('by_bookingId', ['bookingId']),
 })

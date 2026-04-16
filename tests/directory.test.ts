@@ -15,6 +15,7 @@ async function seedInstructorUser(ctx: SeedCtx, slug: string) {
     firstName: slug,
     lastName: 'Test',
     businessName: 'Test',
+    dateOfBirth: '1990-01-01',
     isSeeded: false,
     appLanguage: 'en',
   })
@@ -55,6 +56,7 @@ async function seedCallerUser(ctx: SeedCtx, slug: string) {
     firstName: slug,
     lastName: 'Caller',
     businessName: 'Dive Center',
+    dateOfBirth: '1990-01-01',
     isSeeded: false,
     appLanguage: 'en',
   })
@@ -244,6 +246,7 @@ describe('listByRole language propagation', () => {
         firstName: 'DC',
         lastName: 'Lang',
         businessName: 'DC Business',
+        dateOfBirth: '1990-01-01',
         isSeeded: false,
         appLanguage: 'en',
         customerLanguages: ['ko-KR', 'ja-JP'],

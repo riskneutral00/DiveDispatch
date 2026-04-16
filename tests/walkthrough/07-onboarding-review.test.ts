@@ -22,6 +22,7 @@ async function seedUser(
     firstName: slug,
     lastName: 'Test',
     businessName: `${slug} Business`,
+    dateOfBirth: '1990-01-01',
     isSeeded: false,
     appLanguage: 'en',
     ...overrides,

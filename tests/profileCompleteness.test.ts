@@ -66,6 +66,35 @@ describe('checkProfileCompleteness', () => {
     })
   })
 
+  it('missing dateOfBirth on users table makes profile incomplete', async () => {
+    await t.run(async (ctx) => {
+      const userId = await seedUser(ctx, {
+        role: 'Equipment',
+      })
+      await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en', dateOfBirth: undefined })
+      await seedEquipmentProfile(ctx, userId)
+
+      const result = await checkProfileCompleteness(ctx, { _id: userId }, 'Equipment')
+
+      expect(result.incomplete).toContain('dateOfBirth')
+      expect(result.percentage).toBeLessThan(100)
+    })
+  })
+
+  it('present dateOfBirth does not appear in incomplete fields', async () => {
+    await t.run(async (ctx) => {
+      const userId = await seedUser(ctx, {
+        role: 'Equipment',
+      })
+      await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en', dateOfBirth: '1990-01-01' })
+      await seedEquipmentProfile(ctx, userId)
+
+      const result = await checkProfileCompleteness(ctx, { _id: userId }, 'Equipment')
+
+      expect(result.incomplete).not.toContain('dateOfBirth')
+    })
+  })
+
   it('missing appLanguage on users table makes settings layer incomplete', async () => {
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx, {
@@ -113,7 +142,7 @@ describe('checkProfileCompleteness', () => {
 
       const result = await checkProfileCompleteness(ctx, { _id: userId }, 'Equipment')
 
-      expect(result.percentage).toBe(71)
+      expect(result.percentage).toBe(75)
       expect(result.incomplete).toHaveLength(2)
       expect(result.incomplete).toContain('appLanguage')
       expect(result.incomplete).toContain('phone')

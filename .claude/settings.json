@@ -427,6 +427,12 @@
             "command": "bash .claude/hooks/tdd-guard.sh",
             "timeout": 5,
             "statusMessage": "Checking TDD — sibling test exists…"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/vi-mock-convex-react-blocker.sh",
+            "timeout": 5,
+            "statusMessage": "Checking for vi.mock('convex/react')…"
           }
         ]
       }

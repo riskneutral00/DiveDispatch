@@ -171,23 +171,6 @@ async function hasRole(
   return entry !== null
 }
 
-async function checkRelationshipAccess(
-  ctx: MutationCtx,
-  slug: string,
-  objectId: string,
-): Promise<boolean> {
-  for (const relation of ['assigned_to', 'owns', 'manages'] as const) {
-    const rel = await ctx.db
-      .query('relationships')
-      .withIndex('by_subjectId_relation_objectId', (q) =>
-        q.eq('subjectId', slug).eq('relation', relation).eq('objectId', objectId),
-      )
-      .unique()
-    if (rel) return true
-  }
-  return false
-}
-
 export async function authorize(
   ctx: MutationCtx,
   actor: { user: Doc<'users'>; identity: UserIdentity } | null,
@@ -208,11 +191,6 @@ export async function authorize(
     if (required && orgPermissions.includes(required)) {
       return resolved
     }
-  }
-
-  if (resource.id) {
-    const hasAccess = await checkRelationshipAccess(ctx, user.slug, resource.id)
-    if (hasAccess) return resolved
   }
 
   if (!orgPermissions) {
