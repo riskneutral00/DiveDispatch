@@ -11,6 +11,7 @@
    Use var(--color-primary) / var(--color-secondary) via inline styles instead. */
 @theme inline {
   --color-accent: var(--color-accent);
+  --color-accent-muted: var(--color-accent-muted);
   --color-text-primary: var(--color-text-primary);
   --color-text-secondary: var(--color-text-secondary);
   --color-text-on-primary: var(--color-text-on-primary);

@@ -65,6 +65,23 @@ interface FilterBarProps {
   required?: boolean
 }
 
+function Chip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+  return (
+    <button /* design-ok: chip control */
+      type="button"
+      onClick={onClick}
+      className={chipBase}
+      style={{
+        background: active ? 'var(--color-primary-muted)' : 'transparent',
+        borderColor: active ? 'var(--color-primary-border)' : 'var(--color-glass-border)',
+        color: active ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
+      }}
+    >
+      {label}
+    </button>
+  )
+}
+
 function InstructorFilterBar({
   agencies,
   activeAgency,
@@ -86,19 +103,12 @@ function InstructorFilterBar({
         {agencies.map((agency) => {
           const isActive = activeAgency === agency
           return (
-            <button /* design-ok: filter chip */
+            <Chip
               key={agency}
-              type="button"
+              label={agency}
+              active={isActive}
               onClick={() => onAgencyChange(isActive ? null : agency)}
-              className={chipBase}
-              style={{
-                background: isActive ? 'var(--color-primary-muted)' : 'transparent',
-                borderColor: isActive ? 'var(--color-primary-border)' : 'var(--color-glass-border)',
-                color: 'var(--color-text-primary)',
-              }}
-            >
-              {agency}
-            </button>
+            />
           )
         })}
         <span className="ml-auto text-label text-secondary">
@@ -113,19 +123,12 @@ function InstructorFilterBar({
           {specialties.map((spec) => {
             const isActive = activeSpecialties.has(spec)
             return (
-              <button /* design-ok: filter chip */
+              <Chip
                 key={spec}
-                type="button"
+                label={spec}
+                active={isActive}
                 onClick={() => onSpecialtyToggle(spec)}
-                className={chipBase}
-                style={{
-                  background: isActive ? 'var(--color-primary-muted)' : 'transparent',
-                  borderColor: isActive ? 'var(--color-primary-border)' : 'var(--color-glass-border)',
-                  color: 'var(--color-text-primary)',
-                }}
-              >
-                {spec}
-              </button>
+              />
             )
           })}
         </div>
@@ -281,7 +284,7 @@ export function PreferredInstructorList(props: ListProps) {
     for (const e of entries) {
       for (const c of e.credentials ?? []) {
         if (c.agency === agency) {
-          for (const rating of c.specialtyRatings) {
+          for (const rating of c.specialtyRatings ?? []) {
             set.add(rating)
           }
         }
@@ -322,7 +325,7 @@ export function PreferredInstructorList(props: ListProps) {
     if (agency && activeSpecialties.size > 0) {
       result = result.filter((e) =>
         e.credentials?.some((c) =>
-          c.agency === agency && [...activeSpecialties].every((s) => c.specialtyRatings.includes(s))
+          c.agency === agency && [...activeSpecialties].every((s) => c.specialtyRatings?.includes(s))
         )
       )
     }
@@ -520,22 +523,6 @@ export function PreferredInstructorList(props: ListProps) {
   )
 }
 
-function Chip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
-  return (
-    <button /* design-ok: chip control */
-      type="button"
-      onClick={onClick}
-      className={chipBase}
-      style={{
-        background: active ? 'var(--color-primary-muted)' : 'transparent',
-        borderColor: active ? 'var(--color-primary-border)' : 'var(--color-glass-border)',
-        color: active ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
-      }}
-    >
-      {label}
-    </button>
-  )
-}
 
 
 function VenueBadge({ entry }: { entry: DirectoryEntry }) {

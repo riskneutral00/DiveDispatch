@@ -54,7 +54,7 @@ function ToggleGroup({ options, value, onChange, 'aria-label': ariaLabel, hasErr
       variant="segment"
       size="md"
       aria-label={ariaLabel}
-      className={hasError ? 'ring-2 ring-[var(--color-destructive)]' : ''}
+      className={hasError ? 'ring-2 ring-destructive' : ''}
     />
   )
 }
@@ -340,45 +340,12 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
           {t('prescriptionQuestion')}
         </p>
 
-        <fieldset>
-          <legend className="sr-only">Needs powered lenses</legend>
-          <div className="flex gap-6">
-            {(['Yes', 'No'] as const).map((opt) => {
-              const isSelected = needsPoweredLenses === (opt === 'Yes')
-              return (
-                <label /* design-ok: clickable surface wrapping sr-only radio with custom indicator */ key={opt} className="flex items-center gap-2 cursor-pointer">
-                  <input /* design-ok: sr-only radio with custom indicator */
-                    type="radio"
-                    name="poweredLenses"
-                    value={opt}
-                    checked={isSelected}
-                    onChange={() => setNeedsPoweredLenses(opt === 'Yes')}
-                    className="sr-only"
-                  />
-                  <span
-                    aria-hidden
-                    className="w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all duration-theme"
-                    style={{
-                      borderColor: isSelected
-                        ? 'var(--color-primary)'
-                        : 'var(--color-glass-border)',
-                      background: isSelected ? 'var(--color-primary)' : 'transparent',
-                    }}
-                  >
-                    {isSelected && (
-                      <span className="w-2 h-2 rounded-full bg-text-on-primary block" />
-                    )}
-                  </span>
-                  <span
-                    className="text-body font-medium text-primary"
-                  >
-                    {opt}
-                  </span>
-                </label>
-              )
-            })}
-          </div>
-        </fieldset>
+        <ButtonGroup
+          options={[{ value: 'yes', label: tCommon('yes') }, { value: 'no', label: tCommon('no') }]}
+          value={needsPoweredLenses === true ? 'yes' : needsPoweredLenses === false ? 'no' : ''}
+          onChange={(v) => setNeedsPoweredLenses(v === 'yes')}
+          variant="segment"
+        />
 
         {needsPoweredLenses === true && (
           <div className="mt-4">

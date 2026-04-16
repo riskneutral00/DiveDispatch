@@ -3,6 +3,7 @@
 import { Check, Save } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui'
+import { cn } from '@/lib/utils/cn'
 
 interface SaveButtonProps {
   saving: boolean
@@ -13,13 +14,14 @@ interface SaveButtonProps {
   label?: string
   size?: 'sm' | 'md'
   onClick?: () => void
+  className?: string
 }
 
-export function SaveButton({ saving, saved, isDirty, isUpdate, disabled, label, size = 'md', onClick }: SaveButtonProps) {
+export function SaveButton({ saving, saved, isDirty, isUpdate, disabled, label, size = 'md', onClick, className }: SaveButtonProps) {
   const t = useTranslations('common')
 
   return (
-    <div className="flex justify-end">
+    <div className={cn("flex justify-end", className)}>
       <Button
         type={onClick ? 'button' : 'submit'}
         size={size}

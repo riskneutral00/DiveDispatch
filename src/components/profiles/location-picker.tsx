@@ -262,8 +262,7 @@ function LocationPickerModalInner({ value, onConfirm, onCancel }: ModalInnerProp
                 if (blurTimerRef.current) clearTimeout(blurTimerRef.current)
                 blurTimerRef.current = setTimeout(() => { setSuggestionsOpen(false); kbDispatch({ type: 'CLOSE' }) }, 150)
               }}
-              className="field-underline w-full text-body py-2.5 px-0 placeholder:opacity-60 text-primary"
-              style={{ caretColor: 'var(--color-accent)' }}
+              className="field-underline w-full text-body py-2.5 px-0 placeholder:opacity-60 text-primary caret-accent"
             />
           </div>
           <button /* design-ok: GPS locate button inside compound search input */
@@ -414,9 +413,8 @@ function LocationPickerTrigger({ value, onOpen, onClear, error, label, required,
           id={inputId}
           type="button"
           onClick={onOpen}
-          className={cn("field-underline w-full text-body text-left truncate cursor-pointer pr-6", label ? "pt-4 pb-1.5" : "py-2.5")}
+          className={cn("field-underline w-full text-body text-left truncate cursor-pointer pr-6", label ? "pt-4 pb-1.5" : "py-2.5", value ? "text-primary" : "text-secondary")}
           style={{
-            color: value ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
             ...(error
               ? {
                   borderBottomColor: 'var(--color-destructive)',

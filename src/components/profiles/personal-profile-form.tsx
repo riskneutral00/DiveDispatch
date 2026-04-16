@@ -46,7 +46,7 @@ export type PersonalCredential = DmCredential | InstCredential
 export type { PersonalContactFormState }
 export { INITIAL_CONTACT_FORM, contactFromProfile, contactToPayload }
 
-export type PersonalMergedContactFormState = PersonalContactFormState & {
+export type PersonalMergedContactFormState = PersonalContactFormState & { // dry-ok
   teachingLanguages: Language[]
   access: AccessControlState
 }
@@ -294,10 +294,8 @@ export function PersonalProfileForm({
   variant: PersonalVariant
   section?: PersonalSection
 }) {
-  const wrappedCreate = create
-    ? (payload: Record<string, unknown>) =>
-        create({ ...payload, role: variant === 'divemaster' ? 'DiveMaster' : 'Instructor' })
-    : undefined
+  const wrappedCreate = (payload: Record<string, unknown>) =>
+    create({ ...payload, role: variant === 'divemaster' ? 'DiveMaster' : 'Instructor' })
 
   if (section === 'credentials')
     return (

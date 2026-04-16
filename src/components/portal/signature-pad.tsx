@@ -174,12 +174,11 @@ export const SignaturePad = React.forwardRef<SignaturePadHandle, SignaturePadPro
           </span>
         )}
         <div
-          className="relative rounded-theme overflow-hidden"
+          className="relative rounded-theme overflow-hidden bg-glass-bg-elevated"
           style={{
             border: error
               ? '2px solid var(--color-destructive)'
               : '1px solid var(--color-glass-border)',
-            background: 'var(--color-glass-bg-elevated)',
           }}
         >
           <canvas

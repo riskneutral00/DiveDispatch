@@ -16,6 +16,7 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { Spinner } from '@/components/ui/spinner'
 import { LoadingCard } from '@/components/ui/loading-card'
 import { InlineError } from '@/components/ui/inline-error'
+import { cn } from '@/lib/utils/cn'
 import { GEAR_TYPES, GEAR_TYPE_LABELS } from '@/lib/constants/gear-sizing'
 
 const GEAR_TYPE_OPTIONS = [
@@ -219,13 +220,13 @@ function InventoryTableRow({
       <td className="px-4 py-2.5">
         <Badge variant="default" size="sm">{gearLabel}</Badge>
       </td>
-      <td className="px-4 py-2.5" style={{ color: item.manufacturer ? undefined : 'var(--color-text-secondary)' }}>
+      <td className={cn("px-4 py-2.5", item.manufacturer ? "text-primary" : "text-secondary")}>
         {item.manufacturer || '—'}
       </td>
-      <td className="px-4 py-2.5" style={{ color: item.size ? undefined : 'var(--color-text-secondary)' }}>
+      <td className={cn("px-4 py-2.5", item.size ? "text-primary" : "text-secondary")}>
         {item.size || '—'}
       </td>
-      <td className="px-4 py-2.5" style={{ color: item.diopter != null ? undefined : 'var(--color-text-secondary)' }}>
+      <td className={cn("px-4 py-2.5", item.diopter != null ? "text-primary" : "text-secondary")}>
         {item.diopter != null ? item.diopter : '—'}
       </td>
       <td className="px-4 py-2.5">

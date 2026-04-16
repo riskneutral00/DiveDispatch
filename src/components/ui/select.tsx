@@ -76,10 +76,7 @@ const OptionRow = memo(function OptionRow({
       aria-selected={isSelected}
       onClick={onSelect}
       onMouseEnter={onHover}
-      className="flex items-center justify-between gap-2 px-3 py-2 text-body cursor-pointer transition-colors duration-theme text-primary"
-      style={{
-        background: isFocused ? "var(--color-accent-muted)" : "transparent",
-      }}
+      className={cn("flex items-center justify-between gap-2 px-3 py-2 text-body cursor-pointer transition-colors duration-theme text-primary", isFocused && "bg-accent-muted")}
     >
       <span className="flex items-center gap-2 min-w-0">
         <span className="w-3.5 flex-shrink-0">
