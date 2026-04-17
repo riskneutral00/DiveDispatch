@@ -78,3 +78,17 @@ input[type="radio"] {
   color: initial;
   background-color: initial;
 }
+
+.glass-overlay-blur {
+  backdrop-filter: blur(var(--glass-blur-elevated));
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .glass-overlay-blur {
+    background-color: color-mix(
+      in srgb,
+      var(--color-surface-elevated) 88%,
+      transparent
+    );
+  }
+}

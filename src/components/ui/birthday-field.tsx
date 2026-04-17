@@ -79,7 +79,7 @@ export function BirthdayField({
   }, [maxYear])
 
   const monthOptions = useMemo(() => {
-    const fmt = new Intl.DateTimeFormat(locale, { month: 'short' }) // dry-ok: localized short month names not covered by canonical date helpers
+    const fmt = new Intl.DateTimeFormat(locale, { month: 'short', timeZone: 'UTC' }) // dry-ok: localized short month names not covered by canonical date helpers
     return Array.from({ length: 12 }, (_, i) => ({
       value: pad2(i + 1),
       label: fmt.format(new Date(Date.UTC(2000, i, 1))),

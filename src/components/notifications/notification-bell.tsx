@@ -41,7 +41,7 @@ export function NotificationBell() {
       <Popover
         placement="bottom end"
         offset={4}
-        className="z-[var(--z-dropdown)] w-80 max-w-[calc(100%-2rem)] max-h-[28rem] flex flex-col overflow-hidden shadow-xl glass-elevated rounded-theme outline-none"
+        className="z-[var(--z-dropdown)] w-80 max-w-[calc(100%-2rem)] max-h-[28rem] flex flex-col overflow-hidden shadow-xl glass-elevated glass-overlay-blur rounded-theme outline-none"
       >
         <NotificationPanel userId={userId} />
       </Popover>

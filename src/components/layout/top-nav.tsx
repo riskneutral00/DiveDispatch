@@ -76,7 +76,7 @@ export function TopNav({ onOpenOverlay, profileCompletion }: TopNavProps) {
         <Popover
           placement="bottom end"
           offset={4}
-          className="z-[var(--z-dropdown)] min-w-[200px] glass-elevated outline-none bg-surface-elevated border border-glass-border rounded-[var(--border-radius)]"
+          className="z-[var(--z-dropdown)] min-w-[200px] glass-elevated glass-overlay-blur outline-none bg-surface-elevated border border-glass-border rounded-[var(--border-radius)]"
         >
           <div className="px-3 py-2 glass-divider">
             <p className="text-body font-medium truncate leading-tight text-primary">
