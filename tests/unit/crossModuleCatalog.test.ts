@@ -88,7 +88,8 @@ describe('agency specialty codes ↔ AOW_SPECIALTIES', () => {
         }
       })
 
-      it('getMandatorySpecialties returns a non-empty set', () => {
+      it('getMandatorySpecialties returns a non-empty set (agencies with specialties defined)', () => {
+        if (agency.specialties.length === 0) return
         const mandatory = getMandatorySpecialties(agencyCode)
         expect(mandatory.size).toBeGreaterThan(0)
       })

@@ -1,4 +1,4 @@
-import { AGENCY_CONFIGS, Rank, type ActivityCode, type RankLevel } from './activityCatalog'
+import { AGENCY_CONFIGS, type ActivityCode } from './activityCatalog'
 
 export interface GateResult {
   allowed: boolean
@@ -11,11 +11,11 @@ export interface Credential {
   specialtyRatings?: string[]
 }
 
-export function getRank(credential: { agency: string; level: string }): RankLevel | null {
+export function getIsInstructor(credential: { agency: string; level: string }): boolean | null {
   const config = AGENCY_CONFIGS[credential.agency]
   if (!config) return null
   const levelDef = config.levels.find((l) => l.code === credential.level)
-  return levelDef?.rank ?? null
+  return levelDef?.isInstructor ?? null
 }
 
 export function canConductActivity(
@@ -38,12 +38,12 @@ export function canConductActivity(
     return { allowed: false, reason: { kind: 'rank', detail: `${config.name} does not offer ${activityCode}` } }
   }
 
-  if (levelDef.rank < rule.minRank) {
+  if (rule.requiresInstructor && !levelDef.isInstructor) {
     return {
       allowed: false,
       reason: {
         kind: 'rank',
-        detail: `${credential.agency} ${credential.level} (rank ${levelDef.rank}) cannot conduct ${rule.name} (requires rank ${rule.minRank})`,
+        detail: `${credential.agency} ${credential.level} cannot teach courses (requires instructor)`,
       },
     }
   }
@@ -86,4 +86,3 @@ export function staffCanConductActivity(
   return lastResult
 }
 
-export { Rank, type RankLevel } from './activityCatalog'

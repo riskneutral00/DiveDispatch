@@ -32,23 +32,14 @@ void _guard
 export const COURSE_CODES = ACTIVITY_CODES
 export type CourseCode = ActivityCode
 export const courseCodeValidator = activityCodeValidator
-export const Rank = {
-  DM: 1,
-  AI: 2,
-  Instructor: 3,
-  Staff: 4,
-  Director: 5,
-} as const
-
-export type RankLevel = (typeof Rank)[keyof typeof Rank]
 export interface AgencyLevel {
   code: string
-  rank: RankLevel
+  isInstructor: boolean
 }
 
 export interface AgencyActivityRule {
   name: string
-  minRank: RankLevel
+  requiresInstructor: boolean
   requiresRating: boolean
   minDays: number
   requiresConfined: boolean
@@ -79,23 +70,25 @@ export interface AgencyConfig {
   specialtyGroupLabel: string
 }
 const PADI_LEVELS: AgencyLevel[] = [
-  { code: 'Divemaster', rank: Rank.DM },
-  { code: 'OWSI', rank: Rank.Instructor },
-  { code: 'MSDT', rank: Rank.Instructor },
-  { code: 'IDC Staff Instructor', rank: Rank.Staff },
-  { code: 'Course Director', rank: Rank.Director },
+  { code: 'DM',   isInstructor: false },
+  { code: 'AI',   isInstructor: false },
+  { code: 'OWSI', isInstructor: true },
+  { code: 'MSDT', isInstructor: true },
+  { code: 'IDCS', isInstructor: true },
+  { code: 'MI',   isInstructor: true },
+  { code: 'CD',   isInstructor: true },
 ]
 
 const PADI_ACTIVITY_RULES: Record<ActivityCode, AgencyActivityRule> = {
-  FD: { name: 'Fun Dive', minRank: Rank.DM, requiresRating: false, minDays: 1, requiresConfined: false, prerequisites: ['OW'], repeatable: true, description: 'Recreational diving for certified divers' },
-  DSD: { name: 'Discover Scuba Diving', minRank: Rank.DM, requiresRating: false, minDays: 1, requiresConfined: false, prerequisites: [], repeatable: true, description: 'Introductory dive for non-certified divers' },
-  TRY_DIVE: { name: 'Try Dive', minRank: Rank.DM, requiresRating: false, minDays: 1, requiresConfined: false, prerequisites: [], repeatable: true, description: 'Informal DSD alternative for dive centers not following official PADI SOP' },
-  OW: { name: 'Open Water Diver', minRank: Rank.Instructor, requiresRating: false, minDays: 3, requiresConfined: true, prerequisites: [], repeatable: false, description: 'Entry-level certification with confined and open water dives' },
-  AOW: { name: 'Advanced Open Water Diver', minRank: Rank.Instructor, requiresRating: false, minDays: 2, requiresConfined: false, prerequisites: ['OW'], repeatable: false, description: 'Five adventure dives including deep and navigation' },
-  RESCUE: { name: 'Rescue Diver', minRank: Rank.Instructor, requiresRating: false, minDays: 2, requiresConfined: false, prerequisites: ['AOW'], repeatable: false, description: 'Self-rescue and diver-rescue skills with emergency scenarios' },
-  DM: { name: 'Divemaster', minRank: Rank.Instructor, requiresRating: false, minDays: 5, requiresConfined: false, prerequisites: ['RESCUE'], repeatable: false, description: 'Professional-level training to lead and assist dive activities' },
-  REFRESH: { name: 'ReActivate', minRank: Rank.Instructor, requiresRating: false, minDays: 1, requiresConfined: false, prerequisites: ['OW'], repeatable: false, description: 'Skills review for certified divers returning after a break' },
-  SPECIALTY: { name: 'Specialty Course', minRank: Rank.Instructor, requiresRating: true, minDays: 1, requiresConfined: false, prerequisites: ['OW'], repeatable: true, description: 'Specialty diving courses (Deep, Wreck, Nitrox, etc.)' },
+  FD: { name: 'Fun Dive', requiresInstructor: false, requiresRating: false, minDays: 1, requiresConfined: false, prerequisites: ['OW'], repeatable: true, description: 'Recreational diving for certified divers' },
+  DSD: { name: 'Discover Scuba Diving', requiresInstructor: false, requiresRating: false, minDays: 1, requiresConfined: false, prerequisites: [], repeatable: true, description: 'Introductory dive for non-certified divers' },
+  TRY_DIVE: { name: 'Try Dive', requiresInstructor: false, requiresRating: false, minDays: 1, requiresConfined: false, prerequisites: [], repeatable: true, description: 'Informal DSD alternative for dive centers not following official PADI SOP' },
+  OW: { name: 'Open Water Diver', requiresInstructor: true, requiresRating: false, minDays: 3, requiresConfined: true, prerequisites: [], repeatable: false, description: 'Entry-level certification with confined and open water dives' },
+  AOW: { name: 'Advanced Open Water Diver', requiresInstructor: true, requiresRating: false, minDays: 2, requiresConfined: false, prerequisites: ['OW'], repeatable: false, description: 'Five adventure dives including deep and navigation' },
+  RESCUE: { name: 'Rescue Diver', requiresInstructor: true, requiresRating: false, minDays: 2, requiresConfined: false, prerequisites: ['AOW'], repeatable: false, description: 'Self-rescue and diver-rescue skills with emergency scenarios' },
+  DM: { name: 'Divemaster', requiresInstructor: true, requiresRating: false, minDays: 5, requiresConfined: false, prerequisites: ['RESCUE'], repeatable: false, description: 'Professional-level training to lead and assist dive activities' },
+  REFRESH: { name: 'ReActivate', requiresInstructor: true, requiresRating: false, minDays: 1, requiresConfined: false, prerequisites: ['OW'], repeatable: false, description: 'Skills review for certified divers returning after a break' },
+  SPECIALTY: { name: 'Specialty Course', requiresInstructor: true, requiresRating: true, minDays: 1, requiresConfined: false, prerequisites: ['OW'], repeatable: true, description: 'Specialty diving courses (Deep, Wreck, Nitrox, etc.)' },
 }
 
 const PADI_SPECIALTIES: AgencySpecialtyEntry[] = [
@@ -127,7 +120,7 @@ const PADI_SPECIALTIES: AgencySpecialtyEntry[] = [
 export const PADI: AgencyConfig = {
   code: 'PADI',
   name: 'PADI',
-  memberIdLabel: 'Member Number',
+  memberIdLabel: 'PADI Member Number (Instructor Number)',
   levels: PADI_LEVELS,
   activityRules: PADI_ACTIVITY_RULES,
   specialties: PADI_SPECIALTIES,
@@ -136,23 +129,27 @@ export const PADI: AgencyConfig = {
   specialtyGroupLabel: 'Specialties',
 }
 const SSI_LEVELS: AgencyLevel[] = [
-  { code: 'Dive Guide', rank: Rank.DM },
-  { code: 'OWI', rank: Rank.Instructor },
-  { code: 'Advanced OWI', rank: Rank.Instructor },
-  { code: 'Instructor Trainer', rank: Rank.Staff },
-  { code: 'Instructor Certifier', rank: Rank.Director },
+  { code: 'Dive Guide',            isInstructor: false },
+  { code: 'Divemaster',            isInstructor: false },
+  { code: 'AI',                    isInstructor: false },
+  { code: 'OWI',                   isInstructor: true },
+  { code: 'Specialty Instructor',  isInstructor: true },
+  { code: 'Advanced OWI',          isInstructor: true },
+  { code: 'Divemaster Instructor', isInstructor: true },
+  { code: 'AIT',                   isInstructor: true },
+  { code: 'IT',                    isInstructor: true },
 ]
 
 const SSI_ACTIVITY_RULES: Record<ActivityCode, AgencyActivityRule> = {
-  FD: { name: 'Fun Dive', minRank: Rank.DM, requiresRating: false, minDays: 1, requiresConfined: false, prerequisites: ['OW'], repeatable: true, description: 'Recreational diving for certified divers' },
-  DSD: { name: 'Try Scuba Diving', minRank: Rank.DM, requiresRating: false, minDays: 1, requiresConfined: false, prerequisites: [], repeatable: true, description: 'Introductory dive for non-certified divers' },
-  TRY_DIVE: { name: 'Try Dive', minRank: Rank.DM, requiresRating: false, minDays: 1, requiresConfined: false, prerequisites: [], repeatable: true, description: 'Informal introductory dive alternative for dive centers not following official SSI SOP' },
-  OW: { name: 'Open Water Diver', minRank: Rank.Instructor, requiresRating: false, minDays: 3, requiresConfined: true, prerequisites: [], repeatable: false, description: 'Entry-level certification with confined and open water dives' },
-  AOW: { name: 'Advanced Adventurer', minRank: Rank.Instructor, requiresRating: false, minDays: 2, requiresConfined: false, prerequisites: ['OW'], repeatable: false, description: 'Five specialty dives to explore advanced techniques' },
-  RESCUE: { name: 'Diver Stress & Rescue', minRank: Rank.Instructor, requiresRating: false, minDays: 2, requiresConfined: false, prerequisites: ['AOW'], repeatable: false, description: 'Stress management and rescue techniques for real-world scenarios' },
-  DM: { name: 'Dive Guide', minRank: Rank.Instructor, requiresRating: false, minDays: 5, requiresConfined: false, prerequisites: ['RESCUE'], repeatable: false, description: 'Professional-level training to guide certified divers' },
-  REFRESH: { name: 'Scuba Skills Update', minRank: Rank.Instructor, requiresRating: false, minDays: 1, requiresConfined: false, prerequisites: ['OW'], repeatable: false, description: 'Skills review for certified divers returning after a break' },
-  SPECIALTY: { name: 'Specialty Program', minRank: Rank.Instructor, requiresRating: true, minDays: 1, requiresConfined: false, prerequisites: ['OW'], repeatable: true, description: 'Specialty diving courses (Deep, Wreck, Enriched Air, etc.)' },
+  FD: { name: 'Fun Dive', requiresInstructor: false, requiresRating: false, minDays: 1, requiresConfined: false, prerequisites: ['OW'], repeatable: true, description: 'Recreational diving for certified divers' },
+  DSD: { name: 'Try Scuba Diving', requiresInstructor: false, requiresRating: false, minDays: 1, requiresConfined: false, prerequisites: [], repeatable: true, description: 'Introductory dive for non-certified divers' },
+  TRY_DIVE: { name: 'Try Dive', requiresInstructor: false, requiresRating: false, minDays: 1, requiresConfined: false, prerequisites: [], repeatable: true, description: 'Informal introductory dive alternative for dive centers not following official SSI SOP' },
+  OW: { name: 'Open Water Diver', requiresInstructor: true, requiresRating: false, minDays: 3, requiresConfined: true, prerequisites: [], repeatable: false, description: 'Entry-level certification with confined and open water dives' },
+  AOW: { name: 'Advanced Adventurer', requiresInstructor: true, requiresRating: false, minDays: 2, requiresConfined: false, prerequisites: ['OW'], repeatable: false, description: 'Five specialty dives to explore advanced techniques' },
+  RESCUE: { name: 'Diver Stress & Rescue', requiresInstructor: true, requiresRating: false, minDays: 2, requiresConfined: false, prerequisites: ['AOW'], repeatable: false, description: 'Stress management and rescue techniques for real-world scenarios' },
+  DM: { name: 'Dive Guide', requiresInstructor: true, requiresRating: false, minDays: 5, requiresConfined: false, prerequisites: ['RESCUE'], repeatable: false, description: 'Professional-level training to guide certified divers' },
+  REFRESH: { name: 'Scuba Skills Update', requiresInstructor: true, requiresRating: false, minDays: 1, requiresConfined: false, prerequisites: ['OW'], repeatable: false, description: 'Skills review for certified divers returning after a break' },
+  SPECIALTY: { name: 'Specialty Program', requiresInstructor: true, requiresRating: true, minDays: 1, requiresConfined: false, prerequisites: ['OW'], repeatable: true, description: 'Specialty diving courses (Deep, Wreck, Enriched Air, etc.)' },
 }
 
 const SSI_SPECIALTIES: AgencySpecialtyEntry[] = [
@@ -184,7 +181,7 @@ const SSI_SPECIALTIES: AgencySpecialtyEntry[] = [
 export const SSI: AgencyConfig = {
   code: 'SSI',
   name: 'SSI',
-  memberIdLabel: 'Instructor Number',
+  memberIdLabel: 'SSI Pro Number',
   levels: SSI_LEVELS,
   activityRules: SSI_ACTIVITY_RULES,
   specialties: SSI_SPECIALTIES,
@@ -192,7 +189,107 @@ export const SSI: AgencyConfig = {
   aowRequiredSpecialtyCount: 5,
   specialtyGroupLabel: 'Specialty Programs',
 }
-export const AGENCY_CONFIGS: Record<string, AgencyConfig> = { PADI, SSI }
+const NAUI_LEVELS: AgencyLevel[] = [
+  { code: 'Divemaster',             isInstructor: false },
+  { code: 'AI',                     isInstructor: false },
+  { code: 'Instructor',             isInstructor: true },
+  { code: 'Instructor Trainer',     isInstructor: true },
+  { code: 'Course Director',        isInstructor: true },
+  { code: 'Course Director Trainer', isInstructor: true },
+]
+
+const NAUI_ACTIVITY_RULES: Record<ActivityCode, AgencyActivityRule> = {
+  FD: { name: 'Fun Dive', requiresInstructor: false, requiresRating: false, minDays: 1, requiresConfined: false, prerequisites: ['OW'], repeatable: true, description: 'Recreational diving for certified divers' },
+  DSD: { name: 'Discover Scuba Diving', requiresInstructor: false, requiresRating: false, minDays: 1, requiresConfined: false, prerequisites: [], repeatable: true, description: 'Introductory dive for non-certified divers' },
+  TRY_DIVE: { name: 'Try Dive', requiresInstructor: false, requiresRating: false, minDays: 1, requiresConfined: false, prerequisites: [], repeatable: true, description: 'Informal DSD alternative' },
+  OW: { name: 'Open Water Diver', requiresInstructor: true, requiresRating: false, minDays: 3, requiresConfined: true, prerequisites: [], repeatable: false, description: 'Entry-level certification' },
+  AOW: { name: 'Advanced Open Water Diver', requiresInstructor: true, requiresRating: false, minDays: 2, requiresConfined: false, prerequisites: ['OW'], repeatable: false, description: 'Advanced diver training' },
+  RESCUE: { name: 'Rescue Diver', requiresInstructor: true, requiresRating: false, minDays: 2, requiresConfined: false, prerequisites: ['AOW'], repeatable: false, description: 'Rescue skills and emergency scenarios' },
+  DM: { name: 'Divemaster', requiresInstructor: true, requiresRating: false, minDays: 5, requiresConfined: false, prerequisites: ['RESCUE'], repeatable: false, description: 'Professional-level training' },
+  REFRESH: { name: 'Refresher', requiresInstructor: true, requiresRating: false, minDays: 1, requiresConfined: false, prerequisites: ['OW'], repeatable: false, description: 'Skills review' },
+  SPECIALTY: { name: 'Specialty Course', requiresInstructor: true, requiresRating: true, minDays: 1, requiresConfined: false, prerequisites: ['OW'], repeatable: true, description: 'Specialty diving courses' },
+}
+
+export const NAUI: AgencyConfig = {
+  code: 'NAUI',
+  name: 'NAUI',
+  memberIdLabel: 'NAUI Member Number',
+  levels: NAUI_LEVELS,
+  activityRules: NAUI_ACTIVITY_RULES,
+  specialties: [],
+  automaticAuthority: [],
+  aowRequiredSpecialtyCount: 5,
+  specialtyGroupLabel: 'Specialties',
+}
+
+const BSAC_LEVELS: AgencyLevel[] = [
+  { code: 'Dive Leader',                    isInstructor: false },
+  { code: 'Assistant Diving Instructor',    isInstructor: false },
+  { code: 'Theory Instructor',              isInstructor: true },
+  { code: 'Assistant Open Water Instructor', isInstructor: true },
+  { code: 'Practical Instructor',           isInstructor: true },
+  { code: 'Open Water Instructor',          isInstructor: true },
+  { code: 'Advanced Instructor',            isInstructor: true },
+  { code: 'National Instructor',            isInstructor: true },
+]
+
+const BSAC_ACTIVITY_RULES: Record<ActivityCode, AgencyActivityRule> = {
+  FD: { name: 'Fun Dive', requiresInstructor: false, requiresRating: false, minDays: 1, requiresConfined: false, prerequisites: ['OW'], repeatable: true, description: 'Recreational diving for certified divers' },
+  DSD: { name: 'Try Dive', requiresInstructor: false, requiresRating: false, minDays: 1, requiresConfined: false, prerequisites: [], repeatable: true, description: 'Introductory dive' },
+  TRY_DIVE: { name: 'Try Dive', requiresInstructor: false, requiresRating: false, minDays: 1, requiresConfined: false, prerequisites: [], repeatable: true, description: 'Informal introductory dive' },
+  OW: { name: 'Ocean Diver', requiresInstructor: true, requiresRating: false, minDays: 3, requiresConfined: true, prerequisites: [], repeatable: false, description: 'Entry-level BSAC certification' },
+  AOW: { name: 'Sports Diver', requiresInstructor: true, requiresRating: false, minDays: 2, requiresConfined: false, prerequisites: ['OW'], repeatable: false, description: 'Advanced diver training' },
+  RESCUE: { name: 'Dive Leader Training', requiresInstructor: true, requiresRating: false, minDays: 2, requiresConfined: false, prerequisites: ['AOW'], repeatable: false, description: 'Leadership and rescue skills' },
+  DM: { name: 'Dive Leader', requiresInstructor: true, requiresRating: false, minDays: 5, requiresConfined: false, prerequisites: ['RESCUE'], repeatable: false, description: 'BSAC leadership certification' },
+  REFRESH: { name: 'Refresher', requiresInstructor: true, requiresRating: false, minDays: 1, requiresConfined: false, prerequisites: ['OW'], repeatable: false, description: 'Skills review' },
+  SPECIALTY: { name: 'Skill Development Course', requiresInstructor: true, requiresRating: true, minDays: 1, requiresConfined: false, prerequisites: ['OW'], repeatable: true, description: 'Specialty skill development' },
+}
+
+export const BSAC: AgencyConfig = {
+  code: 'BSAC',
+  name: 'BSAC',
+  memberIdLabel: 'BSAC Membership Number',
+  levels: BSAC_LEVELS,
+  activityRules: BSAC_ACTIVITY_RULES,
+  specialties: [],
+  automaticAuthority: [],
+  aowRequiredSpecialtyCount: 5,
+  specialtyGroupLabel: 'Skill Development Courses',
+}
+
+const CMAS_LEVELS: AgencyLevel[] = [
+  { code: 'Divemaster',          isInstructor: false },
+  { code: 'One Star Instructor', isInstructor: true },
+  { code: 'Two Star Instructor', isInstructor: true },
+  { code: 'Three Star Instructor', isInstructor: true },
+  { code: 'Four Star Instructor', isInstructor: true },
+]
+
+const CMAS_ACTIVITY_RULES: Record<ActivityCode, AgencyActivityRule> = {
+  FD: { name: 'Fun Dive', requiresInstructor: false, requiresRating: false, minDays: 1, requiresConfined: false, prerequisites: ['OW'], repeatable: true, description: 'Recreational diving for certified divers' },
+  DSD: { name: 'Discover Scuba', requiresInstructor: false, requiresRating: false, minDays: 1, requiresConfined: false, prerequisites: [], repeatable: true, description: 'Introductory dive' },
+  TRY_DIVE: { name: 'Try Dive', requiresInstructor: false, requiresRating: false, minDays: 1, requiresConfined: false, prerequisites: [], repeatable: true, description: 'Informal introductory dive' },
+  OW: { name: 'One Star Diver', requiresInstructor: true, requiresRating: false, minDays: 3, requiresConfined: true, prerequisites: [], repeatable: false, description: 'Entry-level CMAS certification' },
+  AOW: { name: 'Two Star Diver', requiresInstructor: true, requiresRating: false, minDays: 2, requiresConfined: false, prerequisites: ['OW'], repeatable: false, description: 'Advanced diver training' },
+  RESCUE: { name: 'Three Star Diver', requiresInstructor: true, requiresRating: false, minDays: 2, requiresConfined: false, prerequisites: ['AOW'], repeatable: false, description: 'Rescue and leadership skills' },
+  DM: { name: 'Divemaster', requiresInstructor: true, requiresRating: false, minDays: 5, requiresConfined: false, prerequisites: ['RESCUE'], repeatable: false, description: 'Professional-level training' },
+  REFRESH: { name: 'Refresher', requiresInstructor: true, requiresRating: false, minDays: 1, requiresConfined: false, prerequisites: ['OW'], repeatable: false, description: 'Skills review' },
+  SPECIALTY: { name: 'Specialty Course', requiresInstructor: true, requiresRating: true, minDays: 1, requiresConfined: false, prerequisites: ['OW'], repeatable: true, description: 'Specialty diving courses' },
+}
+
+export const CMAS: AgencyConfig = {
+  code: 'CMAS',
+  name: 'CMAS',
+  memberIdLabel: 'CMAS Code',
+  levels: CMAS_LEVELS,
+  activityRules: CMAS_ACTIVITY_RULES,
+  specialties: [],
+  automaticAuthority: [],
+  aowRequiredSpecialtyCount: 5,
+  specialtyGroupLabel: 'Specialties',
+}
+
+export const AGENCY_CONFIGS: Record<string, AgencyConfig> = { PADI, SSI, NAUI, BSAC, CMAS }
 export const AGENCY_CODES = Object.keys(AGENCY_CONFIGS)
 export interface AgencyCourse {
   code: string
@@ -207,6 +304,7 @@ export interface AgencyDefinition {
   combinedLabel: string
   specialties: AgencySpecialtyEntry[]
   specialtyGroupLabel: string
+  levels: AgencyLevel[]
 }
 
 function toAgencyDefinition(config: AgencyConfig): AgencyDefinition {
@@ -221,12 +319,16 @@ function toAgencyDefinition(config: AgencyConfig): AgencyDefinition {
     combinedLabel: 'O+A',
     specialties: config.specialties,
     specialtyGroupLabel: config.specialtyGroupLabel,
+    levels: config.levels,
   }
 }
 
 export const AGENCIES: Record<string, AgencyDefinition> = {
   PADI: toAgencyDefinition(PADI),
   SSI: toAgencyDefinition(SSI),
+  NAUI: toAgencyDefinition(NAUI),
+  BSAC: toAgencyDefinition(BSAC),
+  CMAS: toAgencyDefinition(CMAS),
 }
 
 export const AOW_REQUIRED_SPECIALTY_COUNT = 5
@@ -342,7 +444,7 @@ export function getMinAge(activityTypes: readonly ActivityCode[]): number {
 
 export function requiresInstructorForAnyAgency(code: ActivityCode): boolean {
   return Object.values(AGENCY_CONFIGS).every(
-    (config) => config.activityRules[code].minRank >= Rank.Instructor,
+    (config) => config.activityRules[code].requiresInstructor,
   )
 }
 
@@ -354,6 +456,6 @@ export function getLevelsForAgency(agency: string): AgencyLevel[] {
   return AGENCY_CONFIGS[agency]?.levels ?? []
 }
 
-export function getLevelsForAgencyAtRank(agency: string, minRank: RankLevel): AgencyLevel[] {
-  return getLevelsForAgency(agency).filter((l) => l.rank >= minRank)
+export function getInstructorLevels(agency: string): AgencyLevel[] {
+  return getLevelsForAgency(agency).filter((l) => l.isInstructor)
 }

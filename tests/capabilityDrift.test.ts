@@ -6,7 +6,6 @@ import {
   PADI,
   SSI,
   ACTIVITY_CODES,
-  Rank,
 } from '../convex/shared/activityCatalog'
 
 const VAULT_PATH = resolve(__dirname, '../../Vaults/DiveDispatch/Product/SpecialtyMatrix.md')
@@ -162,20 +161,16 @@ describe('activity code coverage', () => {
   })
 })
 
-describe('rank ordinal consistency', () => {
+describe('isInstructor consistency', () => {
   for (const [name, config] of Object.entries(AGENCY_CONFIGS)) {
-    it(`${name} levels have monotonically non-decreasing ranks`, () => {
-      let prevRank = 0
-      for (const level of config.levels) {
-        expect(level.rank, `${name} ${level.code} rank ${level.rank} < previous ${prevRank}`).toBeGreaterThanOrEqual(prevRank)
-        prevRank = level.rank
-      }
+    it(`${name} has at least one non-instructor level (DM/equivalent)`, () => {
+      const hasNonInstructor = config.levels.some((l) => !l.isInstructor)
+      expect(hasNonInstructor, `${name} missing non-instructor level`).toBe(true)
     })
 
-    it(`${name} levels span DM through Director`, () => {
-      const ranks = new Set(config.levels.map((l) => l.rank))
-      expect(ranks.has(Rank.DM), `${name} missing DM rank`).toBe(true)
-      expect(ranks.has(Rank.Instructor), `${name} missing Instructor rank`).toBe(true)
+    it(`${name} has at least one instructor level`, () => {
+      const hasInstructor = config.levels.some((l) => l.isInstructor)
+      expect(hasInstructor, `${name} missing instructor level`).toBe(true)
     })
   }
 })

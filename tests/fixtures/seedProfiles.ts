@@ -150,7 +150,7 @@ export async function seedDiveMasterProfile(
     email: overrides.email ?? 'dm@test.com',
     phone: overrides.phone ?? '+66123456789',
     credential: overrides.credential ?? [
-      { agency: 'PADI', level: 'Divemaster', agencyID: '67890' },
+      { agency: 'PADI', level: 'DM', agencyID: '67890' },
     ],
     verified: overrides.verified ?? true,
     teachingLanguages: overrides.teachingLanguages ?? ['en'],

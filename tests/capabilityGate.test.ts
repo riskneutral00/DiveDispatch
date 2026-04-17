@@ -2,51 +2,58 @@ import { describe, it, expect } from 'vitest'
 import {
   canConductActivity,
   staffCanConductActivity,
-  getRank,
+  getIsInstructor,
   type Credential,
 } from '../convex/shared/capabilityGate'
-import { Rank } from '../convex/shared/activityCatalog'
 
-describe('getRank', () => {
-  it('returns DM rank for PADI Divemaster', () => {
-    expect(getRank({ agency: 'PADI', level: 'Divemaster' })).toBe(Rank.DM)
+describe('getIsInstructor', () => {
+  it('returns false for PADI DM', () => {
+    expect(getIsInstructor({ agency: 'PADI', level: 'DM' })).toBe(false)
   })
 
-  it('returns Instructor rank for PADI OWSI', () => {
-    expect(getRank({ agency: 'PADI', level: 'OWSI' })).toBe(Rank.Instructor)
+  it('returns false for PADI AI (cannot teach independently)', () => {
+    expect(getIsInstructor({ agency: 'PADI', level: 'AI' })).toBe(false)
   })
 
-  it('returns Instructor rank for PADI MSDT (title, same rank as OWSI)', () => {
-    expect(getRank({ agency: 'PADI', level: 'MSDT' })).toBe(Rank.Instructor)
+  it('returns true for PADI OWSI', () => {
+    expect(getIsInstructor({ agency: 'PADI', level: 'OWSI' })).toBe(true)
   })
 
-  it('returns Staff rank for PADI IDC Staff Instructor', () => {
-    expect(getRank({ agency: 'PADI', level: 'IDC Staff Instructor' })).toBe(Rank.Staff)
+  it('returns true for PADI MSDT', () => {
+    expect(getIsInstructor({ agency: 'PADI', level: 'MSDT' })).toBe(true)
   })
 
-  it('returns Director rank for PADI Course Director', () => {
-    expect(getRank({ agency: 'PADI', level: 'Course Director' })).toBe(Rank.Director)
+  it('returns true for PADI IDCS', () => {
+    expect(getIsInstructor({ agency: 'PADI', level: 'IDCS' })).toBe(true)
   })
 
-  it('returns DM rank for SSI Dive Guide', () => {
-    expect(getRank({ agency: 'SSI', level: 'Dive Guide' })).toBe(Rank.DM)
+  it('returns true for PADI MI', () => {
+    expect(getIsInstructor({ agency: 'PADI', level: 'MI' })).toBe(true)
   })
 
-  it('returns Instructor rank for SSI OWI', () => {
-    expect(getRank({ agency: 'SSI', level: 'OWI' })).toBe(Rank.Instructor)
+  it('returns true for PADI CD', () => {
+    expect(getIsInstructor({ agency: 'PADI', level: 'CD' })).toBe(true)
+  })
+
+  it('returns false for SSI Dive Guide', () => {
+    expect(getIsInstructor({ agency: 'SSI', level: 'Dive Guide' })).toBe(false)
+  })
+
+  it('returns true for SSI OWI', () => {
+    expect(getIsInstructor({ agency: 'SSI', level: 'OWI' })).toBe(true)
   })
 
   it('returns null for unknown agency', () => {
-    expect(getRank({ agency: 'CMAS', level: '1-Star' })).toBeNull()
+    expect(getIsInstructor({ agency: 'UNKNOWN', level: 'Something' })).toBeNull()
   })
 
   it('returns null for unknown level', () => {
-    expect(getRank({ agency: 'PADI', level: 'Master Instructor' })).toBeNull()
+    expect(getIsInstructor({ agency: 'PADI', level: 'Master Instructor' })).toBeNull()
   })
 })
 
 describe('canConductActivity — rank gate', () => {
-  const padiDM: Credential = { agency: 'PADI', level: 'Divemaster' }
+  const padiDM: Credential = { agency: 'PADI', level: 'DM' }
   const padiOWSI: Credential = { agency: 'PADI', level: 'OWSI', specialtyRatings: [] }
   const padiMSDT: Credential = { agency: 'PADI', level: 'MSDT', specialtyRatings: ['Deep', 'Wreck', 'Navigation', 'Night', 'Enriched Air'] }
   const ssiDG: Credential = { agency: 'SSI', level: 'Dive Guide' }
@@ -56,11 +63,11 @@ describe('canConductActivity — rank gate', () => {
     expect(canConductActivity(padiDM, 'FD').allowed).toBe(true)
   })
 
-  it('DM can conduct DSD (trojan horse)', () => {
+  it('DM can conduct DSD', () => {
     expect(canConductActivity(padiDM, 'DSD').allowed).toBe(true)
   })
 
-  it('DM can conduct TRY_DIVE (trojan horse)', () => {
+  it('DM can conduct TRY_DIVE', () => {
     expect(canConductActivity(padiDM, 'TRY_DIVE').allowed).toBe(true)
   })
 
@@ -114,8 +121,38 @@ describe('canConductActivity — rank gate', () => {
     }
   })
 
+  it('NAUI Divemaster cannot conduct OW', () => {
+    const cred: Credential = { agency: 'NAUI', level: 'Divemaster' }
+    expect(canConductActivity(cred, 'OW').allowed).toBe(false)
+  })
+
+  it('NAUI Instructor can conduct OW', () => {
+    const cred: Credential = { agency: 'NAUI', level: 'Instructor', specialtyRatings: [] }
+    expect(canConductActivity(cred, 'OW').allowed).toBe(true)
+  })
+
+  it('BSAC Dive Leader cannot conduct OW', () => {
+    const cred: Credential = { agency: 'BSAC', level: 'Dive Leader' }
+    expect(canConductActivity(cred, 'OW').allowed).toBe(false)
+  })
+
+  it('BSAC Open Water Instructor can conduct OW', () => {
+    const cred: Credential = { agency: 'BSAC', level: 'Open Water Instructor', specialtyRatings: [] }
+    expect(canConductActivity(cred, 'OW').allowed).toBe(true)
+  })
+
+  it('CMAS Divemaster cannot conduct OW', () => {
+    const cred: Credential = { agency: 'CMAS', level: 'Divemaster' }
+    expect(canConductActivity(cred, 'OW').allowed).toBe(false)
+  })
+
+  it('CMAS One Star Instructor can conduct OW', () => {
+    const cred: Credential = { agency: 'CMAS', level: 'One Star Instructor', specialtyRatings: [] }
+    expect(canConductActivity(cred, 'OW').allowed).toBe(true)
+  })
+
   it('unknown agency passes gracefully (gate only blocks known agencies)', () => {
-    const result = canConductActivity({ agency: 'CMAS', level: '1-Star' }, 'FD')
+    const result = canConductActivity({ agency: 'UNKNOWN', level: 'Something' }, 'FD')
     expect(result.allowed).toBe(true)
   })
 
@@ -160,7 +197,7 @@ describe('canConductActivity — specialty rating gate', () => {
 describe('staffCanConductActivity — multi-credential', () => {
   it('passes if any credential allows', () => {
     const credentials: Credential[] = [
-      { agency: 'PADI', level: 'Divemaster' },
+      { agency: 'PADI', level: 'DM' },
       { agency: 'SSI', level: 'OWI', specialtyRatings: [] },
     ]
     expect(staffCanConductActivity(credentials, 'OW').allowed).toBe(true)
@@ -168,7 +205,7 @@ describe('staffCanConductActivity — multi-credential', () => {
 
   it('fails if no credential allows', () => {
     const credentials: Credential[] = [
-      { agency: 'PADI', level: 'Divemaster' },
+      { agency: 'PADI', level: 'DM' },
       { agency: 'SSI', level: 'Dive Guide' },
     ]
     const result = staffCanConductActivity(credentials, 'OW')
@@ -178,10 +215,10 @@ describe('staffCanConductActivity — multi-credential', () => {
 
   it('returns last failure reason for diagnostics', () => {
     const credentials: Credential[] = [
-      { agency: 'PADI', level: 'Divemaster' },
+      { agency: 'PADI', level: 'DM' },
     ]
     const result = staffCanConductActivity(credentials, 'OW')
-    expect(result.reason?.detail).toContain('Divemaster')
+    expect(result.reason?.detail).toContain('DM')
   })
 
   it('empty credentials fail', () => {
@@ -190,7 +227,7 @@ describe('staffCanConductActivity — multi-credential', () => {
 
   it('SPECIALTY with Deep passes when one credential has Deep rating', () => {
     const credentials: Credential[] = [
-      { agency: 'PADI', level: 'Divemaster' },
+      { agency: 'PADI', level: 'DM' },
       { agency: 'PADI', level: 'OWSI', specialtyRatings: ['Deep'] },
     ]
     expect(staffCanConductActivity(credentials, 'SPECIALTY', 'Deep').allowed).toBe(true)
