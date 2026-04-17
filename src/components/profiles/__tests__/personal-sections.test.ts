@@ -8,8 +8,12 @@ import {
 import {
   contactFromProfile,
   contactToPayload,
+  personalContactFromProfile,
+  personalContactToPayload,
   INITIAL_CONTACT_FORM,
+  INITIAL_PERSONAL_CONTACT_FORM,
   type ContactFormState,
+  type PersonalContactFormState,
 } from '@/lib/profile-form'
 import {
   languagesFromProfilePersonal,
@@ -34,7 +38,6 @@ const VALID_LOCATION = {
 
 describe('personalContactSchema', () => {
   const valid = {
-    name: 'Ariel Nemo',
     location: VALID_LOCATION,
     email: 'ariel@dive.com',
     phone: '+66 81 234 5678',
@@ -44,8 +47,12 @@ describe('personalContactSchema', () => {
     expect(personalContactSchema.safeParse(valid).success).toBe(true)
   })
 
-  it('rejects missing name', () => {
-    expect(personalContactSchema.safeParse({ ...valid, name: '' }).success).toBe(false)
+  it('ignores name when provided (derived server-side)', () => {
+    const parsed = personalContactSchema.safeParse({ ...valid, name: 'Ariel Nemo' })
+    expect(parsed.success).toBe(true)
+    if (parsed.success) {
+      expect(parsed.data).not.toHaveProperty('name')
+    }
   })
 
   it('rejects invalid email', () => {
@@ -65,6 +72,50 @@ describe('personalContactSchema', () => {
   })
 })
 
+describe('personalContactFromProfile', () => {
+  it('extracts location, email, phone — omits name', () => {
+    const profile = {
+      name: 'Ariel Nemo',
+      placeName: 'Koh Tao',
+      country: 'Thailand',
+      lat: 10.1,
+      lng: 99.8,
+      email: 'ariel@dive.com',
+      phone: '+66 81 234 5678',
+    }
+    const form = personalContactFromProfile(profile)
+    expect(form).not.toHaveProperty('name')
+    expect(form.email).toBe('ariel@dive.com')
+    expect(form.phone).toBe('+66 81 234 5678')
+    expect(form.location?.placeName).toBe('Koh Tao')
+  })
+})
+
+describe('personalContactToPayload', () => {
+  it('produces expected shape without name', () => {
+    const form: PersonalContactFormState = {
+      location: { placeName: 'Koh Tao', country: 'Thailand', lat: 10.1, lng: 99.8 },
+      email: 'ariel@dive.com',
+      phone: '+66 81 234 5678',
+    }
+    const payload = personalContactToPayload(form)
+    expect(payload).not.toHaveProperty('name')
+    expect(payload.placeName).toBe('Koh Tao')
+    expect(payload.country).toBe('Thailand')
+    expect(payload.email).toBe('ariel@dive.com')
+    expect(payload.phone).toBe('+66 81 234 5678')
+  })
+})
+
+describe('INITIAL_PERSONAL_CONTACT_FORM', () => {
+  it('has no name, empty email/phone, null location', () => {
+    expect(INITIAL_PERSONAL_CONTACT_FORM).not.toHaveProperty('name')
+    expect(INITIAL_PERSONAL_CONTACT_FORM.email).toBe('')
+    expect(INITIAL_PERSONAL_CONTACT_FORM.phone).toBe('')
+    expect(INITIAL_PERSONAL_CONTACT_FORM.location).toBeNull()
+  })
+})
+
 describe('personalLanguagesSchema', () => {
   it('accepts at least one teaching language', () => {
     const data = { teachingLanguages: [{ code: 'en', label: 'English' }] }
@@ -80,7 +131,7 @@ describe('personalLanguagesSchema', () => {
 describe('diveMasterCredentialsSchema', () => {
   const validDmCred = {
     agency: 'PADI',
-    level: 'Divemaster',
+    level: 'DM',
     agencyID: 'DM12345',
   }
 
@@ -115,7 +166,7 @@ describe('diveMasterCredentialsSchema', () => {
 describe('instructorCredentialsSchema', () => {
   const validInstCred = {
     agency: 'PADI',
-    level: 'Open Water Scuba Instructor',
+    level: 'OWSI',
     agencyID: 'OWSI550453',
     specialtyRatings: ['Open Water', 'Advanced Open Water'],
   }
@@ -256,12 +307,12 @@ describe('languagesToPayloadPersonal', () => {
 describe('credentialsFromProfile — divemaster variant', () => {
   it('maps credential array from profile for divemaster', () => {
     const profile = {
-      credential: [{ agency: 'PADI', level: 'Divemaster', agencyID: 'DM12345' }],
+      credential: [{ agency: 'PADI', level: 'DM', agencyID: 'DM12345' }],
     }
     const form = credentialsFromProfile(profile, 'divemaster')
     expect(form.credential).toHaveLength(1)
     expect(form.credential[0].agency).toBe('PADI')
-    expect(form.credential[0].level).toBe('Divemaster')
+    expect(form.credential[0].level).toBe('DM')
     expect(form.credential[0].agencyID).toBe('DM12345')
   })
 
@@ -306,7 +357,7 @@ describe('credentialsFromProfile — instructor variant', () => {
 describe('credentialsToPayload', () => {
   it('sends only credential array', () => {
     const form: PersonalCredentialsFormState = {
-      credential: [{ agency: 'PADI', level: 'Divemaster', agencyID: 'DM123' }],
+      credential: [{ agency: 'PADI', level: 'DM', agencyID: 'DM123' }],
     }
     const payload = credentialsToPayload(form)
     expect(Object.keys(payload)).toEqual(['credential'])
@@ -331,7 +382,7 @@ describe('credentialsToPayload', () => {
         {
           _key: 'item-legacy-1',
           agency: 'PADI',
-          level: 'Divemaster',
+          level: 'DM',
           agencyID: 'DM123',
         } as unknown as PersonalCredentialsFormState['credential'][number],
       ],
@@ -339,7 +390,7 @@ describe('credentialsToPayload', () => {
     const payload = credentialsToPayload(form)
     const creds = payload.credential as Array<Record<string, unknown>>
     expect(creds[0]).not.toHaveProperty('_key')
-    expect(creds[0]).toEqual({ agency: 'PADI', level: 'Divemaster', agencyID: 'DM123' })
+    expect(creds[0]).toEqual({ agency: 'PADI', level: 'DM', agencyID: 'DM123' })
   })
 
   it('preserves specialtyRatings for instructor credentials', () => {

@@ -5,9 +5,9 @@ import { LocationPicker, type LocationValue } from '@/components/profiles/locati
 
 interface ProfileBasicInfoProps {
   nameLabel?: string
-  nameValue: string
+  nameValue?: string
   nameError?: string
-  onNameChange: (value: string) => void
+  onNameChange?: (value: string) => void
 
   locationValue: LocationValue | null
   locationError?: string
@@ -51,15 +51,17 @@ export function ProfileBasicInfo({
 }: ProfileBasicInfoProps) {
   return (
     <div className="grid grid-cols-6 gap-x-3 gap-y-4 sm:flex sm:flex-wrap sm:gap-4 w-full"> {/* design-ok */}
-      <NameField
-        scope="organization"
-        label={nameLabel}
-        value={nameValue}
-        onChange={onNameChange}
-        error={nameError}
-        required={nameRequired}
-        className="field-name"
-      />
+      {onNameChange !== undefined && (
+        <NameField
+          scope="organization"
+          label={nameLabel}
+          value={nameValue ?? ''}
+          onChange={onNameChange}
+          error={nameError}
+          required={nameRequired}
+          className="field-name"
+        />
+      )}
       <LocationPicker
         label="Location"
         value={locationValue}

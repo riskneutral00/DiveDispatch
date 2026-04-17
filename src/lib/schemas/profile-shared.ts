@@ -73,9 +73,7 @@ export const agentAssociationsSchema = z.object({
   associations: z.array(associationSchema),
 })
 
-export const personalContactSchema = contactSchema.extend({
-  name: z.string().min(1, 'Name is required'),
-})
+export const personalContactSchema = contactSchema.omit({ name: true })
 
 export const personalLanguagesSchema = z.object({
   teachingLanguages: teachingLanguagesFieldSchema,

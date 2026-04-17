@@ -102,6 +102,13 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
       );
     }
 
+    if (isPro && "agency" in patch) {
+      (updated as AgencyRow).level = "";
+      (updated as AgencyRow).agencyID = "";
+    } else if (isPro && "level" in patch) {
+      (updated as AgencyRow).agencyID = "";
+    }
+
     newItems[idx] = updated;
     onChange(newItems);
   }
@@ -217,7 +224,11 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
 
   function renderProFields(item: AgencyRow, idx: number) {
     const selectedAgency = String((item as AgencyRow).agency ?? "");
+    const selectedLevel = String((item as AgencyRow).level ?? "");
     const agencyDef = selectedAgency ? AGENCIES[selectedAgency] : undefined;
+    const levelOptions = (agencyDef ?? AGENCIES["PADI"]).levels.map(
+      (l) => l.code,
+    );
     const ratingItems = (agencyDef?.specialties ?? [])
       .filter((s) => s.specialtyCourseName !== null)
       .map((s) => ({ value: s.code, label: s.label }));
@@ -235,25 +246,26 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
             required
             className="field-select-short"
           />
-          <Input
-            label="Certification Level"
-            value={String((item as AgencyRow).level ?? "")}
-            onChange={(e) => handleUpdate(idx, { level: e.target.value })}
+          <SimpleSelect
+            label="Level"
+            value={selectedLevel}
+            onChange={(v) => handleUpdate(idx, { level: v })}
+            options={levelOptions}
+            placeholder="Select level…"
             error={errors[`credential.${idx}.level`]}
             required
-            className="field-text-short"
+            disabled={!selectedAgency}
+            className="field-select-short"
           />
           <Input
-            label={
-              variant === "instructor"
-                ? "Agency Instructor ID"
-                : "Agency Member ID"
-            }
+            label="Agency ID"
+            helperText={agencyDef?.memberIdLabel}
             value={String((item as AgencyRow).agencyID ?? "")}
             onChange={(e) => handleUpdate(idx, { agencyID: e.target.value })}
             error={errors[`credential.${idx}.agencyID`]}
             className="field-text-short"
             required
+            disabled={!selectedAgency || !selectedLevel}
           />
         </div>
         {variant === "instructor" && (

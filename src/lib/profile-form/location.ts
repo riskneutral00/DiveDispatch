@@ -72,8 +72,16 @@ export type ContactFormState = {
   phone: string
 }
 
+export type PersonalContactFormState = Omit<ContactFormState, 'name'>
+
 export const INITIAL_CONTACT_FORM: ContactFormState = {
   name: '',
+  location: null,
+  email: '',
+  phone: '',
+}
+
+export const INITIAL_PERSONAL_CONTACT_FORM: PersonalContactFormState = {
   location: null,
   email: '',
   phone: '',
@@ -86,4 +94,13 @@ export function contactFromProfile(p: Record<string, unknown>): ContactFormState
 
 export function contactToPayload(f: ContactFormState): Record<string, unknown> {
   return { name: f.name, ...locationToPayload(f.location!), email: f.email, phone: f.phone }
+}
+
+export function personalContactFromProfile(p: Record<string, unknown>): PersonalContactFormState {
+  const c = contactFieldsFromProfile(p)
+  return { location: c.location, email: c.email, phone: c.phone }
+}
+
+export function personalContactToPayload(f: PersonalContactFormState): Record<string, unknown> {
+  return { ...locationToPayload(f.location!), email: f.email, phone: f.phone }
 }

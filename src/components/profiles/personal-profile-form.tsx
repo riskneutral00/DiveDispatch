@@ -14,12 +14,12 @@ import {
   type AccessControlState,
 } from '@/components/profiles/access-control-section'
 import {
-  type ContactFormState as PersonalContactFormState,
-  INITIAL_CONTACT_FORM,
+  type PersonalContactFormState,
+  INITIAL_PERSONAL_CONTACT_FORM,
   INITIAL_TEACHING_LANGUAGES,
   buildParentContactDefaults,
-  contactFromProfile,
-  contactToPayload,
+  personalContactFromProfile,
+  personalContactToPayload,
   defaultFromMe,
   languagesFromProfile,
   languagesToPayload,
@@ -45,7 +45,6 @@ type InstCredential = z.infer<typeof instructorCredentialSchema>
 export type PersonalCredential = DmCredential | InstCredential
 
 export type { PersonalContactFormState }
-export { INITIAL_CONTACT_FORM, contactFromProfile, contactToPayload }
 
 export type PersonalMergedContactFormState = PersonalContactFormState & { // dry-ok
   teachingLanguages: Language[]
@@ -53,7 +52,7 @@ export type PersonalMergedContactFormState = PersonalContactFormState & { // dry
 }
 
 export const INITIAL_PERSONAL_MERGED_CONTACT: PersonalMergedContactFormState = {
-  ...INITIAL_CONTACT_FORM,
+  ...INITIAL_PERSONAL_CONTACT_FORM,
   ...INITIAL_TEACHING_LANGUAGES,
   access: INITIAL_ACCESS_CONTROL,
 }
@@ -76,7 +75,7 @@ export function languagesToPayloadPersonal(f: { teachingLanguages: Language[] })
 
 function mergedPersonalFromProfile(p: Record<string, unknown>): PersonalMergedContactFormState {
   return {
-    ...contactFromProfile(p),
+    ...personalContactFromProfile(p),
     ...languagesFromProfilePersonal(p),
     access: accessFromProfile(p),
   }
@@ -84,7 +83,7 @@ function mergedPersonalFromProfile(p: Record<string, unknown>): PersonalMergedCo
 
 function mergedPersonalToPayload(f: PersonalMergedContactFormState): Record<string, unknown> {
   return {
-    ...contactToPayload(f),
+    ...personalContactToPayload(f),
     ...languagesToPayloadPersonal(f),
     ...accessToPayload(f.access),
   }
@@ -202,11 +201,6 @@ export function PersonalContactSection({
 
       <div className="space-y-4">
         <ProfileBasicInfo
-          nameValue={form.name}
-          onNameChange={(val) => setField('name', val)}
-          nameError={errors.name}
-          nameLabel="Full Name"
-          nameRequired
           locationValue={form.location}
           onLocationChange={onLocationChange}
           locationError={errors.location}
@@ -245,12 +239,14 @@ export function PersonalCredentialsSection({
   const initialDefaults =
     getInitialCredentialsForm(variant)
 
-  const createOverride = (payload: Record<string, unknown>) =>
-    create({
-      ...buildParentContactDefaults(me),
+  const createOverride = (payload: Record<string, unknown>) => {
+    const { name: _omitName, ...parentDefaults } = buildParentContactDefaults(me)
+    return create({
+      ...parentDefaults,
       teachingLanguages: [],
       ...payload,
     })
+  }
 
   const {
     form,

@@ -207,14 +207,21 @@ describe('agentAssociationsSchema', () => {
 
 describe('personalContactSchema', () => {
   const valid = {
-    name: 'Jane Instructor',
     location: validLocation,
     email: 'jane@dive.com',
     phone: '+1-555-9999',
   }
 
-  it('accepts valid personal contact', () => {
+  it('accepts valid personal contact without name', () => {
     expect(personalContactSchema.safeParse(valid).success).toBe(true)
+  })
+
+  it('drops name when provided (derived server-side)', () => {
+    const parsed = personalContactSchema.safeParse({ ...valid, name: 'Jane' })
+    expect(parsed.success).toBe(true)
+    if (parsed.success) {
+      expect(parsed.data).not.toHaveProperty('name')
+    }
   })
 
   it('rejects null location', () => {
