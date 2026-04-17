@@ -161,8 +161,30 @@ export const updateProfile = mutation({
       ...(args.appLanguage !== undefined && { appLanguage: args.appLanguage }),
       ...(args.customerLanguages !== undefined && { customerLanguages: args.customerLanguages }),
     })
+
+    await syncDiveStaffName(
+      ctx,
+      user._id,
+      sanitized.firstName ?? user.firstName ?? '',
+      sanitized.lastName ?? user.lastName ?? '',
+    )
   },
 })
+
+async function syncDiveStaffName(
+  ctx: { db: DatabaseWriter },
+  userId: Id<'users'>,
+  firstName: string,
+  lastName: string,
+) {
+  const staff = await ctx.db
+    .query('diveStaff')
+    .withIndex('by_userId', (q) => q.eq('userId', userId))
+    .unique()
+  if (staff) {
+    await ctx.db.patch(staff._id, { name: `${firstName} ${lastName}`.trim() })
+  }
+}
 
 export const me = query({
   args: {},
@@ -315,6 +337,7 @@ export const upsertFromWebhook = internalMutation({
         firstName: args.firstName,
         lastName: args.lastName,
       })
+      await syncDiveStaffName(ctx, existing._id, args.firstName, args.lastName)
       return existing._id
     }
 

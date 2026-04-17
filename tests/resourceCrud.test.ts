@@ -69,7 +69,6 @@ const RESOURCE_CONFIGS: Array<{
     apiModule: api.instructors as CrudApi,
     role: 'Instructor',
     createArgs: {
-      name: 'Test Instructor',
       role: 'Instructor',
       placeName: 'Koh Tao',
       country: 'Thailand',
@@ -80,15 +79,14 @@ const RESOURCE_CONFIGS: Array<{
       credential: [{ agency: 'PADI', level: 'OWSI', agencyID: '123', specialtyRatings: ['OW', 'AOW'] }],
       teachingLanguages: ['en'],
     },
-    updateArgs: { name: 'Updated Instructor' },
-    uniqueField: 'name',
+    updateArgs: { phone: '+66999999999' },
+    uniqueField: 'phone',
   },
   {
     name: 'diveStaff',
     apiModule: api.diveMasters as CrudApi,
     role: 'DiveMaster',
     createArgs: {
-      name: 'Test DM',
       role: 'DiveMaster',
       placeName: 'Koh Tao',
       country: 'Thailand',
@@ -99,8 +97,8 @@ const RESOURCE_CONFIGS: Array<{
       credential: [{ agency: 'PADI', level: 'Divemaster', agencyID: '456' }],
       teachingLanguages: ['en'],
     },
-    updateArgs: { name: 'Updated DM' },
-    uniqueField: 'name',
+    updateArgs: { phone: '+66888888888' },
+    uniqueField: 'phone',
   },
   {
     name: 'compressors',
@@ -166,7 +164,7 @@ for (const config of RESOURCE_CONFIGS) {
         await t.run(async (ctx) => {
           const record = await ctx.db.get(id) as Record<string, unknown> | null
           expect(record).not.toBeNull()
-          expect(record![config.uniqueField]).toBe(config.createArgs.name)
+          expect(record![config.uniqueField]).toBe(config.createArgs[config.uniqueField])
           expect(record!.verified).toBe(false)
         })
       })
@@ -181,7 +179,7 @@ for (const config of RESOURCE_CONFIGS) {
         const id1 = await t.withIdentity({ tokenIdentifier: `clerk|${slug}` })
           .mutation(config.apiModule.create, config.createArgs)
         const id2 = await t.withIdentity({ tokenIdentifier: `clerk|${slug}` })
-          .mutation(config.apiModule.create, { ...config.createArgs, name: 'Different' })
+          .mutation(config.apiModule.create, { ...config.createArgs, [config.uniqueField]: 'different-marker-value' })
 
         expect(id1).toBe(id2)
       })
@@ -284,7 +282,7 @@ for (const config of RESOURCE_CONFIGS) {
         const result = await t.withIdentity({ tokenIdentifier: `clerk|${slug}` })
           .query(config.apiModule.mine, {})
         expect(result).not.toBeNull()
-        expect((result as Record<string, unknown>).name).toBe(config.createArgs.name)
+        expect((result as Record<string, unknown>)[config.uniqueField]).toBe(config.createArgs[config.uniqueField])
       })
     })
 
@@ -304,7 +302,7 @@ for (const config of RESOURCE_CONFIGS) {
 
         const result = await t.query(config.apiModule.byUserId, { userId })
         expect(result).not.toBeNull()
-        expect((result as Record<string, unknown>).name).toBe(config.createArgs.name)
+        expect((result as Record<string, unknown>)[config.uniqueField]).toBe(config.createArgs[config.uniqueField])
       })
 
       it('returns null for non-existent userId', async () => {

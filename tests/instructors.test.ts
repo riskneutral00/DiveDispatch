@@ -9,7 +9,6 @@ async function seedUser(ctx: SeedCtx, slug: string, role: 'Instructor' | 'DiveMa
 }
 
 const VALID_INSTRUCTOR_ARGS = {
-  name: 'Jane Instructor',
   role: 'Instructor' as const,
   placeName: 'Koh Tao',
   country: 'Thailand',
@@ -35,7 +34,7 @@ describe('instructors.create', () => {
     ).rejects.toThrow(/FORBIDDEN/)
   })
 
-  it('creates instructor profile for Instructor user', async () => {
+  it('creates instructor profile for Instructor user with name derived from user firstName+lastName', async () => {
     const t = makeT()
     let userId: Awaited<ReturnType<typeof seedUser>> | undefined
     await t.run(async (ctx) => { userId = await seedUser(ctx, 'new-instr') })
@@ -47,7 +46,7 @@ describe('instructors.create', () => {
     await t.run(async (ctx) => {
       const instr = await ctx.db.get(instrId as Id<'diveStaff'>) as Doc<'diveStaff'> | null
       expect(instr).not.toBeNull()
-      expect(instr!.name).toBe('Jane Instructor')
+      expect(instr!.name).toBe('new-instr Test')
       expect(instr!.userId).toEqual(userId)
       expect(instr!.verified).toBe(false)
       expect(instr!.credential).toHaveLength(1)
@@ -71,7 +70,7 @@ describe('instructors.create', () => {
     const identity = { tokenIdentifier: 'clerk|dup-instr' }
 
     const id1 = await t.withIdentity(identity).mutation(api.instructors.create, VALID_INSTRUCTOR_ARGS)
-    const id2 = await t.withIdentity(identity).mutation(api.instructors.create, { ...VALID_INSTRUCTOR_ARGS, name: 'Other' })
+    const id2 = await t.withIdentity(identity).mutation(api.instructors.create, { ...VALID_INSTRUCTOR_ARGS, phone: '+66999999999' })
     expect(id1).toBe(id2)
   })
 })
@@ -79,18 +78,18 @@ describe('instructors.create', () => {
 describe('instructors.update', () => {
   it('rejects unauthenticated callers', async () => {
     const t = makeT()
-    await expect(t.mutation(api.instructors.update, { name: 'New' })).rejects.toThrow(/UNAUTHENTICATED/)
+    await expect(t.mutation(api.instructors.update, { phone: '+660000000000' })).rejects.toThrow(/UNAUTHENTICATED/)
   })
 
   it('rejects when no profile exists', async () => {
     const t = makeT()
     await t.run(async (ctx) => { await seedUser(ctx, 'no-instr') })
     await expect(
-      t.withIdentity({ tokenIdentifier: 'clerk|no-instr' }).mutation(api.instructors.update, { name: 'New' }),
+      t.withIdentity({ tokenIdentifier: 'clerk|no-instr' }).mutation(api.instructors.update, { phone: '+660000000000' }),
     ).rejects.toThrow(/NOT_FOUND/)
   })
 
-  it('updates instructor fields', async () => {
+  it('updates instructor fields and re-derives name from user', async () => {
     const t = makeT()
     let instrId: Awaited<ReturnType<typeof seedInstructorProfile>> | undefined
     await t.run(async (ctx) => {
@@ -99,12 +98,29 @@ describe('instructors.update', () => {
     })
 
     await t.withIdentity({ tokenIdentifier: 'clerk|upd-instr' })
-      .mutation(api.instructors.update, { name: 'Updated Instructor' })
+      .mutation(api.instructors.update, { phone: '+660000000000' })
 
     await t.run(async (ctx) => {
       const instr = await ctx.db.get(instrId!) as Doc<'diveStaff'> | null
-      expect(instr!.name).toBe('Updated Instructor')
-      expect(instr!.email).toBe('instructor@test.com')
+      expect(instr!.phone).toBe('+660000000000')
+      expect(instr!.name).toBe('upd-instr Test')
+    })
+  })
+
+  it('users.updateProfile syncs diveStaff.name when firstName changes', async () => {
+    const t = makeT()
+    let instrId: Awaited<ReturnType<typeof seedInstructorProfile>> | undefined
+    await t.run(async (ctx) => {
+      const userId = await seedUser(ctx, 'sync-instr')
+      instrId = await seedInstructorProfile(ctx, userId)
+    })
+
+    await t.withIdentity({ tokenIdentifier: 'clerk|sync-instr' })
+      .mutation(api.users.updateProfile, { firstName: 'Renamed' })
+
+    await t.run(async (ctx) => {
+      const instr = await ctx.db.get(instrId!) as Doc<'diveStaff'> | null
+      expect(instr!.name).toBe('Renamed Test')
     })
   })
 })

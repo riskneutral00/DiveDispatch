@@ -69,10 +69,10 @@ const ROSTER: InstructorDef[] = [
   { firstName: 'Yuki', lastName: 'Tanaka', credentials: [{ agency: 'PADI', level: 'OWSI', specialtyRatings: ['Deep', 'Wreck', 'Night'] }, { agency: 'SSI', level: 'OWI', specialtyRatings: ['Deep', 'Wreck'] }], teachingLanguages: ['ja', 'ko', 'zh-CN'] },
   { firstName: 'Maria', lastName: 'Santos', credentials: [{ agency: 'PADI', level: 'MSDT', specialtyRatings: ['Deep', 'Enriched Air', 'Sidemount', 'Navigation', 'DPV', 'Wreck'] }, { agency: 'SSI', level: 'Advanced OWI', specialtyRatings: ['Deep', 'Enriched Air', 'Sidemount', 'Navigation', 'S&R'] }], teachingLanguages: ['es', 'fr', 'de'] },
 
-  { firstName: 'Arisa', lastName: 'Kanchanaburi', credentials: [{ agency: 'PADI', level: 'Divemaster', specialtyRatings: [] }], teachingLanguages: ['th', 'en'], role: 'DiveMaster' },
+  { firstName: 'Arisa', lastName: 'Kanchanaburi', credentials: [{ agency: 'PADI', level: 'DM', specialtyRatings: [] }], teachingLanguages: ['th', 'en'], role: 'DiveMaster' },
   { firstName: 'Kittipong', lastName: 'Jaidee', credentials: [{ agency: 'SSI', level: 'Dive Guide', specialtyRatings: [] }], teachingLanguages: ['th', 'en', 'zh-CN'], role: 'DiveMaster' },
-  { firstName: 'Prasit', lastName: 'Rattana', credentials: [{ agency: 'PADI', level: 'Divemaster', specialtyRatings: [] }], teachingLanguages: ['th', 'en'], role: 'DiveMaster' },
-  { firstName: 'Tanawat', lastName: 'Boon', credentials: [{ agency: 'PADI', level: 'Divemaster', specialtyRatings: [] }], teachingLanguages: ['th', 'en', 'zh-CN'], role: 'DiveMaster' },
+  { firstName: 'Prasit', lastName: 'Rattana', credentials: [{ agency: 'PADI', level: 'DM', specialtyRatings: [] }], teachingLanguages: ['th', 'en'], role: 'DiveMaster' },
+  { firstName: 'Tanawat', lastName: 'Boon', credentials: [{ agency: 'PADI', level: 'DM', specialtyRatings: [] }], teachingLanguages: ['th', 'en', 'zh-CN'], role: 'DiveMaster' },
   { firstName: 'Sato', lastName: 'Kenji', credentials: [{ agency: 'SSI', level: 'Dive Guide', specialtyRatings: [] }], teachingLanguages: ['ja', 'en', 'ko'], role: 'DiveMaster' },
 
   { firstName: 'Mei', lastName: 'Lin', credentials: [{ agency: 'PADI', level: 'OWSI', specialtyRatings: ['Deep', 'Enriched Air'] }], teachingLanguages: ['zh-CN', 'zh-TW', 'th'] },

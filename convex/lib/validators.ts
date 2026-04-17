@@ -59,7 +59,6 @@ export const rentalChecklistValidator = v.object({
 })
 
 export const BASE_PROFILE_CREATE_FIELDS = {
-  name: v.string(),
   placeName: v.string(),
   country: v.string(),
   lat: v.number(),
@@ -69,7 +68,6 @@ export const BASE_PROFILE_CREATE_FIELDS = {
 }
 
 export const BASE_PROFILE_UPDATE_FIELDS = {
-  name: v.optional(v.string()),
   placeName: v.optional(v.string()),
   country: v.optional(v.string()),
   lat: v.optional(v.number()),
@@ -77,6 +75,9 @@ export const BASE_PROFILE_UPDATE_FIELDS = {
   email: v.optional(v.string()),
   phone: v.optional(v.string()),
 }
+
+export const BUSINESS_NAME_CREATE_FIELD = { name: v.string() }
+export const BUSINESS_NAME_UPDATE_FIELD = { name: v.optional(v.string()) }
 
 export const ACCESS_CONTROL_FIELDS = {
   isAllowed: v.optional(v.array(v.string())),

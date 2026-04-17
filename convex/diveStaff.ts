@@ -6,6 +6,7 @@ import {
   profileUpdate,
   profileCreate,
 } from './lib/profileHelpers'
+import { getAuthUser } from './lib/auth'
 import { BASE_PROFILE_CREATE_FIELDS, BASE_PROFILE_UPDATE_FIELDS, ACCESS_CONTROL_FIELDS } from './lib/validators'
 
 const credentialValidator = v.object({
@@ -15,6 +16,10 @@ const credentialValidator = v.object({
   specialtyRatings: v.optional(v.array(v.string())),
 })
 
+function deriveStaffName(user: { firstName?: string; lastName?: string }): string {
+  return `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim()
+}
+
 export const create = mutation({
   args: {
     ...BASE_PROFILE_CREATE_FIELDS,
@@ -23,10 +28,13 @@ export const create = mutation({
     credential: v.array(credentialValidator),
     teachingLanguages: v.array(v.string()),
   },
-  handler: async (ctx, args) =>
-    profileCreate(ctx, { ...args }, 'diveStaff', args.role, {
+  handler: async (ctx, args) => {
+    const user = await getAuthUser(ctx)
+    const name = user ? deriveStaffName(user) : ''
+    return profileCreate(ctx, { ...args, name }, 'diveStaff', args.role, {
       verified: false,
-    }),
+    })
+  },
 })
 
 export const update = mutation({
@@ -37,8 +45,11 @@ export const update = mutation({
     credential: v.optional(v.array(credentialValidator)),
     teachingLanguages: v.optional(v.array(v.string())),
   },
-  handler: async (ctx, args) =>
-    profileUpdate(ctx, args, 'diveStaff', 'diveStaff'),
+  handler: async (ctx, args) => {
+    const user = await getAuthUser(ctx)
+    const name = user ? deriveStaffName(user) : undefined
+    return profileUpdate(ctx, { ...args, ...(name ? { name } : {}) }, 'diveStaff', 'diveStaff')
+  },
 })
 
 export const byUserId = query({
