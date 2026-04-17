@@ -317,23 +317,20 @@ describe('credentialsFromProfile', () => {
 })
 
 describe('credentialsToPayload', () => {
-  it('sends credential array + nitroxCertified', () => {
+  it('sends credential array only', () => {
     const form: PersonalCredentialsFormState = {
       credential: [{ agency: 'PADI', level: 'DM', agencyID: 'DM123', specialtyRatings: [] }],
-      nitroxCertified: false,
     }
     const payload = credentialsToPayload(form)
-    expect(new Set(Object.keys(payload))).toEqual(new Set(['credential', 'nitroxCertified']))
+    expect(new Set(Object.keys(payload))).toEqual(new Set(['credential']))
     const creds = payload.credential as Array<{ agency: string; level: string; agencyID: string }>
     expect(creds).toHaveLength(1)
     expect(creds[0].agency).toBe('PADI')
-    expect(payload.nitroxCertified).toBe(false)
   })
 
   it('does not include contact or language fields', () => {
     const form: PersonalCredentialsFormState = {
       credential: [],
-      nitroxCertified: false,
     }
     const payload = credentialsToPayload(form)
     expect(payload).not.toHaveProperty('name')
@@ -348,15 +345,13 @@ describe('credentialsToPayload', () => {
           agency: 'PADI',
           level: 'OWSI',
           agencyID: 'INS-1',
-          specialtyRatings: ['Nitrox', 'DeepDiver'],
+          specialtyRatings: ['Enriched Air', 'Deep'],
         },
       ],
-      nitroxCertified: true,
     }
     const payload = credentialsToPayload(form)
     const creds = payload.credential as Array<Record<string, unknown>>
-    expect(creds[0].specialtyRatings).toEqual(['Nitrox', 'DeepDiver'])
-    expect(payload.nitroxCertified).toBe(true)
+    expect(creds[0].specialtyRatings).toEqual(['Enriched Air', 'Deep'])
   })
 })
 

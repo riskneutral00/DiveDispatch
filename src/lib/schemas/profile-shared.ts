@@ -79,17 +79,11 @@ export const personalLanguagesSchema = z.object({
   teachingLanguages: teachingLanguagesFieldSchema,
 })
 
-export const personalOperatorPrefsSchema = z.object({
-  autoAccept: z.boolean().optional(),
-})
-
 export const personalContactMergedSchema = personalContactSchema
   .merge(personalLanguagesSchema)
-  .merge(personalOperatorPrefsSchema)
 
 export const instructorCredentialsSchema = z.object({
   credential: z.array(instructorCredentialSchema).min(1, 'At least one credential is required'),
-  nitroxCertified: z.boolean().optional(),
 })
 
 const BOAT_TYPES_TUPLE = BOAT_TYPES

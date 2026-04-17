@@ -1,13 +1,11 @@
 'use client'
 
-import { useTranslations } from 'next-intl'
 import { type LocationValue } from '@/components/profiles/location-picker-lazy'
 import { ProfileAgencyInfo } from '@/components/profiles/profile-agency-info'
 import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
 import { LanguageField } from '@/components/ui/language-field'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import { SectionDivider } from '@/components/ui/section-divider'
-import { Checkbox } from '@/components/ui/checkbox'
 import {
   INITIAL_ACCESS_CONTROL,
   accessFromProfile,
@@ -44,14 +42,12 @@ export type { PersonalContactFormState }
 export type PersonalMergedContactFormState = PersonalContactFormState & { // dry-ok
   teachingLanguages: Language[]
   access: AccessControlState
-  autoAccept: boolean
 }
 
 export const INITIAL_PERSONAL_MERGED_CONTACT: PersonalMergedContactFormState = {
   ...INITIAL_PERSONAL_CONTACT_FORM,
   ...INITIAL_TEACHING_LANGUAGES,
   access: INITIAL_ACCESS_CONTROL,
-  autoAccept: true,
 }
 
 export type PersonalLanguagesFormState = { teachingLanguages: Language[] }
@@ -75,7 +71,6 @@ function mergedPersonalFromProfile(p: Record<string, unknown>): PersonalMergedCo
     ...personalContactFromProfile(p),
     ...languagesFromProfilePersonal(p),
     access: accessFromProfile(p),
-    autoAccept: (p.autoAccept as boolean | undefined) ?? true,
   }
 }
 
@@ -84,13 +79,11 @@ function mergedPersonalToPayload(f: PersonalMergedContactFormState): Record<stri
     ...personalContactToPayload(f),
     ...languagesToPayloadPersonal(f),
     ...accessToPayload(f.access),
-    autoAccept: f.autoAccept,
   }
 }
 
 export type PersonalCredentialsFormState = {
   credential: PersonalCredential[]
-  nitroxCertified: boolean
 }
 
 export function makeEmptyCredential(): PersonalCredential {
@@ -98,7 +91,7 @@ export function makeEmptyCredential(): PersonalCredential {
 }
 
 export function getInitialCredentialsForm(): PersonalCredentialsFormState {
-  return { credential: [makeEmptyCredential()], nitroxCertified: false }
+  return { credential: [makeEmptyCredential()] }
 }
 
 export function credentialsFromProfile(p: Record<string, unknown>): PersonalCredentialsFormState {
@@ -108,7 +101,6 @@ export function credentialsFromProfile(p: Record<string, unknown>): PersonalCred
       creds.length > 0
         ? creds
         : [makeEmptyCredential()],
-    nitroxCertified: (p.nitroxCertified as boolean | undefined) ?? false,
   }
 }
 
@@ -120,7 +112,6 @@ export function credentialsToPayload(f: PersonalCredentialsFormState): Record<st
       agencyID: c.agencyID,
       specialtyRatings: c.specialtyRatings ?? [],
     })),
-    nitroxCertified: f.nitroxCertified,
   }
 }
 
@@ -137,7 +128,6 @@ export function PersonalContactSection({
   update,
   onClose,
 }: PersonalContactSectionProps) {
-  const t = useTranslations('common')
   const createOverride = (payload: Record<string, unknown>) =>
     create({ ...payload, credential: [] })
 
@@ -208,15 +198,6 @@ export function PersonalContactSection({
           value={form.teachingLanguages}
           onChange={(langs) => setField('teachingLanguages', langs)}
         />
-
-        <SectionDivider variant="soft" />
-
-        <Checkbox
-          label={t('autoAcceptLabel')}
-          description={t('autoAcceptDescription')}
-          checked={form.autoAccept}
-          onChange={(checked) => setField('autoAccept', checked)}
-        />
       </div>
     </ProfileFormShell>
   )
@@ -229,7 +210,6 @@ export function PersonalCredentialsSection({
   update,
   onClose,
 }: PersonalCredentialsSectionProps) {
-  const t = useTranslations('common')
   const initialDefaults = getInitialCredentialsForm()
 
   const createOverride = (payload: Record<string, unknown>) => {
@@ -286,15 +266,6 @@ export function PersonalCredentialsSection({
         items={form.credential}
         onChange={(items) => setField('credential', items)}
         errors={errors as Record<string, string>}
-      />
-
-      <SectionDivider variant="soft" />
-
-      <Checkbox
-        label={t('nitroxCertifiedLabel')}
-        description={t('nitroxCertifiedDescription')}
-        checked={form.nitroxCertified}
-        onChange={(checked) => setField('nitroxCertified', checked)}
       />
     </ProfileFormShell>
   )
