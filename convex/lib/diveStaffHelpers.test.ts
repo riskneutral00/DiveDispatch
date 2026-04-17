@@ -108,9 +108,22 @@ describe('getHighestCredentialClass', () => {
 })
 
 describe('assertNitroxCapable', () => {
+  const enrichedAirCred = {
+    agency: 'PADI',
+    level: 'OWSI',
+    agencyID: '1',
+    specialtyRatings: ['Enriched Air'],
+  }
+  const noEnrichedAirCred = {
+    agency: 'PADI',
+    level: 'OWSI',
+    agencyID: '1',
+    specialtyRatings: ['Deep', 'Wreck'],
+  }
+
   it('no-op when booking does not need nitrox', () => {
-    expect(() => assertNitroxCapable({ nitroxCertified: false }, false)).not.toThrow()
-    expect(() => assertNitroxCapable({ nitroxCertified: undefined }, false)).not.toThrow()
+    expect(() => assertNitroxCapable({ credential: [noEnrichedAirCred] }, false)).not.toThrow()
+    expect(() => assertNitroxCapable({ credential: [] }, false)).not.toThrow()
     expect(() => assertNitroxCapable(null, false)).not.toThrow()
   })
 
@@ -118,14 +131,22 @@ describe('assertNitroxCapable', () => {
     expect(() => assertNitroxCapable(null, true)).not.toThrow()
   })
 
-  it('passes when booking needs nitrox and staff is certified', () => {
-    expect(() => assertNitroxCapable({ nitroxCertified: true }, true)).not.toThrow()
+  it('passes when booking needs nitrox and any credential has Enriched Air specialty', () => {
+    expect(() => assertNitroxCapable({ credential: [enrichedAirCred] }, true)).not.toThrow()
   })
 
-  it('throws CAPABILITY_GAP when booking needs nitrox and staff has nitroxCertified=false', () => {
-    expect(() => assertNitroxCapable({ nitroxCertified: false, name: 'Ryan' }, true)).toThrow(ConvexError)
+  it('passes when Enriched Air appears on one of multiple credentials', () => {
+    expect(() =>
+      assertNitroxCapable({ credential: [noEnrichedAirCred, enrichedAirCred] }, true),
+    ).not.toThrow()
+  })
+
+  it('throws CAPABILITY_GAP when booking needs nitrox and no credential has Enriched Air', () => {
+    expect(() =>
+      assertNitroxCapable({ credential: [noEnrichedAirCred], name: 'Ryan' }, true),
+    ).toThrow(ConvexError)
     try {
-      assertNitroxCapable({ nitroxCertified: false, name: 'Ryan' }, true)
+      assertNitroxCapable({ credential: [noEnrichedAirCred], name: 'Ryan' }, true)
     } catch (e) {
       expect(e).toBeInstanceOf(ConvexError)
       const data = (e as ConvexError<{ code: string; reason: string; staffName: string | null }>).data
@@ -135,7 +156,8 @@ describe('assertNitroxCapable', () => {
     }
   })
 
-  it('throws when nitroxCertified is undefined (fail-safe default)', () => {
-    expect(() => assertNitroxCapable({ nitroxCertified: undefined }, true)).toThrow(ConvexError)
+  it('throws when credential is empty or undefined (fail-safe default)', () => {
+    expect(() => assertNitroxCapable({ credential: [] }, true)).toThrow(ConvexError)
+    expect(() => assertNitroxCapable({}, true)).toThrow(ConvexError)
   })
 })

@@ -37,12 +37,15 @@ export function getHighestCredentialClass(
 }
 
 export function assertNitroxCapable(
-  staff: { nitroxCertified?: boolean; name?: string } | null | undefined,
+  staff: { credential?: readonly Credential[]; name?: string } | null | undefined,
   bookingNeedsNitrox: boolean,
 ): void {
   if (!bookingNeedsNitrox) return
   if (!staff) return
-  if (staff.nitroxCertified === true) return
+  const hasNitroxRating = staff.credential?.some((c) =>
+    c.specialtyRatings?.includes('Enriched Air'),
+  )
+  if (hasNitroxRating) return
   throw new ConvexError({
     code: ErrorCode.CAPABILITY_GAP,
     reason: 'nitroxRequired',

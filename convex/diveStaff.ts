@@ -27,8 +27,6 @@ export const create = mutation({
     ...ACCESS_CONTROL_FIELDS,
     credential: v.array(credentialValidator),
     teachingLanguages: v.array(v.string()),
-    autoAccept: v.optional(v.boolean()),
-    nitroxCertified: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     if (args.teachingLanguages.length === 0) {
@@ -38,7 +36,7 @@ export const create = mutation({
     const name = user ? deriveStaffName(user) : ''
     return profileCreate(
       ctx,
-      { ...args, name, role: 'Instructor', autoAccept: args.autoAccept ?? true },
+      { ...args, name, role: 'Instructor' },
       'diveStaff',
       'Instructor',
       { verified: false },
@@ -52,8 +50,6 @@ export const update = mutation({
     ...ACCESS_CONTROL_FIELDS,
     credential: v.optional(v.array(credentialValidator)),
     teachingLanguages: v.optional(v.array(v.string())),
-    autoAccept: v.optional(v.boolean()),
-    nitroxCertified: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     if (args.teachingLanguages !== undefined && args.teachingLanguages.length === 0) {

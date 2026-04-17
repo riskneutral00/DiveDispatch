@@ -19,6 +19,7 @@ export default defineSchema({
 
   users: defineTable({
     tokenIdentifier: v.string(),
+    originalTokenIdentifier: v.optional(v.string()),
     slug: v.string(),
     email: v.string(),
     name: v.string(),
@@ -29,7 +30,6 @@ export default defineSchema({
     customerLanguages: v.optional(v.array(v.string())),
     phone: v.optional(v.string()),
     dateOfBirth: v.optional(v.string()),
-    isSeeded: v.boolean(),
     selectedThemeId: v.optional(v.id('themes')),
     savedThemeIds: v.optional(v.array(v.id('themes'))),
     defaultLocation: v.optional(v.string()),
@@ -347,8 +347,6 @@ export default defineSchema({
       }),
     ),
     teachingLanguages: v.array(v.string()),
-    autoAccept: v.optional(v.boolean()),
-    nitroxCertified: v.optional(v.boolean()),
     ...accessControlFields,
     verified: v.boolean(),
   }).index('by_userId', ['userId']),

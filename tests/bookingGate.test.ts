@@ -441,7 +441,7 @@ describe('booking gate: capability gate blocks DM from OW+', () => {
     )
   })
 
-  it('instructor without nitroxCertified assigned to Enriched Air SPECIALTY throws CAPABILITY_GAP reason nitroxRequired (P0-25)', async () => {
+  it('instructor without Enriched Air specialty rating assigned to Enriched Air SPECIALTY throws CAPABILITY_GAP reason nitroxRequired', async () => {
     const t = makeT()
 
     const bookingId = await t.run(async (ctx) => {
@@ -464,7 +464,7 @@ describe('booking gate: capability gate blocks DM from OW+', () => {
         lastName: 'NitroxNo',
       })
       await seedInstructorProfile(ctx, instUserId, {
-        credential: [{ agency: 'PADI', level: 'OWSI', agencyID: '11111', specialtyRatings: ['Enriched Air'] }],
+        credential: [{ agency: 'PADI', level: 'OWSI', agencyID: '11111', specialtyRatings: ['Deep', 'Wreck'] }],
       })
 
       return seedBooking(ctx, {
@@ -499,7 +499,7 @@ describe('booking gate: capability gate blocks DM from OW+', () => {
     )
   })
 
-  it('instructor with nitroxCertified=true passes Enriched Air SPECIALTY gate', async () => {
+  it('instructor with Enriched Air specialty rating passes Enriched Air SPECIALTY gate', async () => {
     const t = makeT()
 
     const bookingId = await t.run(async (ctx) => {
@@ -523,7 +523,6 @@ describe('booking gate: capability gate blocks DM from OW+', () => {
       })
       await seedInstructorProfile(ctx, instUserId, {
         credential: [{ agency: 'PADI', level: 'OWSI', agencyID: '22222', specialtyRatings: ['Enriched Air'] }],
-        nitroxCertified: true,
       })
 
       return seedBooking(ctx, {

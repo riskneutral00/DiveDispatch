@@ -143,49 +143,6 @@ describe('directory.listByRole — Instructor picker gate', () => {
   })
 })
 
-describe('instructors.create — autoAccept (P0-19)', () => {
-  it('persists autoAccept: false when provided', async () => {
-    const t = makeT()
-    let userId: Awaited<ReturnType<typeof seedUser>> | undefined
-    await t.run(async (ctx) => { userId = await seedUser(ctx, 'no-auto') })
-
-    const instrId = await t.withIdentity({ tokenIdentifier: 'clerk|no-auto' })
-      .mutation(api.instructors.create, { ...VALID_INSTRUCTOR_ARGS, autoAccept: false })
-
-    await t.run(async (ctx) => {
-      const instr = await ctx.db.get(instrId as Id<'diveStaff'>) as Doc<'diveStaff'> | null
-      expect(instr!.autoAccept).toBe(false)
-    })
-  })
-
-  it('defaults autoAccept to true when omitted', async () => {
-    const t = makeT()
-    await t.run(async (ctx) => { await seedUser(ctx, 'default-auto') })
-
-    const instrId = await t.withIdentity({ tokenIdentifier: 'clerk|default-auto' })
-      .mutation(api.instructors.create, VALID_INSTRUCTOR_ARGS)
-
-    await t.run(async (ctx) => {
-      const instr = await ctx.db.get(instrId as Id<'diveStaff'>) as Doc<'diveStaff'> | null
-      expect(instr!.autoAccept).toBe(true)
-    })
-  })
-
-  it('round-trips autoAccept via byUserId query', async () => {
-    const t = makeT()
-    let userId: Awaited<ReturnType<typeof seedUser>> | undefined
-    await t.run(async (ctx) => { userId = await seedUser(ctx, 'rt-auto') })
-
-    await t.withIdentity({ tokenIdentifier: 'clerk|rt-auto' })
-      .mutation(api.instructors.create, { ...VALID_INSTRUCTOR_ARGS, autoAccept: false })
-
-    const result = await t.withIdentity({ tokenIdentifier: 'clerk|rt-auto' })
-      .query(api.instructors.byUserId, { userId: userId! })
-    expect(result).not.toBeNull()
-    expect(result!.autoAccept).toBe(false)
-  })
-})
-
 describe('instructors.create — teachingLanguages empty-array gate (P0-20)', () => {
   it('rejects empty teachingLanguages on create', async () => {
     const t = makeT()
