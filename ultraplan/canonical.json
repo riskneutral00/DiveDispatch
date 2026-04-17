@@ -33,9 +33,7 @@
         "lastName": "Suksawat",
         "appLanguage": "th",
         "dateOfBirth": "1975-08-12",
-        "phone": "+66-76-330-345",
-        "isSeeded": false,
-        "onboardingComplete": true
+        "phone": "+66-76-330-345"
       },
       "compressors": {
         "name": "Scuba Market Thailand",
@@ -45,10 +43,12 @@
         "lng": 98.3062,
         "email": "scuba-market+clerk_test@divedispatch.dev",
         "phone": "+66-76-330-345",
-        "gasMixes": ["air", "nitrox"],
+        "gasMixes": [
+          "air",
+          "nitrox"
+        ],
         "nitroxMin": 32,
         "nitroxMax": 32,
-        "autoAccept": true,
         "verified": false
       }
     },
@@ -62,9 +62,7 @@
         "lastName": "Charoensuk",
         "appLanguage": "th",
         "dateOfBirth": "1982-04-20",
-        "phone": "+66-81-234-5014",
-        "isSeeded": false,
-        "onboardingComplete": true
+        "phone": "+66-81-234-5014"
       },
       "compressors": {
         "name": "Compressor Shop Chalong Pier",
@@ -75,10 +73,12 @@
         "email": "compressor-chalong+clerk_test@divedispatch.dev",
         "phone": "+66-76-395-001",
         "gasMixes_initial": [],
-        "gasMixes_completed": ["air", "nitrox"],
+        "gasMixes_completed": [
+          "air",
+          "nitrox"
+        ],
         "nitroxMin": 32,
         "nitroxMax": 32,
-        "autoAccept": true,
         "verified": false
       }
     },
@@ -93,9 +93,7 @@
         "lastName": "Prasert",
         "appLanguage": "zh-CN",
         "dateOfBirth": "1980-01-15",
-        "phone": "+66-81-234-5001",
-        "isSeeded": false,
-        "onboardingComplete": true
+        "phone": "+66-81-234-5001"
       },
       "equipment": {
         "name": "Hug Ocean",
@@ -106,12 +104,25 @@
         "email": "hug-ocean+clerk_test@divedispatch.dev",
         "phone": "+66-76-381-103",
         "manufacturersByGearType": {
-          "wetsuit": ["ScubaPro", "Aqua Lung", "Mares"],
-          "bcd": ["ScubaPro", "Aqua Lung", "Mares"],
-          "regulator": ["ScubaPro", "Aqua Lung", "Mares"]
+          "wetsuit": [
+            "ScubaPro",
+            "Aqua Lung",
+            "Mares"
+          ],
+          "bcd": [
+            "ScubaPro",
+            "Aqua Lung",
+            "Mares"
+          ],
+          "regulator": [
+            "ScubaPro",
+            "Aqua Lung",
+            "Mares"
+          ]
         },
-        "isAllowed": ["n7rq5j"],
-        "autoAccept": true,
+        "isAllowed": [
+          "n7rq5j"
+        ],
         "verified": false
       },
       "inventoryOverrides": "[30 SKUs @ totalUnits=4 each: wetsuit 3 brands × 4 sizes; bcd 3 brands × 3 sizes; fins 5 sizes (no brand); mask 1 regular (no brand); regulator 3 brands (no size). 4-customer capacity.]"
@@ -128,9 +139,7 @@
         "nickname": "Ta",
         "appLanguage": "th",
         "dateOfBirth": "1990-06-03",
-        "phone": "+66-76-330-678",
-        "isSeeded": false,
-        "onboardingComplete": true
+        "phone": "+66-76-330-678"
       },
       "equipment": {
         "name": "Scuba Revolution Phuket",
@@ -141,12 +150,23 @@
         "email": "scuba-revolution+clerk_test@divedispatch.dev",
         "phone": "+66-76-330-678",
         "manufacturersByGearType": {
-          "wetsuit": ["ScubaPro", "Aqua Lung", "Mares"],
-          "bcd": ["ScubaPro", "Aqua Lung", "Mares"],
-          "regulator": ["ScubaPro", "Aqua Lung", "Mares"]
+          "wetsuit": [
+            "ScubaPro",
+            "Aqua Lung",
+            "Mares"
+          ],
+          "bcd": [
+            "ScubaPro",
+            "Aqua Lung",
+            "Mares"
+          ],
+          "regulator": [
+            "ScubaPro",
+            "Aqua Lung",
+            "Mares"
+          ]
         },
         "isAllowed": [],
-        "autoAccept": true,
         "verified": false
       },
       "inventoryOverrides": "[Same 30-SKU spread as equipment_manager_1 @ 4-customer capacity.]"
@@ -162,9 +182,7 @@
         "lastName": "Huang",
         "appLanguage": "zh-TW",
         "dateOfBirth": "1987-11-28",
-        "phone": "+66-81-234-5004",
-        "isSeeded": false,
-        "onboardingComplete": true
+        "phone": "+66-81-234-5004"
       },
       "equipment": {
         "name": "Nicole Dive Center",
@@ -175,12 +193,23 @@
         "email": "nicole-dive-center+clerk_test@divedispatch.dev",
         "phone": "+66-76-386-002",
         "manufacturersByGearType": {
-          "wetsuit": ["ScubaPro", "Aqua Lung", "Mares"],
-          "bcd": ["ScubaPro", "Aqua Lung", "Mares"],
-          "regulator": ["ScubaPro", "Aqua Lung", "Mares"]
+          "wetsuit": [
+            "ScubaPro",
+            "Aqua Lung",
+            "Mares"
+          ],
+          "bcd": [
+            "ScubaPro",
+            "Aqua Lung",
+            "Mares"
+          ],
+          "regulator": [
+            "ScubaPro",
+            "Aqua Lung",
+            "Mares"
+          ]
         },
         "isAllowed": [],
-        "autoAccept": true,
         "verified": false
       },
       "inventoryOverrides_initial": "[29 SKUs @ totalUnits=4 each: wetsuit/bcd/regulator brand matrix + fins 5 sizes. NO mask SKUs — intentional gap.]",
@@ -202,13 +231,25 @@
             "name": "M.V. Hug Ocean",
             "maxPax": 50,
             "type": "day_boat",
-            "routes": [{ "diveSite": "Racha Noi / Racha Yai", "daysOfWeek": [1, 2, 3, 4, 5, 6, 0] }]
+            "routes": [
+              {
+                "diveSite": "Racha Noi / Racha Yai",
+                "daysOfWeek": [
+                  1,
+                  2,
+                  3,
+                  4,
+                  5,
+                  6,
+                  0
+                ]
+              }
+            ]
           }
         ],
         "hasCompressor": true,
         "isAllowed": [],
         "notAllowed": [],
-        "autoAccept": true,
         "verified": false
       }
     },
@@ -223,9 +264,7 @@
         "lastName": "Charoen",
         "appLanguage": "th",
         "dateOfBirth": "1978-09-05",
-        "phone": "+66-81-234-5003",
-        "isSeeded": false,
-        "onboardingComplete": true
+        "phone": "+66-81-234-5003"
       },
       "boats": {
         "name": "Mandarin Queen",
@@ -242,9 +281,28 @@
             "maxPax": 70,
             "type": "day_boat",
             "routes": [
-              { "diveSite": "Racha Noi / Racha Yai", "daysOfWeek": [1, 4, 6] },
-              { "diveSite": "Shark Point / King Cruiser", "daysOfWeek": [2] },
-              { "diveSite": "Phi Phi", "daysOfWeek": [3, 5, 0] }
+              {
+                "diveSite": "Racha Noi / Racha Yai",
+                "daysOfWeek": [
+                  1,
+                  4,
+                  6
+                ]
+              },
+              {
+                "diveSite": "Shark Point / King Cruiser",
+                "daysOfWeek": [
+                  2
+                ]
+              },
+              {
+                "diveSite": "Phi Phi",
+                "daysOfWeek": [
+                  3,
+                  5,
+                  0
+                ]
+              }
             ]
           },
           {
@@ -252,16 +310,34 @@
             "maxPax": 90,
             "type": "day_boat",
             "routes": [
-              { "diveSite": "Racha Noi / Racha Yai", "daysOfWeek": [2, 5, 0] },
-              { "diveSite": "Shark Point / King Cruiser", "daysOfWeek": [3] },
-              { "diveSite": "Phi Phi", "daysOfWeek": [1, 4, 6] }
+              {
+                "diveSite": "Racha Noi / Racha Yai",
+                "daysOfWeek": [
+                  2,
+                  5,
+                  0
+                ]
+              },
+              {
+                "diveSite": "Shark Point / King Cruiser",
+                "daysOfWeek": [
+                  3
+                ]
+              },
+              {
+                "diveSite": "Phi Phi",
+                "daysOfWeek": [
+                  1,
+                  4,
+                  6
+                ]
+              }
             ]
           }
         ],
         "hasCompressor": true,
         "isAllowed": [],
         "notAllowed": [],
-        "autoAccept": true,
         "verified": false
       }
     },
@@ -276,9 +352,7 @@
         "lastName": "Clarke",
         "appLanguage": "en",
         "dateOfBirth": "1985-03-22",
-        "phone": "+66-81-600-1000",
-        "isSeeded": false,
-        "onboardingComplete": true
+        "phone": "+66-81-600-1000"
       },
       "instructors": {
         "name": "Ryan Clarke",
@@ -293,13 +367,18 @@
             "agency": "PADI",
             "level": "OWSI",
             "agencyID": "PADI-300000",
-            "specialtyRatings": ["Deep", "Navigation"]
+            "specialtyRatings": [
+              "Deep",
+              "Navigation"
+            ]
           }
         ],
-        "teachingLanguages": ["en", "th"],
+        "teachingLanguages": [
+          "en",
+          "th"
+        ],
         "isAllowed": [],
         "notAllowed": [],
-        "autoAccept": true,
         "verified": false
       }
     },
@@ -314,9 +393,7 @@
         "lastName": "Ming",
         "appLanguage": "en",
         "dateOfBirth": "1991-07-14",
-        "phone": "+66-81-603-1003",
-        "isSeeded": false,
-        "onboardingComplete": true
+        "phone": "+66-81-603-1003"
       },
       "instructors": {
         "name": "Li Ming",
@@ -331,13 +408,18 @@
             "agency": "SSI",
             "level": "OWI",
             "agencyID": "SSI-500030",
-            "specialtyRatings": ["Deep"]
+            "specialtyRatings": [
+              "Deep"
+            ]
           }
         ],
-        "teachingLanguages": ["zh-CN", "en", "ko"],
+        "teachingLanguages": [
+          "zh-CN",
+          "en",
+          "ko"
+        ],
         "isAllowed": [],
         "notAllowed": [],
-        "autoAccept": true,
         "verified": false
       }
     },
@@ -353,9 +435,7 @@
         "lastName": "Chen",
         "appLanguage": "en",
         "dateOfBirth": "1989-02-10",
-        "phone": "+66-81-602-1002",
-        "isSeeded": false,
-        "onboardingComplete": true
+        "phone": "+66-81-602-1002"
       },
       "instructors": {
         "name": "Wei Chen",
@@ -370,14 +450,24 @@
             "agency": "PADI",
             "level": "MSDT",
             "agencyID": "PADI-300020",
-            "specialtyRatings": ["Deep", "Enriched Air", "Wreck", "Navigation", "Night"]
+            "specialtyRatings": [
+              "Deep",
+              "Enriched Air",
+              "Wreck",
+              "Navigation",
+              "Night"
+            ]
           }
         ],
         "teachingLanguages_initial": [],
-        "teachingLanguages_completed": ["zh-CN", "zh-TW", "th", "en"],
+        "teachingLanguages_completed": [
+          "zh-CN",
+          "zh-TW",
+          "th",
+          "en"
+        ],
         "isAllowed": [],
         "notAllowed": [],
-        "autoAccept": false,
         "verified": false
       }
     },
@@ -392,9 +482,7 @@
         "lastName": "Kanchanaburi",
         "appLanguage": "en",
         "dateOfBirth": "1993-12-01",
-        "phone": "+66-81-615-1015",
-        "isSeeded": false,
-        "onboardingComplete": true
+        "phone": "+66-81-615-1015"
       },
       "instructors": {
         "name": "Arisa Kanchanaburi",
@@ -413,11 +501,12 @@
           }
         ],
         "teachingLanguages_initial": [],
-        "teachingLanguages_completed": ["th", "en"],
+        "teachingLanguages_completed": [
+          "th",
+          "en"
+        ],
         "isAllowed": [],
         "notAllowed": [],
-        "autoAccept": true,
-        "nitroxCertified": false,
         "verified": false
       }
     },
@@ -439,7 +528,6 @@
         "confinedCapable": true,
         "isAllowed": [],
         "notAllowed": [],
-        "autoAccept": true,
         "verified": false
       }
     },
@@ -454,9 +542,7 @@
         "lastName": "Lin",
         "appLanguage": "zh-CN",
         "dateOfBirth": "1983-05-18",
-        "phone": "+66-81-234-5002",
-        "isSeeded": false,
-        "onboardingComplete": true
+        "phone": "+66-81-234-5002"
       },
       "venues": {
         "name": "Neptune",
@@ -471,9 +557,10 @@
         "maxDepth": 2.5,
         "maxCapacity": 6,
         "confinedCapable": true,
-        "isAllowed": ["z8mv4c"],
+        "isAllowed": [
+          "z8mv4c"
+        ],
         "notAllowed": [],
-        "autoAccept": true,
         "verified": false
       }
     },
@@ -488,9 +575,7 @@
         "lastName": "Jantarakul",
         "appLanguage": "th",
         "dateOfBirth": "1977-10-30",
-        "phone": "+66-76-394-001",
-        "isSeeded": false,
-        "onboardingComplete": true
+        "phone": "+66-76-394-001"
       },
       "venues": {
         "name": "Water Pro",
@@ -508,7 +593,6 @@
         "confinedCapable": true,
         "isAllowed": [],
         "notAllowed": [],
-        "autoAccept": true,
         "verified": false
       }
     },
@@ -522,9 +606,7 @@
         "lastName": "Wongsawat",
         "appLanguage": "th",
         "dateOfBirth": "1986-08-25",
-        "phone": "+66-76-394-002",
-        "isSeeded": false,
-        "onboardingComplete": true
+        "phone": "+66-76-394-002"
       },
       "venues": {
         "name": "Shark Bites",
@@ -541,7 +623,6 @@
         "confinedCapable": true,
         "isAllowed": [],
         "notAllowed": [],
-        "autoAccept": true,
         "verified": false
       }
     },
@@ -564,10 +645,21 @@
             "owDays": 4,
             "aowDays": 2,
             "oaDays": 5,
-            "selectedSpecialties": ["Deep", "Night", "Navigation", "Peak", "Wreck"]
+            "selectedSpecialties": [
+              "Deep",
+              "Night",
+              "Navigation",
+              "Peak",
+              "Wreck"
+            ]
           }
         ],
-        "customerLanguages": ["zh-CN", "zh-TW", "th", "en"],
+        "customerLanguages": [
+          "zh-CN",
+          "zh-TW",
+          "th",
+          "en"
+        ],
         "isAllowed": [],
         "notAllowed": [],
         "verified": true
@@ -593,10 +685,18 @@
             "owDays": 4,
             "aowDays": 2,
             "oaDays": 5,
-            "selectedSpecialties": ["Deep", "Navigation"]
+            "selectedSpecialties": [
+              "Deep",
+              "Navigation"
+            ]
           }
         ],
-        "customerLanguages": ["zh-TW", "zh-CN", "en", "th"],
+        "customerLanguages": [
+          "zh-TW",
+          "zh-CN",
+          "en",
+          "th"
+        ],
         "isAllowed": [],
         "notAllowed": [],
         "verified": true
@@ -618,7 +718,9 @@
           "phone": "+886-912-345-999",
           "relationship": "spouse"
         },
-        "languages": ["zh-TW"],
+        "languages": [
+          "zh-TW"
+        ],
         "sizing": {
           "wetsuit": "M",
           "bcd": "S",
@@ -646,7 +748,9 @@
           "phone": "+86-138-0013-8999",
           "relationship": "spouse"
         },
-        "languages": ["zh-CN"],
+        "languages": [
+          "zh-CN"
+        ],
         "sizing": {
           "wetsuit": "L",
           "bcd": "M",
@@ -675,7 +779,9 @@
           "phone": "+1-415-555-0199",
           "relationship": "mother"
         },
-        "languages": ["en"],
+        "languages": [
+          "en"
+        ],
         "sizing": {
           "wetsuit": "L",
           "bcd": "L",
@@ -697,10 +803,10 @@
         "lastName": "Walker",
         "appLanguage": "en",
         "dateOfBirth": "1992-04-17",
-        "customerLanguages": ["en"],
-        "phone": "+66 81 900 1234",
-        "isSeeded": false,
-        "onboardingComplete": true
+        "customerLanguages": [
+          "en"
+        ],
+        "phone": "+66 81 900 1234"
       },
       "agents": {
         "name": "Alex Walker",
@@ -710,8 +816,15 @@
         "lng": 98.39,
         "email": "agent.walker@phukettravel.example",
         "phone": "+66 81 900 1234",
-        "associations": [{ "agency": "PADI", "number": "PAD-AG-70001" }],
-        "customerLanguages": ["en"],
+        "associations": [
+          {
+            "agency": "PADI",
+            "number": "PAD-AG-70001"
+          }
+        ],
+        "customerLanguages": [
+          "en"
+        ],
         "isAllowed": [],
         "notAllowed": [],
         "verified": true
@@ -732,7 +845,9 @@
         "lat": 7.8206,
         "lng": 98.3003,
         "venueCategory": "diveSite",
-        "diveSiteTypes": ["shore"],
+        "diveSiteTypes": [
+          "shore"
+        ],
         "confinedCapable": true,
         "hasCompressor": false,
         "maxCapacity": 50,

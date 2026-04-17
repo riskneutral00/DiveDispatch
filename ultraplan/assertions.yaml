@@ -31,10 +31,8 @@ act_1_phase_1:
     compressors:
       - canonical: stakeholders.compressor_1.compressors
         verified: false
-        autoAccept: true
       - canonical: stakeholders.compressor_2.compressors
         verified: false
-        autoAccept: true
         gasMixes: []   # _initial state — closes in Act II
   ui:
     - url: /{compressor_1.slug}/compressor/dashboard
@@ -125,7 +123,7 @@ act_1_phase_8:
         preferredOperatorSlug: stakeholders.dive_center_1.slugRef
 
 act_1_end:
-  description: All canonical users persisted; every resource row carries autoAccept (Instructor exception); every _initial gap still in _initial state.
+  description: All canonical users persisted; every _initial gap still in _initial state. Auto-accept lives on stakeholderPreferences.acceptanceMode (user-level), not on resource rows.
   db:
     users_count: 14
     resource_rows_count: ">=14"

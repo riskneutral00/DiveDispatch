@@ -54,7 +54,7 @@
     "usersBlock": {
       "description": "Canonical per-user record. Mirrors `users` table but omits runtime-assigned tokenIdentifier/slug.",
       "type": "object",
-      "required": ["email", "firstName", "lastName", "appLanguage", "dateOfBirth", "isSeeded", "onboardingComplete"],
+      "required": ["email", "firstName", "lastName", "appLanguage", "dateOfBirth"],
       "properties": {
         "email": { "type": "string", "format": "email" },
         "name": { "type": "string" },
@@ -65,8 +65,6 @@
         "customerLanguages": { "type": "array", "items": { "type": "string" } },
         "phone": { "type": "string" },
         "dateOfBirth": { "type": "string", "description": "ISO date. Required for Customer; optional for operators." },
-        "isSeeded": { "type": "boolean" },
-        "onboardingComplete": { "type": "boolean" },
         "defaultLocation": { "type": "string" }
       }
     },
@@ -137,7 +135,7 @@
             { "$ref": "#/$defs/accessControl" },
             {
               "type": "object",
-              "required": ["name", "email", "phone", "autoAccept", "verified"],
+              "required": ["name", "email", "phone", "verified"],
               "properties": {
                 "name": { "type": "string" },
                 "email": { "type": "string", "format": "email" },
@@ -147,7 +145,6 @@
                 "gasMixes_completed": { "type": "array", "items": { "type": "string", "enum": ["air", "nitrox"] }, "minItems": 1 },
                 "nitroxMin": { "type": "integer", "minimum": 22, "maximum": 40, "description": "Lower bound of nitrox O2% range. Required when gasMixes includes 'nitrox'." },
                 "nitroxMax": { "type": "integer", "minimum": 22, "maximum": 40, "description": "Upper bound of nitrox O2% range. Required when gasMixes includes 'nitrox'. Must be >= nitroxMin." },
-                "autoAccept": { "const": true, "description": "Compressor auto-accepts (row-level boolean, disabled FE checkbox). P0-3 adds schema column." },
                 "verified": { "type": "boolean" }
               }
             }
@@ -170,7 +167,7 @@
             { "$ref": "#/$defs/accessControl" },
             {
               "type": "object",
-              "required": ["name", "email", "phone", "autoAccept", "verified"],
+              "required": ["name", "email", "phone", "verified"],
               "properties": {
                 "name": { "type": "string" },
                 "email": { "type": "string", "format": "email" },
@@ -181,7 +178,6 @@
                   "description": "P0-7: tighten schema from optional → required non-empty. Min 3 gear types for happy path.",
                   "additionalProperties": { "type": "array", "items": { "type": "string" }, "minItems": 1 }
                 },
-                "autoAccept": { "const": true, "description": "P0-6 adds schema column." },
                 "verified": { "type": "boolean" }
               }
             }
@@ -207,7 +203,7 @@
             { "$ref": "#/$defs/accessControl" },
             {
               "type": "object",
-              "required": ["name", "email", "phone", "hasCompressor", "autoAccept", "verified"],
+              "required": ["name", "email", "phone", "hasCompressor", "verified"],
               "properties": {
                 "name": { "type": "string" },
                 "email": { "type": "string", "format": "email" },
@@ -216,7 +212,6 @@
                 "vessels_initial": { "type": "array", "maxItems": 0 },
                 "vessels_completed": { "type": "array", "items": { "$ref": "#/$defs/vessel" }, "minItems": 1 },
                 "hasCompressor": { "type": "boolean" },
-                "autoAccept": { "const": true, "description": "P0-9 adds schema column." },
                 "verified": { "type": "boolean" }
               }
             }
@@ -249,8 +244,6 @@
                 "teachingLanguages": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
                 "teachingLanguages_initial": { "type": "array", "maxItems": 0 },
                 "teachingLanguages_completed": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
-                "autoAccept": { "type": "boolean", "description": "P0-19. Optional; defaults to true server-side." },
-                "nitroxCertified": { "type": "boolean", "description": "P0-25. Optional; gates nitrox-required booking assignments." },
                 "verified": { "type": "boolean" }
               }
             }
@@ -273,7 +266,7 @@
             { "$ref": "#/$defs/accessControl" },
             {
               "type": "object",
-              "required": ["name", "venueCategory", "hasCompressor", "autoAccept", "verified"],
+              "required": ["name", "venueCategory", "hasCompressor", "verified"],
               "properties": {
                 "name": { "type": "string" },
                 "email": { "type": "string", "format": "email" },
@@ -285,7 +278,6 @@
                 "maxCapacity_completed": { "type": "integer", "minimum": 1 },
                 "confinedCapable": { "type": "boolean", "description": "Should be true for pools (confined-water training venue)." },
                 "hasCompressor": { "type": "boolean" },
-                "autoAccept": { "const": true, "description": "P0-13 adds schema column." },
                 "verified": { "type": "boolean" }
               }
             }
@@ -389,7 +381,7 @@
     },
     "entryCustomer": {
       "type": "object",
-      "description": "Lighter portal template — no userRoles row, no autoAccept, no isAllowed.",
+      "description": "Lighter portal template — no userRoles row, no isAllowed.",
       "required": ["role"],
       "properties": {
         "role": { "const": "Customer" },

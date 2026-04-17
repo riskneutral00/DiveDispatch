@@ -278,9 +278,9 @@ Every entry in the ledger conforms to one of four shapes. Required fields below;
 
 | Entry type | Required fields | Min verification layer (§2) | Notes |
 |---|---|---|---|
-| Resource stakeholder (Stops 1–6) | `id`, `role`, `user` or `slugRef`, role-specific schema fields, `autoAccept: true` (except Instructor — toggleable), `isAllowed`/`notAllowed` if role-applicable, `<field>_initial` + `<field>_completed` pair if carrying the deliberate-incomplete gap | **S + U** (field presence in DB after onboarding + UI creation flow completes) | Per Lesson #8. Instructor is the only resource without the auto-accept disabled pattern. |
-| Customer (Stop 8) | `id`, portal fixture fields (firstName, lastName, email, phone, DOB, certLevel, medical y/n, emergencyContact, languages), one `<field>_initial` + `<field>_completed` pair | **S + M + U** (portal token valid, mutation accepts partial progress, UI submits) | No userRoles row, no autoAccept, no isAllowed. Lighter template. |
-| Operator stakeholder (Stops 7, 9) | `id`, `role`, `user` or `slugRef`, organizer schema fields, `isAllowed`/`notAllowed`, `customerLanguages`, deliberate-incomplete pair | **S + U** (organizer profile persists, UI flows complete) | No `autoAccept` column. Agent additionally carries `defaultReferral` or equivalent. |
+| Resource stakeholder (Stops 1–6) | `id`, `role`, `user` or `slugRef`, role-specific schema fields, `isAllowed`/`notAllowed` if role-applicable, `<field>_initial` + `<field>_completed` pair if carrying the deliberate-incomplete gap | **S + U** (field presence in DB after onboarding + UI creation flow completes) | Auto-accept lives user-level on `stakeholderPreferences.acceptanceMode` (seed default: Instructor → `PrePayRequired`, others → `Auto`) — no per-resource flag. |
+| Customer (Stop 8) | `id`, portal fixture fields (firstName, lastName, email, phone, DOB, certLevel, medical y/n, emergencyContact, languages), one `<field>_initial` + `<field>_completed` pair | **S + M + U** (portal token valid, mutation accepts partial progress, UI submits) | No userRoles row, no isAllowed. Lighter template. |
+| Operator stakeholder (Stops 7, 9) | `id`, `role`, `user` or `slugRef`, organizer schema fields, `isAllowed`/`notAllowed`, `customerLanguages`, deliberate-incomplete pair | **S + U** (organizer profile persists, UI flows complete) | Agent additionally carries `defaultReferral` or equivalent. |
 | admin_venues (sibling of `stakeholders`) | `id`, `venues` fields, `inventoryUnits.ownerId: '__unowned__'`, `ownerType: 'DiveSite'`, `verified: true` | **S** (row present, ownerId sentinel correct) | No `userId`. Exempt from deliberate-incomplete rule. No UI flow — admin-seeded. |
 
 **Multi-role users:** when a user owns rows in multiple stops (HUG_OCEAN, NICOLE_DC, NEPTUNE, PHUKET_DC, SCUBA_REVOLUTION), define the `user` block once in the stop where the user first appears. Subsequent stops reference via `slugRef` — do not duplicate.
@@ -338,12 +338,13 @@ Five Acts partition the run: **I Onboarding · II Booking Convergence · III Var
   - FE rewire: `src/components/profiles/agent-profile-form.tsx:56-60, 78-80` — switch read path from `me.customerLanguages` to `p.customerLanguages`.
   - UI form fields already shipped on DC + Agent; no new form work.
 
-### P0-3 — `compressors` table missing `autoAccept` and `nitroxO2Percent`
+### P0-3 — `compressors` table missing `nitroxO2Percent`
 
 - **Source:** Stop 1 audit (this skeleton — per Lesson #1).
-- **Impact:** Compressor canonical JSON declares both fields (`autoAccept: true`, `nitroxO2Percent: 32`). Schema rejects these writes today. Stop 1 UI run cannot complete without the columns.
+- **Scope narrowed 2026-04-17:** `autoAccept` portion withdrawn (see P0-19) — auto-accept lives user-level on `stakeholderPreferences.acceptanceMode`. Nitrox range portion remains.
+- **Impact:** Compressor canonical JSON declares `nitroxO2Percent: 32`. Schema rejects nitrox min/max writes today. Stop 1 UI run cannot complete without the columns.
 - **Action:**
-  - Schema: add `compressors.autoAccept: v.boolean()` (default `true` server-side) and `compressors.nitroxMin: v.optional(v.number())` + `compressors.nitroxMax: v.optional(v.number())` (integer, range 22–40, both required in mutation iff `gasMixes` includes `'nitrox'`, min ≤ max).
+  - Schema: add `compressors.nitroxMin: v.optional(v.number())` + `compressors.nitroxMax: v.optional(v.number())` (integer, range 22–40, both required in mutation iff `gasMixes` includes `'nitrox'`, min ≤ max).
   - Update `convex/compressors.ts:17-34` create + update args.
   - Update `convex/seedData.ts` compressor fixtures.
   - Extend zod validators in `src/lib/profile-form/profile-shared.ts`.
@@ -353,17 +354,16 @@ Five Acts partition the run: **I Onboarding · II Booking Convergence · III Var
 - **Source:** Stop 1 audit (this skeleton — per Lesson #1).
 - **Resolution:** Trimix removed from canonical `GAS_MIXES` and seed data. Only `'air'` and `'nitrox'` remain. Nitrox gains a min/max range (22–40%) instead.
 
-### P0-5 — Compressor profile form missing nitrox dropdown + auto-accept display
+### P0-5 — Compressor profile form missing nitrox dropdown
 
 - **Source:** Stop 1 audit (this skeleton — per Lesson #1).
-- **Impact:** With P0-3 schema fields live, FE still cannot capture `nitroxO2Percent` or surface the `autoAccept` state. Stop 1 UI run cannot complete without the input path.
-- **Action:** `src/components/profiles/compressor-profile-form.tsx` — conditional scrollable integer select (22–40) when `nitrox` is selected in gas mixes; always-rendered disabled checkbox showing `checked=true` for auto-accept.
+- **Scope narrowed 2026-04-17:** auto-accept FE display withdrawn (see P0-19).
+- **Impact:** With P0-3 schema fields live, FE still cannot capture `nitroxMin` / `nitroxMax`. Stop 1 UI run cannot complete without the input path.
+- **Action:** `src/components/profiles/compressor-profile-form.tsx` — conditional scrollable integer select (22–40) when `nitrox` is selected in gas mixes.
 
-### P0-6 — `equipment` table missing `autoAccept`
+### P0-6 — `equipment` table missing `autoAccept` — WITHDRAWN
 
-- **Source:** Stop 2 audit (this skeleton — per Lesson #1).
-- **Impact:** All three happy-path Equipment Managers (Hug, Ta, Nicole) declare `autoAccept: true` in canonical JSON. Schema rejects the write today.
-- **Action:** Add `equipment.autoAccept: v.boolean()` (default `true` server-side) to schema; update `convex/equipment.ts` create + update args; add disabled checkbox on Equipment tab of `src/components/profiles/equipment-profile-form.tsx` (same pattern as compressor).
+- **Status:** WITHDRAWN 2026-04-17 — see P0-19. Auto-accept is user-level on `stakeholderPreferences.acceptanceMode`. No per-resource column added.
 
 ### P0-7 — `equipment.manufacturersByGearType` must be required non-empty
 
@@ -377,15 +377,9 @@ Five Acts partition the run: **I Onboarding · II Booking Convergence · III Var
 - **Impact:** Nicole starts with zero mask inventory. The happy path expects the Equipment picker in the booking form to hide / disable her until mask inventory is added. If the picker just lists all Equipment profiles regardless of inventory state, the test fails and path cannot demonstrate the gate.
 - **Action:** Investigate how the booking-form Equipment dropdown builds its list. Grep `src/components/booking/**` for Equipment option rendering. If the filter is absent, file as a distinct blocker; if the filter exists, document where and cite the query.
 
-### P0-9 — `boats` table missing `autoAccept`
+### P0-9 — `boats` table missing `autoAccept` — WITHDRAWN
 
-- **Source:** Stop 3 audit.
-- **Impact:** Both happy-path Boat stakeholders (Hug, PHUKET_DC) declare `autoAccept: true` in canonical JSON §7.12. Schema rejects the write today. Rule D (all resource roles display disabled auto-accept checkbox, Instructor exception) requires the column.
-- **Action:**
-  - Schema: add `boats.autoAccept: v.boolean()` (default `true` server-side) at `convex/schema.ts:356-386`.
-  - Mutation: update `convex/boats.ts:37-51` create args and extras; update args at `convex/boats.ts:53-71`.
-  - FE: add always-rendered disabled checkbox showing `checked=true` on Fleet tab in `src/components/profiles/boat-profile-form.tsx` (parallel to compressor P0-5 + equipment P0-6 pattern).
-  - Seed: add `autoAccept: true` to HUG_OCEAN.boat + PHUKET_DC.boat at `convex/seedData.ts:274-289, 386-412`.
+- **Status:** WITHDRAWN 2026-04-17 — see P0-19. Auto-accept is user-level on `stakeholderPreferences.acceptanceMode`. No per-resource column added.
 
 ### P0-10 — Strip `boats.fleet[].seatCapacity`
 
@@ -412,22 +406,16 @@ Five Acts partition the run: **I Onboarding · II Booking Convergence · III Var
 
 - **Status:** RESOLVED 2026-04-17 — manual-user-creation test plan obviates seed collision. Cascade behavior locked by unit test in `tests/instructors.test.ts`. Seed fix deferred to when `/happypath` automated run resumes.
 - **Source:** Stop 4 audit.
-- **Impact:** Canonical instructor_3 (`wei-chen`) declares `teachingLanguages_completed: ['zh-CN', 'zh-TW', 'th', 'en']` — seed at `convex/seedInstructorData.ts:58` has `['zh-CN', 'zh-TW', 'th']` (no `'en'`). Happy-path Wei Chen is `isSeeded: false` with `teachingLanguages_initial: []` gap; the seeded Wei Chen user at the same slug blocks fresh onboarding.
+- **Impact:** Canonical instructor_3 (`wei-chen`) declares `teachingLanguages_completed: ['zh-CN', 'zh-TW', 'th', 'en']` — seed at `convex/seedInstructorData.ts:58` has `['zh-CN', 'zh-TW', 'th']` (no `'en'`). Happy-path Wei Chen is a freshly-onboarded Clerk user with `teachingLanguages_initial: []` gap; the seeded Wei Chen user (with `tokenIdentifier: seed|wei-chen`) at the same slug blocks fresh onboarding.
 - **Action:**
   - Seed extend: add `'en'` to Wei Chen's ROSTER entry (`seedInstructorData.ts:58`) so the seed-hydrated state matches canonical `_completed`.
   - Harness: the happy-path runner must either (a) delete the seeded Wei Chen before onboarding, (b) pick a distinct slug for the happy-path Wei Chen and alias canonical `slugRef`, or (c) document that the happy path resets and re-seeds before each run. Pick one; document in §7.12 or a new §15 "Harness conventions."
   - OPERATOR_PREFERRED check: `convex/seed.ts:467-493` — verify Hug's `preferredInstructorSlugs` includes `'wei-chen'`, `'ryan-clarke'`, and `'li-ming'` (current seed line 469 has `['wei-chen', 'nicole-tam', 'mike-chen', 'xiao-lei', 'zhen-liu']` — missing Ryan + Li Ming). **Committed target (2026-04-14, Cluster B.3):** `preferredInstructorSlugs: ['ryan-clarke', 'wei-chen', 'li-ming']` — Ryan must be #1 so Day 2 zh-TW binding cascades to Wei Chen #2 (proves language-fallback traversal per `assertions.yaml#act_3_phase_1`).
   - Same action for `dive_master` (`arisa-kanchanaburi`): verify DM-eligible preferences; Arisa's seed `['th', 'en']` already matches `_completed` so no seed language extension needed — only harness collision handling.
 
-### P0-13 — `venues.autoAccept` for pool rows
+### P0-13 — `venues.autoAccept` for pool rows — WITHDRAWN
 
-- **Source:** Stop 6 audit.
-- **Impact:** All four happy-path pools (Hug, Neptune, Water Pro, Shark Bites) declare `autoAccept: true`. Column absent. Rule D requires disabled FE checkbox for Pool role. DiveSite role is v0.1.1 defer — autoAccept UI excluded for DiveSite rows.
-- **Action:**
-  - Schema: add `venues.autoAccept: v.optional(v.boolean())` at `convex/schema.ts:402-419`.
-  - Mutation: `convex/venues.ts:58-69` create args + update args — default `autoAccept: true` server-side when `venueCategory === 'pool'`.
-  - FE: add always-rendered disabled checkbox `checked=true` on Capabilities tab in `src/components/profiles/pool-profile-form.tsx` (parallel compressor P0-5 / equipment P0-6 / boat P0-9 pattern). `dive-site-profile-form.tsx` — no checkbox (role deferred).
-  - Seed: extend HUG_OCEAN.pool, NEPTUNE.pool, WATER_PRO.pool, SHARK_BITES.pool with `autoAccept: true` at `convex/seedData.ts:290-301, 338-349, 1007-1017, 1034-1044`.
+- **Status:** WITHDRAWN 2026-04-17 — see P0-19. Auto-accept is user-level on `stakeholderPreferences.acceptanceMode`. No per-resource column added.
 
 ### P0-14 — Seed `NEPTUNE.pool.isAllowed` must be `['z8mv4c']`
 
@@ -478,13 +466,11 @@ Five Acts partition the run: **I Onboarding · II Booking Convergence · III Var
 - **Impact:** Without a gate, empty-gasMixes compressors surface in the booking picker, contradicting the deliberate-incomplete scenario. Parallel to P0-7 (equipment) / P0-14 (pool).
 - **Action:** mutation validator reject empty gasMixes when `profileComplete: true`; cascade helper excludes empty rows; zod tightened; FE Gas Mixes tab hint.
 
-### P0-19 — `instructors.autoAccept` + `diveMasters.autoAccept` schema + FE
+### P0-19 — Auto-accept (WITHDRAWN 2026-04-17)
 
-- **Status:** RESOLVED 2026-04-17 — Post DM-user-role collapse, only `diveStaff.autoAccept` exists (single table). Schema has `v.optional(v.boolean())`, mutation defaults true server-side, FE renders enabled toggleable Checkbox on Contact tab. Round-trip verified via `instructors.test.ts`.
-- **Ticket:** `.tickets/DD-489.md`
-- **Source:** Retro re-audit Stops 4+5. Canonical patched 2026-04-14: instructor_1/_2 `autoAccept: true`, instructor_3 `autoAccept: false` (Wei Chen manual per F.2), dive_master `autoAccept: true`. Schema has no column; FE has no toggle.
-- **Impact:** Cannot round-trip canonical values; Lesson #8 pattern incomplete (Instructor = toggleable enabled, DM = disabled-on-true).
-- **Action:** add `autoAccept` column to both tables; mutation accepts it; FE renders enabled checkbox on Instructor (toggleable) + disabled checkbox on DiveMaster (always true); seed extends ROSTER with per-instructor autoAccept; canonical schema `entryDiveMaster.diveMasters.autoAccept: const true` (added 2026-04-14).
+- **Status:** WITHDRAWN 2026-04-17 — `diveStaff.autoAccept` was added then removed same day. Single source of truth for auto-accept is `stakeholderPreferences.acceptanceMode` (user-level enum: `Auto` / `PrePayRequired` / `PostPayAllowed`), wired at `convex/bookings/create.ts:209`. Seed defaults Instructor role to `PrePayRequired` (manual) and all other roles to `Auto`. Canonical no longer carries per-resource `autoAccept`; the Contact tab has no auto-accept control; the Booking tab's Acceptance Mode radio is the sole surface.
+- **Ticket:** `.tickets/DD-489.md` (resolved via removal)
+- **Supersedes:** Rule D "all resource rows carry autoAccept with disabled FE checkbox" — see updated choreography.md §II.4.
 
 ### P0-20 — `teachingLanguages` empty-array gate on Instructor + DiveMaster
 
@@ -524,7 +510,7 @@ Five Acts partition the run: **I Onboarding · II Booking Convergence · III Var
 
 ### P0-25 — `nitroxCertified` missing from customers + instructors (safety)
 
-- **Status:** PARTIALLY RESOLVED 2026-04-17 — Instructor side closed: `diveStaff.nitroxCertified` schema column + mutation arg + Credentials-tab Checkbox + assignment gate (`convex/bookings/create.ts` throws `CAPABILITY_GAP` reason `nitroxRequired` when booking specialty includes `'Enriched Air'` and staff lacks cert). Customer side (`customers.nitroxCertified` + portal capture) still open — separate follow-up.
+- **Status:** PARTIALLY RESOLVED 2026-04-17 — Instructor side closed via derivation: booking gate (`convex/bookings/create.ts` → `assertNitroxCapable` in `convex/lib/diveStaffHelpers.ts`) now reads `credential[].specialtyRatings.includes('Enriched Air')` instead of a standalone boolean. `diveStaff.nitroxCertified` column + Credentials-tab Checkbox were removed same day — the Specialty Instructor Ratings grid already captures nitrox capability per agency. Throws `CAPABILITY_GAP` reason `nitroxRequired` when booking specialty includes `'Enriched Air'` and no credential carries that rating. Customer side (`customers.nitroxCertified` + portal capture) still open — separate follow-up.
 - **Ticket:** `.tickets/DD-495.md`
 - **Source:** Retro re-audit Stops 2+4. V1 Done Criteria Scene 15 requires visible nitrox cert. No `customers.nitroxCertified` column; `instructors` has `specialtyRatings` (could derive) but no standalone field or UI surface. Booking cascade does not gate nitrox-cylinder assignment on cert status.
 - **Impact:** Safety + liability gap — uncertified diver can be booked on a nitrox tank.

@@ -46,7 +46,7 @@ Each resource + operator stakeholder logs in, completes onboarding, verifies per
 4. Navigate to profile tabs; fill every field declared on the role-specific sub-object (e.g. `canonical.stakeholders.compressor_1.compressors.*`).
 5. Refresh the page; verify all values persisted (§2 S layer).
 
-**End-of-Act assertion (see `assertions.yaml#act_1_end`):** every canonical user has a persisted `users` row + N role rows per Lesson #9; every resource row carries `autoAccept: true` (Instructor optional); every deliberate-incomplete pair still shows `_initial` state (closes in Act II / III).
+**End-of-Act assertion (see `assertions.yaml#act_1_end`):** every canonical user has a persisted `users` row + N role rows per Lesson #9; every deliberate-incomplete pair still shows `_initial` state (closes in Act II / III). Auto-accept is user-level (`stakeholderPreferences.acceptanceMode`), not a resource-row field.
 
 ---
 
@@ -57,7 +57,7 @@ Each resource + operator stakeholder logs in, completes onboarding, verifies per
 | II.1 | Agent (or DC) drags O+AP quick-book onto calendar → booking in `Draft` | `stakeholders.agent` or `.dive_center_1` as booking owner | S + M | **Scene 2** | none | `act_2_phase_1` |
 | II.2 | `submitToDraft` writes instructor + pool + equipment + compressor reservations atomically with AvailabilitySnapshot | all resource canonical keys touched by this booking | S + M | **Scene 2** | **LAW 3** (same-mutation snapshot atomicity). **Currently broken — P0-1.** | `act_2_phase_2` |
 | II.3 | Portal link generated → customer opens → completes medical + waiver + sizing + emergency contact | `stakeholders.customer_1`, `.customer_2`, `.customer_3` | S + M + U | **Scene 3** | none | `act_2_phase_3` |
-| II.4 | Resource-side confirmations cascade (auto-accept for Compressor / Equipment / Boat / Pool / DiveMaster; manual accept for Instructor) | canonical `.autoAccept` fields drive FE disabled-checkbox render. Day-to-instructor schedule per Cluster B.1 notes below. | S + M | Scene 2 + Scene 7 (decline branch in Act IV) | **LAW 1** (exclusive-unit: instructor cannot double-hold); **LAW 2** (pooled: pool/equipment count decrements; blocks only at zero) | `act_2_phase_4` |
+| II.4 | Resource-side confirmations cascade (auto-accept for Compressor / Equipment / Boat / Pool / DiveMaster; manual accept for Instructor) | Per-user `stakeholderPreferences.acceptanceMode` drives the gate (Instructor → `PrePayRequired`; others → `Auto`). Day-to-instructor schedule per Cluster B.1 notes below. | S + M | Scene 2 + Scene 7 (decline branch in Act IV) | **LAW 1** (exclusive-unit: instructor cannot double-hold); **LAW 2** (pooled: pool/equipment count decrements; blocks only at zero) | `act_2_phase_4` |
 | II.5 | Booking auto-advances Draft → Upcoming → Active → Completed as gates fire | — | S + M | **Scene 4** | **LAW 3** (snapshot atomicity on state transitions) | `act_2_phase_5` |
 | II.6 | Dive day opens → check-in → activity completes | `admin_venues.kata_beach` (dive site) | S + M + U | **Scene 5** | none | `act_2_phase_6` |
 
@@ -65,7 +65,7 @@ Each resource + operator stakeholder logs in, completes onboarding, verifies per
 
 | Day | Activity | Instructor canonical key | Language match | Acceptance mode | LAW exercised |
 |---|---|---|---|---|---|
-| Day 1 | Confined + OW dive 1 | `stakeholders.instructor_1` (Ryan Clarke) | en / th | auto-accept (instructor_1.autoAccept toggled on) | LAW 1 |
+| Day 1 | Confined + OW dive 1 | `stakeholders.instructor_1` (Ryan Clarke) | en / th | auto-accept (Ryan's `stakeholderPreferences.acceptanceMode = 'Auto'`) | LAW 1 |
 | Day 2 | OW dives 2–3 | `stakeholders.instructor_3` (Wei Chen — cascade target) | zh-TW match for `customer_1` (Cluster B.3) | manual-accept (Wei Chen manual per Cluster F.2) | LAW 1 |
 | Day 3 | OW dive 4 + AOW dive 1 | `stakeholders.instructor_2` (Li Ming) | zh-CN match for `customer_2` | auto-accept | LAW 1 |
 | Day 4 | AOW dives 2–3 | `stakeholders.dive_master` (Arisa Kanchanaburi) — DM binding per J.3 | th / en | auto-accept (DM) | LAW 1 + LAW 2 (ratio rule) |
