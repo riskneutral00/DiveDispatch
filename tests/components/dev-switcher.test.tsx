@@ -22,6 +22,9 @@ vi.mock('convex/react', async (importOriginal) => {
     ...actual,
     useConvexAuth: () => ({ isLoading: false, isAuthenticated: true }),
     useMutation: () => mockSwitchUser,
+    useQuery: () => [
+      { slug: 'center-slug', firstName: 'Center', lastName: 'Owner', name: 'Center Owner', roles: ['DiveCenter'] },
+    ],
   }
 })
 

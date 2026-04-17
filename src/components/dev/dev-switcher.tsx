@@ -1,7 +1,7 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { useMutation } from 'convex/react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useMutation, useQuery } from 'convex/react'
 import { Bug, Loader2, ArrowRight, Check } from 'lucide-react'
 import { api } from '@/lib/convex-generated'
 import { useCurrentUser } from '@/lib/hooks/use-current-user'
@@ -12,34 +12,34 @@ import {
   ROLE_BY_CLERK_ROLE,
   type RoleKey,
 } from '@/lib/constants/roles'
+import { Card } from '@/components/ui/card'
+import { parseConvexError } from '@/lib/utils/convex-error'
 
 const DEV_SWITCHER_EXCLUDED_ROLE_KEYS = new Set<RoleKey>([
   'liveaboard',
   'dive-resort',
 ])
-import { ALL_STAKEHOLDERS, type SeedUser, type SeedStakeholder } from '../../../convex/seedData'
-import { ALL_INSTRUCTORS } from '../../../convex/seedInstructorData'
-import { Card } from '@/components/ui/card'
-import { parseConvexError } from '@/lib/utils/convex-error'
+
+type DevUser = {
+  slug: string
+  firstName: string
+  lastName: string
+  name: string
+  roles: string[]
+}
 
 export function DevSwitcher() {
   if (process.env.NODE_ENV !== 'development') return null
   return <DevSwitcherInner />
 }
 
-const ALL_SEED: SeedStakeholder[] = [
-  ...ALL_STAKEHOLDERS,
-  ...ALL_INSTRUCTORS,
-]
-
-function groupByRole(): Map<RoleKey, SeedUser[]> {
-  const groups = new Map<RoleKey, SeedUser[]>()
+function groupByRole(users: DevUser[]): Map<RoleKey, DevUser[]> {
+  const groups = new Map<RoleKey, DevUser[]>()
   const seen = new Map<RoleKey, Set<string>>()
 
-  for (const s of ALL_SEED) {
-    if (!s.roles?.length) continue
-    for (const { role } of s.roles) {
-      const config = ROLE_BY_CLERK_ROLE[role]
+  for (const u of users) {
+    for (const clerkRole of u.roles) {
+      const config = ROLE_BY_CLERK_ROLE[clerkRole as keyof typeof ROLE_BY_CLERK_ROLE]
       if (!config) continue
       const key = config.key
       let slugs = seen.get(key)
@@ -47,21 +47,20 @@ function groupByRole(): Map<RoleKey, SeedUser[]> {
         slugs = new Set()
         seen.set(key, slugs)
       }
-      if (slugs.has(s.user.slug)) continue
-      slugs.add(s.user.slug)
+      if (slugs.has(u.slug)) continue
+      slugs.add(u.slug)
       const list = groups.get(key) ?? []
-      list.push(s.user)
+      list.push(u)
       groups.set(key, list)
     }
   }
   return groups
 }
 
-const GROUPED = groupByRole()
-
 function DevSwitcherInner() {
   const { user } = useCurrentUser()
   const switchUser = useMutation(api.devSwitcher.devSwitchUser)
+  const allUsers = useQuery(api.devSwitcher.listAllUsers)
   const { setSwitching: setContextSwitching } = useDevSwitching()
   const [open, setOpen] = useState(false)
   const [switching, setSwitching] = useState<string | null>(null)
@@ -79,14 +78,22 @@ function DevSwitcherInner() {
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [open])
 
-  const [selections, setSelections] = useState<Map<RoleKey, string>>(() => {
-    const m = new Map<RoleKey, string>()
-    for (const config of ROLES) {
-      const users = GROUPED.get(config.key)
-      if (users?.length) m.set(config.key, users[0].slug)
-    }
-    return m
-  })
+  const grouped = useMemo(() => groupByRole(allUsers ?? []), [allUsers])
+
+  const [selections, setSelections] = useState<Map<RoleKey, string>>(new Map())
+
+  useEffect(() => {
+    setSelections((prev) => {
+      const next = new Map(prev)
+      for (const config of ROLES) {
+        const users = grouped.get(config.key)
+        if (users?.length && !next.has(config.key)) {
+          next.set(config.key, users[0].slug)
+        }
+      }
+      return next
+    })
+  }, [grouped])
 
   function setSelected(roleKey: RoleKey, slug: string) {
     setSelections((prev) => new Map(prev).set(roleKey, slug))
@@ -129,7 +136,7 @@ function DevSwitcherInner() {
         className="fixed bottom-4 right-4 z-[var(--z-dropdown)]"
       >
         {open && (
-          <div className="absolute bottom-full right-0 z-10 mb-2 w-80">
+          <div className="absolute bottom-full right-0 z-10 mb-2 w-80"> {/* design-ok */}
             <Card padding="none" overflow="hidden">
             <div
               className="px-4 py-2 text-label font-semibold border-b text-secondary border-glass-border"
@@ -147,59 +154,66 @@ function DevSwitcherInner() {
               </div>
             )}
             <div className="max-h-96 overflow-y-auto overflow-x-hidden">
-              {ROLES.filter((c) => !DEV_SWITCHER_EXCLUDED_ROLE_KEYS.has(c.key)).map((config) => {
-                const users = GROUPED.get(config.key)
-                if (!users?.length) return null
-                const Icon = config.icon
-                const selectedSlug = selections.get(config.key) ?? users[0].slug
-                const isCurrentUser = user?.slug === selectedSlug
-                const isLoading = switching === selectedSlug
+              {allUsers === undefined ? (
+                <div className="px-3 py-3 text-[11px] text-secondary"> {/* design-ok */}
+                  Loading…
+                </div>
+              ) : allUsers.length === 0 ? (
+                <div className="px-3 py-3 text-[11px] text-secondary"> {/* design-ok */}
+                  No users in DB yet.
+                </div>
+              ) : (
+                ROLES.filter((c) => !DEV_SWITCHER_EXCLUDED_ROLE_KEYS.has(c.key)).map((config) => {
+                  const users = grouped.get(config.key)
+                  if (!users?.length) return null
+                  const Icon = config.icon
+                  const selectedSlug = selections.get(config.key) ?? users[0].slug
+                  const isCurrentUser = user?.slug === selectedSlug
+                  const isLoading = switching === selectedSlug
 
-                return (
-                  <div
-                    key={config.key}
-                    className="flex items-center gap-2 px-3 py-1.5 border-b last:border-0 border-glass-border"
-                  >
-                    <Icon
-                      className="h-3.5 w-3.5 shrink-0 text-secondary"
-                    />
-                    <span
-                      className="text-[11px] w-20 shrink-0 truncate text-secondary" /* design-ok */
+                  return (
+                    <div
+                      key={config.key}
+                      className="flex items-center gap-2 px-3 py-1.5 border-b last:border-0 border-glass-border"
                     >
-                      {config.label}
-                    </span>
-                    <select /* design-ok: dev-only tenant switcher */
-                      value={selectedSlug}
-                      onChange={(e) => setSelected(config.key, e.target.value)}
-                      disabled={!!switching}
-                      className="flex-1 min-w-0 text-[11px] rounded-[var(--border-radius-button)] px-1 py-0.5 border text-primary bg-surface border-glass-border"
-                    >
-                      {users.map((u) => (
-                        <option key={u.slug} value={u.slug}>
-                          {u.firstName}
-                        </option>
-                      ))}
-                    </select>
-                    <button
-                      onClick={() => handleSwitch(selectedSlug)}
-                      disabled={!!switching}
-                      className="shrink-0 h-6 w-6 flex items-center justify-center rounded-[var(--border-radius-button)] disabled:opacity-40 text-primary"
-                      aria-label={`Switch to ${selectedSlug}`}
-                    >
-                      {isLoading ? (
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                      ) : isCurrentUser ? (
-                        <Check
-                          className="h-3 w-3"
-                          style={{ color: 'var(--color-primary)' }}
-                        />
-                      ) : (
-                        <ArrowRight className="h-3 w-3" />
-                      )}
-                    </button>
-                  </div>
-                )
-              })}
+                      <Icon
+                        className="h-3.5 w-3.5 shrink-0 text-secondary"
+                      />
+                      <span
+                        className="text-[11px] w-20 shrink-0 truncate text-secondary" /* design-ok */
+                      >
+                        {config.label}
+                      </span>
+                      <select /* design-ok: dev-only tenant switcher */
+                        value={selectedSlug}
+                        onChange={(e) => setSelected(config.key, e.target.value)}
+                        disabled={!!switching}
+                        className="flex-1 min-w-0 text-[11px] rounded-[var(--border-radius-button)] px-1 py-0.5 border text-primary bg-surface border-glass-border"
+                      >
+                        {users.map((u) => (
+                          <option key={u.slug} value={u.slug}>
+                            {u.firstName || u.slug}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        onClick={() => handleSwitch(selectedSlug)}
+                        disabled={!!switching}
+                        className="shrink-0 h-6 w-6 flex items-center justify-center rounded-[var(--border-radius-button)] disabled:opacity-40 text-primary"
+                        aria-label={`Switch to ${selectedSlug}`}
+                      >
+                        {isLoading ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : isCurrentUser ? (
+                          <Check className="h-3 w-3 text-primary" />
+                        ) : (
+                          <ArrowRight className="h-3 w-3" />
+                        )}
+                      </button>
+                    </div>
+                  )
+                })
+              )}
             </div>
           </Card>
           </div>
