@@ -8,7 +8,6 @@ import {
   agentAssociationsSchema,
   personalContactSchema,
   personalLanguagesSchema,
-  diveMasterCredentialsSchema,
   instructorCredentialsSchema,
 } from '../src/lib/schemas/profile-shared'
 
@@ -253,38 +252,6 @@ describe('personalLanguagesSchema', () => {
   it('rejects customerLanguages (wrong field name)', () => {
     const result = personalLanguagesSchema.safeParse({ customerLanguages: [validLang] })
     // teachingLanguages is missing, so it fails
-    expect(result.success).toBe(false)
-  })
-})
-
-// ---------------------------------------------------------------------------
-// diveMasterCredentialsSchema
-// ---------------------------------------------------------------------------
-
-describe('diveMasterCredentialsSchema', () => {
-  const validCred = { agency: 'PADI', level: 'Divemaster', agencyID: 'DM-55555' }
-
-  it('accepts valid credentials array with one entry', () => {
-    const result = diveMasterCredentialsSchema.safeParse({ credential: [validCred] })
-    expect(result.success).toBe(true)
-  })
-
-  it('rejects empty credentials array', () => {
-    const result = diveMasterCredentialsSchema.safeParse({ credential: [] })
-    expect(result.success).toBe(false)
-  })
-
-  it('rejects credential with empty agency', () => {
-    const result = diveMasterCredentialsSchema.safeParse({
-      credential: [{ ...validCred, agency: '' }],
-    })
-    expect(result.success).toBe(false)
-  })
-
-  it('rejects credential with empty level', () => {
-    const result = diveMasterCredentialsSchema.safeParse({
-      credential: [{ ...validCred, level: '' }],
-    })
     expect(result.success).toBe(false)
   })
 })

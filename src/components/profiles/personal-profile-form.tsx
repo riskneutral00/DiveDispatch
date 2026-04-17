@@ -1,12 +1,13 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { type LocationValue } from '@/components/profiles/location-picker-lazy'
 import { ProfileAgencyInfo } from '@/components/profiles/profile-agency-info'
 import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
 import { LanguageField } from '@/components/ui/language-field'
-import { ProfileFormHeader } from '@/components/profiles/profile-form-header'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import { SectionDivider } from '@/components/ui/section-divider'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   INITIAL_ACCESS_CONTROL,
   accessFromProfile,
@@ -27,9 +28,7 @@ import {
 } from '@/lib/profile-form'
 import {
   personalContactMergedSchema,
-  diveMasterCredentialsSchema,
   instructorCredentialsSchema,
-  credentialSchema,
   instructorCredentialSchema,
 } from '@/lib/schemas/profile-shared'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
@@ -37,24 +36,22 @@ import type { Language } from '@/lib/types/language'
 import { z } from 'zod'
 
 export type PersonalSection = 'contact' | 'credentials'
-export type PersonalVariant = 'divemaster' | 'instructor'
 
-type DmCredential = z.infer<typeof credentialSchema>
-type InstCredential = z.infer<typeof instructorCredentialSchema>
-
-export type PersonalCredential = DmCredential | InstCredential
+export type PersonalCredential = z.infer<typeof instructorCredentialSchema>
 
 export type { PersonalContactFormState }
 
 export type PersonalMergedContactFormState = PersonalContactFormState & { // dry-ok
   teachingLanguages: Language[]
   access: AccessControlState
+  autoAccept: boolean
 }
 
 export const INITIAL_PERSONAL_MERGED_CONTACT: PersonalMergedContactFormState = {
   ...INITIAL_PERSONAL_CONTACT_FORM,
   ...INITIAL_TEACHING_LANGUAGES,
   access: INITIAL_ACCESS_CONTROL,
+  autoAccept: true,
 }
 
 export type PersonalLanguagesFormState = { teachingLanguages: Language[] }
@@ -78,6 +75,7 @@ function mergedPersonalFromProfile(p: Record<string, unknown>): PersonalMergedCo
     ...personalContactFromProfile(p),
     ...languagesFromProfilePersonal(p),
     access: accessFromProfile(p),
+    autoAccept: (p.autoAccept as boolean | undefined) ?? true,
   }
 }
 
@@ -86,70 +84,60 @@ function mergedPersonalToPayload(f: PersonalMergedContactFormState): Record<stri
     ...personalContactToPayload(f),
     ...languagesToPayloadPersonal(f),
     ...accessToPayload(f.access),
+    autoAccept: f.autoAccept,
   }
 }
 
 export type PersonalCredentialsFormState = {
   credential: PersonalCredential[]
+  nitroxCertified: boolean
 }
 
-export function makeEmptyCredential(variant: PersonalVariant): PersonalCredential {
-  const base = { agency: '', level: '', agencyID: '' }
-  return variant === 'instructor' ? { ...base, specialtyRatings: [] } : base
+export function makeEmptyCredential(): PersonalCredential {
+  return { agency: '', level: '', agencyID: '', specialtyRatings: [] }
 }
 
-export function getInitialCredentialsForm(variant: PersonalVariant): PersonalCredentialsFormState {
-  return { credential: [makeEmptyCredential(variant)] }
+export function getInitialCredentialsForm(): PersonalCredentialsFormState {
+  return { credential: [makeEmptyCredential()], nitroxCertified: false }
 }
 
-export function credentialsFromProfile(
-  p: Record<string, unknown>,
-  variant: PersonalVariant,
-): PersonalCredentialsFormState {
+export function credentialsFromProfile(p: Record<string, unknown>): PersonalCredentialsFormState {
   const creds = (p.credential as PersonalCredential[] | undefined) ?? []
   return {
     credential:
       creds.length > 0
         ? creds
-        : [makeEmptyCredential(variant)],
+        : [makeEmptyCredential()],
+    nitroxCertified: (p.nitroxCertified as boolean | undefined) ?? false,
   }
 }
 
 export function credentialsToPayload(f: PersonalCredentialsFormState): Record<string, unknown> {
   return {
-    credential: f.credential.map((c) => {
-      const base: Record<string, unknown> = {
-        agency: c.agency,
-        level: c.level,
-        agencyID: c.agencyID,
-      }
-      if ('specialtyRatings' in c && c.specialtyRatings !== undefined) {
-        base.specialtyRatings = c.specialtyRatings
-      }
-      return base
-    }),
+    credential: f.credential.map((c) => ({
+      agency: c.agency,
+      level: c.level,
+      agencyID: c.agencyID,
+      specialtyRatings: c.specialtyRatings ?? [],
+    })),
+    nitroxCertified: f.nitroxCertified,
   }
 }
 
-export type PersonalContactSectionProps = BaseProfileSectionProps & {
-  variant: PersonalVariant
-}
+export type PersonalContactSectionProps = BaseProfileSectionProps
 
 export type PersonalCredentialsSectionProps = Pick<BaseProfileSectionProps, 'profile' | 'me' | 'create' | 'update'> & {
-  variant: PersonalVariant
   onClose?: () => void
 }
 
 export function PersonalContactSection({
-  variant,
   profile,
   me,
   create,
   update,
   onClose,
 }: PersonalContactSectionProps) {
-  const isDm = variant === 'divemaster'
-
+  const t = useTranslations('common')
   const createOverride = (payload: Record<string, unknown>) =>
     create({ ...payload, credential: [] })
 
@@ -197,8 +185,6 @@ export function PersonalContactSection({
       isValid={isValid}
       className="space-y-6"
     >
-      {isDm && <ProfileFormHeader isUpdate={isUpdate} roleName="divemaster" />}
-
       <div className="space-y-4">
         <ProfileBasicInfo
           locationValue={form.location}
@@ -222,22 +208,29 @@ export function PersonalContactSection({
           value={form.teachingLanguages}
           onChange={(langs) => setField('teachingLanguages', langs)}
         />
+
+        <SectionDivider variant="soft" />
+
+        <Checkbox
+          label={t('autoAcceptLabel')}
+          description={t('autoAcceptDescription')}
+          checked={form.autoAccept}
+          onChange={(checked) => setField('autoAccept', checked)}
+        />
       </div>
     </ProfileFormShell>
   )
 }
 
 export function PersonalCredentialsSection({
-  variant,
   profile,
   me,
   create,
   update,
   onClose,
 }: PersonalCredentialsSectionProps) {
-  const schema = variant === 'divemaster' ? diveMasterCredentialsSchema : instructorCredentialsSchema
-  const initialDefaults =
-    getInitialCredentialsForm(variant)
+  const t = useTranslations('common')
+  const initialDefaults = getInitialCredentialsForm()
 
   const createOverride = (payload: Record<string, unknown>) => {
     const { name: _omitName, ...parentDefaults } = buildParentContactDefaults(me)
@@ -263,9 +256,9 @@ export function PersonalCredentialsSection({
     resetToBaseline,
   } = useProfileForm({
     profile,
-    schema,
+    schema: instructorCredentialsSchema,
     defaults: initialDefaults,
-    fromProfile: (p) => credentialsFromProfile(p, variant),
+    fromProfile: (p) => credentialsFromProfile(p),
     toPayload: credentialsToPayload,
     create: createOverride,
     update,
@@ -289,20 +282,27 @@ export function PersonalCredentialsSection({
       className="space-y-6"
     >
       <ProfileAgencyInfo
-        variant={variant}
+        variant="instructor"
         items={form.credential}
         onChange={(items) => setField('credential', items)}
         errors={errors as Record<string, string>}
+      />
+
+      <SectionDivider variant="soft" />
+
+      <Checkbox
+        label={t('nitroxCertifiedLabel')}
+        description={t('nitroxCertifiedDescription')}
+        checked={form.nitroxCertified}
+        onChange={(checked) => setField('nitroxCertified', checked)}
       />
     </ProfileFormShell>
   )
 }
 
-export type DiveMasterProfileSection = PersonalSection
 export type InstructorProfileSection = PersonalSection
 
 export function PersonalProfileForm({
-  variant,
   section,
   profile,
   me,
@@ -310,43 +310,31 @@ export function PersonalProfileForm({
   update,
   onClose,
 }: BaseProfileSectionProps & {
-  variant: PersonalVariant
   section?: PersonalSection
 }) {
-  const wrappedCreate = (payload: Record<string, unknown>) =>
-    create({ ...payload, role: variant === 'divemaster' ? 'DiveMaster' : 'Instructor' })
-
   if (section === 'credentials')
     return (
       <PersonalCredentialsSection
-        variant={variant}
         profile={profile}
         me={me}
-        create={wrappedCreate}
+        create={create}
         update={update}
         onClose={onClose}
       />
     )
   return (
     <PersonalContactSection
-      variant={variant}
       profile={profile}
       me={me}
-      create={wrappedCreate}
+      create={create}
       update={update}
       onClose={onClose}
     />
   )
 }
 
-export function DiveMasterProfileForm(
-  props: BaseProfileSectionProps & { section?: DiveMasterProfileSection },
-) {
-  return <PersonalProfileForm variant="divemaster" {...props} />
-}
-
 export function InstructorProfileForm(
   props: BaseProfileSectionProps & { section?: InstructorProfileSection },
 ) {
-  return <PersonalProfileForm variant="instructor" {...props} />
+  return <PersonalProfileForm {...props} />
 }

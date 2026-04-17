@@ -28,7 +28,6 @@ describe('Every role has booking tab', () => {
     'dive-center',
     'agent',
     'instructor',
-    'dive-master',
     'boat',
     'compressor',
     'equipment',
@@ -71,7 +70,6 @@ describe('Operator roles have resources tab', () => {
 describe('Non-operator roles do not have resources tab', () => {
   const nonOperatorRoles: RoleKey[] = [
     'instructor',
-    'dive-master',
     'boat',
     'compressor',
     'equipment',
@@ -105,7 +103,6 @@ describe('Non-equipment roles do not have inventory tab', () => {
     'dive-center',
     'agent',
     'instructor',
-    'dive-master',
     'boat',
     'compressor',
     'pool',

@@ -75,6 +75,10 @@
     "month": "เดือน",
     "day": "วัน",
     "appLanguage": "ภาษาของแอป",
+    "autoAcceptLabel": "รับการจองอัตโนมัติ",
+    "autoAcceptDescription": "รับคำขอจองที่ตรงกับเวลาว่างของคุณโดยอัตโนมัติ ยกเลิกเพื่อพิจารณาทีละคำขอ",
+    "nitroxCertifiedLabel": "ผ่านการรับรอง Nitrox",
+    "nitroxCertifiedDescription": "ทำเครื่องหมายหากคุณมีใบรับรอง Enriched Air (Nitrox) ที่ยังใช้ได้ จำเป็นสำหรับการจองแบบ Nitrox",
     "country": "ประเทศ",
     "nationality": "สัญชาติ",
     "phoneInvalid": "หมายเลขโทรศัพท์ไม่ถูกต้อง",
@@ -121,6 +125,7 @@
     "resourcesIncomplete": "กรุณากำหนดทรัพยากรที่จำเป็นทั้งหมดก่อนยืนยัน",
     "snapshotFieldImmutable": "ไม่สามารถเปลี่ยนแปลงฟิลด์นี้หลังจากสร้างแล้ว",
     "capabilityGap": "พนักงานคนนี้ไม่สามารถดำเนินกิจกรรมนี้ได้ กรุณาตรวจสอบคุณสมบัติ",
+    "teachingLanguagesRequired": "ต้องระบุภาษาที่สอนอย่างน้อยหนึ่งภาษา",
     "rateLimited": "คำขอมากเกินไป กรุณารอสักครู่แล้วลองอีกครั้ง"
   },
   "nav": {

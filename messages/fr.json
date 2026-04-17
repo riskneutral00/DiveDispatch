@@ -75,6 +75,10 @@
     "month": "Mois",
     "day": "Jour",
     "appLanguage": "Langue de l'application",
+    "autoAcceptLabel": "Accepter automatiquement les réservations",
+    "autoAcceptDescription": "Accepter automatiquement les demandes correspondant à votre disponibilité. Décochez pour examiner chaque demande manuellement.",
+    "nitroxCertifiedLabel": "Certifié Nitrox",
+    "nitroxCertifiedDescription": "Cochez si vous détenez une certification Air Enrichi (Nitrox) en cours. Requis pour les réservations nitrox.",
     "country": "Pays",
     "nationality": "Nationalité",
     "phoneInvalid": "Numéro de téléphone invalide",
@@ -121,6 +125,7 @@
     "resourcesIncomplete": "Assignez toutes les ressources requises avant de confirmer.",
     "snapshotFieldImmutable": "Ce champ ne peut pas être modifié après la création.",
     "capabilityGap": "Ce membre du personnel ne peut pas mener cette activité. Vérifiez ses qualifications.",
+    "teachingLanguagesRequired": "Au moins une langue d'enseignement est requise.",
     "rateLimited": "Trop de requêtes. Patientez un instant et réessayez."
   },
   "nav": {

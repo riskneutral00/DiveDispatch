@@ -8,7 +8,6 @@ import { api } from '@/lib/convex-generated'
 import { AgentProfileForm } from '@/components/profiles/agent-profile-form'
 import { DiveCenterProfileForm } from '@/components/profiles/dive-center-profile-form'
 import { InstructorProfileForm } from '@/components/profiles/personal-profile-form'
-import { DiveMasterProfileForm } from '@/components/profiles/personal-profile-form'
 import { BoatProfileForm } from '@/components/profiles/boat-profile-form'
 import { CompressorProfileForm } from '@/components/profiles/compressor-profile-form'
 import { EquipmentProfileForm } from '@/components/profiles/equipment-profile-form'
@@ -33,7 +32,6 @@ interface RoleFormConfig {
 const ROLE_FORM_CONFIGS: Partial<Record<RoleKey, RoleFormConfig>> = {
   'dive-center': { apiModule: api.diveCenters, Component: DiveCenterProfileForm },
   instructor:    { apiModule: api.diveStaff,    Component: InstructorProfileForm },
-  'dive-master': { apiModule: api.diveStaff,    Component: DiveMasterProfileForm },
   boat:          { apiModule: api.boats,        Component: BoatProfileForm },
   compressor:    { apiModule: api.compressors,  Component: CompressorProfileForm },
   equipment:     { apiModule: api.equipment,    Component: EquipmentProfileForm },

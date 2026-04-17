@@ -75,6 +75,10 @@
     "month": "月",
     "day": "日",
     "appLanguage": "应用语言",
+    "autoAcceptLabel": "自动接受预订",
+    "autoAcceptDescription": "自动接受与您可用时间匹配的预订请求。取消勾选可手动审核每个请求。",
+    "nitroxCertifiedLabel": "高氧（Nitrox）认证",
+    "nitroxCertifiedDescription": "如果您持有有效的高氧（Nitrox）认证，请勾选。高氧相关预订必需。",
     "country": "国家",
     "nationality": "国籍",
     "phoneInvalid": "电话号码无效",
@@ -121,6 +125,7 @@
     "resourcesIncomplete": "请在确认前分配所有必需资源。",
     "snapshotFieldImmutable": "创建后此字段无法更改。",
     "capabilityGap": "该员工无法进行此活动。请检查其资质。",
+    "teachingLanguagesRequired": "至少需要一种教学语言。",
     "rateLimited": "请求过多，请稍后再试。"
   },
   "nav": {

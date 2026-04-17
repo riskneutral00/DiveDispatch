@@ -25,8 +25,7 @@ import {
 export type ProfileAgencyInfoVariant =
   | "dive-center"
   | "agent"
-  | "instructor"
-  | "divemaster";
+  | "instructor";
 
 type AgencyRow = Record<string, unknown>;
 
@@ -43,7 +42,7 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
   onChange,
   errors = {},
 }: ProfileAgencyInfoProps<TItem>) {
-  const isPro = variant === "instructor" || variant === "divemaster";
+  const isPro = variant === "instructor";
   const isAgent = variant === "agent";
   const isCenter = variant === "dive-center";
 
@@ -69,15 +68,12 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
     if (isAgent) {
       return { agency: "", number: "" };
     }
-    if (variant === "instructor") {
-      return {
-        agency: "",
-        level: "",
-        agencyID: "",
-        specialtyRatings: [],
-      };
-    }
-    return { agency: "", level: "", agencyID: "" };
+    return {
+      agency: "",
+      level: "",
+      agencyID: "",
+      specialtyRatings: [],
+    };
   }
 
   function handleAdd() {

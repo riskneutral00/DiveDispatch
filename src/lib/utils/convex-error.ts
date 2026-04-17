@@ -29,6 +29,7 @@ const CODE_TO_KEY: Record<string, string> = {
   LAST_ROLE: 'lastRole',
   SNAPSHOT_FIELD_IMMUTABLE: 'snapshotFieldImmutable',
   CAPABILITY_GAP: 'capabilityGap',
+  TEACHING_LANGUAGES_REQUIRED: 'teachingLanguagesRequired',
   RATE_LIMITED: 'rateLimited',
 }
 

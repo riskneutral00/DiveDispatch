@@ -7,7 +7,6 @@ import {
   DiveHostelIcon,
   DiveSiteIcon,
   InstructorIcon,
-  DiveMasterIcon,
   BoatIcon,
   EquipmentIcon,
   PoolIcon,
@@ -23,7 +22,6 @@ export type RoleKey =
   | 'dive-hostel'
   | 'dive-site'
   | 'instructor'
-  | 'dive-master'
   | 'boat'
   | 'equipment'
   | 'pool'
@@ -37,7 +35,6 @@ export type ClerkRole =
   | 'DiveHostel'
   | 'DiveSite'
   | 'Instructor'
-  | 'DiveMaster'
   | 'Boat'
   | 'Equipment'
   | 'Pool'
@@ -195,26 +192,7 @@ export const ROLES: RoleConfig[] = [
     isResource: true,
     displayGroup: 'resource',
     tableName: 'diveStaff',
-    description: 'Lead courses, certify students, and guide dives at operator-organized trips.',
-    profileTabs: [
-      { id: 'contact', label: 'Contact' },
-      { id: 'credentials', label: 'Credentials' },
-      { id: 'booking', label: 'Booking' },
-    ],
-  },
-  {
-    key: 'dive-master',
-    clerkRole: 'DiveMaster',
-    label: 'Dive Master',
-    pluralLabel: 'Dive Masters',
-    route: '/dive-master',
-    browseRoute: '/resources/dive-masters',
-    icon: DiveMasterIcon,
-    isOrganizer: false,
-    isResource: true,
-    displayGroup: 'resource',
-    tableName: 'diveStaff',
-    description: 'Guide certified divers, assist instructors, and lead fun dives.',
+    description: 'Dive professionals — Divemaster through Course Director. Lead courses, guide dives, and assist at operator-organized trips.',
     profileTabs: [
       { id: 'contact', label: 'Contact' },
       { id: 'credentials', label: 'Credentials' },

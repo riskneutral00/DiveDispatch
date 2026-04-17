@@ -75,6 +75,10 @@
     "month": "월",
     "day": "일",
     "appLanguage": "앱 언어",
+    "autoAcceptLabel": "예약 자동 수락",
+    "autoAcceptDescription": "사용 가능한 시간대에 맞는 예약 요청을 자동 수락합니다. 수동으로 검토하려면 해제하세요.",
+    "nitroxCertifiedLabel": "나이트록스 자격 보유",
+    "nitroxCertifiedDescription": "현재 엔리치드 에어(나이트록스) 자격을 보유하고 있는 경우 체크하세요. 나이트록스 예약에 필요합니다.",
     "country": "국가",
     "nationality": "국적",
     "phoneInvalid": "전화번호가 유효하지 않습니다",
@@ -121,6 +125,7 @@
     "resourcesIncomplete": "확인하기 전에 필요한 모든 리소스를 배정하세요.",
     "snapshotFieldImmutable": "생성 후에는 이 필드를 변경할 수 없습니다.",
     "capabilityGap": "이 스태프는 이 활동을 진행할 수 없습니다. 자격 증명을 확인하세요.",
+    "teachingLanguagesRequired": "최소 하나 이상의 교수 언어가 필요합니다.",
     "rateLimited": "요청이 너무 많습니다. 잠시 후 다시 시도하세요."
   },
   "nav": {

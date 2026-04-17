@@ -206,19 +206,18 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
   const prevCoursesRef = useRef<string>('')
 
   const instructors = useQuery(api.directory.listByRole, { role: 'Instructor' }) ?? []
-  const diveMasters = useQuery(api.directory.listByRole, { role: 'DiveMaster' }) ?? []
   const boats = useQuery(api.directory.listByRole, { role: 'Boat' }) ?? []
   const pools = useQuery(api.directory.listByRole, { role: 'Pool' }) ?? []
   const shoreOptions = useQuery(api.availability.listDiveSites) ?? []
   const instructorOptions = instructors.map((r) => ({ id: r.slug, label: r.name, languages: r.languages, isPreferred: r.isPreferred }))
-  const diveMasterOptions = diveMasters.map((r) => ({ id: r.slug, label: r.name, languages: r.languages, isPreferred: r.isPreferred }))
+  const diveMasterOptions = instructorOptions
   const customerLanguageCodes = customers.flatMap(c => (c.flags ?? []).map(f => f.code))
   const boatOptions = boats.map((r) => ({ id: r.slug, label: r.name }))
   const poolOptions = pools.map((r) => ({ id: r.slug, label: r.name }))
 
   const credentialsBySlug = useMemo(() => {
     const map = new Map<string, Credential[]>()
-    for (const r of [...instructors, ...diveMasters]) {
+    for (const r of instructors) {
       if (r.credentials) {
         map.set(r.slug, r.credentials.map((c) => ({
           agency: c.agency,
@@ -228,7 +227,7 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
       }
     }
     return map
-  }, [instructors, diveMasters])
+  }, [instructors])
 
   const allSpecialtyCodes = useMemo(
     () => [...new Set(customers.flatMap((c) => (c.courseEntries ?? []).filter((e) => e.activityCode === 'SPECIALTY' && e.specialtyCode).map((e) => e.specialtyCode!)))],

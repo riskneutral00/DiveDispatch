@@ -7,7 +7,6 @@ describe('PROFILE_REGISTRY', () => {
     expect(roles).toContain('dive-center')
     expect(roles).toContain('agent')
     expect(roles).toContain('instructor')
-    expect(roles).toContain('dive-master')
     expect(roles).toContain('boat')
     expect(roles).toContain('compressor')
     expect(roles).toContain('equipment')

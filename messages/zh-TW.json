@@ -75,6 +75,10 @@
     "month": "月",
     "day": "日",
     "appLanguage": "應用程式語言",
+    "autoAcceptLabel": "自動接受預訂",
+    "autoAcceptDescription": "自動接受符合您可用時間的預訂請求。取消勾選以手動審核每個請求。",
+    "nitroxCertifiedLabel": "高氧（Nitrox）認證",
+    "nitroxCertifiedDescription": "若您持有有效的高氧（Nitrox）認證，請勾選。高氧相關預訂必需。",
     "country": "國家",
     "nationality": "國籍",
     "phoneInvalid": "電話號碼無效",
@@ -121,6 +125,7 @@
     "resourcesIncomplete": "請在確認前指派所有必要資源。",
     "snapshotFieldImmutable": "建立後此欄位無法變更。",
     "capabilityGap": "該員工無法進行此活動。請檢查其資質。",
+    "teachingLanguagesRequired": "至少需要一種教學語言。",
     "rateLimited": "請求過多，請稍後再試。"
   },
   "nav": {

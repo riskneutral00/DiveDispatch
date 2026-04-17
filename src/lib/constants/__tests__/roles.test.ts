@@ -28,8 +28,8 @@ describe('Binary role classification', () => {
     }
   })
 
-  it('total role count is 12', () => {
-    expect(ROLES).toHaveLength(12)
+  it('total role count is 11', () => {
+    expect(ROLES).toHaveLength(11)
   })
 })
 
@@ -55,10 +55,9 @@ describe('Specific role assignments', () => {
     }
   })
 
-  it('Instructor, DiveMaster, Boat, Equipment, Pool, Compressor are all resources', () => {
+  it('Instructor, Boat, Equipment, Pool, Compressor are all resources', () => {
     const resourceKeys: RoleKey[] = [
       'instructor',
-      'dive-master',
       'boat',
       'equipment',
       'pool',
@@ -81,11 +80,11 @@ describe('Derived lists', () => {
     )
   })
 
-  it('RESOURCE_ROLES has exactly 7 members', () => {
-    expect(RESOURCE_ROLES).toHaveLength(7)
+  it('RESOURCE_ROLES has exactly 6 members', () => {
+    expect(RESOURCE_ROLES).toHaveLength(6)
     const keys = RESOURCE_ROLES.map((r) => r.key).sort()
     expect(keys).toEqual(
-      ['boat', 'compressor', 'dive-master', 'dive-site', 'equipment', 'instructor', 'pool'].sort(),
+      ['boat', 'compressor', 'dive-site', 'equipment', 'instructor', 'pool'].sort(),
     )
   })
 })
@@ -97,8 +96,8 @@ describe('Display grouping', () => {
     expect(keys).toContain('dive-site')
   })
 
-  it('DISPLAY_RESOURCE_ROLES has 6 members (excludes DiveSite)', () => {
-    expect(DISPLAY_RESOURCE_ROLES).toHaveLength(6)
+  it('DISPLAY_RESOURCE_ROLES has 5 members (excludes DiveSite)', () => {
+    expect(DISPLAY_RESOURCE_ROLES).toHaveLength(5)
     const keys = DISPLAY_RESOURCE_ROLES.map((r) => r.key)
     expect(keys).not.toContain('dive-site')
   })
@@ -118,12 +117,12 @@ describe('Display grouping', () => {
     }
   })
 
-  it('union of display groups covers all 12 roles with no gaps', () => {
+  it('union of display groups covers all 11 roles with no gaps', () => {
     const displayKeys = new Set([
       ...DISPLAY_OPERATOR_ROLES.map((r) => r.key),
       ...DISPLAY_RESOURCE_ROLES.map((r) => r.key),
     ])
-    expect(displayKeys.size).toBe(12)
+    expect(displayKeys.size).toBe(11)
     expect(displayKeys.size).toBe(ROLES.length)
     for (const role of ROLES) {
       expect(displayKeys.has(role.key), `${role.key} missing from display groups`).toBe(true)
@@ -157,10 +156,10 @@ describe('Booking creation eligibility (isOrganizer gates QuickBookRail + create
     )
   })
 
-  it('exactly these 7 roles cannot create bookings', () => {
+  it('exactly these 6 roles cannot create bookings', () => {
     const keys = RESOURCE_ROLES.map((r) => r.key).sort()
     expect(keys).toEqual(
-      ['boat', 'compressor', 'dive-master', 'dive-site', 'equipment', 'instructor', 'pool'],
+      ['boat', 'compressor', 'dive-site', 'equipment', 'instructor', 'pool'],
     )
   })
 })

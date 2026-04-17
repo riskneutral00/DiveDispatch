@@ -79,17 +79,18 @@ export const personalLanguagesSchema = z.object({
   teachingLanguages: teachingLanguagesFieldSchema,
 })
 
-export const personalContactMergedSchema = personalContactSchema.merge(personalLanguagesSchema)
+export const personalOperatorPrefsSchema = z.object({
+  autoAccept: z.boolean().optional(),
+})
 
-function makeCredentialsSchema(inner: typeof credentialSchema | typeof instructorCredentialSchema) {
-  return z.object({
-    credential: z.array(inner).min(1, 'At least one credential is required'),
-  })
-}
+export const personalContactMergedSchema = personalContactSchema
+  .merge(personalLanguagesSchema)
+  .merge(personalOperatorPrefsSchema)
 
-export const diveMasterCredentialsSchema = makeCredentialsSchema(credentialSchema)
-
-export const instructorCredentialsSchema = makeCredentialsSchema(instructorCredentialSchema)
+export const instructorCredentialsSchema = z.object({
+  credential: z.array(instructorCredentialSchema).min(1, 'At least one credential is required'),
+  nitroxCertified: z.boolean().optional(),
+})
 
 const BOAT_TYPES_TUPLE = BOAT_TYPES
 

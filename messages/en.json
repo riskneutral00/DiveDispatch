@@ -75,6 +75,10 @@
     "month": "Month",
     "day": "Day",
     "appLanguage": "App Language",
+    "autoAcceptLabel": "Auto-accept bookings",
+    "autoAcceptDescription": "Automatically accept booking requests that match your availability. Uncheck to review each request manually.",
+    "nitroxCertifiedLabel": "Nitrox certified",
+    "nitroxCertifiedDescription": "Check this if you hold a current Enriched Air (Nitrox) certification. Required for nitrox-rated bookings.",
     "country": "Country",
     "nationality": "Nationality",
     "phoneInvalid": "Invalid phone number",
@@ -121,6 +125,7 @@
     "resourcesIncomplete": "Assign all required resources before confirming.",
     "snapshotFieldImmutable": "This field can't be changed after creation.",
     "capabilityGap": "This staff member cannot conduct this activity. Check their credentials.",
+    "teachingLanguagesRequired": "At least one teaching language is required.",
     "rateLimited": "Too many requests. Wait a moment and try again."
   },
   "nav": {
