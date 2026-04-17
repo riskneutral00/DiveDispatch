@@ -105,6 +105,8 @@ export async function seedInstructorProfile(
     credential?: Array<{ agency: string; level: string; agencyID: string; specialtyRatings: string[] }>
     verified?: boolean
     teachingLanguages?: string[]
+    nitroxCertified?: boolean
+    autoAccept?: boolean
   } = {},
 ) {
   return ctx.db.insert('diveStaff', {
@@ -122,6 +124,8 @@ export async function seedInstructorProfile(
     ],
     verified: overrides.verified ?? true,
     teachingLanguages: overrides.teachingLanguages ?? ['en'],
+    ...(overrides.nitroxCertified !== undefined ? { nitroxCertified: overrides.nitroxCertified } : {}),
+    ...(overrides.autoAccept !== undefined ? { autoAccept: overrides.autoAccept } : {}),
   })
 }
 
@@ -141,7 +145,7 @@ export async function seedDiveMasterProfile(
 ) {
   return ctx.db.insert('diveStaff', {
     userId,
-    role: 'DiveMaster',
+    role: 'Instructor',
     name: overrides.name ?? 'Test DiveMaster',
     placeName: overrides.placeName ?? 'Koh Tao',
     country: overrides.country ?? 'Thailand',

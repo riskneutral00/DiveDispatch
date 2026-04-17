@@ -848,16 +848,16 @@ describe('myDashboard', () => {
     expect(result.requests).toHaveLength(0)
   })
 
-  it('DiveMaster role: uses by_instructorId index same as Instructor', async () => {
+  it('Instructor role with DM credential: uses by_instructorId index', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
-      await seedTestUser(ctx, 'dm-1', 'DiveMaster')
+      await seedTestUser(ctx, 'dm-1', 'Instructor')
       await seedInventoryUnit(ctx, { ownerId: 'dm-1', resourceType: 'Instructor', ownerType: 'Instructor', displayName: 'dm-1 unit' })
       await seedBookingWithResources(ctx, 'dc-1', { status: 'Upcoming', instructorId: 'dm-1' })
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'clerk|dm-1' })
-      .query(api.bookings.myDashboard, { activeRole: 'DiveMaster' })
+      .query(api.bookings.myDashboard, { activeRole: 'Instructor' })
 
     expect(result.bookings).toHaveLength(1)
   })

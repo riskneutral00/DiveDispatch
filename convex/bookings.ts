@@ -143,7 +143,7 @@ export type RequestItem = {
 }
 
 const RESOURCE_ROLES = new Set([
-  'Instructor', 'DiveMaster', 'Boat', 'Equipment', 'Pool', 'Compressor', 'DiveSite',
+  'Instructor', 'Boat', 'Equipment', 'Pool', 'Compressor', 'DiveSite',
 ])
 
 export async function buildInstructorNameMap(
@@ -683,7 +683,6 @@ export const listByResource = query({
     resourceId: v.string(),
     resourceType: v.union(
       v.literal('Instructor'),
-      v.literal('DiveMaster'),
       v.literal('Boat'),
       v.literal('Equipment'),
       v.literal('Pool'),

@@ -32,7 +32,6 @@
         { "$ref": "#/$defs/entryEquipment" },
         { "$ref": "#/$defs/entryBoat" },
         { "$ref": "#/$defs/entryInstructor" },
-        { "$ref": "#/$defs/entryDiveMaster" },
         { "$ref": "#/$defs/entryPool" },
         { "$ref": "#/$defs/entryDiveCenter" },
         { "$ref": "#/$defs/entryAgent" },
@@ -250,39 +249,8 @@
                 "teachingLanguages": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
                 "teachingLanguages_initial": { "type": "array", "maxItems": 0 },
                 "teachingLanguages_completed": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
-                "autoAccept": { "type": "boolean", "description": "Instructor is the exception — toggleable, not forced true. Optional." },
-                "verified": { "type": "boolean" }
-              }
-            }
-          ]
-        }
-      },
-      "additionalProperties": false
-    },
-    "entryDiveMaster": {
-      "type": "object",
-      "required": ["role", "diveMasters"],
-      "properties": {
-        "role": { "const": "DiveMaster" },
-        "slugRef": { "type": "string" },
-        "note": { "type": "string" },
-        "users": { "$ref": "#/$defs/usersBlock" },
-        "diveMasters": {
-          "allOf": [
-            { "$ref": "#/$defs/location" },
-            { "$ref": "#/$defs/accessControl" },
-            {
-              "type": "object",
-              "required": ["name", "email", "phone", "credential", "verified"],
-              "properties": {
-                "name": { "type": "string" },
-                "email": { "type": "string", "format": "email" },
-                "phone": { "type": "string" },
-                "credential": { "$ref": "#/$defs/credential" },
-                "teachingLanguages": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
-                "teachingLanguages_initial": { "type": "array", "maxItems": 0 },
-                "teachingLanguages_completed": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
-                "autoAccept": { "const": true, "description": "P0-19 adds schema column. DM follows Lesson #8 resource pattern — disabled checkbox, true server-side." },
+                "autoAccept": { "type": "boolean", "description": "P0-19. Optional; defaults to true server-side." },
+                "nitroxCertified": { "type": "boolean", "description": "P0-25. Optional; gates nitrox-required booking assignments." },
                 "verified": { "type": "boolean" }
               }
             }

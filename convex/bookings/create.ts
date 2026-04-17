@@ -25,6 +25,7 @@ import { assertSnapshotImmutability, BOOKINGS_SNAPSHOT_FIELDS } from '../lib/sna
 import { profileBySlug } from '../lib/profileHelpers'
 import type { Doc } from '../_generated/dataModel'
 import { staffCanConductActivity, type Credential } from '../shared/capabilityGate'
+import { assertNitroxCapable } from '../lib/diveStaffHelpers'
 import type { ActivityCode } from '../shared/activityCatalog'
 import { normalizeTime } from '../lib/validators'
 import { RESERVATION_STATUS, VACATED_REASON } from '../shared/statuses'
@@ -263,9 +264,13 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
     (r) => r.resourceType === 'Instructor' && r.resourceId,
   )
 
+  const bookingNeedsNitrox = bookingSpecialtyCodes.includes('Enriched Air')
+
   for (const ir of gateResources) { // batch-exempt: sequential per-resource gate
     const instructor = await profileBySlug(ctx, ir.resourceId!, 'diveStaff') as Doc<'diveStaff'> | null
     if (!instructor) continue
+
+    assertNitroxCapable(instructor, bookingNeedsNitrox)
 
     for (const activityCode of bookingCourses) {
       if (activityCode === 'SPECIALTY' && bookingSpecialtyCodes.length > 0) {

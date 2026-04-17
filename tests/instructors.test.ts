@@ -4,12 +4,11 @@ import type { Doc, Id } from '../convex/_generated/dataModel'
 import { seedUser as _seedUser, seedInstructorProfile, type SeedCtx } from './fixtures'
 import { makeT } from './helpers/convex-helpers'
 
-async function seedUser(ctx: SeedCtx, slug: string, role: 'Instructor' | 'DiveMaster' | 'DiveCenter' = 'Instructor') {
+async function seedUser(ctx: SeedCtx, slug: string, role: 'Instructor' | 'DiveCenter' = 'Instructor') {
   return _seedUser(ctx, { tokenIdentifier: `clerk|${slug}`, slug, email: `${slug}@test.com`, name: slug, firstName: slug, lastName: 'Test', role })
 }
 
 const VALID_INSTRUCTOR_ARGS = {
-  role: 'Instructor' as const,
   placeName: 'Koh Tao',
   country: 'Thailand',
   lat: 10.09,
@@ -26,7 +25,7 @@ describe('instructors.create', () => {
     await expect(t.mutation(api.instructors.create, VALID_INSTRUCTOR_ARGS)).rejects.toThrow(/UNAUTHENTICATED/)
   })
 
-  it('rejects non-Instructor/DiveMaster roles', async () => {
+  it('rejects non-Instructor roles', async () => {
     const t = makeT()
     await t.run(async (ctx) => { await seedUser(ctx, 'dc-user', 'DiveCenter') })
     await expect(
@@ -52,16 +51,6 @@ describe('instructors.create', () => {
       expect(instr!.credential).toHaveLength(1)
       expect(instr!.credential[0].agency).toBe('PADI')
     })
-  })
-
-  it('rejects DiveMaster role creating Instructor-typed profile', async () => {
-    const t = makeT()
-    await t.run(async (ctx) => { await seedUser(ctx, 'dm-user', 'DiveMaster') })
-
-    await expect(
-      t.withIdentity({ tokenIdentifier: 'clerk|dm-user' })
-        .mutation(api.instructors.create, VALID_INSTRUCTOR_ARGS),
-    ).rejects.toThrow(/FORBIDDEN/)
   })
 
   it('returns existing ID on duplicate create', async () => {
@@ -151,6 +140,74 @@ describe('directory.listByRole — Instructor picker gate', () => {
       .query(api.directory.listByRole, { role: 'Instructor' })
     expect(result).toHaveLength(1)
     expect(result[0].slug).toBe('instr-ok')
+  })
+})
+
+describe('instructors.create — autoAccept (P0-19)', () => {
+  it('persists autoAccept: false when provided', async () => {
+    const t = makeT()
+    let userId: Awaited<ReturnType<typeof seedUser>> | undefined
+    await t.run(async (ctx) => { userId = await seedUser(ctx, 'no-auto') })
+
+    const instrId = await t.withIdentity({ tokenIdentifier: 'clerk|no-auto' })
+      .mutation(api.instructors.create, { ...VALID_INSTRUCTOR_ARGS, autoAccept: false })
+
+    await t.run(async (ctx) => {
+      const instr = await ctx.db.get(instrId as Id<'diveStaff'>) as Doc<'diveStaff'> | null
+      expect(instr!.autoAccept).toBe(false)
+    })
+  })
+
+  it('defaults autoAccept to true when omitted', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedUser(ctx, 'default-auto') })
+
+    const instrId = await t.withIdentity({ tokenIdentifier: 'clerk|default-auto' })
+      .mutation(api.instructors.create, VALID_INSTRUCTOR_ARGS)
+
+    await t.run(async (ctx) => {
+      const instr = await ctx.db.get(instrId as Id<'diveStaff'>) as Doc<'diveStaff'> | null
+      expect(instr!.autoAccept).toBe(true)
+    })
+  })
+
+  it('round-trips autoAccept via byUserId query', async () => {
+    const t = makeT()
+    let userId: Awaited<ReturnType<typeof seedUser>> | undefined
+    await t.run(async (ctx) => { userId = await seedUser(ctx, 'rt-auto') })
+
+    await t.withIdentity({ tokenIdentifier: 'clerk|rt-auto' })
+      .mutation(api.instructors.create, { ...VALID_INSTRUCTOR_ARGS, autoAccept: false })
+
+    const result = await t.withIdentity({ tokenIdentifier: 'clerk|rt-auto' })
+      .query(api.instructors.byUserId, { userId: userId! })
+    expect(result).not.toBeNull()
+    expect(result!.autoAccept).toBe(false)
+  })
+})
+
+describe('instructors.create — teachingLanguages empty-array gate (P0-20)', () => {
+  it('rejects empty teachingLanguages on create', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedUser(ctx, 'empty-lang') })
+
+    await expect(
+      t.withIdentity({ tokenIdentifier: 'clerk|empty-lang' })
+        .mutation(api.instructors.create, { ...VALID_INSTRUCTOR_ARGS, teachingLanguages: [] }),
+    ).rejects.toThrow(/TEACHING_LANGUAGES_REQUIRED/)
+  })
+
+  it('rejects empty teachingLanguages on update', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => {
+      const userId = await seedUser(ctx, 'regress-lang')
+      await seedInstructorProfile(ctx, userId)
+    })
+
+    await expect(
+      t.withIdentity({ tokenIdentifier: 'clerk|regress-lang' })
+        .mutation(api.instructors.update, { teachingLanguages: [] }),
+    ).rejects.toThrow(/TEACHING_LANGUAGES_REQUIRED/)
   })
 })
 

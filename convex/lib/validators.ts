@@ -10,7 +10,6 @@ export const stakeholderTypeValidator = v.union(
   v.literal('Equipment'),
   v.literal('Pool'),
   v.literal('Compressor'),
-  v.literal('DiveMaster'),
   v.literal('Liveaboard'),
   v.literal('DiveResort'),
   v.literal('DiveHostel'),
@@ -22,7 +21,6 @@ export type StakeholderRole = typeof stakeholderTypeValidator['type']
 const RESOURCE_TYPES: ReadonlySet<string> = new Set(RESOURCE_OWNER_TYPES)
 
 export function effectiveResourceType(roleType: string): ResourceOwnerType | null {
-  if (roleType === 'DiveMaster') return 'Instructor'
   return RESOURCE_TYPES.has(roleType) ? (roleType as ResourceOwnerType) : null
 }
 

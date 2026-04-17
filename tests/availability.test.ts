@@ -651,7 +651,7 @@ describe('_toggleBlockedDate', () => {
         })
 
         await expect(
-          _toggleBlockedDate(ctx, { date: testDate(5), roleType: 'DiveMaster' }),
+          _toggleBlockedDate(ctx, { date: testDate(5), roleType: 'Instructor' }),
         ).rejects.toThrow('CONFIRMED_RESERVATION_EXISTS')
       })
     })

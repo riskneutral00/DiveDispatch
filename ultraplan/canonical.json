@@ -11,7 +11,7 @@
     "instructor_1",
     "instructor_2",
     "instructor_3",
-    "dive_master",
+    "instructor_4",
     "pool_1",
     "pool_2",
     "pool_3",
@@ -381,10 +381,10 @@
         "verified": false
       }
     },
-    "dive_master": {
-      "role": "DiveMaster",
+    "instructor_4": {
+      "role": "Instructor",
       "slugRef": "arisa-kanchanaburi",
-      "note": "Deliberate-incomplete per rule: starts with teachingLanguages_initial: [] — unbookable until languages added. Parallel to instructor_3 gap pattern.",
+      "note": "Post-DM-collapse (2026-04-17): Arisa is now an Instructor-role user whose credential level is DM. Operational DM slot class preserved on bookingResources.roleType. Deliberate-incomplete per rule: starts with teachingLanguages_initial: [] — unbookable until languages added. Parallel to instructor_3 gap pattern.",
       "users": {
         "email": "arisa-kanchanaburi+clerk_test@divedispatch.dev",
         "name": "Arisa Kanchanaburi",
@@ -396,7 +396,7 @@
         "isSeeded": false,
         "onboardingComplete": true
       },
-      "diveMasters": {
+      "instructors": {
         "name": "Arisa Kanchanaburi",
         "placeName": "Phuket",
         "country": "Thailand",
@@ -407,8 +407,9 @@
         "credential": [
           {
             "agency": "PADI",
-            "level": "Divemaster",
-            "agencyID": "PADI-300150"
+            "level": "DM",
+            "agencyID": "PADI-300150",
+            "specialtyRatings": []
           }
         ],
         "teachingLanguages_initial": [],
@@ -416,6 +417,7 @@
         "isAllowed": [],
         "notAllowed": [],
         "autoAccept": true,
+        "nitroxCertified": false,
         "verified": false
       }
     },

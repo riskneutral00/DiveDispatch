@@ -330,7 +330,7 @@ export default defineSchema({
 
   diveStaff: defineTable({
     userId: v.id('users'),
-    role: v.union(v.literal('DiveMaster'), v.literal('Instructor')),
+    role: v.literal('Instructor'),
     name: v.string(),
     placeName: v.string(),
     country: v.string(),
@@ -347,6 +347,8 @@ export default defineSchema({
       }),
     ),
     teachingLanguages: v.array(v.string()),
+    autoAccept: v.optional(v.boolean()),
+    nitroxCertified: v.optional(v.boolean()),
     ...accessControlFields,
     verified: v.boolean(),
   }).index('by_userId', ['userId']),

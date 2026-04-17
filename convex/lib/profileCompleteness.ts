@@ -100,7 +100,7 @@ export async function checkProfileCompleteness(
       if (!arr(value)) {
         incomplete.push(field)
       } else if (field === 'credential') {
-        if ((role === 'Instructor' || role === 'DiveMaster') && !isCredentialDeepValid(value, role === 'Instructor')) {
+        if (role === 'Instructor' && !isCredentialDeepValid(value, true)) {
           incomplete.push(field)
         }
       } else if (field === 'associations' && !isAssociationDeepValid(value, role)) {

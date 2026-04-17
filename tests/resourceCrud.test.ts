@@ -69,7 +69,6 @@ const RESOURCE_CONFIGS: Array<{
     apiModule: api.instructors as CrudApi,
     role: 'Instructor',
     createArgs: {
-      role: 'Instructor',
       placeName: 'Koh Tao',
       country: 'Thailand',
       lat: 10.09,
@@ -80,24 +79,6 @@ const RESOURCE_CONFIGS: Array<{
       teachingLanguages: ['en'],
     },
     updateArgs: { phone: '+66999999999' },
-    uniqueField: 'phone',
-  },
-  {
-    name: 'diveStaff',
-    apiModule: api.diveMasters as CrudApi,
-    role: 'DiveMaster',
-    createArgs: {
-      role: 'DiveMaster',
-      placeName: 'Koh Tao',
-      country: 'Thailand',
-      lat: 10.09,
-      lng: 99.84,
-      email: 'dm@test.com',
-      phone: '+66123456789',
-      credential: [{ agency: 'PADI', level: 'Divemaster', agencyID: '456' }],
-      teachingLanguages: ['en'],
-    },
-    updateArgs: { phone: '+66888888888' },
     uniqueField: 'phone',
   },
   {

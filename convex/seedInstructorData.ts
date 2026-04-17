@@ -1,11 +1,10 @@
-import { PHUKET, SeedStakeholder, SeedUser, StakeholderRole } from './seedData'
+import { PHUKET, SeedStakeholder, SeedUser } from './seedData'
 
 interface InstructorDef {
   firstName: string
   lastName: string
   credentials: { agency: string; level: string; specialtyRatings: string[] }[]
   teachingLanguages: string[]
-  role?: 'Instructor' | 'DiveMaster'
 }
 
 function toSlug(first: string, last: string): string {
@@ -16,7 +15,6 @@ function buildInstructor(def: InstructorDef, index: number): SeedStakeholder {
   const slug = toSlug(def.firstName, def.lastName)
   const email = `${slug}+clerk_test@divedispatch.dev`
   const phone = `+66-81-${String(600 + index).padStart(3, '0')}-${String(1000 + index).padStart(4, '0')}`
-  const role: StakeholderRole = def.role === 'DiveMaster' ? 'DiveMaster' : 'Instructor'
 
   const user: SeedUser = {
     slug,
@@ -32,15 +30,15 @@ function buildInstructor(def: InstructorDef, index: number): SeedStakeholder {
     agency: c.agency,
     level: c.level,
     agencyID: c.agency === 'PADI' ? `PADI-${300000 + index * 10 + i}` : `SSI-${500000 + index * 10 + i}`,
-    specialtyRatings: role === 'DiveMaster' ? [] : c.specialtyRatings,
+    specialtyRatings: c.specialtyRatings,
   }))
 
   return {
     user,
-    roles: [{ role }],
+    roles: [{ role: 'Instructor' }],
     instructor: {
       name: `${def.firstName} ${def.lastName}`,
-      role,
+      role: 'Instructor',
       ...PHUKET,
       email,
       phone,
@@ -69,11 +67,11 @@ const ROSTER: InstructorDef[] = [
   { firstName: 'Yuki', lastName: 'Tanaka', credentials: [{ agency: 'PADI', level: 'OWSI', specialtyRatings: ['Deep', 'Wreck', 'Night'] }, { agency: 'SSI', level: 'OWI', specialtyRatings: ['Deep', 'Wreck'] }], teachingLanguages: ['ja', 'ko', 'zh-CN'] },
   { firstName: 'Maria', lastName: 'Santos', credentials: [{ agency: 'PADI', level: 'MSDT', specialtyRatings: ['Deep', 'Enriched Air', 'Sidemount', 'Navigation', 'DPV', 'Wreck'] }, { agency: 'SSI', level: 'Advanced OWI', specialtyRatings: ['Deep', 'Enriched Air', 'Sidemount', 'Navigation', 'S&R'] }], teachingLanguages: ['es', 'fr', 'de'] },
 
-  { firstName: 'Arisa', lastName: 'Kanchanaburi', credentials: [{ agency: 'PADI', level: 'DM', specialtyRatings: [] }], teachingLanguages: ['th', 'en'], role: 'DiveMaster' },
-  { firstName: 'Kittipong', lastName: 'Jaidee', credentials: [{ agency: 'SSI', level: 'Dive Guide', specialtyRatings: [] }], teachingLanguages: ['th', 'en', 'zh-CN'], role: 'DiveMaster' },
-  { firstName: 'Prasit', lastName: 'Rattana', credentials: [{ agency: 'PADI', level: 'DM', specialtyRatings: [] }], teachingLanguages: ['th', 'en'], role: 'DiveMaster' },
-  { firstName: 'Tanawat', lastName: 'Boon', credentials: [{ agency: 'PADI', level: 'DM', specialtyRatings: [] }], teachingLanguages: ['th', 'en', 'zh-CN'], role: 'DiveMaster' },
-  { firstName: 'Sato', lastName: 'Kenji', credentials: [{ agency: 'SSI', level: 'Dive Guide', specialtyRatings: [] }], teachingLanguages: ['ja', 'en', 'ko'], role: 'DiveMaster' },
+  { firstName: 'Arisa', lastName: 'Kanchanaburi', credentials: [{ agency: 'PADI', level: 'DM', specialtyRatings: [] }], teachingLanguages: ['th', 'en'] },
+  { firstName: 'Kittipong', lastName: 'Jaidee', credentials: [{ agency: 'SSI', level: 'Dive Guide', specialtyRatings: [] }], teachingLanguages: ['th', 'en', 'zh-CN'] },
+  { firstName: 'Prasit', lastName: 'Rattana', credentials: [{ agency: 'PADI', level: 'DM', specialtyRatings: [] }], teachingLanguages: ['th', 'en'] },
+  { firstName: 'Tanawat', lastName: 'Boon', credentials: [{ agency: 'PADI', level: 'DM', specialtyRatings: [] }], teachingLanguages: ['th', 'en', 'zh-CN'] },
+  { firstName: 'Sato', lastName: 'Kenji', credentials: [{ agency: 'SSI', level: 'Dive Guide', specialtyRatings: [] }], teachingLanguages: ['ja', 'en', 'ko'] },
 
   { firstName: 'Mei', lastName: 'Lin', credentials: [{ agency: 'PADI', level: 'OWSI', specialtyRatings: ['Deep', 'Enriched Air'] }], teachingLanguages: ['zh-CN', 'zh-TW', 'th'] },
   { firstName: 'Jiahao', lastName: 'Wu', credentials: [{ agency: 'SSI', level: 'OWI', specialtyRatings: ['Wreck', 'Boat'] }], teachingLanguages: ['zh-CN', 'zh-TW', 'th'] },

@@ -410,6 +410,7 @@ Five Acts partition the run: **I Onboarding · II Booking Convergence · III Var
 
 ### P0-12 — Seed Wei Chen teachingLanguages must include `'en'`; happy-path collision handling for seed Wei Chen vs. onboarded Wei Chen
 
+- **Status:** RESOLVED 2026-04-17 — manual-user-creation test plan obviates seed collision. Cascade behavior locked by unit test in `tests/instructors.test.ts`. Seed fix deferred to when `/happypath` automated run resumes.
 - **Source:** Stop 4 audit.
 - **Impact:** Canonical instructor_3 (`wei-chen`) declares `teachingLanguages_completed: ['zh-CN', 'zh-TW', 'th', 'en']` — seed at `convex/seedInstructorData.ts:58` has `['zh-CN', 'zh-TW', 'th']` (no `'en'`). Happy-path Wei Chen is `isSeeded: false` with `teachingLanguages_initial: []` gap; the seeded Wei Chen user at the same slug blocks fresh onboarding.
 - **Action:**
@@ -479,6 +480,7 @@ Five Acts partition the run: **I Onboarding · II Booking Convergence · III Var
 
 ### P0-19 — `instructors.autoAccept` + `diveMasters.autoAccept` schema + FE
 
+- **Status:** RESOLVED 2026-04-17 — Post DM-user-role collapse, only `diveStaff.autoAccept` exists (single table). Schema has `v.optional(v.boolean())`, mutation defaults true server-side, FE renders enabled toggleable Checkbox on Contact tab. Round-trip verified via `instructors.test.ts`.
 - **Ticket:** `.tickets/DD-489.md`
 - **Source:** Retro re-audit Stops 4+5. Canonical patched 2026-04-14: instructor_1/_2 `autoAccept: true`, instructor_3 `autoAccept: false` (Wei Chen manual per F.2), dive_master `autoAccept: true`. Schema has no column; FE has no toggle.
 - **Impact:** Cannot round-trip canonical values; Lesson #8 pattern incomplete (Instructor = toggleable enabled, DM = disabled-on-true).
@@ -486,6 +488,7 @@ Five Acts partition the run: **I Onboarding · II Booking Convergence · III Var
 
 ### P0-20 — `teachingLanguages` empty-array gate on Instructor + DiveMaster
 
+- **Status:** RESOLVED 2026-04-17 — `convex/diveStaff.ts` create/update throw `TEACHING_LANGUAGES_REQUIRED` on empty array. Picker filter (`convex/directory.ts`) excludes empty-language profiles. Zod `min(1)` on client. Tests cover create-reject, update-reject, picker-skip.
 - **Ticket:** `.tickets/DD-490.md`
 - **Source:** Retro re-audit Stops 4+5. Canonical uses `_initial: []` → `_completed: [...]` pattern for instructor_3 (Wei Chen) + dive_master (Arisa). Schema allows empty array; no picker exclusion guaranteed.
 - **Impact:** Happy-path deliberate-incomplete bookability gate relies on this behavior — must be enforced.
@@ -521,6 +524,7 @@ Five Acts partition the run: **I Onboarding · II Booking Convergence · III Var
 
 ### P0-25 — `nitroxCertified` missing from customers + instructors (safety)
 
+- **Status:** PARTIALLY RESOLVED 2026-04-17 — Instructor side closed: `diveStaff.nitroxCertified` schema column + mutation arg + Credentials-tab Checkbox + assignment gate (`convex/bookings/create.ts` throws `CAPABILITY_GAP` reason `nitroxRequired` when booking specialty includes `'Enriched Air'` and staff lacks cert). Customer side (`customers.nitroxCertified` + portal capture) still open — separate follow-up.
 - **Ticket:** `.tickets/DD-495.md`
 - **Source:** Retro re-audit Stops 2+4. V1 Done Criteria Scene 15 requires visible nitrox cert. No `customers.nitroxCertified` column; `instructors` has `specialtyRatings` (could derive) but no standalone field or UI surface. Booking cascade does not gate nitrox-cylinder assignment on cert status.
 - **Impact:** Safety + liability gap — uncertified diver can be booked on a nitrox tank.
@@ -1011,8 +1015,8 @@ These rules fire from mistakes already made this audit. Do not relearn.
 | 1 | Resource | Compressor ×2 | DONE (retro-patched 2026-04-14 — +P0-18 gasMixes gate) | compressor_1 (Scuba Market), compressor_2 (Chalong Pier, gasMixes-gap) | P0-2, P0-3, P0-4, P0-5, P0-18 (5) | harmonized |
 | 2 | Resource | Equipment Manager ×3 | DONE (retro-patched 2026-04-14 — +P0-24 isAllowed FE, +P0-25 nitroxCertified) | equipment_manager_1 (Hug), equipment_manager_2 (Scuba Revolution), equipment_manager_3 (Nicole — mask-empty) | P0-6, P0-7, P0-8, P0-24, P0-25 (5) | harmonized |
 | 3 | Resource | Boat ×2 | DONE (retro-patched 2026-04-14 — +P0-22 hasCompressor, +P0-24 isAllowed FE) | boat_1 (Hug, M.V. Hug Ocean), boat_2 (PHUKET_DC, MQ5+MQ7) | P0-9, P0-10, P0-11, P0-22, P0-24 (5) | harmonized |
-| 4 | Resource | Instructor ×3 | DONE (retro-patched 2026-04-14 — +autoAccept canonical patch, +P0-19, P0-20, P0-24, P0-25) | instructor_1 (Ryan, autoAccept true), instructor_2 (Li Ming, autoAccept true), instructor_3 (Wei Chen, autoAccept false — manual per F.2, teachingLanguages-gap) | P0-12, P0-19, P0-20, P0-24, P0-25 (5) | harmonized |
-| 5 | Resource | DiveMaster | DONE (retro-patched 2026-04-14 — +autoAccept canonical patch, +P0-19, P0-20) | dive_master (Arisa, autoAccept true, teachingLanguages-gap) | P0-12, P0-19, P0-20 (3) | harmonized |
+| 4 | Resource | Instructor ×4 | DONE (retro-patched 2026-04-14; Stop 5 absorbed 2026-04-17 post DM-user-role collapse) | instructor_1 (Ryan), instructor_2 (Li Ming), instructor_3 (Wei Chen, teachingLanguages-gap), instructor_4 (Arisa, PADI DM credential, teachingLanguages-gap) | P0-12 ✓, P0-19 ✓, P0-20 ✓, P0-24, P0-25 ✓ (5) | harmonized |
+| 5 | Resource | (merged into Stop 4) | MERGED 2026-04-17 — DM collapsed to credential-level on Instructor role. Arisa moved to Stop 4 as instructor_4. | — | — | — |
 | 6 | Resource | Pool ×4 | DONE (retro-patched 2026-04-14 — +P0-21 confinedCapable FE, +P0-22 hasCompressor, +P0-24 isAllowed FE) | pool_1 (Hug), pool_2 (Neptune isAllowed), pool_3 (Water Pro maxCapacity-gap), pool_4 (Shark Bites) | P0-13, P0-14, P0-21, P0-22, P0-24 (5) | harmonized |
 | admin | Admin | AdminVenue | DONE (Kata Beach = single sufficient exemplar) | `admin_venues.kata_beach` | none | harmonized |
 | 7 | Operator | DiveCenter | DONE | dive_center_1 (Hug Ocean, slug n7rq5j), dive_center_2 (Nicole Dive Center, slug q9bz7r, associations-gap) | none (no new three-way gaps) | harmonized |

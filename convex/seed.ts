@@ -276,10 +276,8 @@ export const seedInstructors = internalMutation({
 
     for (const s of ALL_INSTRUCTORS) {
       const userId = await insertUser(ctx, s)
-      const primaryRole = s.roles?.[0]?.role
       if (s.instructor) {
-        const seedRole = primaryRole === 'DiveMaster' ? 'DiveMaster' as const : 'Instructor' as const
-        await ctx.db.insert('diveStaff', { userId, ...s.instructor, role: seedRole }) // batch-exempt: sequential per-instructor seed
+        await ctx.db.insert('diveStaff', { userId, ...s.instructor, role: 'Instructor' }) // batch-exempt: sequential per-instructor seed
       }
     }
   },
@@ -549,7 +547,7 @@ export const seedStakeholderPreferences = internalMutation({
       await ctx.db.insert('stakeholderPreferences', { // batch-exempt
         stakeholderId: slug,
         stakeholderType: role,
-        acceptanceMode: role === 'Instructor' || role === 'DiveMaster' ? 'PrePayRequired' : 'Auto',
+        acceptanceMode: role === 'Instructor' ? 'PrePayRequired' : 'Auto',
         useNamedUnits: false,
         commonLanguageCodes: [],
         confirmOnAccept: false,

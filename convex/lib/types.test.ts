@@ -26,7 +26,6 @@ import type {
   UserRoleDoc,
   BookingTemplateDoc,
   AgentDoc,
-  DiveMasterDoc,
   LiveaboardDoc,
   CabinDoc,
   TripScheduleDoc,
@@ -73,7 +72,6 @@ describe('convex/lib/types — Doc exports', () => {
     false satisfies IsNever<UserRoleDoc>
     false satisfies IsNever<BookingTemplateDoc>
     false satisfies IsNever<AgentDoc>
-    false satisfies IsNever<DiveMasterDoc>
     false satisfies IsNever<LiveaboardDoc>
     false satisfies IsNever<CabinDoc>
     false satisfies IsNever<TripScheduleDoc>

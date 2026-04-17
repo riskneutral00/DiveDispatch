@@ -27,7 +27,6 @@ export type EquipmentInventoryDoc = Doc<'equipmentInventory'>
 export type UserRoleDoc = Doc<'userRoles'>
 export type BookingTemplateDoc = Doc<'bookingTemplates'>
 export type AgentDoc = Doc<'agents'>
-export type DiveMasterDoc = Doc<'diveStaff'>
 export type LiveaboardDoc = Doc<'liveaboards'>
 export type CabinDoc = Doc<'cabins'>
 export type TripScheduleDoc = Doc<'tripSchedules'>

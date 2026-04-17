@@ -49,7 +49,7 @@ describe('ROLE_PRECEDENCE', () => {
   it('all expected roles are defined', () => {
     const expected = [
       'DiveCenter', 'Agent', 'Liveaboard', 'DiveResort', 'DiveHostel',
-      'DiveSite', 'Instructor', 'DiveMaster', 'Boat', 'Equipment', 'Pool', 'Compressor',
+      'DiveSite', 'Instructor', 'Boat', 'Equipment', 'Pool', 'Compressor',
     ]
     for (const role of expected) {
       expect(ROLE_PRECEDENCE).toHaveProperty(role)

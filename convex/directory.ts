@@ -85,8 +85,7 @@ async function fetchProfile(
   }
 
   switch (role) {
-    case 'Instructor':
-    case 'DiveMaster': {
+    case 'Instructor': {
       const creds = (p.credential ?? []) as Array<{ agency: string; level: string; specialtyRatings?: string[] }>
       return {
         ...base,
@@ -195,7 +194,7 @@ export const listByRole = query({
           if (!profile) return null
 
           if (args.role === 'Compressor' && (profile.gasMixes?.length ?? 0) === 0) return null
-          if ((args.role === 'Instructor' || args.role === 'DiveMaster') && (profile.teachingLanguages?.length ?? 0) === 0) return null
+          if (args.role === 'Instructor' && (profile.teachingLanguages?.length ?? 0) === 0) return null
           if (args.placeName && profile.placeName.toLowerCase() !== args.placeName.toLowerCase()) return null
           if (args.country && profile.country.toLowerCase() !== args.country.toLowerCase()) return null
           if (args.agency && args.agency !== 'all') {

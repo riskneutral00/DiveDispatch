@@ -400,7 +400,7 @@ describe('booking gate: capability gate blocks DM from OW+', () => {
       const dmUserId = await seedUser(ctx, {
         slug: 'dm-cap',
         tokenIdentifier: 'clerk|dm-cap',
-        role: 'DiveMaster',
+        role: 'Instructor',
         email: 'dm-cap@test.com',
         name: 'DM Cap',
         firstName: 'DM',
@@ -441,6 +441,122 @@ describe('booking gate: capability gate blocks DM from OW+', () => {
     )
   })
 
+  it('instructor without nitroxCertified assigned to Enriched Air SPECIALTY throws CAPABILITY_GAP reason nitroxRequired (P0-25)', async () => {
+    const t = makeT()
+
+    const bookingId = await t.run(async (ctx) => {
+      await seedUser(ctx, {
+        slug: 'dc-nitrox',
+        tokenIdentifier: 'clerk|dc-nitrox',
+        role: 'DiveCenter',
+        email: 'dc-nitrox@test.com',
+        name: 'DC Nitrox',
+        firstName: 'DC',
+        lastName: 'Nitrox',
+      })
+      const instUserId = await seedUser(ctx, {
+        slug: 'inst-nitrox-no',
+        tokenIdentifier: 'clerk|inst-nitrox-no',
+        role: 'Instructor',
+        email: 'inst-nitrox-no@test.com',
+        name: 'Inst NitroxNo',
+        firstName: 'Inst',
+        lastName: 'NitroxNo',
+      })
+      await seedInstructorProfile(ctx, instUserId, {
+        credential: [{ agency: 'PADI', level: 'OWSI', agencyID: '11111', specialtyRatings: ['Enriched Air'] }],
+      })
+
+      return seedBooking(ctx, {
+        ownerId: 'dc-nitrox',
+        activityType: ['SPECIALTY'],
+        bookingFormComplete: false,
+        divers: [],
+      })
+    })
+
+    await expectConvexError(
+      t.withIdentity({ tokenIdentifier: 'clerk|dc-nitrox' }).mutation(
+        api.bookings.create.submitToDraft,
+        {
+          bookingId,
+          sessions: [],
+          bookingData: {
+            activityType: ['SPECIALTY'],
+            startDate,
+            endDate,
+            portalContact: false,
+            portalMedical: false,
+            portalWaiver: false,
+            resources: [
+              { resourceType: 'Instructor', resourceId: 'inst-nitrox-no', roleType: 'Instructor' },
+            ],
+            divers: [makeDiverWithSpecialty(['Enriched Air'])],
+          },
+        },
+      ),
+      ErrorCode.CAPABILITY_GAP,
+    )
+  })
+
+  it('instructor with nitroxCertified=true passes Enriched Air SPECIALTY gate', async () => {
+    const t = makeT()
+
+    const bookingId = await t.run(async (ctx) => {
+      await seedUser(ctx, {
+        slug: 'dc-nitrox-ok',
+        tokenIdentifier: 'clerk|dc-nitrox-ok',
+        role: 'DiveCenter',
+        email: 'dc-nitrox-ok@test.com',
+        name: 'DC NitroxOK',
+        firstName: 'DC',
+        lastName: 'NitroxOK',
+      })
+      const instUserId = await seedUser(ctx, {
+        slug: 'inst-nitrox-yes',
+        tokenIdentifier: 'clerk|inst-nitrox-yes',
+        role: 'Instructor',
+        email: 'inst-nitrox-yes@test.com',
+        name: 'Inst NitroxYes',
+        firstName: 'Inst',
+        lastName: 'NitroxYes',
+      })
+      await seedInstructorProfile(ctx, instUserId, {
+        credential: [{ agency: 'PADI', level: 'OWSI', agencyID: '22222', specialtyRatings: ['Enriched Air'] }],
+        nitroxCertified: true,
+      })
+
+      return seedBooking(ctx, {
+        ownerId: 'dc-nitrox-ok',
+        activityType: ['SPECIALTY'],
+        bookingFormComplete: false,
+        divers: [],
+      })
+    })
+
+    await expect(
+      t.withIdentity({ tokenIdentifier: 'clerk|dc-nitrox-ok' }).mutation(
+        api.bookings.create.submitToDraft,
+        {
+          bookingId,
+          sessions: [],
+          bookingData: {
+            activityType: ['SPECIALTY'],
+            startDate,
+            endDate,
+            portalContact: false,
+            portalMedical: false,
+            portalWaiver: false,
+            resources: [
+              { resourceType: 'Instructor', resourceId: 'inst-nitrox-yes', roleType: 'Instructor' },
+            ],
+            divers: [makeDiverWithSpecialty(['Enriched Air'])],
+          },
+        },
+      ),
+    ).resolves.toEqual(expect.any(String))
+  })
+
   it('DiveMaster assigned to DSD booking passes gate (trojan horse)', async () => {
     const t = makeT()
 
@@ -468,7 +584,7 @@ describe('booking gate: capability gate blocks DM from OW+', () => {
       const dmUserId = await seedUser(ctx, {
         slug: 'dm-cap2',
         tokenIdentifier: 'clerk|dm-cap2',
-        role: 'DiveMaster',
+        role: 'Instructor',
         email: 'dm-cap2@test.com',
         name: 'DM Cap2',
         firstName: 'DM',

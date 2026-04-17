@@ -91,9 +91,8 @@ describe('ROLE_REQUIRED', () => {
     expect(ROLE_REQUIRED.Compressor).toEqual(['name', 'placeName', 'gasMixes'])
   })
 
-  it('Instructor and DiveMaster require teachingLanguages (happy-path P0-20 gate)', () => {
+  it('Instructor requires teachingLanguages (happy-path P0-20 gate)', () => {
     expect(ROLE_REQUIRED.Instructor).toContain('teachingLanguages')
-    expect(ROLE_REQUIRED.DiveMaster).toContain('teachingLanguages')
   })
 
   it('DiveSite has required fields defined', () => {
@@ -119,9 +118,8 @@ describe('ROLE_REQUIRED ↔ ROLES alignment', () => {
     }
   })
 
-  it('personnel roles (Instructor, DiveMaster) both have ROLE_REQUIRED entries', () => {
+  it('Instructor role has ROLE_REQUIRED entry', () => {
     expect(ROLE_REQUIRED.Instructor).toBeDefined()
-    expect(ROLE_REQUIRED.DiveMaster).toBeDefined()
   })
 
   it('organizer roles (DiveCenter, Agent) both have ROLE_REQUIRED entries', () => {

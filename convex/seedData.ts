@@ -161,7 +161,7 @@ interface AgentProfile {
 
 interface InstructorProfile {
   name: string
-  role: 'DiveMaster' | 'Instructor'
+  role: 'Instructor'
   placeName: string
   country: string
   lat: number

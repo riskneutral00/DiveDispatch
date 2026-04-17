@@ -16,10 +16,10 @@ describe('PARKED_INSTRUCTORS seed data', () => {
     expect(new Set(emails).size).toBe(emails.length)
   })
 
-  it('every entry has the Instructor or DiveMaster role', () => {
+  it('every entry has the Instructor role', () => {
     for (const s of PARKED_INSTRUCTORS) {
       expect(s.roles).toBeDefined()
-      expect(s.roles!.some((r) => r.role === 'Instructor' || r.role === 'DiveMaster')).toBe(true)
+      expect(s.roles!.some((r) => r.role === 'Instructor')).toBe(true)
     }
   })
 

@@ -14,7 +14,6 @@ export const ROLE_TABLE_MAP: Record<string, TableNames> = {
   DiveSite: 'venues',
   Compressor: 'compressors',
   DiveCenter: 'diveCenters',
-  DiveMaster: 'diveStaff',
   Agent: 'agents',
   Liveaboard: 'liveaboards',
   DiveResort: 'diveResorts',

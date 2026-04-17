@@ -150,17 +150,16 @@ describe('prerequisite gate: Agent — associations depth', () => {
   })
 })
 
-// ─── HIGH: DiveMaster credential hollow-array bypass ────────────────────────
+// ─── HIGH: DM-credential Instructor hollow-array bypass ────────────────────────
 
-describe('prerequisite gate: DiveMaster — credential depth', () => {
+describe('prerequisite gate: Instructor w/ DM credential — credential depth', () => {
   it('credential with blank agency/level/agencyID must make completeness < 100%', async () => {
     await t.run(async (ctx) => {
-      const userId = await seedUser(ctx, { role: 'DiveMaster' })
+      const userId = await seedUser(ctx, { role: 'Instructor' })
       await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
-      // DiveMaster credential has no courses field
       await ctx.db.insert('diveStaff', {
         userId,
-    role: 'DiveMaster',
+    role: 'Instructor',
         name: 'Test DM',
         placeName: 'Koh Tao',
         country: 'Thailand',
@@ -173,7 +172,7 @@ describe('prerequisite gate: DiveMaster — credential depth', () => {
         teachingLanguages: ['en'],
       })
 
-      const result = await checkProfileCompleteness(ctx, { _id: userId }, 'DiveMaster')
+      const result = await checkProfileCompleteness(ctx, { _id: userId }, 'Instructor')
       expect(result.percentage).toBeLessThan(100)
       expect(result.incomplete).toContain('credential')
     })
