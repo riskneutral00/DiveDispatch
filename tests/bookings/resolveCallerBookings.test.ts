@@ -23,7 +23,6 @@ describe('resolveCallerBookings ownerType isolation', () => {
         lastName: 'Role',
         phone: '+66812345678',
         dateOfBirth: '1990-01-01',
-        isSeeded: false,
         appLanguage: 'en',
       })
 

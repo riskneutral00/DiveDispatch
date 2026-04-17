@@ -181,14 +181,15 @@ export const wipeBatch = internalMutation({
 })
 
 async function insertUser(ctx: MutationCtx, s: SeedStakeholder) {
+  const token = `seed|${s.user.slug}`
   return ctx.db.insert('users', {
-    tokenIdentifier: `seed|${s.user.slug}`,
+    tokenIdentifier: token,
+    originalTokenIdentifier: token,
     slug: s.user.slug,
     email: s.user.email,
     name: s.user.name,
     firstName: s.user.firstName,
     lastName: s.user.lastName,
-    isSeeded: true,
     appLanguage: s.user.appLanguage,
     phone: s.user.phone,
     dateOfBirth: s.user.dateOfBirth ?? '1990-01-01',

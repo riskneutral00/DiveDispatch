@@ -15,7 +15,6 @@ async function seedInstructorUser(ctx: SeedCtx, slug: string) {
     firstName: slug,
     lastName: 'Test',
     dateOfBirth: '1990-01-01',
-    isSeeded: false,
     appLanguage: 'en',
   })
   await ctx.db.insert('userRoles', {
@@ -54,7 +53,6 @@ async function seedCallerUser(ctx: SeedCtx, slug: string) {
     firstName: slug,
     lastName: 'Caller',
     dateOfBirth: '1990-01-01',
-    isSeeded: false,
     appLanguage: 'en',
   })
   await ctx.db.insert('userRoles', {
@@ -242,8 +240,7 @@ describe('listByRole language propagation', () => {
         firstName: 'DC',
         lastName: 'Lang',
         dateOfBirth: '1990-01-01',
-        isSeeded: false,
-        appLanguage: 'en',
+            appLanguage: 'en',
         customerLanguages: ['ko-KR', 'ja-JP'],
       })
       await ctx.db.insert('userRoles', {

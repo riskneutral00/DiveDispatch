@@ -10,3 +10,13 @@ export function requireDevEnvironment(): void {
     throw new ConvexError({ code: ErrorCode.FORBIDDEN, reason: 'Dev-only endpoint' })
   }
 }
+
+export function isDevSwitchEnabled(): boolean {
+  return isDevEnvironment() && process.env.ALLOW_DEV_SWITCH === 'true'
+}
+
+export function requireDevSwitchEnabled(): void {
+  if (!isDevSwitchEnabled()) {
+    throw new ConvexError({ code: ErrorCode.FORBIDDEN, reason: 'Dev switcher disabled' })
+  }
+}

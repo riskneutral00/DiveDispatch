@@ -24,7 +24,6 @@ async function seedUser(ctx: Ctx, slug: string, role: StakeholderRole = 'Agent')
     name: `${slug} Display`,
     firstName: slug,
     lastName: 'Test',
-    isSeeded: false,
   })
 }
 

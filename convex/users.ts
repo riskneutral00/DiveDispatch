@@ -93,6 +93,7 @@ export const createUser = mutation({
     const slug = await generateUniqueSlug(ctx.db)
     const userId = await ctx.db.insert('users', {
       tokenIdentifier: identity.tokenIdentifier,
+      originalTokenIdentifier: identity.tokenIdentifier,
       slug,
       email,
       name,
@@ -104,7 +105,6 @@ export const createUser = mutation({
       ...(args.nickname !== undefined && { nickname: args.nickname }),
       ...(args.phone !== undefined && { phone: args.phone }),
       customerLanguages: args.customerLanguages,
-      isSeeded: false,
       appLanguage: args.appLanguage ?? 'en',
     })
 
@@ -344,12 +344,12 @@ export const upsertFromWebhook = internalMutation({
     const slug = await generateUniqueSlug(ctx.db)
     const userId = await ctx.db.insert('users', {
       tokenIdentifier: args.tokenIdentifier,
+      originalTokenIdentifier: args.tokenIdentifier,
       slug,
       email: args.email,
       name: args.name,
       firstName: args.firstName,
       lastName: args.lastName,
-      isSeeded: false,
       appLanguage: 'en',
     })
 

@@ -16,7 +16,6 @@ async function seedUser(ctx: unknown, slug = 'dc-test') {
     name: slug,
     firstName: 'Test',
     lastName: 'User',
-    isSeeded: false,
     appLanguage: 'en',
   })
 }

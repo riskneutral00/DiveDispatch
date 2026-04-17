@@ -16,13 +16,14 @@ export async function seedUser(
     name?: string
     firstName?: string
     lastName?: string
-    isSeeded?: boolean
     skipUserRoles?: boolean
   } = {},
 ) {
   const role = overrides.role ?? 'DiveCenter'
+  const token = overrides.tokenIdentifier ?? TEST_TOKENS.diveCenter
   const userId = await ctx.db.insert('users', {
-    tokenIdentifier: overrides.tokenIdentifier ?? TEST_TOKENS.diveCenter,
+    tokenIdentifier: token,
+    originalTokenIdentifier: token,
     slug: overrides.slug ?? TEST_SLUGS.diveCenter,
     email: overrides.email ?? 'test@test.com',
     name: overrides.name ?? 'Test User',
@@ -30,7 +31,6 @@ export async function seedUser(
     lastName: overrides.lastName ?? 'User',
     phone: '+66812345678',
     dateOfBirth: '1990-01-01',
-    isSeeded: overrides.isSeeded ?? true,
     appLanguage: 'en',
   })
   if (!overrides.skipUserRoles) {
