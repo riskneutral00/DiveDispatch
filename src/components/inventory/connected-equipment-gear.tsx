@@ -7,6 +7,7 @@ import { Plus, Package } from 'lucide-react'
 import { api } from '@/lib/convex-generated'
 import type { Id } from '@/lib/convex-generated'
 import { GEAR_TYPES, GEAR_TYPE_LABELS, MANUFACTURERS, ALL_GEAR_SIZING, type GearType } from '@/lib/constants/gear-sizing'
+import { GEAR_REQUIRED_FIELDS, isGearItemComplete } from '@/lib/constants/gear-required-fields'
 import { MenuButton } from '@/components/ui/menu-button'
 import { Card } from '@/components/ui/card'
 import { ItemCard } from '@/components/ui/item-card'
@@ -31,6 +32,11 @@ interface InventoryRow {
   totalUnits: number
 }
 
+interface DraftRow {
+  localId: string
+  gearType: GearType
+}
+
 export function ConnectedEquipmentGear() {
   const tCommon = useTranslations('common')
   const tBooking = useTranslations('booking')
@@ -42,6 +48,7 @@ export function ConnectedEquipmentGear() {
 
   const [activeGearType, setActiveGearType] = useState<GearType>('wetsuit')
   const [pendingRemove, setPendingRemove] = useState<InventoryRow | null>(null)
+  const [drafts, setDrafts] = useState<DraftRow[]>([])
 
   const items = useMemo<InventoryRow[]>(() => {
     if (!grouped) return []
@@ -53,14 +60,38 @@ export function ConnectedEquipmentGear() {
     return Object.values(grouped).flat()
   }, [grouped])
 
-  const handleAdd = useCallback(async () => {
-    await addItemMutation({
-      gearType: activeGearType,
-      totalUnits: 1,
-    })
-  }, [addItemMutation, activeGearType])
+  const activeDrafts = useMemo(
+    () => drafts.filter((d) => d.gearType === activeGearType),
+    [drafts, activeGearType],
+  )
 
-  const handleUpdate = useCallback(
+  const handleAddDraft = useCallback(() => {
+    setDrafts((prev) => [
+      ...prev,
+      { localId: generateLocalId(), gearType: activeGearType },
+    ])
+  }, [activeGearType])
+
+  const handleDiscardDraft = useCallback((localId: string) => {
+    setDrafts((prev) => prev.filter((d) => d.localId !== localId))
+  }, [])
+
+  const handleDraftSave = useCallback(
+    async (localId: string, payload: {
+      gearType: GearType
+      manufacturer?: string
+      size?: string
+      diopter?: number
+      isPrescription?: boolean
+      totalUnits: number
+    }) => {
+      await addItemMutation(payload)
+      setDrafts((prev) => prev.filter((d) => d.localId !== localId))
+    },
+    [addItemMutation],
+  )
+
+  const handleExistingSave = useCallback(
     async (inventoryId: string, patch: Partial<InventoryRow>) => {
       const payload: {
         inventoryId: Id<'equipmentInventory'>
@@ -93,6 +124,7 @@ export function ConnectedEquipmentGear() {
   }
 
   const activeLabel = GEAR_TYPE_LABELS[activeGearType]
+  const recentManufacturers = distinctManufacturers(allItems, activeGearType)
 
   return (
     <div className="space-y-4">
@@ -117,7 +149,7 @@ export function ConnectedEquipmentGear() {
       </nav>
 
       <div className="space-y-3">
-        {items.length === 0 ? (
+        {items.length === 0 && activeDrafts.length === 0 ? (
           <Card>
             <EmptyState
               icon={Package}
@@ -125,19 +157,30 @@ export function ConnectedEquipmentGear() {
             />
           </Card>
         ) : (
-          items.map((item) => (
-            <InventoryItemCard
-              key={item._id}
-              item={item}
-              gearType={activeGearType}
-              recentManufacturers={distinctManufacturers(allItems, activeGearType)}
-              onUpdate={(patch) => handleUpdate(item._id, patch)}
-              onRemove={() => setPendingRemove(item)}
-            />
-          ))
+          <>
+            {items.map((item) => (
+              <ExistingItemCard
+                key={item._id}
+                item={item}
+                gearType={activeGearType}
+                recentManufacturers={recentManufacturers}
+                onSave={(patch) => handleExistingSave(item._id, patch)}
+                onRemove={() => setPendingRemove(item)}
+              />
+            ))}
+            {activeDrafts.map((draft) => (
+              <DraftItemCard
+                key={draft.localId}
+                gearType={draft.gearType}
+                recentManufacturers={recentManufacturers}
+                onSave={(payload) => handleDraftSave(draft.localId, payload)}
+                onDiscard={() => handleDiscardDraft(draft.localId)}
+              />
+            ))}
+          </>
         )}
 
-        <Button type="button" variant="secondary" size="sm" onClick={handleAdd}>
+        <Button type="button" variant="secondary" size="sm" onClick={handleAddDraft}>
           <Plus size={14} />
           {tBooking('addGearType', { type: activeLabel })}
         </Button>
@@ -160,6 +203,13 @@ export function ConnectedEquipmentGear() {
   )
 }
 
+function generateLocalId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID()
+  }
+  return `draft-${Date.now()}-${Math.random().toString(36).slice(2)}`
+}
+
 function distinctManufacturers(items: InventoryRow[], gearType: GearType): string[] {
   const set = new Set<string>()
   for (const it of items) {
@@ -176,102 +226,188 @@ function canonicalSizesFor(manufacturer: string | undefined, gearType: GearType)
   return Array.from(new Set(entries.map((e) => e.size)))
 }
 
-interface InventoryItemCardProps {
+interface ExistingItemCardProps {
   item: InventoryRow
   gearType: GearType
   recentManufacturers: string[]
-  onUpdate: (patch: Partial<InventoryRow>) => Promise<void>
+  onSave: (patch: Partial<InventoryRow>) => Promise<void>
   onRemove: () => void
 }
 
-function InventoryItemCard({ item, gearType, recentManufacturers, onUpdate, onRemove }: InventoryItemCardProps) {
+function ExistingItemCard({ item, gearType, recentManufacturers, onSave, onRemove }: ExistingItemCardProps) {
+  return (
+    <GearItemCard
+      kind="existing"
+      gearType={gearType}
+      recentManufacturers={recentManufacturers}
+      initial={{
+        manufacturer: item.manufacturer,
+        size: item.size,
+        totalUnits: item.totalUnits,
+        isPrescription: item.isPrescription,
+        diopter: item.diopter,
+      }}
+      onCommit={onSave}
+      onRemove={onRemove}
+    />
+  )
+}
+
+interface DraftItemCardProps {
+  gearType: GearType
+  recentManufacturers: string[]
+  onSave: (payload: {
+    gearType: GearType
+    manufacturer?: string
+    size?: string
+    diopter?: number
+    isPrescription?: boolean
+    totalUnits: number
+  }) => Promise<void>
+  onDiscard: () => void
+}
+
+function DraftItemCard({ gearType, recentManufacturers, onSave, onDiscard }: DraftItemCardProps) {
+  return (
+    <GearItemCard
+      kind="draft"
+      gearType={gearType}
+      recentManufacturers={recentManufacturers}
+      initial={{ totalUnits: 1 }}
+      onCommit={async (patch) => {
+        await onSave({
+          gearType,
+          manufacturer: patch.manufacturer,
+          size: patch.size,
+          diopter: patch.diopter,
+          isPrescription: patch.isPrescription,
+          totalUnits: patch.totalUnits ?? 1,
+        })
+      }}
+      onRemove={onDiscard}
+    />
+  )
+}
+
+interface GearItemCardProps {
+  kind: 'draft' | 'existing'
+  gearType: GearType
+  recentManufacturers: string[]
+  initial: {
+    manufacturer?: string
+    size?: string
+    totalUnits?: number
+    isPrescription?: boolean
+    diopter?: number
+  }
+  onCommit: (patch: Partial<InventoryRow>) => Promise<void>
+  onRemove: () => void
+}
+
+function GearItemCard({ kind, gearType, recentManufacturers, initial, onCommit, onRemove }: GearItemCardProps) {
   const tCommon = useTranslations('common')
   const tBooking = useTranslations('booking')
-  const [manufacturer, setManufacturer] = useState(item.manufacturer ?? '')
-  const [size, setSize] = useState(item.size ?? '')
-  const [totalUnits, setTotalUnits] = useState(item.totalUnits)
-  const [isPrescription, setIsPrescription] = useState(item.isPrescription ?? false)
-  const [diopter, setDiopter] = useState<number | undefined>(item.diopter)
+
+  const [manufacturer, setManufacturer] = useState(initial.manufacturer ?? '')
+  const [size, setSize] = useState(initial.size ?? '')
+  const [totalUnits, setTotalUnits] = useState<number>(initial.totalUnits ?? 1)
+  const [isPrescription, setIsPrescription] = useState(initial.isPrescription ?? false)
+  const [diopter, setDiopter] = useState<number | undefined>(initial.diopter)
   const [saveError, setSaveError] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
 
   const canonicalManufacturers = useMemo<readonly string[]>(() => Array.from(MANUFACTURERS), [])
 
-  const runUpdate = async (patch: Partial<InventoryRow>) => {
+  const currentState = {
+    manufacturer: manufacturer.trim() || undefined,
+    size: size.trim() || undefined,
+    totalUnits,
+    isPrescription,
+    diopter,
+  }
+
+  const isValid = isGearItemComplete(currentState, gearType)
+
+  const isDirty =
+    (initial.manufacturer ?? '') !== manufacturer ||
+    (initial.size ?? '') !== size ||
+    (initial.totalUnits ?? 1) !== totalUnits ||
+    (initial.isPrescription ?? false) !== isPrescription ||
+    (initial.diopter ?? undefined) !== diopter
+
+  const requiredFields = GEAR_REQUIRED_FIELDS[gearType]
+  const needsManufacturer = requiredFields.includes('manufacturer')
+  const needsSize = requiredFields.includes('size')
+
+  const canSave = kind === 'draft' ? isValid : isValid && isDirty
+
+  const handleSave = useCallback(async () => {
+    if (!canSave) return
     setSaveError('')
+    setSaving(true)
+    setSaved(false)
     try {
-      await onUpdate(patch)
+      const patch: Partial<InventoryRow> = {
+        manufacturer: currentState.manufacturer,
+        size: currentState.size,
+        totalUnits,
+        isPrescription,
+      }
+      if (gearType === 'mask' && isPrescription && typeof diopter === 'number') {
+        patch.diopter = diopter
+      }
+      await onCommit(patch)
+      setSaved(true)
+      setTimeout(() => setSaved(false), 1500)
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setSaving(false)
     }
-  }
-
-  const handleManufacturerChange = async (next: string) => {
-    setManufacturer(next)
-    if (next === (item.manufacturer ?? '')) return
-    await runUpdate({ manufacturer: next })
-  }
-
-  const handleSizeChange = async (next: string) => {
-    setSize(next)
-    if (next === (item.size ?? '')) return
-    await runUpdate({ size: next })
-  }
-
-  const handleUnitsChange = async (next: number | undefined) => {
-    if (next === undefined) return
-    setTotalUnits(next)
-    if (next === item.totalUnits) return
-    setSaveError('')
-    try {
-      await onUpdate({ totalUnits: next })
-    } catch (err) {
-      setSaveError(err instanceof Error ? err.message : String(err))
-      setTotalUnits(item.totalUnits)
-    }
-  }
-
-  const handleRxChange = async (next: boolean) => {
-    setIsPrescription(next)
-    await runUpdate({ isPrescription: next })
-  }
-
-  const handleDiopterChange = async (next: number | undefined) => {
-    setDiopter(next)
-    if (next === undefined || next === item.diopter) return
-    await runUpdate({ diopter: next })
-  }
+  }, [canSave, currentState.manufacturer, currentState.size, totalUnits, isPrescription, diopter, gearType, onCommit])
 
   const isMask = gearType === 'mask'
   const sizeOptions = canonicalSizesFor(manufacturer, gearType)
 
   return (
-    <ItemCard onRemove={onRemove} aria-label={tCommon('remove')}>
+    <ItemCard
+      onRemove={onRemove}
+      aria-label={tCommon('remove')}
+      onSave={handleSave}
+      canSave={canSave}
+      saving={saving}
+      saved={saved}
+      save-aria-label={tCommon('save')}
+    >
       <div className="flex flex-wrap gap-3">
         <SimpleSelect
           label={tBooking('manufacturer')}
           value={manufacturer}
-          onChange={handleManufacturerChange}
+          onChange={setManufacturer}
           options={[
             ...canonicalManufacturers,
             ...recentManufacturers.filter((m) => m && !canonicalManufacturers.includes(m)),
           ]}
           className="field-select-long"
+          required={needsManufacturer}
         />
         {sizeOptions.length > 0 ? (
           <SimpleSelect
             label={tBooking('size')}
             value={size}
-            onChange={handleSizeChange}
+            onChange={setSize}
             options={sizeOptions}
             className="field-select-short"
+            required={needsSize}
           />
         ) : (
           <Input
             label={tBooking('size')}
             value={size}
             onChange={(e) => setSize(e.target.value)}
-            onBlur={() => handleSizeChange(size)}
             className="w-16"
+            required={needsSize}
           />
         )}
         <NumberPicker
@@ -279,15 +415,16 @@ function InventoryItemCard({ item, gearType, recentManufacturers, onUpdate, onRe
           min={1}
           max={500}
           value={totalUnits}
-          onChange={handleUnitsChange}
+          onChange={(v) => { if (v !== undefined) setTotalUnits(v) }}
           className="field-number"
+          required
         />
         {isMask && (
           <div className="flex items-center">
             <Checkbox
               label={tBooking('prescription')}
               checked={isPrescription}
-              onChange={handleRxChange}
+              onChange={setIsPrescription}
             />
           </div>
         )}
@@ -299,8 +436,9 @@ function InventoryItemCard({ item, gearType, recentManufacturers, onUpdate, onRe
             step={0.5}
             decimals={1}
             value={diopter}
-            onChange={handleDiopterChange}
+            onChange={setDiopter}
             className="field-number"
+            required
           />
         )}
       </div>

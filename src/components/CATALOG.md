@@ -68,7 +68,7 @@ Governance: `.claude/rules/existing-components-first.md` + `.claude/rules/dry-fi
 | `WizardStepShell` | `@/components/ui/wizard-step-shell` | Wizard step container (title, description, content). |
 | `BottomActionBar` | `@/components/ui/bottom-action-bar` | Fixed mobile bottom action bar (primary Save on mobile). |
 | `SectionDivider` | `@/components/ui/section-divider` | Horizontal divider between sections. |
-| `ItemCard` | `@/components/ui/item-card` | Removable card in a list (credentials, routes, fleet entries). Never hand-roll trash buttons. |
+| `ItemCard` | `@/components/ui/item-card` | Removable card in a list (credentials, routes, fleet entries). Never hand-roll trash buttons. Optional `onSave` + `canSave` + `saving` + `saved` props render a Save icon-button next to the trash icon (used by draft-row-with-Save patterns like the Equipment Gear tab). |
 | `ListRow` | `@/components/ui/list-row` | Reusable row with compact variant. |
 
 ## Cards & content headers
