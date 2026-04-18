@@ -365,11 +365,12 @@ Five Acts partition the run: **I Onboarding · II Booking Convergence · III Var
 
 - **Status:** WITHDRAWN 2026-04-17 — see P0-19. Auto-accept is user-level on `stakeholderPreferences.acceptanceMode`. No per-resource column added.
 
-### P0-7 — `equipment.manufacturersByGearType` must be required non-empty
+### P0-7 — `equipment.manufacturersByGearType` must be required non-empty — DERIVED
 
+- **Status:** DERIVED 2026-04-17 (gear-consolidation session, commits `81203c3c` + `08ea8e74`). Field is now server-synced from `equipmentInventory` rows via `convex/lib/equipmentManufacturersSync.ts::syncManufacturersByGearType`, invoked from `addItem`, `updateItem` (when manufacturer changes), `removeItem`, and `bulkSetByManufacturer`. Field is no longer client-writable — "required non-empty" is an emergent property of having ≥1 inventory row per required gear type.
 - **Source:** Stop 2 audit.
-- **Impact:** An Equipment profile with zero declared gear types is nonfunctional for bookings. Canonical JSON requires a three-type minimum (wetsuit + bcd + regulator). Optional field permits the happy path to create a broken profile.
-- **Action:** Tighten schema optional → required non-empty record. Tighten zod validator in `src/lib/profile-form/profile-shared.ts`. Add FE validation in Gear Catalog sub-tab.
+- **Original impact:** An Equipment profile with zero declared gear types is nonfunctional for bookings.
+- **Resolution:** Enforcement moved from schema-layer constraint to runtime readiness gate in `equipmentGearCompleteness` (commit `c1f992d3`), which asserts per-gear-type completeness against `GEAR_REQUIRED_FIELDS`. The booking-picker surfaces the Equipment only when the readiness gate passes. Invariant preserved; enforcement layer changed.
 
 ### P0-8 — Booking-picker completeness gate (investigation)
 
@@ -1061,6 +1062,15 @@ All stakeholder ledger stops locked:
 - **Stop 9 Agent** — `agent` (Alex Walker, defaultReferral → dive_center_1). New P0: P0-17.
 
 §9 P0 count: **P0-1 through P0-26 (26 total)**. Pre-run gate still blocking — all 26 must close before `/happypath` can fire. Retirement criteria (INDEX.md + §16): audit COMPLETE ✓ · one fully green happy-path run ✗ · V1 shipped ✗. Artifact set retires when all three hold.
+
+### 2026-04-18 extension — Stop 2 Gear overlay ready for walkthrough
+
+The Equipment Manager profile completed a structural collapse + matrix UI build in two sessions after audit lock:
+
+- **2026-04-17 equipment-gear-consolidation** (commits `81203c3c`, `08ea8e74`, `c1f992d3`) — `profileTabs` went `[contact, gear-catalog, inventory, booking]` → `[contact, gear, booking]`. Gear tab is overlay-only (`src/components/inventory/connected-equipment-gear.tsx`). `equipmentGearCatalogSchema` Zod deleted. `manufacturersByGearType` derived from `equipmentInventory` rows (P0-7 → DERIVED). Equipment readiness now gated on per-gear-type inventory completeness.
+- **2026-04-18 gear-matrix-section** (commits `2b1f80f1`, `264188fe`) — Per-manufacturer gear matrix UI (wetsuit/bcd/fins rendered as size × totalUnits grid; mask/regulator stay on list shape). New `bulkSetByManufacturer` mutation: diff-based single-write that creates/patches/deletes `equipmentInventory` rows to match submitted cells. Fin `sizeSystem` discriminator added (`eu | us | cm | letter`) + 4 per-system size tables + `isMatrixGearType()` type predicate. New components: `gear-matrix-section.tsx`, `add-gear-manufacturer-dialog.tsx`.
+
+Stop 2 is **walkthrough-ready** at the code/test layer (5001/5001, tsc clean, /gate CLEAN 2026-04-18). UX confirmation still owed — Matt's hand-created-persona walkthrough (below) is the verification.
 
 ### Next queue — P0 closure, then /happypath run
 

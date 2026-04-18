@@ -18,7 +18,9 @@ This folder holds the canonical spec for the DiveDispatch happy path. Five artif
 
 **Audit (current) → P0 fix → Happy-path run → V1 ship.**
 
-We are in Audit phase. Seven of ten audit stops have locked canonical data. Three remain: Stop 7 (DiveCenter), Stop 8 (Customer), Stop 9 (Agent). After all stops lock and all §9 P0s close, the run fires. After the run passes, V1 ships and these artifacts retire (see skeleton §16).
+**Audit COMPLETE** as of 2026-04-14 — all 9 stops + `admin_venues.kata_beach` locked. We are in the **P0 fix** phase. §9 holds 26 P0s: P0-15..P0-26 ticketed as DD-485..DD-496, P0-1..P0-14 still need backfill. P0-7 (`equipment.manufacturersByGearType`) moved to DERIVED 2026-04-17 post gear-consolidation. After §9 empties, the `/happypath` run fires. After the run passes, V1 ships and these artifacts retire (see skeleton §16).
+
+**Latest extension (2026-04-18):** Stop 2 Gear overlay walkthrough-ready (matrix UI + `bulkSetByManufacturer` shipped). See skeleton §14 → "2026-04-18 extension" subsection.
 
 ## Artifact roles
 
@@ -48,7 +50,7 @@ We are in Audit phase. Seven of ten audit stops have locked canonical data. Thre
 
 ## Resume pointer
 
-**Resuming the audit?** Open `happy-path-spec-skeleton.md` → §14 Resume Point. Next stop is **Stop 7 DiveCenter** with four committed defaults already staged.
+**Resuming the audit?** Open `happy-path-spec-skeleton.md` → §14. All 9 stops + admin locked. Next work is §9 P0 closure via `/post-spec` (12 ticketed, 14 backfill-needed). The 2026-04-18 extension subsection captures Stop 2 Gear overlay readiness for walkthrough.
 
 **Running the happy-path?** Open `choreography.md` → Act I Phase 1. Follow `§15 Execution Conventions` in skeleton (pause rule, post-run observation routing).
 
