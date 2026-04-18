@@ -4,6 +4,7 @@ import { authorize, assertOwnership, requireAuth } from './lib/auth'
 import { gearTypeValidator } from './lib/validators'
 import { ErrorCode } from './lib/errorCodes'
 import { isActiveReservation } from './bookings/_shared'
+import { syncManufacturersByGearType } from './lib/equipmentManufacturersSync'
 
 export const addItem = mutation({
   args: {
@@ -40,6 +41,8 @@ export const addItem = mutation({
       ...(args.diopter !== undefined ? { diopter: args.diopter } : {}),
       ...(args.isPrescription !== undefined ? { isPrescription: args.isPrescription } : {}),
     })
+
+    await syncManufacturersByGearType(ctx, user.slug)
 
     return inventoryId
   },
@@ -82,7 +85,7 @@ export const updateItem = mutation({
       if (args.totalUnits < maxReserved) {
         throw new ConvexError({
           code: ErrorCode.VALIDATION,
-          message: `Cannot reduce totalUnits below reserved count (${maxReserved})`,
+          reason: `Cannot reduce totalUnits below reserved count (${maxReserved})`,
         })
       }
     }
@@ -103,6 +106,10 @@ export const updateItem = mutation({
           availableUnits: totalUnits - snap.reservedUnits,
         })
       }
+    }
+
+    if (cleanPatch.manufacturer !== undefined) {
+      await syncManufacturersByGearType(ctx, item.equipmentManagerId)
     }
   },
 })
@@ -129,12 +136,14 @@ export const removeItem = mutation({
     if (hasActive) {
       throw new ConvexError({
         code: ErrorCode.CONFLICT,
-        message: 'Cannot remove item with active reservations',
+        reason: 'Cannot remove item with active reservations',
       })
     }
 
     await ctx.db.delete(item.inventoryUnitId)
     await ctx.db.delete(args.inventoryId)
+
+    await syncManufacturersByGearType(ctx, item.equipmentManagerId)
   },
 })
 

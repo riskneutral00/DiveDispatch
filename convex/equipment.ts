@@ -13,7 +13,6 @@ export const create = mutation({
     ...BASE_PROFILE_CREATE_FIELDS,
     ...BUSINESS_NAME_CREATE_FIELD,
     ...ACCESS_CONTROL_FIELDS,
-    manufacturersByGearType: v.optional(v.record(v.string(), v.array(v.string()))),
   },
   handler: async (ctx, args) =>
     profileCreate(ctx, args, 'equipment', 'Equipment', { verified: false }),
@@ -24,7 +23,6 @@ export const update = mutation({
     ...BASE_PROFILE_UPDATE_FIELDS,
     ...BUSINESS_NAME_UPDATE_FIELD,
     ...ACCESS_CONTROL_FIELDS,
-    manufacturersByGearType: v.optional(v.record(v.string(), v.array(v.string()))),
   },
   handler: async (ctx, args) => profileUpdate(ctx, args, 'equipment'),
 })

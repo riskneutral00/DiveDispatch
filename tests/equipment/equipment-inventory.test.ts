@@ -245,4 +245,103 @@ describe('equipmentInventory', () => {
       expect(Object.keys(grouped)).toHaveLength(0)
     })
   })
+
+  describe('syncManufacturersByGearType side effect', () => {
+    it('addItem with manufacturer populates equipment.manufacturersByGearType', async () => {
+      const t = makeT()
+      await seedEM(t)
+      const auth = t.withIdentity({ tokenIdentifier: EM_TOKEN })
+
+      await auth.mutation(api.equipmentInventory.addItem, {
+        gearType: 'wetsuit',
+        manufacturer: 'ScubaPro',
+        size: 'M',
+        totalUnits: 5,
+      })
+
+      const profile = await auth.query(api.equipment.mine, {})
+      expect(profile?.manufacturersByGearType?.wetsuit).toEqual(['ScubaPro'])
+    })
+
+    it('addItem without manufacturer leaves manufacturersByGearType empty for that gearType', async () => {
+      const t = makeT()
+      await seedEM(t)
+      const auth = t.withIdentity({ tokenIdentifier: EM_TOKEN })
+
+      await auth.mutation(api.equipmentInventory.addItem, {
+        gearType: 'mask',
+        totalUnits: 10,
+      })
+
+      const profile = await auth.query(api.equipment.mine, {})
+      expect(profile?.manufacturersByGearType?.mask ?? []).toEqual([])
+    })
+
+    it('updateItem manufacturer swap removes old and adds new', async () => {
+      const t = makeT()
+      await seedEM(t)
+      const auth = t.withIdentity({ tokenIdentifier: EM_TOKEN })
+
+      const inventoryId = await auth.mutation(api.equipmentInventory.addItem, {
+        gearType: 'bcd',
+        manufacturer: 'Mares',
+        size: 'L',
+        totalUnits: 3,
+      })
+
+      const before = await auth.query(api.equipment.mine, {})
+      expect(before?.manufacturersByGearType?.bcd).toEqual(['Mares'])
+
+      await auth.mutation(api.equipmentInventory.updateItem, {
+        inventoryId,
+        manufacturer: 'ScubaPro',
+      })
+
+      const after = await auth.query(api.equipment.mine, {})
+      expect(after?.manufacturersByGearType?.bcd).toEqual(['ScubaPro'])
+    })
+
+    it('removeItem clears gearType entry when last manufacturer item removed', async () => {
+      const t = makeT()
+      await seedEM(t)
+      const auth = t.withIdentity({ tokenIdentifier: EM_TOKEN })
+
+      const inventoryId = await auth.mutation(api.equipmentInventory.addItem, {
+        gearType: 'fins',
+        manufacturer: 'Cressi',
+        size: 'EU 42',
+        totalUnits: 5,
+      })
+
+      const before = await auth.query(api.equipment.mine, {})
+      expect(before?.manufacturersByGearType?.fins).toEqual(['Cressi'])
+
+      await auth.mutation(api.equipmentInventory.removeItem, { inventoryId })
+
+      const after = await auth.query(api.equipment.mine, {})
+      expect(after?.manufacturersByGearType?.fins ?? []).toEqual([])
+    })
+
+    it('removeItem of one item keeps other manufacturers for same gearType', async () => {
+      const t = makeT()
+      await seedEM(t)
+      const auth = t.withIdentity({ tokenIdentifier: EM_TOKEN })
+
+      await auth.mutation(api.equipmentInventory.addItem, {
+        gearType: 'regulator',
+        manufacturer: 'Atomic',
+        totalUnits: 2,
+      })
+      const second = await auth.mutation(api.equipmentInventory.addItem, {
+        gearType: 'regulator',
+        manufacturer: 'Apeks',
+        totalUnits: 3,
+      })
+
+      await auth.mutation(api.equipmentInventory.removeItem, { inventoryId: second })
+
+      const after = await auth.query(api.equipment.mine, {})
+      expect(after?.manufacturersByGearType?.regulator).toEqual(['Atomic'])
+    })
+  })
 })
