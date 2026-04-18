@@ -6,7 +6,17 @@ import { useTranslations } from 'next-intl'
 import { Plus, Package } from 'lucide-react'
 import { api } from '@/lib/convex-generated'
 import type { Id } from '@/lib/convex-generated'
-import { GEAR_TYPES, GEAR_TYPE_LABELS, MANUFACTURERS, ALL_GEAR_SIZING, type GearType } from '@/lib/constants/gear-sizing'
+import {
+  GEAR_TYPES,
+  GEAR_TYPE_LABELS,
+  MANUFACTURERS,
+  ALL_GEAR_SIZING,
+  isMatrixGearType,
+  finSizesFor,
+  type GearType,
+  type MatrixGearType,
+  type FinSizeSystem,
+} from '@/lib/constants/gear-sizing'
 import { GEAR_REQUIRED_FIELDS, isGearItemComplete } from '@/lib/constants/gear-required-fields'
 import { MenuButton } from '@/components/ui/menu-button'
 import { Card } from '@/components/ui/card'
@@ -20,6 +30,8 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { LoadingCard } from '@/components/ui/loading-card'
 import { ConfirmActionDialog } from '@/components/ui/confirm-dialog'
 import { InlineError } from '@/components/ui/inline-error'
+import { ManufacturerMatrixSection, type InventoryCellRow } from '@/components/inventory/gear-matrix-section'
+import { AddGearManufacturerDialog } from '@/components/inventory/add-gear-manufacturer-dialog'
 
 interface InventoryRow {
   _id: string
@@ -27,6 +39,7 @@ interface InventoryRow {
   gearType: string
   manufacturer?: string
   size?: string
+  sizeSystem?: FinSizeSystem
   diopter?: number
   isPrescription?: boolean
   totalUnits: number
@@ -37,6 +50,18 @@ interface DraftRow {
   gearType: GearType
 }
 
+interface PendingMatrix {
+  key: string
+  manufacturer: string
+  sizeSystem?: FinSizeSystem
+}
+
+interface PendingRemoveGroup {
+  manufacturer: string
+  sizeSystem?: FinSizeSystem
+  count: number
+}
+
 export function ConnectedEquipmentGear() {
   const tCommon = useTranslations('common')
   const tBooking = useTranslations('booking')
@@ -45,10 +70,14 @@ export function ConnectedEquipmentGear() {
   const addItemMutation = useMutation(api.equipmentInventory.addItem)
   const updateItemMutation = useMutation(api.equipmentInventory.updateItem)
   const removeItemMutation = useMutation(api.equipmentInventory.removeItem)
+  const bulkSetMutation = useMutation(api.equipmentInventory.bulkSetByManufacturer)
 
   const [activeGearType, setActiveGearType] = useState<GearType>('wetsuit')
   const [pendingRemove, setPendingRemove] = useState<InventoryRow | null>(null)
+  const [pendingRemoveGroup, setPendingRemoveGroup] = useState<PendingRemoveGroup | null>(null)
   const [drafts, setDrafts] = useState<DraftRow[]>([])
+  const [addManufacturerOpen, setAddManufacturerOpen] = useState(false)
+  const [pendingMatrices, setPendingMatrices] = useState<PendingMatrix[]>([])
 
   const items = useMemo<InventoryRow[]>(() => {
     if (!grouped) return []
@@ -63,6 +92,33 @@ export function ConnectedEquipmentGear() {
   const activeDrafts = useMemo(
     () => drafts.filter((d) => d.gearType === activeGearType),
     [drafts, activeGearType],
+  )
+
+  const isMatrix = isMatrixGearType(activeGearType)
+
+  const matrixGroups = useMemo(() => {
+    if (!isMatrix) return []
+    const byKey = new Map<string, { manufacturer: string; sizeSystem?: FinSizeSystem; rows: InventoryRow[] }>()
+    for (const row of items) {
+      const m = row.manufacturer
+      if (!m) continue
+      const key = activeGearType === 'fins' ? `${m}__${row.sizeSystem ?? ''}` : m
+      const entry = byKey.get(key)
+      if (entry) entry.rows.push(row)
+      else byKey.set(key, { manufacturer: m, sizeSystem: row.sizeSystem, rows: [row] })
+    }
+    return Array.from(byKey.entries()).map(([key, v]) => ({ key, ...v }))
+  }, [items, activeGearType, isMatrix])
+
+  const matrixKeysInDb = useMemo(() => new Set(matrixGroups.map((g) => g.key)), [matrixGroups])
+
+  const activePendingMatrices = useMemo(
+    () =>
+      pendingMatrices.filter((p) => {
+        const key = p.key.startsWith(`${activeGearType}__`) ? p.key.slice(activeGearType.length + 2) : null
+        return key !== null && !matrixKeysInDb.has(key)
+      }),
+    [pendingMatrices, activeGearType, matrixKeysInDb],
   )
 
   const handleAddDraft = useCallback(() => {
@@ -119,6 +175,46 @@ export function ConnectedEquipmentGear() {
     setPendingRemove(null)
   }, [pendingRemove, removeItemMutation])
 
+  const handleMatrixBulkSave = useCallback(
+    async (manufacturer: string, sizeSystem: FinSizeSystem | undefined, cells: Record<string, number>) => {
+      await bulkSetMutation({
+        gearType: activeGearType,
+        manufacturer,
+        ...(sizeSystem !== undefined ? { sizeSystem } : {}),
+        cells,
+      })
+      const localKey = sizeSystem ? `${manufacturer}__${sizeSystem}` : manufacturer
+      setPendingMatrices((prev) =>
+        prev.filter((p) => p.key !== `${activeGearType}__${localKey}`),
+      )
+    },
+    [bulkSetMutation, activeGearType],
+  )
+
+  const handleConfirmGroupRemove = useCallback(async () => {
+    if (!pendingRemoveGroup) return
+    await bulkSetMutation({
+      gearType: activeGearType,
+      manufacturer: pendingRemoveGroup.manufacturer,
+      ...(pendingRemoveGroup.sizeSystem !== undefined ? { sizeSystem: pendingRemoveGroup.sizeSystem } : {}),
+      cells: {},
+    })
+    setPendingRemoveGroup(null)
+  }, [bulkSetMutation, activeGearType, pendingRemoveGroup])
+
+  const handleAddManufacturerConfirm = useCallback(
+    (manufacturer: string, sizeSystem?: FinSizeSystem) => {
+      const localKey = sizeSystem ? `${manufacturer}__${sizeSystem}` : manufacturer
+      const fullKey = `${activeGearType}__${localKey}`
+      setPendingMatrices((prev) => {
+        if (prev.some((p) => p.key === fullKey)) return prev
+        return [...prev, { key: fullKey, manufacturer, sizeSystem }]
+      })
+      setAddManufacturerOpen(false)
+    },
+    [activeGearType],
+  )
+
   if (grouped === undefined) {
     return <LoadingCard variant="spinner" message={tCommon('loading')} />
   }
@@ -148,49 +244,63 @@ export function ConnectedEquipmentGear() {
         ))}
       </nav>
 
-      <div className="space-y-3">
-        {items.length === 0 && activeDrafts.length === 0 ? (
-          <Card>
-            <EmptyState
-              icon={Package}
-              message={tBooking('noGearYet', { type: activeLabel.toLowerCase() })}
-            />
-          </Card>
-        ) : (
-          <>
-            {items.map((item) => (
-              <ExistingItemCard
-                key={item._id}
-                item={item}
-                gearType={activeGearType}
-                recentManufacturers={recentManufacturers}
-                onSave={(patch) => handleExistingSave(item._id, patch)}
-                onRemove={() => setPendingRemove(item)}
+      {isMatrix ? (
+        <MatrixView
+          gearType={activeGearType as MatrixGearType}
+          groups={matrixGroups}
+          pendingMatrices={activePendingMatrices}
+          onBulkSave={handleMatrixBulkSave}
+          onRequestRemoveGroup={setPendingRemoveGroup}
+          onAddManufacturer={() => setAddManufacturerOpen(true)}
+          onDiscardPending={(key) =>
+            setPendingMatrices((prev) => prev.filter((p) => p.key !== `${activeGearType}__${key}`))
+          }
+        />
+      ) : (
+        <div className="space-y-3">
+          {items.length === 0 && activeDrafts.length === 0 ? (
+            <Card>
+              <EmptyState
+                icon={Package}
+                message={tBooking('noGearYet', { type: activeLabel.toLowerCase() })}
               />
-            ))}
-            {activeDrafts.map((draft) => (
-              <DraftItemCard
-                key={draft.localId}
-                gearType={draft.gearType}
-                recentManufacturers={recentManufacturers}
-                onSave={(payload) => handleDraftSave(draft.localId, payload)}
-                onDiscard={() => handleDiscardDraft(draft.localId)}
-              />
-            ))}
-          </>
-        )}
+            </Card>
+          ) : (
+            <>
+              {items.map((item) => (
+                <ExistingItemCard
+                  key={item._id}
+                  item={item}
+                  gearType={activeGearType}
+                  recentManufacturers={recentManufacturers}
+                  onSave={(patch) => handleExistingSave(item._id, patch)}
+                  onRemove={() => setPendingRemove(item)}
+                />
+              ))}
+              {activeDrafts.map((draft) => (
+                <DraftItemCard
+                  key={draft.localId}
+                  gearType={draft.gearType}
+                  recentManufacturers={recentManufacturers}
+                  onSave={(payload) => handleDraftSave(draft.localId, payload)}
+                  onDiscard={() => handleDiscardDraft(draft.localId)}
+                />
+              ))}
+            </>
+          )}
 
-        <Button
-          type="button"
-          variant="secondary"
-          size="sm"
-          onClick={handleAddDraft}
-          disabled={activeDrafts.length > 0}
-        >
-          <Plus size={14} />
-          {tBooking('addGearType', { type: activeLabel })}
-        </Button>
-      </div>
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={handleAddDraft}
+            disabled={activeDrafts.length > 0}
+          >
+            <Plus size={14} />
+            {tBooking('addGearType', { type: activeLabel })}
+          </Button>
+        </div>
+      )}
 
       <ConfirmActionDialog
         open={!!pendingRemove}
@@ -205,8 +315,131 @@ export function ConnectedEquipmentGear() {
         confirmLabel={tCommon('remove')}
         variant="destructive"
       />
+
+      <ConfirmActionDialog
+        open={!!pendingRemoveGroup}
+        onClose={() => setPendingRemoveGroup(null)}
+        onConfirm={handleConfirmGroupRemove}
+        title={tBooking('removeManufacturer', { manufacturer: pendingRemoveGroup?.manufacturer ?? '' })}
+        description={tBooking('removeManufacturerConfirm', {
+          count: pendingRemoveGroup?.count ?? 0,
+          manufacturer: pendingRemoveGroup?.manufacturer ?? '',
+          gearType: activeLabel.toLowerCase(),
+        })}
+        confirmLabel={tCommon('remove')}
+        variant="destructive"
+      />
+
+      {isMatrix && (
+        <AddGearManufacturerDialog
+          open={addManufacturerOpen}
+          gearType={activeGearType as MatrixGearType}
+          existingManufacturers={matrixGroups.map((g) => g.manufacturer)}
+          existingFinSystems={
+            activeGearType === 'fins'
+              ? (matrixGroups
+                  .filter((g) => g.sizeSystem !== undefined)
+                  .map((g) => g.sizeSystem as FinSizeSystem))
+              : []
+          }
+          onClose={() => setAddManufacturerOpen(false)}
+          onConfirm={handleAddManufacturerConfirm}
+        />
+      )}
     </div>
   )
+}
+
+interface MatrixViewProps {
+  gearType: MatrixGearType
+  groups: Array<{ key: string; manufacturer: string; sizeSystem?: FinSizeSystem; rows: InventoryRow[] }>
+  pendingMatrices: PendingMatrix[]
+  onBulkSave: (manufacturer: string, sizeSystem: FinSizeSystem | undefined, cells: Record<string, number>) => Promise<void>
+  onRequestRemoveGroup: (g: PendingRemoveGroup) => void
+  onAddManufacturer: () => void
+  onDiscardPending: (key: string) => void
+}
+
+function MatrixView({
+  gearType,
+  groups,
+  pendingMatrices,
+  onBulkSave,
+  onRequestRemoveGroup,
+  onAddManufacturer,
+  onDiscardPending,
+}: MatrixViewProps) {
+  const tBooking = useTranslations('booking')
+
+  const hasAny = groups.length > 0 || pendingMatrices.length > 0
+
+  return (
+    <div className="space-y-3">
+      {!hasAny && (
+        <Card>
+          <EmptyState
+            icon={Package}
+            message={tBooking('noGearYet', { type: GEAR_TYPE_LABELS[gearType].toLowerCase() })}
+          />
+        </Card>
+      )}
+      {groups.map((group) => {
+        const columns = columnsFor(gearType, group.manufacturer, group.sizeSystem)
+        const rowsBySize = new Map<string, InventoryCellRow>()
+        for (const r of group.rows) {
+          if (r.size) rowsBySize.set(r.size, { _id: r._id, size: r.size, totalUnits: r.totalUnits })
+        }
+        return (
+          <ManufacturerMatrixSection
+            key={group.key}
+            gearType={gearType}
+            manufacturer={group.manufacturer}
+            sizeSystem={group.sizeSystem}
+            columns={columns}
+            rowsBySize={rowsBySize}
+            onBulkSave={(cells) => onBulkSave(group.manufacturer, group.sizeSystem, cells)}
+            onRemoveAll={() =>
+              onRequestRemoveGroup({
+                manufacturer: group.manufacturer,
+                sizeSystem: group.sizeSystem,
+                count: group.rows.length,
+              })
+            }
+          />
+        )
+      })}
+      {pendingMatrices.map((pending) => {
+        const localKey = pending.sizeSystem ? `${pending.manufacturer}__${pending.sizeSystem}` : pending.manufacturer
+        const columns = columnsFor(gearType, pending.manufacturer, pending.sizeSystem)
+        return (
+          <ManufacturerMatrixSection
+            key={pending.key}
+            gearType={gearType}
+            manufacturer={pending.manufacturer}
+            sizeSystem={pending.sizeSystem}
+            columns={columns}
+            rowsBySize={new Map()}
+            onBulkSave={(cells) => onBulkSave(pending.manufacturer, pending.sizeSystem, cells)}
+            onRemoveAll={() => onDiscardPending(localKey)}
+          />
+        )
+      })}
+      <Button type="button" variant="secondary" size="sm" onClick={onAddManufacturer}>
+        <Plus size={14} />
+        {tBooking('addManufacturer')}
+      </Button>
+    </div>
+  )
+}
+
+function columnsFor(gearType: MatrixGearType, manufacturer: string, sizeSystem?: FinSizeSystem): readonly string[] {
+  if (gearType === 'fins') {
+    return sizeSystem ? finSizesFor(sizeSystem) : []
+  }
+  const entries = ALL_GEAR_SIZING.filter(
+    (e) => e.manufacturer === manufacturer && e.gearType === gearType,
+  )
+  return Array.from(new Set(entries.map((e) => e.size)))
 }
 
 function generateLocalId(): string {
@@ -398,14 +631,14 @@ function GearItemCard({ kind, gearType, recentManufacturers, initial, onCommit, 
           className="field-select-long"
           required={needsManufacturer}
         />
-        {sizeOptions.length > 0 ? (
+        {needsSize && (sizeOptions.length > 0 ? (
           <SimpleSelect
             label={tBooking('size')}
             value={size}
             onChange={setSize}
             options={sizeOptions}
             className="field-select-short"
-            required={needsSize}
+            required
           />
         ) : (
           <Input
@@ -413,9 +646,9 @@ function GearItemCard({ kind, gearType, recentManufacturers, initial, onCommit, 
             value={size}
             onChange={(e) => setSize(e.target.value)}
             className="field-select-short"
-            required={needsSize}
+            required
           />
-        )}
+        ))}
         <NumberPicker
           label={tBooking('units')}
           min={1}
