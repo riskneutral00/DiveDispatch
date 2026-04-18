@@ -4,7 +4,7 @@ export const GEAR_REQUIRED_FIELDS: Record<GearType, ReadonlyArray<'manufacturer'
   wetsuit: ['manufacturer', 'size', 'totalUnits'],
   bcd: ['manufacturer', 'size', 'totalUnits'],
   fins: ['manufacturer', 'size', 'totalUnits'],
-  mask: ['manufacturer', 'size', 'totalUnits'],
+  mask: ['manufacturer', 'totalUnits'],
   regulator: ['manufacturer', 'totalUnits'],
 }
 

@@ -45,6 +45,13 @@ export const gearTypeValidator = v.union(
   v.literal('regulator'),
 )
 
+export const finSizeSystemValidator = v.union(
+  v.literal('eu'),
+  v.literal('us'),
+  v.literal('cm'),
+  v.literal('letter'),
+)
+
 export const gearRentalValidator = v.union(v.literal('own'), v.literal('rent'))
 
 export const rentalChecklistValidator = v.object({

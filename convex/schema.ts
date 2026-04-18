@@ -7,7 +7,7 @@ import { boatTypeValidator as boatTypeUnion } from './shared/boatTypes'
 import { gasMixValidator as gasMix } from './shared/gasMixes'
 import { venueCategoryValidator, diveSiteTypeValidator } from './shared/venueTypes'
 import { capacityModelValidator as capacityModel, genderValidator as gender, shoeSizeUnitValidator as shoeSizeUnit, acceptanceModeValidator as acceptanceMode } from './shared/schemaEnums'
-import { stakeholderTypeValidator as stakeholderType, gearTypeValidator as gearType, rentalChecklistValidator } from './lib/validators'
+import { stakeholderTypeValidator as stakeholderType, gearTypeValidator as gearType, finSizeSystemValidator, rentalChecklistValidator } from './lib/validators'
 import { bookingStatusValidator as bookingStatus, reservationStatusValidator as reservationStatus, bagStatusValidator, notificationTypeValidator as notificationType, vacatedReasonValidator } from './shared/statuses'
 
 const accessControlFields = {
@@ -468,6 +468,7 @@ export default defineSchema({
     gearType: gearType,
     manufacturer: v.optional(v.string()),
     size: v.optional(v.string()),
+    sizeSystem: v.optional(finSizeSystemValidator),
     diopter: v.optional(v.number()),
     isPrescription: v.optional(v.boolean()),
   })

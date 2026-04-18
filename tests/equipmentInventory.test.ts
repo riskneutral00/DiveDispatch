@@ -8,7 +8,6 @@
 
 import { describe, it, expect, beforeEach } from 'vitest'
 import { api } from '../convex/_generated/api'
-import type { Id } from '../convex/_generated/dataModel'
 import { makeT, expectConvexError } from './helpers/convex-helpers'
 import { TEST_TOKENS, TEST_SLUGS, seedUser, seedBooking, seedSession, seedReservation, seedSnapshot } from './fixtures'
 
@@ -271,27 +270,24 @@ describe('equipmentInventory.updateItem', () => {
       { gearType: 'bcd', totalUnits: 5 },
     )
 
-    // Seed a snapshot with 3 reserved out of 5
-    let snapshotId: any
-    await t.run(async (ctx) => {
+    const snapshotId = await t.run(async (ctx) => {
       const item = await ctx.db.get(inventoryId)
-      snapshotId = await seedSnapshot(ctx, item!.inventoryUnitId, {
+      return seedSnapshot(ctx, item!.inventoryUnitId, {
         totalUnits: 5,
         reservedUnits: 3,
         availableUnits: 2,
       })
     })
 
-    // Increase totalUnits 5 → 10
     await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
       api.equipmentInventory.updateItem,
       { inventoryId, totalUnits: 10 },
     )
 
     await t.run(async (ctx) => {
-      const snap = await ctx.db.get(snapshotId as Id<'availabilitySnapshots'>)
+      const snap = await ctx.db.get(snapshotId)
       expect(snap!.totalUnits).toBe(10)
-      expect(snap!.availableUnits).toBe(7) // 10 - 3
+      expect(snap!.availableUnits).toBe(7)
     })
   })
 
@@ -305,26 +301,24 @@ describe('equipmentInventory.updateItem', () => {
       { gearType: 'regulator', totalUnits: 10 },
     )
 
-    let snapshotId: any
-    await t.run(async (ctx) => {
+    const snapshotId = await t.run(async (ctx) => {
       const item = await ctx.db.get(inventoryId)
-      snapshotId = await seedSnapshot(ctx, item!.inventoryUnitId, {
+      return seedSnapshot(ctx, item!.inventoryUnitId, {
         totalUnits: 10,
         reservedUnits: 3,
         availableUnits: 7,
       })
     })
 
-    // Decrease totalUnits 10 → 4 (passes guard: 4 >= 3)
     await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
       api.equipmentInventory.updateItem,
       { inventoryId, totalUnits: 4 },
     )
 
     await t.run(async (ctx) => {
-      const snap = await ctx.db.get(snapshotId as Id<'availabilitySnapshots'>)
+      const snap = await ctx.db.get(snapshotId)
       expect(snap!.totalUnits).toBe(4)
-      expect(snap!.availableUnits).toBe(1) // 4 - 3
+      expect(snap!.availableUnits).toBe(1)
     })
   })
 
@@ -338,26 +332,24 @@ describe('equipmentInventory.updateItem', () => {
       { gearType: 'fins', totalUnits: 10 },
     )
 
-    let snapshotId: any
-    await t.run(async (ctx) => {
+    const snapshotId = await t.run(async (ctx) => {
       const item = await ctx.db.get(inventoryId)
-      snapshotId = await seedSnapshot(ctx, item!.inventoryUnitId, {
+      return seedSnapshot(ctx, item!.inventoryUnitId, {
         totalUnits: 10,
         reservedUnits: 5,
         availableUnits: 5,
       })
     })
 
-    // Reduce to exactly the reserved count
     await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
       api.equipmentInventory.updateItem,
       { inventoryId, totalUnits: 5 },
     )
 
     await t.run(async (ctx) => {
-      const snap = await ctx.db.get(snapshotId as Id<'availabilitySnapshots'>)
+      const snap = await ctx.db.get(snapshotId)
       expect(snap!.totalUnits).toBe(5)
-      expect(snap!.availableUnits).toBe(0) // 5 - 5
+      expect(snap!.availableUnits).toBe(0)
     })
   })
 
@@ -676,5 +668,189 @@ describe('equipmentInventory.listMyInventory', () => {
       t.query(api.equipmentInventory.listMyInventory, {}),
       'UNAUTHENTICATED',
     )
+  })
+})
+
+// ── bulkSetByManufacturer ────────────────────────────────────────────────────
+
+describe('equipmentInventory.bulkSetByManufacturer', () => {
+  let t: ReturnType<typeof makeT>
+  beforeEach(() => { t = makeT() })
+
+  const seedEquipment = async () => {
+    await t.withIdentity({ tokenIdentifier: EM_TOKEN }).run(async (ctx) => {
+      await seedUser(ctx, { tokenIdentifier: EM_TOKEN, slug: EM_SLUG, role: 'Equipment', email: 'em@test.com' })
+    })
+  }
+
+  it('creates rows for new sizes and skips cells with count 0', async () => {
+    await seedEquipment()
+
+    await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
+      api.equipmentInventory.bulkSetByManufacturer,
+      {
+        gearType: 'wetsuit',
+        manufacturer: 'ScubaPro',
+        cells: { '2XS': 4, 'XS': 4, 'S': 4, 'M': 0 },
+      },
+    )
+
+    const grouped = await t.withIdentity({ tokenIdentifier: EM_TOKEN }).query(
+      api.equipmentInventory.listMyInventory,
+      {},
+    )
+    const rows = (grouped.wetsuit ?? []).filter((r) => r.manufacturer === 'ScubaPro')
+    expect(rows).toHaveLength(3)
+    const bySize = Object.fromEntries(rows.map((r) => [r.size, r.totalUnits]))
+    expect(bySize).toEqual({ '2XS': 4, 'XS': 4, 'S': 4 })
+  })
+
+  it('updates totalUnits on existing rows', async () => {
+    await seedEquipment()
+
+    await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
+      api.equipmentInventory.bulkSetByManufacturer,
+      { gearType: 'bcd', manufacturer: 'Mares', cells: { 'M': 2, 'L': 3 } },
+    )
+
+    await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
+      api.equipmentInventory.bulkSetByManufacturer,
+      { gearType: 'bcd', manufacturer: 'Mares', cells: { 'M': 7, 'L': 3 } },
+    )
+
+    const grouped = await t.withIdentity({ tokenIdentifier: EM_TOKEN }).query(
+      api.equipmentInventory.listMyInventory,
+      {},
+    )
+    const bySize = Object.fromEntries(
+      (grouped.bcd ?? [])
+        .filter((r) => r.manufacturer === 'Mares')
+        .map((r) => [r.size, r.totalUnits]),
+    )
+    expect(bySize).toEqual({ 'M': 7, 'L': 3 })
+  })
+
+  it('deletes rows when size is omitted or count is 0', async () => {
+    await seedEquipment()
+
+    await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
+      api.equipmentInventory.bulkSetByManufacturer,
+      { gearType: 'wetsuit', manufacturer: 'Aqua Lung', cells: { 'S': 2, 'M': 3, 'L': 4 } },
+    )
+
+    await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
+      api.equipmentInventory.bulkSetByManufacturer,
+      { gearType: 'wetsuit', manufacturer: 'Aqua Lung', cells: { 'S': 0, 'M': 3 } },
+    )
+
+    const grouped = await t.withIdentity({ tokenIdentifier: EM_TOKEN }).query(
+      api.equipmentInventory.listMyInventory,
+      {},
+    )
+    const rows = (grouped.wetsuit ?? []).filter((r) => r.manufacturer === 'Aqua Lung')
+    expect(rows).toHaveLength(1)
+    expect(rows[0].size).toBe('M')
+    expect(rows[0].totalUnits).toBe(3)
+  })
+
+  it('rejects reducing totalUnits below max reserved', async () => {
+    await seedEquipment()
+
+    await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
+      api.equipmentInventory.bulkSetByManufacturer,
+      { gearType: 'bcd', manufacturer: 'ScubaPro', cells: { 'L': 10 } },
+    )
+
+    await t.run(async (ctx) => {
+      const row = (await ctx.db.query('equipmentInventory').collect())
+        .find((r) => r.manufacturer === 'ScubaPro' && r.size === 'L')!
+      await seedSnapshot(ctx, row.inventoryUnitId, {
+        totalUnits: 10,
+        reservedUnits: 4,
+        availableUnits: 6,
+      })
+    })
+
+    await expectConvexError(
+      t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
+        api.equipmentInventory.bulkSetByManufacturer,
+        { gearType: 'bcd', manufacturer: 'ScubaPro', cells: { 'L': 3 } },
+      ),
+      'VALIDATION',
+    )
+  })
+
+  it('rejects deleting rows with active reservations', async () => {
+    await seedEquipment()
+
+    await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
+      api.equipmentInventory.bulkSetByManufacturer,
+      { gearType: 'wetsuit', manufacturer: 'ScubaPro', cells: { 'M': 5 } },
+    )
+
+    await t.run(async (ctx) => {
+      const row = (await ctx.db.query('equipmentInventory').collect())
+        .find((r) => r.manufacturer === 'ScubaPro' && r.size === 'M')!
+      const bookingId = await seedBooking(ctx)
+      const sessionId = await seedSession(ctx, bookingId, row.inventoryUnitId)
+      await seedReservation(ctx, bookingId, row.inventoryUnitId, sessionId, { status: 'Confirmed' })
+    })
+
+    await expectConvexError(
+      t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
+        api.equipmentInventory.bulkSetByManufacturer,
+        { gearType: 'wetsuit', manufacturer: 'ScubaPro', cells: {} },
+      ),
+      'CONFLICT',
+    )
+  })
+
+  it('scopes reconciliation by sizeSystem for fins', async () => {
+    await seedEquipment()
+
+    await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
+      api.equipmentInventory.bulkSetByManufacturer,
+      {
+        gearType: 'fins',
+        manufacturer: 'ScubaPro',
+        sizeSystem: 'eu',
+        cells: { '40-41': 3, '42-43': 3 },
+      },
+    )
+    await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
+      api.equipmentInventory.bulkSetByManufacturer,
+      {
+        gearType: 'fins',
+        manufacturer: 'ScubaPro',
+        sizeSystem: 'us',
+        cells: { '9-10': 2, '11-12': 2 },
+      },
+    )
+
+    await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
+      api.equipmentInventory.bulkSetByManufacturer,
+      {
+        gearType: 'fins',
+        manufacturer: 'ScubaPro',
+        sizeSystem: 'eu',
+        cells: { '40-41': 5 },
+      },
+    )
+
+    const grouped = await t.withIdentity({ tokenIdentifier: EM_TOKEN }).query(
+      api.equipmentInventory.listMyInventory,
+      {},
+    )
+    const finRows = (grouped.fins ?? []).filter((r) => r.manufacturer === 'ScubaPro')
+    const euRows = finRows.filter((r) => r.sizeSystem === 'eu')
+    const usRows = finRows.filter((r) => r.sizeSystem === 'us')
+
+    expect(euRows).toHaveLength(1)
+    expect(euRows[0].size).toBe('40-41')
+    expect(euRows[0].totalUnits).toBe(5)
+
+    expect(usRows).toHaveLength(2)
+    const usBySize = Object.fromEntries(usRows.map((r) => [r.size, r.totalUnits]))
+    expect(usBySize).toEqual({ '9-10': 2, '11-12': 2 })
   })
 })

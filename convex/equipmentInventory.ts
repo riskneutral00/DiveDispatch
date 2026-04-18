@@ -1,7 +1,8 @@
 import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
+import type { Doc, Id } from './_generated/dataModel'
 import { authorize, assertOwnership, requireAuth } from './lib/auth'
-import { gearTypeValidator } from './lib/validators'
+import { gearTypeValidator, finSizeSystemValidator } from './lib/validators'
 import { ErrorCode } from './lib/errorCodes'
 import { isActiveReservation } from './bookings/_shared'
 import { syncManufacturersByGearType } from './lib/equipmentManufacturersSync'
@@ -147,12 +148,153 @@ export const removeItem = mutation({
   },
 })
 
+export const bulkSetByManufacturer = mutation({
+  args: {
+    gearType: gearTypeValidator,
+    manufacturer: v.string(),
+    sizeSystem: v.optional(finSizeSystemValidator),
+    cells: v.record(v.string(), v.number()),
+  },
+  handler: async (ctx, args) => {
+    const { user } = await authorize(ctx, null, 'resource:manage', { type: 'resource', requiredRole: 'Equipment' })
+
+    for (const [size, count] of Object.entries(args.cells)) {
+      if (!Number.isInteger(count) || count < 0) {
+        throw new ConvexError({ code: ErrorCode.VALIDATION, reason: `Invalid unit count for size ${size}` })
+      }
+    }
+
+    if (args.gearType === 'fins' && args.sizeSystem === undefined) {
+      throw new ConvexError({ code: ErrorCode.VALIDATION, reason: 'sizeSystem required for fins' })
+    }
+    if (args.gearType !== 'fins' && args.sizeSystem !== undefined) {
+      throw new ConvexError({ code: ErrorCode.VALIDATION, reason: 'sizeSystem only allowed for fins' })
+    }
+
+    const allRows = await ctx.db
+      .query('equipmentInventory')
+      .withIndex('by_equipmentManagerId', (q) => q.eq('equipmentManagerId', user.slug))
+      .take(500)
+
+    const scopedRows = allRows.filter((r) =>
+      r.gearType === args.gearType &&
+      r.manufacturer === args.manufacturer &&
+      (args.gearType !== 'fins' || r.sizeSystem === args.sizeSystem),
+    )
+
+    const rowsBySize = new Map<string, Doc<'equipmentInventory'>>()
+    for (const row of scopedRows) {
+      if (row.size) rowsBySize.set(row.size, row)
+    }
+
+    const creates: Array<{ size: string; count: number }> = []
+    const updates: Array<{ row: Doc<'equipmentInventory'>; newCount: number }> = []
+    const deletes: Doc<'equipmentInventory'>[] = []
+
+    for (const [size, count] of Object.entries(args.cells)) {
+      const existing = rowsBySize.get(size)
+      if (count > 0 && !existing) {
+        creates.push({ size, count })
+      } else if (count > 0 && existing) {
+        updates.push({ row: existing, newCount: count })
+      } else if (count === 0 && existing) {
+        deletes.push(existing)
+      }
+    }
+
+    for (const row of scopedRows) {
+      if (row.size && !(row.size in args.cells)) {
+        if (!deletes.some((d) => d._id === row._id)) {
+          deletes.push(row)
+        }
+      }
+    }
+
+    for (const { row, newCount } of updates) {
+      const unit = await ctx.db.get(row.inventoryUnitId) // batch-exempt: bounded by matrix cells per manufacturer
+      if (!unit) continue
+      if (newCount < unit.totalUnits) {
+        const snaps = await ctx.db // batch-exempt: bounded by matrix cells per manufacturer
+          .query('availabilitySnapshots')
+          .withIndex('by_inventoryUnitId_date', (q) => q.eq('inventoryUnitId', row.inventoryUnitId))
+          .take(500)
+        const maxReserved = snaps.reduce((m, s) => Math.max(m, s.reservedUnits), 0)
+        if (newCount < maxReserved) {
+          throw new ConvexError({
+            code: ErrorCode.VALIDATION,
+            reason: `Cannot reduce ${args.manufacturer} ${row.size ?? ''} below reserved count (${maxReserved})`,
+          })
+        }
+      }
+    }
+
+    for (const row of deletes) {
+      const reservations = await ctx.db // batch-exempt: bounded by matrix cells per manufacturer
+        .query('reservations')
+        .withIndex('by_inventoryUnitId_status', (q) => q.eq('inventoryUnitId', row.inventoryUnitId))
+        .take(500)
+      if (reservations.some(isActiveReservation)) {
+        throw new ConvexError({
+          code: ErrorCode.CONFLICT,
+          reason: `Cannot remove ${args.manufacturer} ${row.size ?? ''} with active reservations`,
+        })
+      }
+    }
+
+    for (const { size, count } of creates) {
+      const unitId: Id<'inventoryUnits'> = await ctx.db.insert('inventoryUnits', { // batch-exempt: bounded by matrix cells per manufacturer
+        resourceType: 'Equipment',
+        resourceId: user.slug,
+        displayName: `${args.gearType} - ${args.manufacturer} (${size})`,
+        capacityModel: 'Pooled',
+        totalUnits: count,
+        ownerId: user.slug,
+        ownerType: 'Equipment',
+      })
+      await ctx.db.insert('equipmentInventory', { // batch-exempt: bounded by matrix cells per manufacturer
+        inventoryUnitId: unitId,
+        equipmentManagerId: user.slug,
+        gearType: args.gearType,
+        manufacturer: args.manufacturer,
+        size,
+        ...(args.sizeSystem !== undefined ? { sizeSystem: args.sizeSystem } : {}),
+      })
+    }
+
+    for (const { row, newCount } of updates) {
+      await ctx.db.patch(row.inventoryUnitId, { totalUnits: newCount }) // batch-exempt: bounded by matrix cells per manufacturer
+      const snaps = await ctx.db // batch-exempt: bounded by matrix cells per manufacturer
+        .query('availabilitySnapshots')
+        .withIndex('by_inventoryUnitId_date', (q) => q.eq('inventoryUnitId', row.inventoryUnitId))
+        .take(500)
+      for (const snap of snaps) {
+        await ctx.db.patch(snap._id, { // batch-exempt: bounded by snapshots per unit
+          totalUnits: newCount,
+          availableUnits: newCount - snap.reservedUnits,
+        })
+      }
+    }
+
+    for (const row of deletes) {
+      await ctx.db.delete(row.inventoryUnitId) // batch-exempt: bounded by matrix cells per manufacturer
+      await ctx.db.delete(row._id) // batch-exempt: bounded by matrix cells per manufacturer
+    }
+
+    if (creates.length > 0 || deletes.length > 0) {
+      await syncManufacturersByGearType(ctx, user.slug)
+    }
+
+    return { created: creates.length, updated: updates.length, deleted: deletes.length }
+  },
+})
+
 export type InventoryItemWithUnits = {
   _id: string
   inventoryUnitId: string
   gearType: string
   manufacturer?: string
   size?: string
+  sizeSystem?: 'eu' | 'us' | 'cm' | 'letter'
   diopter?: number
   isPrescription?: boolean
   totalUnits: number
@@ -186,6 +328,7 @@ export const listMyInventory = query({
         gearType: item.gearType,
         manufacturer: item.manufacturer,
         size: item.size,
+        sizeSystem: item.sizeSystem,
         diopter: item.diopter,
         isPrescription: item.isPrescription,
         totalUnits: unit ? unit.totalUnits : 0,

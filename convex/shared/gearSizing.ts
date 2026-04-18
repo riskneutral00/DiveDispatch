@@ -92,3 +92,24 @@ export const GEAR_TYPE_LABELS: Record<GearType, string> = {
   mask: 'Mask',
   regulator: 'Regulator',
 };
+
+export const FIN_SIZE_SYSTEMS = ['eu', 'us', 'cm', 'letter'] as const;
+export type FinSizeSystem = (typeof FIN_SIZE_SYSTEMS)[number];
+
+export const FIN_SIZES_EU = ['36-37', '38-39', '40-41', '42-43', '44-45', '46-47'] as const;
+export const FIN_SIZES_US = ['5-6', '7-8', '9-10', '11-12', '13-14'] as const;
+export const FIN_SIZES_CM = ['22', '23', '24', '25', '26', '27', '28', '29', '30'] as const;
+export const FIN_SIZES_LETTER = ['XS', 'S', 'M', 'L', 'XL'] as const;
+
+export function finSizesFor(system: FinSizeSystem): readonly string[] {
+  if (system === 'eu') return FIN_SIZES_EU;
+  if (system === 'us') return FIN_SIZES_US;
+  if (system === 'cm') return FIN_SIZES_CM;
+  return FIN_SIZES_LETTER;
+}
+
+export type MatrixGearType = Exclude<GearType, 'mask' | 'regulator'>;
+
+export function isMatrixGearType(g: GearType): g is MatrixGearType {
+  return g !== 'mask' && g !== 'regulator';
+}

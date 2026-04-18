@@ -19,8 +19,13 @@ describe('isGearItemComplete', () => {
     expect(isGearItemComplete({ manufacturer: 'Apeks' }, 'regulator')).toBe(false)
   })
 
+  it('mask does not require size', () => {
+    expect(isGearItemComplete({ manufacturer: 'Aqua Lung', totalUnits: 4 }, 'mask')).toBe(true)
+    expect(isGearItemComplete({ manufacturer: 'Aqua Lung' }, 'mask')).toBe(false)
+  })
+
   it('mask with isPrescription=true requires diopter', () => {
-    const base = { manufacturer: 'Aqua Lung', size: 'Standard', totalUnits: 4 }
+    const base = { manufacturer: 'Aqua Lung', totalUnits: 4 }
     expect(isGearItemComplete({ ...base, isPrescription: false }, 'mask')).toBe(true)
     expect(isGearItemComplete({ ...base, isPrescription: true }, 'mask')).toBe(false)
     expect(isGearItemComplete({ ...base, isPrescription: true, diopter: -2 }, 'mask')).toBe(true)
