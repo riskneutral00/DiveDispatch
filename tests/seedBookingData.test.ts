@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { generateCustomers, generateAllSeedData } from '../convex/seedBookingData'
+import { generateCustomers, generateAllSeedData } from '../convex/seedBookingData.parked'
 
 describe('generateCustomers', () => {
   const customers = generateCustomers()

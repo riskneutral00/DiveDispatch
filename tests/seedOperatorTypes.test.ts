@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { PARKED_STAKEHOLDERS, ANDAMAN_EXPLORER, CORAL_BAY_RESORT, AMANDA } from '../convex/seedData'
-import { BOOKING_CONFIGS } from '../convex/seedBookingData'
+import { BOOKING_CONFIGS } from '../convex/seedBookingData.parked'
 import packageJson from '../package.json'
 
 describe('Non-DiveCenter operator seed data', () => {
