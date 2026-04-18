@@ -5,6 +5,7 @@ import { OPERATOR_ROLE_SET } from './auth'
 import { profileBySlug } from './profileHelpers'
 import { ROLE_TABLE_MAP } from './profileHelpers'
 import { AOW_REQUIRED_SPECIALTY_COUNT } from '../shared/agencies'
+import { evaluateGearInventoryCompleteness } from './equipmentGearCompleteness'
 
 export async function checkProfileCompleteness(
   ctx: QueryCtx,
@@ -92,6 +93,12 @@ export async function checkProfileCompleteness(
       const fleet = profile.fleet as Array<{ routes?: Array<{ diveSite: string }> }> | undefined
       const hasDiveSite = fleet?.some(f => f.routes?.some(r => r.diveSite))
       if (!hasDiveSite) incomplete.push(field)
+      continue
+    }
+
+    if (role === 'Equipment' && field === 'gearInventory') {
+      const incompleteGearTypes = await evaluateGearInventoryCompleteness(ctx, userDoc.slug)
+      if (incompleteGearTypes.length > 0) incomplete.push(field)
       continue
     }
 

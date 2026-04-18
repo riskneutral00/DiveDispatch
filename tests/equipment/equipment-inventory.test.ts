@@ -3,6 +3,7 @@ import { api } from '../../convex/_generated/api'
 import { makeT, expectConvexError } from '../helpers/convex-helpers'
 import { seedUser, seedInventoryUnit, seedEquipmentProfile, TEST_SLUGS, TEST_TOKENS } from '../fixtures'
 import type { Id } from '../../convex/_generated/dataModel'
+import { evaluateGearInventoryCompleteness } from '../../convex/lib/equipmentGearCompleteness'
 
 const EM_TOKEN = 'test|em-user'
 const EM_SLUG = TEST_SLUGS.em
@@ -342,6 +343,63 @@ describe('equipmentInventory', () => {
 
       const after = await auth.query(api.equipment.mine, {})
       expect(after?.manufacturersByGearType?.regulator).toEqual(['Atomic'])
+    })
+  })
+
+  describe('gearInventoryCompleteness', () => {
+    it('reports all five gear types as incomplete when inventory is empty', async () => {
+      const t = makeT()
+      await seedEM(t)
+
+      const incomplete = await t.run(async (ctx) =>
+        evaluateGearInventoryCompleteness(ctx, EM_SLUG),
+      )
+
+      expect(incomplete.sort()).toEqual(['bcd', 'fins', 'mask', 'regulator', 'wetsuit'])
+    })
+
+    it('keeps wetsuit incomplete when the only row lacks a size', async () => {
+      const t = makeT()
+      await seedEM(t)
+      const auth = t.withIdentity({ tokenIdentifier: EM_TOKEN })
+
+      await auth.mutation(api.equipmentInventory.addItem, {
+        gearType: 'wetsuit',
+        manufacturer: 'ScubaPro',
+        totalUnits: 3,
+      })
+
+      const incomplete = await t.run(async (ctx) =>
+        evaluateGearInventoryCompleteness(ctx, EM_SLUG),
+      )
+      expect(incomplete).toContain('wetsuit')
+    })
+
+    it('returns empty when each gear type has at least one complete row', async () => {
+      const t = makeT()
+      await seedEM(t)
+      const auth = t.withIdentity({ tokenIdentifier: EM_TOKEN })
+
+      await auth.mutation(api.equipmentInventory.addItem, {
+        gearType: 'wetsuit', manufacturer: 'ScubaPro', size: 'M', totalUnits: 5,
+      })
+      await auth.mutation(api.equipmentInventory.addItem, {
+        gearType: 'bcd', manufacturer: 'ScubaPro', size: 'M', totalUnits: 4,
+      })
+      await auth.mutation(api.equipmentInventory.addItem, {
+        gearType: 'fins', manufacturer: 'Cressi', size: 'EU 42', totalUnits: 6,
+      })
+      await auth.mutation(api.equipmentInventory.addItem, {
+        gearType: 'mask', manufacturer: 'Aqua Lung', size: 'Standard', totalUnits: 8,
+      })
+      await auth.mutation(api.equipmentInventory.addItem, {
+        gearType: 'regulator', manufacturer: 'Apeks', totalUnits: 3,
+      })
+
+      const incomplete = await t.run(async (ctx) =>
+        evaluateGearInventoryCompleteness(ctx, EM_SLUG),
+      )
+      expect(incomplete).toEqual([])
     })
   })
 })

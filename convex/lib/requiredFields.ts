@@ -9,7 +9,7 @@ export const ROLE_REQUIRED: Record<string, readonly string[]> = {
   Agent: ['name', 'placeName', 'country', 'associations', 'customerLanguages'],
   Instructor: DIVE_STAFF_REQUIRED,
   Boat: ['name', 'placeName', 'diveSite', 'fleet'],
-  Equipment: ['name', 'placeName'],
+  Equipment: ['name', 'placeName', 'gearInventory'],
   Pool: ['name', 'placeName'],
   Compressor: ['name', 'placeName', 'gasMixes'],
   DiveSite: ['name', 'placeName', 'country', 'diveSiteTypes'],
