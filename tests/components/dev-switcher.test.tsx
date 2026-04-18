@@ -16,15 +16,17 @@ import { render, screen, fireEvent, waitFor } from '../helpers/render'
 const mockSwitchUser = vi.fn()
 const mockSetContextSwitching = vi.fn()
 
+const mockAllUsers = [
+  { slug: 'center-slug', firstName: 'Center', lastName: 'Owner', name: 'Center Owner', roles: ['DiveCenter'] },
+]
+
 vi.mock('convex/react', async (importOriginal) => {
   const actual = await importOriginal<typeof import('convex/react')>()
   return {
     ...actual,
     useConvexAuth: () => ({ isLoading: false, isAuthenticated: true }),
     useMutation: () => mockSwitchUser,
-    useQuery: () => [
-      { slug: 'center-slug', firstName: 'Center', lastName: 'Owner', name: 'Center Owner', roles: ['DiveCenter'] },
-    ],
+    useQuery: () => mockAllUsers,
   }
 })
 
