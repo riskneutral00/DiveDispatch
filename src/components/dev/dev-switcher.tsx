@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useMutation, useQuery } from 'convex/react'
+import { useConvexAuth, useMutation, useQuery } from 'convex/react'
 import { Bug, Loader2, ArrowRight, Check } from 'lucide-react'
 import { api } from '@/lib/convex-generated'
 import { useCurrentUser } from '@/lib/hooks/use-current-user'
@@ -30,6 +30,12 @@ type DevUser = {
 
 export function DevSwitcher() {
   if (process.env.NODE_ENV !== 'development') return null
+  return <DevSwitcherGate />
+}
+
+function DevSwitcherGate() {
+  const { isAuthenticated } = useConvexAuth()
+  if (!isAuthenticated) return null
   return <DevSwitcherInner />
 }
 
@@ -58,9 +64,13 @@ function groupByRole(users: DevUser[]): Map<RoleKey, DevUser[]> {
 }
 
 function DevSwitcherInner() {
+  const { isAuthenticated } = useConvexAuth()
   const { user } = useCurrentUser()
   const switchUser = useMutation(api.devSwitcher.devSwitchUser)
-  const allUsers = useQuery(api.devSwitcher.listAllUsers)
+  const allUsers = useQuery(
+    api.devSwitcher.listAllUsers,
+    isAuthenticated ? {} : 'skip',
+  )
   const { setSwitching: setContextSwitching } = useDevSwitching()
   const [open, setOpen] = useState(false)
   const [switching, setSwitching] = useState<string | null>(null)
