@@ -233,8 +233,7 @@ export const ROLES: RoleConfig[] = [
     description: 'Supply rental gear and manage inventory across dive bookings.',
     profileTabs: [
       { id: 'contact', label: 'Contact' },
-      { id: 'gear-catalog', label: 'Gear Catalog' },
-      { id: 'inventory', label: 'Inventory' },
+      { id: 'gear', label: 'Gear' },
       { id: 'booking', label: 'Booking' },
     ],
   },

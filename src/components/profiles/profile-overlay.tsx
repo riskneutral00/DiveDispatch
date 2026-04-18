@@ -13,7 +13,7 @@ import { ROLE_BY_KEY } from '@/lib/constants/roles'
 import { RoleProfileForm } from '@/components/profiles/connected-role-forms'
 import { ManageRolesConnected } from '@/components/account/manage-roles-connected'
 import { DashboardPageFrame } from '@/components/layout/dashboard-page-frame'
-import { ConnectedEquipmentInventory } from '@/components/inventory/connected-equipment-inventory'
+import { ConnectedEquipmentGear } from '@/components/inventory/connected-equipment-gear'
 import { PreferencesEditor } from '@/components/account/preferences-editor'
 
 export type ProfileOverlayTab = 'profile' | 'roles' | `role:${RoleKey}`
@@ -86,8 +86,8 @@ export function ProfileOverlay({ open, onClose, initialTab = 'profile', roleSlug
     if (!activeRoleKey) return null
 
     if (activeSection && OVERLAY_ONLY_SECTIONS.has(activeSection)) {
-      if (activeSection === 'inventory') {
-        return <ConnectedEquipmentInventory />
+      if (activeSection === 'gear') {
+        return <ConnectedEquipmentGear />
       }
       if (activeSection === 'booking' || activeSection === 'resources') {
         return <PreferencesEditor section={activeSection} roleSlug={activeRoleKey} onClose={onClose} />

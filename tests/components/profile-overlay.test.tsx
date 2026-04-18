@@ -45,8 +45,8 @@ vi.mock('@/components/layout/dashboard-page-frame', () => ({
     <div data-testid="dashboard-page-frame" className={className}>{children}</div>
   ),
 }))
-vi.mock('@/components/inventory/connected-equipment-inventory', () => ({
-  ConnectedEquipmentInventory: () => null,
+vi.mock('@/components/inventory/connected-equipment-gear', () => ({
+  ConnectedEquipmentGear: () => null,
 }))
 vi.mock('@/components/account/preferences-editor', () => ({
   PreferencesEditor: () => null,

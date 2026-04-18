@@ -136,10 +136,6 @@ export const compressorGasMixesSchema = z
     { message: 'Nitrox range required (min ≤ max, 22–40%)', path: ['nitroxMin'] },
   )
 
-export const equipmentGearCatalogSchema = z.object({
-  manufacturersByGearType: z.record(z.string(), z.array(z.string())),
-})
-
 export const poolCapabilitiesSchema = z.object({
   maxDepth: z.number().positive('Must be greater than 0'),
   maxCapacity: z.number().int('Must be a whole number').positive('Must be at least 1'),

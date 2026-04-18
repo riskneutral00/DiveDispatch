@@ -12,10 +12,10 @@ describe('OVERLAY_ONLY_SECTIONS export', () => {
     expect(OVERLAY_ONLY_SECTIONS).toBeInstanceOf(Set)
   })
 
-  it('contains booking, resources, inventory', () => {
+  it('contains booking, resources, gear', () => {
     expect(OVERLAY_ONLY_SECTIONS.has('booking')).toBe(true)
     expect(OVERLAY_ONLY_SECTIONS.has('resources')).toBe(true)
-    expect(OVERLAY_ONLY_SECTIONS.has('inventory')).toBe(true)
+    expect(OVERLAY_ONLY_SECTIONS.has('gear')).toBe(true)
   })
 
   it('has exactly 3 members', () => {
@@ -84,21 +84,27 @@ describe('Non-operator roles do not have resources tab', () => {
   }
 })
 
-describe('Equipment role has inventory tab', () => {
-  it('equipment tabs include inventory', () => {
+describe('Equipment role has gear tab', () => {
+  it('equipment tabs include gear', () => {
     const ids = tabIds('equipment')
-    expect(ids).toContain('inventory')
+    expect(ids).toContain('gear')
   })
 
-  it('equipment has inventory before booking', () => {
+  it('equipment has gear before booking', () => {
     const ids = tabIds('equipment')
-    const inventoryIdx = ids.indexOf('inventory')
+    const gearIdx = ids.indexOf('gear')
     const bookingIdx = ids.indexOf('booking')
-    expect(inventoryIdx).toBeLessThan(bookingIdx)
+    expect(gearIdx).toBeLessThan(bookingIdx)
+  })
+
+  it('equipment no longer has gear-catalog or inventory tabs', () => {
+    const ids = tabIds('equipment')
+    expect(ids).not.toContain('gear-catalog')
+    expect(ids).not.toContain('inventory')
   })
 })
 
-describe('Non-equipment roles do not have inventory tab', () => {
+describe('Non-equipment roles do not have gear tab', () => {
   const nonEquipmentRoles: RoleKey[] = [
     'dive-center',
     'agent',
@@ -110,9 +116,9 @@ describe('Non-equipment roles do not have inventory tab', () => {
   ]
 
   for (const role of nonEquipmentRoles) {
-    it(`${role} tabs do not include inventory`, () => {
+    it(`${role} tabs do not include gear`, () => {
       const ids = tabIds(role)
-      expect(ids).not.toContain('inventory')
+      expect(ids).not.toContain('gear')
     })
   }
 })

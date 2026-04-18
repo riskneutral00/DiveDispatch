@@ -57,8 +57,7 @@ describe('PROFILE_REGISTRY', () => {
     expect(PROFILE_REGISTRY.equipment.tabs).not.toBeNull()
     expect(PROFILE_REGISTRY.equipment.tabs).toEqual([
       { id: 'contact', label: 'Contact' },
-      { id: 'gear-catalog', label: 'Gear Catalog' },
-      { id: 'inventory', label: 'Inventory' },
+      { id: 'gear', label: 'Gear' },
       { id: 'booking', label: 'Booking' },
     ])
   })
