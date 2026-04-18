@@ -4,6 +4,7 @@ import { makeT, expectConvexError } from '../helpers/convex-helpers'
 import { seedUser, seedInventoryUnit, seedEquipmentProfile, TEST_SLUGS, TEST_TOKENS } from '../fixtures'
 import type { Id } from '../../convex/_generated/dataModel'
 import { evaluateGearInventoryCompleteness } from '../../convex/lib/equipmentGearCompleteness'
+import { checkProfileCompleteness } from '../../convex/lib/profileCompleteness'
 
 const EM_TOKEN = 'test|em-user'
 const EM_SLUG = TEST_SLUGS.em
@@ -400,6 +401,26 @@ describe('equipmentInventory', () => {
         evaluateGearInventoryCompleteness(ctx, EM_SLUG),
       )
       expect(incomplete).toEqual([])
+    })
+
+    it('drops Equipment profile completeness below 100% when inventory is empty', async () => {
+      const t = makeT()
+      const userId = await t.run(async (ctx) => {
+        const id = await seedUser(ctx, {
+          tokenIdentifier: EM_TOKEN,
+          slug: EM_SLUG,
+          role: 'Equipment',
+        })
+        await seedEquipmentProfile(ctx, id)
+        return id
+      })
+
+      const status = await t.run(async (ctx) =>
+        checkProfileCompleteness(ctx, { _id: userId }, 'Equipment'),
+      )
+
+      expect(status.incomplete).toContain('gearInventory')
+      expect(status.percentage).toBeLessThan(100)
     })
   })
 })

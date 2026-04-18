@@ -44,11 +44,12 @@ export function ItemCard({
             aria-label={saveAriaLabel}
             disabled={!canSave || saving}
             className="flex-shrink-0 -mt-1"
+            style={saved ? { background: 'var(--color-active-fg)', borderColor: 'var(--color-active-fg)' } : undefined}
           >
             {saving ? (
               <Loader2 size={14} className="animate-spin" />
             ) : saved ? (
-              <Check size={14} className="text-success" />
+              <Check size={14} className="text-on-primary" />
             ) : (
               <Save size={14} />
             )}

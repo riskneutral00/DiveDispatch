@@ -180,7 +180,13 @@ export function ConnectedEquipmentGear() {
           </>
         )}
 
-        <Button type="button" variant="secondary" size="sm" onClick={handleAddDraft}>
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          onClick={handleAddDraft}
+          disabled={activeDrafts.length > 0}
+        >
           <Plus size={14} />
           {tBooking('addGearType', { type: activeLabel })}
         </Button>
@@ -406,7 +412,7 @@ function GearItemCard({ kind, gearType, recentManufacturers, initial, onCommit, 
             label={tBooking('size')}
             value={size}
             onChange={(e) => setSize(e.target.value)}
-            className="w-16"
+            className="field-select-short"
             required={needsSize}
           />
         )}
