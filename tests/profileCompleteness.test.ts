@@ -8,6 +8,7 @@ import {
   seedDiveCenterProfile,
   seedInstructorProfile,
   seedEquipmentProfile,
+  seedCompleteGearInventory,
   seedAgent,
   seedBoatProfile,
   seedStakeholderPreferences,
@@ -30,6 +31,7 @@ describe('checkProfileCompleteness', () => {
       // Set profile-layer and settings-layer fields
       await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
       await seedEquipmentProfile(ctx, userId)
+      await seedCompleteGearInventory(ctx, TEST_SLUGS.diveCenter)
 
       const result = await checkProfileCompleteness(ctx, { _id: userId }, 'Equipment')
 
@@ -129,20 +131,16 @@ describe('checkProfileCompleteness', () => {
 
   it('percentage correct across all three layers', async () => {
     await t.run(async (ctx) => {
-      // Equipment role required: name, placeName (2 role fields)
-      // Profile required: firstName, lastName, email, phone (4)
-      // Settings required: appLanguage (1)
-      // Total: 7
-      // Missing: appLanguage + phone = 2 missing -> 5/7 filled = 71%
       const userId = await seedUser(ctx, {
         role: 'Equipment',
       })
       await ctx.db.patch(userId, { appLanguage: '', phone: '' })
       await seedEquipmentProfile(ctx, userId)
+      await seedCompleteGearInventory(ctx, TEST_SLUGS.diveCenter)
 
       const result = await checkProfileCompleteness(ctx, { _id: userId }, 'Equipment')
 
-      expect(result.percentage).toBe(75)
+      expect(result.percentage).toBe(78)
       expect(result.incomplete).toHaveLength(2)
       expect(result.incomplete).toContain('appLanguage')
       expect(result.incomplete).toContain('phone')
@@ -277,6 +275,7 @@ describe('checkAllRolesCompleteness', () => {
       const userId = await seedUser(ctx, { role: 'Equipment' })
       await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
       await seedEquipmentProfile(ctx, userId)
+      await seedCompleteGearInventory(ctx, TEST_SLUGS.diveCenter)
 
       const result = await checkAllRolesCompleteness(ctx, userId)
 
@@ -291,6 +290,7 @@ describe('checkAllRolesCompleteness', () => {
       const userId = await seedUser(ctx, { role: 'Equipment' })
       await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
       await seedEquipmentProfile(ctx, userId)
+      await seedCompleteGearInventory(ctx, TEST_SLUGS.diveCenter)
       // Add incomplete Instructor role (no profile)
       await ctx.db.insert('userRoles', {
         userId,
@@ -318,6 +318,7 @@ describe('getProfileCompletionForRole query', () => {
       const userId = await seedUser(ctx, { role: 'Equipment' })
       await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
       await seedEquipmentProfile(ctx, userId)
+      await seedCompleteGearInventory(ctx, TEST_SLUGS.diveCenter)
     })
 
     const result = await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter })

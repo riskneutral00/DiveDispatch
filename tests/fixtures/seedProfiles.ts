@@ -1,4 +1,5 @@
 import type { Doc, Id } from '../../convex/_generated/dataModel'
+import { GEAR_TYPES, type GearType } from '../../convex/shared/gearSizing'
 import type { SeedCtx } from './seedUsers'
 
 export async function seedDiveCenterProfile(
@@ -209,4 +210,32 @@ export async function seedEquipmentProfile(
     phone: overrides.phone ?? '+66123456789',
     verified: overrides.verified ?? true,
   })
+}
+
+export async function seedCompleteGearInventory(
+  ctx: SeedCtx,
+  equipmentManagerSlug: string,
+) {
+  const MANUFACTURER = 'ScubaPro'
+  const TOTAL_UNITS = 5
+  const getSize = (gt: GearType): string | undefined => (gt === 'regulator' ? undefined : 'M')
+  for (const gearType of GEAR_TYPES) {
+    const size = getSize(gearType)
+    const unitId = await ctx.db.insert('inventoryUnits', {
+      resourceType: 'Equipment',
+      resourceId: equipmentManagerSlug,
+      displayName: `${gearType} ${MANUFACTURER}${size ? ` ${size}` : ''}`,
+      capacityModel: 'Pooled',
+      totalUnits: TOTAL_UNITS,
+      ownerId: equipmentManagerSlug,
+      ownerType: 'Equipment',
+    })
+    await ctx.db.insert('equipmentInventory', {
+      inventoryUnitId: unitId,
+      equipmentManagerId: equipmentManagerSlug,
+      gearType,
+      manufacturer: MANUFACTURER,
+      size,
+    })
+  }
 }

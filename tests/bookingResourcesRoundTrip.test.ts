@@ -16,7 +16,7 @@ import { api } from '../convex/_generated/api'
 import type { Id } from '../convex/_generated/dataModel'
 import { HOLD_TTL_MS as HOLD_TTL } from '../convex/lib/auth'
 import { testDate } from './helpers/dates'
-import { seedUser, seedInstructorProfile, seedEquipmentProfile, seedDiveCenterProfile, type SeedCtx } from './fixtures'
+import { seedUser, seedInstructorProfile, seedEquipmentProfile, seedCompleteGearInventory, seedDiveCenterProfile, type SeedCtx } from './fixtures'
 import { makeT } from './helpers/convex-helpers'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -97,6 +97,7 @@ describe('bookingResources round-trip lifecycle', () => {
         await seedInstructorProfile(ctx, instUserId)
         const emUserId = await seedUser(ctx, { slug: 'em-1', tokenIdentifier: 'clerk|em-1', role: 'Equipment' })
         await seedEquipmentProfile(ctx, emUserId)
+        await seedCompleteGearInventory(ctx, 'em-1')
 
         const instUnitId = await seedInstructorUnit(ctx, 'inst-1')
         const emUnitId = await seedEquipmentUnit(ctx, 'em-1')
@@ -198,6 +199,7 @@ describe('bookingResources round-trip lifecycle', () => {
         await seedInstructorProfile(ctx, instUserId2)
         const emUserId2 = await seedUser(ctx, { slug: 'em-1', tokenIdentifier: 'clerk|em-1', role: 'Equipment', name: 'em-1 Display' })
         await seedEquipmentProfile(ctx, emUserId2)
+        await seedCompleteGearInventory(ctx, 'em-1')
 
         const instUnitId = await seedInstructorUnit(ctx, 'inst-1')
         const emUnitId = await seedEquipmentUnit(ctx, 'em-1')
@@ -291,6 +293,7 @@ describe('bookingResources round-trip lifecycle', () => {
         await seedInstructorProfile(ctx, instUserId)
         const emUserId = await seedUser(ctx, { slug: 'em-1', tokenIdentifier: 'clerk|em-1', role: 'Equipment' })
         await seedEquipmentProfile(ctx, emUserId)
+        await seedCompleteGearInventory(ctx, 'em-1')
 
         const instUnitId = await seedInstructorUnit(ctx, 'inst-1')
         const emUnitId = await seedEquipmentUnit(ctx, 'em-1')
@@ -372,6 +375,7 @@ describe('bookingResources round-trip lifecycle', () => {
         await seedInstructorProfile(ctx, instUserId)
         const emUserId = await seedUser(ctx, { slug: 'em-1', tokenIdentifier: 'clerk|em-1', role: 'Equipment' })
         await seedEquipmentProfile(ctx, emUserId)
+        await seedCompleteGearInventory(ctx, 'em-1')
 
         const instUnitId = await seedInstructorUnit(ctx, 'inst-1')
         const emUnitId = await seedEquipmentUnit(ctx, 'em-1')
@@ -494,6 +498,7 @@ describe('bookingResources round-trip lifecycle', () => {
         await seedInstructorProfile(ctx, instUserId)
         const emUserId = await seedUser(ctx, { slug: 'em-1', tokenIdentifier: 'clerk|em-1', role: 'Equipment' })
         await seedEquipmentProfile(ctx, emUserId)
+        await seedCompleteGearInventory(ctx, 'em-1')
 
         const instUnitId = await seedInstructorUnit(ctx, 'inst-1')
         const emUnitId = await seedEquipmentUnit(ctx, 'em-1')

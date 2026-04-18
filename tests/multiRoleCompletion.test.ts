@@ -4,6 +4,7 @@ import {
   seedUser,
   seedDiveCenterProfile,
   seedEquipmentProfile,
+  seedCompleteGearInventory,
   type SeedCtx,
 } from './fixtures'
 import { makeT } from './helpers/convex-helpers'
@@ -23,6 +24,7 @@ async function seedCompleteEquipment(ctx: SeedCtx, slug: string) {
   // Set profile-layer and settings-layer fields on users table
   await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
   await seedEquipmentProfile(ctx, userId)
+  await seedCompleteGearInventory(ctx, slug)
   return userId
 }
 

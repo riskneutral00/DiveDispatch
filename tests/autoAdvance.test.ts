@@ -15,6 +15,7 @@ import {
   seedBookingResource,
   seedBookingLink,
   seedEquipmentProfile,
+  seedCompleteGearInventory,
   type SeedCtx,
 } from './fixtures'
 import { makeT } from './helpers/convex-helpers'
@@ -240,6 +241,7 @@ describe('tryAutoAdvance — trigger points', () => {
       await seedUser(ctx, { slug: 'dc-slug', tokenIdentifier: 'clerk|dc-slug', role: 'DiveCenter' })
       const emUserId = await seedUser(ctx, { slug: 'em-slug', tokenIdentifier: 'clerk|em-slug', role: 'Equipment' })
       await seedEquipmentProfile(ctx, emUserId)
+      await seedCompleteGearInventory(ctx, 'em-slug')
       const unitId = await seedInventoryUnit(ctx, {
         resourceType: 'Equipment',
         ownerId: 'em-slug',

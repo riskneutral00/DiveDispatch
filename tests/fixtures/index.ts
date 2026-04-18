@@ -20,5 +20,6 @@ export {
   seedDiveMasterProfile,
   seedBoatProfile,
   seedEquipmentProfile,
+  seedCompleteGearInventory,
 } from './seedProfiles'
 export { seedStakeholderPreferences } from './seedStakeholders'
