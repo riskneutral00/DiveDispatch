@@ -8,7 +8,6 @@ export type { StakeholderRole }
 
 export const PHUKET = { placeName: 'Phuket', country: 'Thailand', lat: 7.8804, lng: 98.3923 } as const
 const CHALONG = { placeName: 'Phuket', country: 'Thailand', lat: 7.8386, lng: 98.3519 } as const
-const KATA = { placeName: 'Phuket', country: 'Thailand', lat: 7.8202, lng: 98.3062 } as const
 const VERIFIED = true
 
 const PADI_PREFS = { owDays: 3, aowDays: 2, oaDays: 4, selectedSpecialties: ['Deep', 'Drift', 'Wreck', 'Navigation'] }
@@ -122,6 +121,10 @@ interface CompressorProfile {
   email: string
   phone: string
   gasMixes?: GasMixType[]
+  nitroxMin?: number
+  nitroxMax?: number
+  isAllowed?: string[]
+  notAllowed?: string[]
   verified: boolean
 }
 
@@ -156,6 +159,8 @@ interface AgentProfile {
   email: string
   phone: string
   associations: { agency: string; number: string }[]
+  isAllowed?: string[]
+  notAllowed?: string[]
   verified: boolean
 }
 
@@ -900,48 +905,6 @@ export const ANDAMAN_EXPLORER: SeedStakeholder = {
   },
 }
 
-export const CHALONG_COMPRESSOR: SeedStakeholder = {
-  user: {
-    slug: 'x4kp2m',
-    email: 'compressor-chalong+clerk_test@divedispatch.dev',
-    name: 'Sombat Charoensuk',
-    firstName: 'Sombat',
-    lastName: 'Charoensuk',
-    appLanguage: 'th',
-    phone: '+66-81-234-5014',
-  },
-  roles: [{ role: 'Compressor' }],
-  compressor: {
-    name: 'Compressor Shop Chalong Pier',
-    ...CHALONG,
-    email: 'compressor-chalong@divedispatch.dev',
-    phone: '+66-76-395-001',
-    gasMixes: ['air', 'nitrox'],
-    verified: VERIFIED,
-  },
-}
-
-export const SCUBA_MARKET: SeedStakeholder = {
-  user: {
-    slug: 'q7sm3k',
-    email: 'scuba-market+clerk_test@divedispatch.dev',
-    name: 'Prawit Suksawat',
-    firstName: 'Prawit',
-    lastName: 'Suksawat',
-    appLanguage: 'th',
-    phone: '+66-76-330-345',
-  },
-  roles: [{ role: 'Compressor' }],
-  compressor: {
-    name: 'Scuba Market Thailand',
-    ...KATA,
-    email: 'scuba-market@divedispatch.dev',
-    phone: '+66-76-330-345',
-    gasMixes: ['air', 'nitrox'],
-    verified: VERIFIED,
-  },
-}
-
 export const CORAL_BAY_RESORT: SeedStakeholder = {
   user: {
     slug: 'j2dn9f',
@@ -1047,6 +1010,89 @@ export const UNOWNED_DIVE_SITES: SeedDiveSite[] = [
   { name: 'Kata Beach', slug: 'kata-beach', capacity: 50 },
 ]
 
+export const RESTORED_PRAWIT: SeedStakeholder = {
+  user: {
+    slug: 'wkxhew',
+    email: 'scuba-market+clerk_test@divedispatch.dev',
+    name: 'Prawit Suksawat',
+    firstName: 'Prawit',
+    lastName: 'Suksawat',
+    appLanguage: 'th-TH',
+    phone: '+6676330345',
+    dateOfBirth: '1975-08-12',
+  },
+  roles: [{ role: 'Compressor' }],
+  compressor: {
+    name: 'Scuba Market Thailand',
+    placeName: 'Wat Kitti Sangkharam, 44 Thanon Kata, Tambon Karon, Amphoe Mueang Phuket, Chang Wat Phuket 83100',
+    country: 'Thailand',
+    lat: 7.8215228,
+    lng: 98.3062015,
+    email: 'scuba-market+clerk_test@divedispatch.dev',
+    phone: '+6676330345',
+    gasMixes: ['air', 'nitrox'],
+    nitroxMin: 32,
+    nitroxMax: 32,
+    isAllowed: [],
+    notAllowed: [],
+    verified: false,
+  },
+}
+
+export const RESTORED_SOMBAT: SeedStakeholder = {
+  user: {
+    slug: 'h0a5zl',
+    email: 'compressor-chalong+clerk_test@divedispatch.dev',
+    name: 'Sombat Charoensuk',
+    firstName: 'Sombat',
+    lastName: 'Charoensuk',
+    appLanguage: 'th-TH',
+    phone: '+6676395001',
+    dateOfBirth: '1982-04-20',
+  },
+  roles: [{ role: 'Compressor' }],
+  compressor: {
+    name: 'Compressor Shop Chalong Pier',
+    placeName: 'Asian Divers, Wiset Rd, Tambon Karon, Amphoe Mueang Phuket, Chang Wat Phuket 83100',
+    country: 'Thailand',
+    lat: 7.8203607,
+    lng: 98.3423974,
+    email: 'compressor-chalong+clerk_test@divedispatch.dev',
+    phone: '+66812345014',
+    gasMixes: ['air', 'nitrox'],
+    nitroxMin: 32,
+    nitroxMax: 32,
+    isAllowed: [],
+    notAllowed: [],
+    verified: false,
+  },
+}
+
+export const RESTORED_ALEX: SeedStakeholder = {
+  user: {
+    slug: 'ax3k7p',
+    email: 'ax3k7p+clerk_test@divedispatch.dev',
+    name: 'Alex Walker',
+    firstName: 'Alex',
+    lastName: 'Walker',
+    appLanguage: 'en-GB',
+    phone: '+66819001234',
+    dateOfBirth: '1992-04-17',
+    customerLanguages: ['en'],
+  },
+  roles: [{ role: 'Agent' }],
+  agent: {
+    name: 'Alex Walker',
+    ...PHUKET,
+    email: 'ax3k7p+clerk_test@divedispatch.dev',
+    phone: '+66819001234',
+    associations: [{ agency: 'PADI', number: 'PAD-AG-70001' }],
+    isAllowed: [],
+    notAllowed: [],
+    verified: false,
+  },
+}
+
 export const PARKED_STAKEHOLDERS: SeedStakeholder[] = [
   HUG_OCEAN,
   NEPTUNE,
@@ -1068,11 +1114,13 @@ export const PARKED_STAKEHOLDERS: SeedStakeholder[] = [
   BLUE_PLANET,
   WATER_PRO,
   SHARK_BITES,
-  CHALONG_COMPRESSOR,
-  SCUBA_MARKET,
   SCUBA_REVOLUTION,
   ANDAMAN_EXPLORER,
   CORAL_BAY_RESORT,
 ]
 
-export const ALL_STAKEHOLDERS: SeedStakeholder[] = []
+export const ALL_STAKEHOLDERS: SeedStakeholder[] = [
+  RESTORED_PRAWIT,
+  RESTORED_SOMBAT,
+  RESTORED_ALEX,
+]

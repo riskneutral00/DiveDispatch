@@ -51,7 +51,6 @@ function buildInstructor(def: InstructorDef, index: number): SeedStakeholder {
 
 const ROSTER: InstructorDef[] = [
 
-  { firstName: 'Ryan', lastName: 'Clarke', credentials: [{ agency: 'PADI', level: 'OWSI', specialtyRatings: ['Deep', 'Navigation'] }], teachingLanguages: ['en', 'th'] },
   { firstName: 'Nattaya', lastName: 'Srisuk', credentials: [{ agency: 'PADI', level: 'OWSI', specialtyRatings: ['Deep', 'Enriched Air', 'Night'] }], teachingLanguages: ['th', 'en', 'zh-CN'] },
   { firstName: 'Wei', lastName: 'Chen', credentials: [{ agency: 'PADI', level: 'MSDT', specialtyRatings: ['Deep', 'Enriched Air', 'Wreck', 'Navigation', 'Night'] }], teachingLanguages: ['zh-CN', 'zh-TW', 'th'] },
   { firstName: 'Li', lastName: 'Ming', credentials: [{ agency: 'SSI', level: 'OWI', specialtyRatings: ['Deep'] }], teachingLanguages: ['zh-CN', 'en', 'ko'] },
@@ -67,7 +66,6 @@ const ROSTER: InstructorDef[] = [
   { firstName: 'Yuki', lastName: 'Tanaka', credentials: [{ agency: 'PADI', level: 'OWSI', specialtyRatings: ['Deep', 'Wreck', 'Night'] }, { agency: 'SSI', level: 'OWI', specialtyRatings: ['Deep', 'Wreck'] }], teachingLanguages: ['ja', 'ko', 'zh-CN'] },
   { firstName: 'Maria', lastName: 'Santos', credentials: [{ agency: 'PADI', level: 'MSDT', specialtyRatings: ['Deep', 'Enriched Air', 'Sidemount', 'Navigation', 'DPV', 'Wreck'] }, { agency: 'SSI', level: 'Advanced OWI', specialtyRatings: ['Deep', 'Enriched Air', 'Sidemount', 'Navigation', 'S&R'] }], teachingLanguages: ['es', 'fr', 'de'] },
 
-  { firstName: 'Arisa', lastName: 'Kanchanaburi', credentials: [{ agency: 'PADI', level: 'DM', specialtyRatings: [] }], teachingLanguages: ['th', 'en'] },
   { firstName: 'Kittipong', lastName: 'Jaidee', credentials: [{ agency: 'SSI', level: 'Dive Guide', specialtyRatings: [] }], teachingLanguages: ['th', 'en', 'zh-CN'] },
   { firstName: 'Prasit', lastName: 'Rattana', credentials: [{ agency: 'PADI', level: 'DM', specialtyRatings: [] }], teachingLanguages: ['th', 'en'] },
   { firstName: 'Tanawat', lastName: 'Boon', credentials: [{ agency: 'PADI', level: 'DM', specialtyRatings: [] }], teachingLanguages: ['th', 'en', 'zh-CN'] },
@@ -107,4 +105,73 @@ const ROSTER: InstructorDef[] = [
 
 export const PARKED_INSTRUCTORS: SeedStakeholder[] = ROSTER.map((def, i) => buildInstructor(def, i))
 
-export const ALL_INSTRUCTORS: SeedStakeholder[] = []
+const PHUKET_CHALONG = {
+  placeName: 'Chalong, Mueang Phuket District, Phuket',
+  country: 'Thailand',
+  lat: 7.8367169,
+  lng: 98.3483897,
+} as const
+
+export const RESTORED_RYAN: SeedStakeholder = {
+  user: {
+    slug: 'geprkx',
+    email: 'ryan-clarke+clerk_test@divedispatch.dev',
+    name: 'Ryan Clarke',
+    firstName: 'Ryan',
+    lastName: 'Clarke',
+    appLanguage: 'en-GB',
+    phone: '+66816001000',
+    dateOfBirth: '1985-03-22',
+  },
+  roles: [{ role: 'Instructor' }],
+  instructor: {
+    name: 'Ryan Clarke',
+    role: 'Instructor',
+    ...PHUKET_CHALONG,
+    email: 'ryan-clarke+clerk_test@divedispatch.dev',
+    phone: '+66816001000',
+    teachingLanguages: ['en-GB', 'th-TH'],
+    credential: [
+      {
+        agency: 'PADI',
+        level: 'OWSI',
+        agencyID: '3000000',
+        specialtyRatings: ['Deep', 'Navigation'],
+      },
+    ],
+    verified: false,
+  },
+}
+
+export const RESTORED_ARISA: SeedStakeholder = {
+  user: {
+    slug: 'z039zt',
+    email: 'arisa-kanchanaburi+clerk_test@divedispatch.dev',
+    name: 'Arisa Kanchanaburi',
+    firstName: 'Arisa',
+    lastName: 'Kanchanaburi',
+    appLanguage: 'en',
+    phone: '+66816151015',
+    dateOfBirth: '1993-12-01',
+  },
+  roles: [{ role: 'Instructor' }],
+  instructor: {
+    name: 'Arisa Kanchanaburi',
+    role: 'Instructor',
+    ...PHUKET_CHALONG,
+    email: 'arisa-kanchanaburi+clerk_test@divedispatch.dev',
+    phone: '+66816151015',
+    teachingLanguages: ['en-GB', 'th-TH'],
+    credential: [
+      {
+        agency: 'PADI',
+        level: 'DM',
+        agencyID: '300150',
+        specialtyRatings: [],
+      },
+    ],
+    verified: false,
+  },
+}
+
+export const ALL_INSTRUCTORS: SeedStakeholder[] = [RESTORED_RYAN, RESTORED_ARISA]
