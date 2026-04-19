@@ -82,7 +82,7 @@ describe('ROLE_REQUIRED', () => {
     }
   })
 
-  it('Equipment and Pool only require name and placeName', () => {
+  it('Equipment requires gearInventory; Pool requires only name and placeName', () => {
     expect(ROLE_REQUIRED.Equipment).toEqual(['name', 'placeName', 'gearInventory'])
     expect(ROLE_REQUIRED.Pool).toEqual(['name', 'placeName'])
   })

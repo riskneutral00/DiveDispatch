@@ -133,6 +133,29 @@ describe('equipmentInventory.updateItem', () => {
 
       const unit = await ctx.db.get(item!.inventoryUnitId)
       expect(unit!.totalUnits).toBe(10)
+      expect(unit!.displayName).toBe('bcd - Scubapro (L)')
+    })
+  })
+
+  it('clears diopter when isPrescription is set to false', async () => {
+    await t.withIdentity({ tokenIdentifier: EM_TOKEN }).run(async (ctx) => {
+      await seedUser(ctx, { tokenIdentifier: EM_TOKEN, slug: EM_SLUG, role: 'Equipment', email: 'em@test.com' })
+    })
+
+    const inventoryId = await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
+      api.equipmentInventory.addItem,
+      { gearType: 'mask', manufacturer: 'Aqua Lung', totalUnits: 3, isPrescription: true, diopter: -2.5 },
+    )
+
+    await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
+      api.equipmentInventory.updateItem,
+      { inventoryId, isPrescription: false },
+    )
+
+    await t.run(async (ctx) => {
+      const item = await ctx.db.get(inventoryId)
+      expect(item!.isPrescription).toBe(false)
+      expect(item!.diopter).toBeUndefined()
     })
   })
 

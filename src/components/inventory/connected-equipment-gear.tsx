@@ -334,14 +334,10 @@ export function ConnectedEquipmentGear() {
         <AddGearManufacturerDialog
           open={addManufacturerOpen}
           gearType={activeGearType as MatrixGearType}
-          existingManufacturers={matrixGroups.map((g) => g.manufacturer)}
-          existingFinSystems={
-            activeGearType === 'fins'
-              ? (matrixGroups
-                  .filter((g) => g.sizeSystem !== undefined)
-                  .map((g) => g.sizeSystem as FinSizeSystem))
-              : []
-          }
+          existingGroups={matrixGroups.map((g) => ({
+            manufacturer: g.manufacturer,
+            sizeSystem: g.sizeSystem,
+          }))}
           onClose={() => setAddManufacturerOpen(false)}
           onConfirm={handleAddManufacturerConfirm}
         />
@@ -663,7 +659,10 @@ function GearItemCard({ kind, gearType, recentManufacturers, initial, onCommit, 
             <Checkbox
               label={tBooking('prescription')}
               checked={isPrescription}
-              onChange={setIsPrescription}
+              onChange={(checked) => {
+                setIsPrescription(checked)
+                if (!checked) setDiopter(undefined)
+              }}
             />
           </div>
         )}

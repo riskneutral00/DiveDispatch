@@ -388,7 +388,7 @@ describe('equipmentInventory', () => {
         gearType: 'bcd', manufacturer: 'ScubaPro', size: 'M', totalUnits: 4,
       })
       await auth.mutation(api.equipmentInventory.addItem, {
-        gearType: 'fins', manufacturer: 'Cressi', size: 'EU 42', totalUnits: 6,
+        gearType: 'fins', manufacturer: 'Cressi', size: 'EU 42', sizeSystem: 'eu', totalUnits: 6,
       })
       await auth.mutation(api.equipmentInventory.addItem, {
         gearType: 'mask', manufacturer: 'Aqua Lung', size: 'Standard', totalUnits: 8,

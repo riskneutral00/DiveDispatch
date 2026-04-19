@@ -14,6 +14,13 @@ describe('isGearItemComplete', () => {
     expect(isGearItemComplete({ manufacturer: 'ScubaPro', size: '  ', totalUnits: 1 }, 'wetsuit')).toBe(false)
   })
 
+  it('fins require manufacturer + size + sizeSystem + totalUnits', () => {
+    const base = { manufacturer: 'ScubaPro', size: 'M', totalUnits: 5 }
+    expect(isGearItemComplete(base, 'fins')).toBe(false)
+    expect(isGearItemComplete({ ...base, sizeSystem: 'letter' }, 'fins')).toBe(true)
+    expect(isGearItemComplete({ ...base, sizeSystem: '' }, 'fins')).toBe(false)
+  })
+
   it('regulator does not require size', () => {
     expect(isGearItemComplete({ manufacturer: 'Apeks', totalUnits: 3 }, 'regulator')).toBe(true)
     expect(isGearItemComplete({ manufacturer: 'Apeks' }, 'regulator')).toBe(false)

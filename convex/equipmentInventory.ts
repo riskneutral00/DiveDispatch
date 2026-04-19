@@ -12,6 +12,7 @@ export const addItem = mutation({
     gearType: gearTypeValidator,
     manufacturer: v.optional(v.string()),
     size: v.optional(v.string()),
+    sizeSystem: v.optional(finSizeSystemValidator),
     diopter: v.optional(v.number()),
     isPrescription: v.optional(v.boolean()),
     totalUnits: v.number(),
@@ -21,6 +22,10 @@ export const addItem = mutation({
 
     if (args.totalUnits < 1) {
       throw new ConvexError({ code: ErrorCode.VALIDATION, reason: 'totalUnits must be at least 1' })
+    }
+
+    if (args.gearType !== 'fins' && args.sizeSystem !== undefined) {
+      throw new ConvexError({ code: ErrorCode.VALIDATION, reason: 'sizeSystem only allowed for fins' })
     }
 
     const inventoryUnitId = await ctx.db.insert('inventoryUnits', {
@@ -39,6 +44,7 @@ export const addItem = mutation({
       gearType: args.gearType,
       ...(args.manufacturer !== undefined ? { manufacturer: args.manufacturer } : {}),
       ...(args.size !== undefined ? { size: args.size } : {}),
+      ...(args.sizeSystem !== undefined ? { sizeSystem: args.sizeSystem } : {}),
       ...(args.diopter !== undefined ? { diopter: args.diopter } : {}),
       ...(args.isPrescription !== undefined ? { isPrescription: args.isPrescription } : {}),
     })
@@ -92,15 +98,32 @@ export const updateItem = mutation({
     }
 
     const { inventoryId: _, totalUnits, ...inventoryPatch } = args
-    const cleanPatch = Object.fromEntries(
+    const cleanPatch: Record<string, unknown> = Object.fromEntries(
       Object.entries(inventoryPatch).filter(([, val]) => val !== undefined),
     )
+
+    if (cleanPatch.isPrescription === false) {
+      cleanPatch.diopter = undefined
+    }
+
     if (Object.keys(cleanPatch).length > 0) {
       await ctx.db.patch(args.inventoryId, cleanPatch)
     }
 
+    const unitPatch: { totalUnits?: number; displayName?: string } = {}
+    if (totalUnits !== undefined) unitPatch.totalUnits = totalUnits
+    if (cleanPatch.manufacturer !== undefined || cleanPatch.size !== undefined) {
+      const effectiveManufacturer =
+        cleanPatch.manufacturer !== undefined ? (cleanPatch.manufacturer as string) : item.manufacturer
+      const effectiveSize =
+        cleanPatch.size !== undefined ? (cleanPatch.size as string) : item.size
+      unitPatch.displayName = `${item.gearType}${effectiveManufacturer ? ` - ${effectiveManufacturer}` : ''}${effectiveSize ? ` (${effectiveSize})` : ''}`
+    }
+    if (Object.keys(unitPatch).length > 0) {
+      await ctx.db.patch(item.inventoryUnitId, unitPatch)
+    }
+
     if (totalUnits !== undefined) {
-      await ctx.db.patch(item.inventoryUnitId, { totalUnits })
       for (const snap of linkedSnapshots) {
         await ctx.db.patch(snap._id, { // batch-exempt
           totalUnits,
@@ -203,7 +226,7 @@ export const bulkSetByManufacturer = mutation({
     }
 
     for (const row of scopedRows) {
-      if (row.size && !(row.size in args.cells)) {
+      if (!row.size || !(row.size in args.cells)) {
         if (!deletes.some((d) => d._id === row._id)) {
           deletes.push(row)
         }

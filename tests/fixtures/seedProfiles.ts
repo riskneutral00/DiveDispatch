@@ -236,6 +236,7 @@ export async function seedCompleteGearInventory(
       gearType,
       manufacturer: MANUFACTURER,
       size,
+      ...(gearType === 'fins' ? { sizeSystem: 'letter' as const } : {}),
     })
   }
 }

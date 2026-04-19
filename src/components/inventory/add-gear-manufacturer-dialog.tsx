@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Dialog } from '@/components/ui/dialog'
 import { SimpleSelect } from '@/components/ui/simple-select'
@@ -12,11 +12,15 @@ import {
   type FinSizeSystem,
 } from '@/lib/constants/gear-sizing'
 
+interface ExistingGroup {
+  manufacturer: string
+  sizeSystem?: FinSizeSystem
+}
+
 interface Props {
   open: boolean
   gearType: MatrixGearType
-  existingManufacturers: readonly string[]
-  existingFinSystems?: readonly FinSizeSystem[]
+  existingGroups: readonly ExistingGroup[]
   onClose: () => void
   onConfirm: (manufacturer: string, sizeSystem?: FinSizeSystem) => void
 }
@@ -24,8 +28,7 @@ interface Props {
 export function AddGearManufacturerDialog({
   open,
   gearType,
-  existingManufacturers,
-  existingFinSystems = [],
+  existingGroups,
   onClose,
   onConfirm,
 }: Props) {
@@ -35,18 +38,28 @@ export function AddGearManufacturerDialog({
   const [manufacturer, setManufacturer] = useState('')
   const [sizeSystem, setSizeSystem] = useState<FinSizeSystem>('eu')
 
-  const manufacturerOptions = MANUFACTURERS.filter((m) =>
-    gearType === 'fins'
-      ? true
-      : !existingManufacturers.includes(m),
-  )
+  useEffect(() => {
+    if (!open) {
+      setManufacturer('')
+      setSizeSystem('eu')
+    }
+  }, [open])
 
   const isFins = gearType === 'fins'
 
-  const canConfirm = manufacturer.length > 0 && (
-    !isFins ||
-    !(existingManufacturers.includes(manufacturer) && existingFinSystems.includes(sizeSystem))
+  const existingManufacturerSet = new Set(existingGroups.map((g) => g.manufacturer))
+
+  const manufacturerOptions = MANUFACTURERS.filter((m) =>
+    isFins ? true : !existingManufacturerSet.has(m),
   )
+
+  const pairExists = isFins
+    ? existingGroups.some(
+        (g) => g.manufacturer === manufacturer && g.sizeSystem === sizeSystem,
+      )
+    : existingManufacturerSet.has(manufacturer)
+
+  const canConfirm = manufacturer.length > 0 && !pairExists
 
   const handleConfirm = () => {
     if (!canConfirm) return
