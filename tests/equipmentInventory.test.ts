@@ -877,3 +877,130 @@ describe('equipmentInventory.bulkSetByManufacturer', () => {
     expect(usBySize).toEqual({ '9-10': 2, '11-12': 2 })
   })
 })
+
+// ── renameManufacturerGroup ──────────────────────────────────────────────────
+
+describe('equipmentInventory.renameManufacturerGroup', () => {
+  let t: ReturnType<typeof makeT>
+  beforeEach(() => { t = makeT() })
+
+  const seedEquipment = async () => {
+    await t.withIdentity({ tokenIdentifier: EM_TOKEN }).run(async (ctx) => {
+      await seedUser(ctx, { tokenIdentifier: EM_TOKEN, slug: EM_SLUG, role: 'Equipment', email: 'em@test.com' })
+    })
+  }
+
+  it('renames all rows in a group and preserves inventoryUnitIds', async () => {
+    await seedEquipment()
+
+    await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
+      api.equipmentInventory.bulkSetByManufacturer,
+      { gearType: 'wetsuit', manufacturer: 'ScubaPro', cells: { 'S': 2, 'M': 3, 'L': 4 } },
+    )
+
+    const beforeIds = await t.run(async (ctx) => {
+      const rows = await ctx.db.query('equipmentInventory').collect()
+      return rows
+        .filter((r) => r.manufacturer === 'ScubaPro')
+        .map((r) => ({ rowId: r._id, unitId: r.inventoryUnitId, size: r.size }))
+        .sort((a, b) => (a.size ?? '').localeCompare(b.size ?? ''))
+    })
+
+    const result = await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
+      api.equipmentInventory.renameManufacturerGroup,
+      {
+        gearType: 'wetsuit',
+        previousManufacturer: 'ScubaPro',
+        manufacturer: 'Cressi',
+      },
+    )
+
+    expect(result.renamed).toBe(3)
+
+    const afterIds = await t.run(async (ctx) => {
+      const rows = await ctx.db.query('equipmentInventory').collect()
+      return rows
+        .filter((r) => r.manufacturer === 'Cressi')
+        .map((r) => ({ rowId: r._id, unitId: r.inventoryUnitId, size: r.size }))
+        .sort((a, b) => (a.size ?? '').localeCompare(b.size ?? ''))
+    })
+
+    expect(afterIds).toEqual(beforeIds)
+
+    const orphans = await t.run(async (ctx) => {
+      const rows = await ctx.db.query('equipmentInventory').collect()
+      return rows.filter((r) => r.manufacturer === 'ScubaPro')
+    })
+    expect(orphans).toHaveLength(0)
+  })
+
+  it('renames fins group with new sizeSystem', async () => {
+    await seedEquipment()
+
+    await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
+      api.equipmentInventory.bulkSetByManufacturer,
+      { gearType: 'fins', manufacturer: 'ScubaPro', sizeSystem: 'eu', cells: { '40-41': 2 } },
+    )
+
+    await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
+      api.equipmentInventory.renameManufacturerGroup,
+      {
+        gearType: 'fins',
+        previousManufacturer: 'ScubaPro',
+        previousSizeSystem: 'eu',
+        manufacturer: 'Mares',
+        sizeSystem: 'us',
+      },
+    )
+
+    const grouped = await t.withIdentity({ tokenIdentifier: EM_TOKEN }).query(
+      api.equipmentInventory.listMyInventory,
+      {},
+    )
+    const rows = (grouped.fins ?? [])
+    expect(rows).toHaveLength(1)
+    expect(rows[0].manufacturer).toBe('Mares')
+    expect(rows[0].sizeSystem).toBe('us')
+  })
+
+  it('rejects rename into an existing target group', async () => {
+    await seedEquipment()
+
+    await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
+      api.equipmentInventory.bulkSetByManufacturer,
+      { gearType: 'bcd', manufacturer: 'ScubaPro', cells: { 'M': 2 } },
+    )
+    await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
+      api.equipmentInventory.bulkSetByManufacturer,
+      { gearType: 'bcd', manufacturer: 'Cressi', cells: { 'L': 3 } },
+    )
+
+    await expectConvexError(
+      t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
+        api.equipmentInventory.renameManufacturerGroup,
+        {
+          gearType: 'bcd',
+          previousManufacturer: 'ScubaPro',
+          manufacturer: 'Cressi',
+        },
+      ),
+      'CONFLICT',
+    )
+  })
+
+  it('rejects when previous group has no rows', async () => {
+    await seedEquipment()
+
+    await expectConvexError(
+      t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
+        api.equipmentInventory.renameManufacturerGroup,
+        {
+          gearType: 'mask',
+          previousManufacturer: 'Ghost',
+          manufacturer: 'Cressi',
+        },
+      ),
+      'NOT_FOUND',
+    )
+  })
+})

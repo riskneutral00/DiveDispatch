@@ -311,6 +311,74 @@ export const bulkSetByManufacturer = mutation({
   },
 })
 
+export const renameManufacturerGroup = mutation({
+  args: {
+    gearType: gearTypeValidator,
+    previousManufacturer: v.string(),
+    previousSizeSystem: v.optional(finSizeSystemValidator),
+    manufacturer: v.string(),
+    sizeSystem: v.optional(finSizeSystemValidator),
+  },
+  handler: async (ctx, args) => {
+    const { user } = await authorize(ctx, null, 'resource:manage', { type: 'resource', requiredRole: 'Equipment' })
+
+    if (args.gearType === 'fins') {
+      if (args.previousSizeSystem === undefined || args.sizeSystem === undefined) {
+        throw new ConvexError({ code: ErrorCode.VALIDATION, reason: 'sizeSystem required for fins' })
+      }
+    } else if (args.previousSizeSystem !== undefined || args.sizeSystem !== undefined) {
+      throw new ConvexError({ code: ErrorCode.VALIDATION, reason: 'sizeSystem only allowed for fins' })
+    }
+
+    const noChange = args.previousManufacturer === args.manufacturer && args.previousSizeSystem === args.sizeSystem
+    if (noChange) return { renamed: 0 }
+
+    const allRows = await ctx.db
+      .query('equipmentInventory')
+      .withIndex('by_equipmentManagerId', (q) => q.eq('equipmentManagerId', user.slug))
+      .take(500)
+
+    const sourceRows = allRows.filter((r) =>
+      r.gearType === args.gearType &&
+      r.manufacturer === args.previousManufacturer &&
+      (args.gearType !== 'fins' || r.sizeSystem === args.previousSizeSystem),
+    )
+
+    if (sourceRows.length === 0) {
+      throw new ConvexError({ code: ErrorCode.NOT_FOUND, reason: 'No rows found for previous manufacturer group' })
+    }
+
+    const targetConflict = allRows.some((r) =>
+      r.gearType === args.gearType &&
+      r.manufacturer === args.manufacturer &&
+      (args.gearType !== 'fins' || r.sizeSystem === args.sizeSystem),
+    )
+    if (targetConflict) {
+      throw new ConvexError({
+        code: ErrorCode.CONFLICT,
+        reason: `Target group ${args.manufacturer}${args.sizeSystem ? ` (${args.sizeSystem})` : ''} already exists`,
+      })
+    }
+
+    for (const row of sourceRows) {
+      const patch: Record<string, unknown> = { manufacturer: args.manufacturer }
+      if (args.gearType === 'fins') patch.sizeSystem = args.sizeSystem
+      await ctx.db.patch(row._id, patch) // batch-exempt: bounded by sizes per manufacturer
+
+      const unit = await ctx.db.get(row.inventoryUnitId) // batch-exempt: bounded by sizes per manufacturer
+      if (unit) {
+        await ctx.db.patch(row.inventoryUnitId, { // batch-exempt: bounded by sizes per manufacturer
+          displayName: `${args.gearType} - ${args.manufacturer}${row.size ? ` (${row.size})` : ''}`,
+        })
+      }
+    }
+
+    await syncManufacturersByGearType(ctx, user.slug)
+
+    return { renamed: sourceRows.length }
+  },
+})
+
 export type InventoryItemWithUnits = {
   _id: string
   inventoryUnitId: string
@@ -357,7 +425,7 @@ export const listMyInventory = query({
         totalUnits: unit ? unit.totalUnits : 0,
       }
       if (!grouped[item.gearType]) {
-        grouped[item.gearType] = []
+        grouped[item.gearType] = new Array<InventoryItemWithUnits>()
       }
       grouped[item.gearType].push(entry)
     }
