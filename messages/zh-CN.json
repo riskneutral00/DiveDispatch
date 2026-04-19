@@ -239,7 +239,7 @@
     "noInventory": "暂无库存。添加您的第一个项目。",
     "noItemsFound": "未找到{type}项目。",
     "gearTypes": "装备类型",
-    "noGearYet": "暂无{type}。添加第一项。",
+    "addAtLeastOneSize": "请至少添加一个尺码以保存。",
     "addGearType": "添加{type}",
     "manufacturer": "厂商",
     "size": "尺寸",

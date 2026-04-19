@@ -239,7 +239,7 @@
     "noInventory": "ยังไม่มีอุปกรณ์ เพิ่มรายการแรกของคุณ",
     "noItemsFound": "ไม่พบรายการ{type}",
     "gearTypes": "ประเภทอุปกรณ์",
-    "noGearYet": "ยังไม่มี{type} เพิ่มรายการแรก",
+    "addAtLeastOneSize": "เพิ่มอย่างน้อยหนึ่งไซซ์เพื่อบันทึก",
     "addGearType": "เพิ่ม{type}",
     "manufacturer": "ผู้ผลิต",
     "size": "ขนาด",

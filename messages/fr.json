@@ -239,7 +239,7 @@
     "noInventory": "Aucun inventaire. Ajoutez votre premier article.",
     "noItemsFound": "Aucun article de type {type} trouvé.",
     "gearTypes": "Types d'équipement",
-    "noGearYet": "Pas encore de {type}. Ajoutez votre premier.",
+    "addAtLeastOneSize": "Ajoutez au moins une taille pour enregistrer.",
     "addGearType": "Ajouter {type}",
     "manufacturer": "Fabricant",
     "size": "Taille",
