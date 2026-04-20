@@ -38,10 +38,10 @@ export function IconButton({
         'rounded-full transition-all duration-theme text-secondary',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-glow)]',
         HOVER_CLASS[hoverEffect],
+        isGlass && 'bg-glass-bg',
         className,
       )}
       style={isGlass ? {
-        background: 'var(--color-glass-bg)',
         border: '1px solid var(--color-glass-border)',
       } : undefined}
       {...rest}

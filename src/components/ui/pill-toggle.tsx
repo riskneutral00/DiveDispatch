@@ -153,9 +153,8 @@ export function PillToggleGroup({
           </button>
           {open && (
             <div
-              className="absolute top-full right-0 mt-1 z-[var(--z-dropdown)] rounded-theme p-2 flex flex-wrap gap-1.5"
+              className="absolute top-full right-0 mt-1 z-[var(--z-dropdown)] rounded-theme p-2 flex flex-wrap gap-1.5 bg-surface-elevated"
               style={{
-                backgroundColor: 'var(--color-surface-elevated)',
                 border: '1px solid var(--color-glass-border)',
                 boxShadow: '0 8px 32px var(--color-glass-shadow-elevated)',
                 minWidth: '200px',

@@ -108,7 +108,7 @@ export function SimpleSelect({
             : {}),
         }}
       >
-        {showLeadingPlaceholder && <option value="" disabled />}
+        {showLeadingPlaceholder && <option value="" disabled>{placeholder ?? ""}</option>}
         {options.map((opt) => {
           const optValue = typeof opt === "string" ? opt : opt.value;
           const optLabel = typeof opt === "string" ? opt : opt.label;

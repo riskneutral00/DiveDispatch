@@ -46,18 +46,16 @@ export function MenuButton({
         MENU_BUTTON_SIZE_MAP[size],
         active ? shape.active : shape.base,
         active ? 'text-primary' : 'text-secondary',
+        active && 'bg-glass-bg-elevated',
         !active && 'hover:opacity-70',
         'flex-shrink-0',
         className,
       )}
       style={active ? {
-        background: 'var(--color-glass-bg-elevated)',
         border: '1px solid var(--color-primary)',
-        color: 'var(--color-text-primary)',
       } : {
         background: 'transparent',
         border: '1px solid transparent',
-        color: 'var(--color-text-secondary)',
       }}
       aria-current={active ? 'page' : undefined}
       {...rest}

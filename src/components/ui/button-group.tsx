@@ -83,7 +83,7 @@ export function ButtonGroup({
           type="button"
           onClick={() => onChange(v)}
           className={cn(
-            "px-2.5 py-2 font-medium capitalize transition-all duration-theme border-l first:border-l-0", // spacing-ok: compact segmented control padding
+            "px-2.5 py-2 font-medium capitalize transition-all duration-theme border-l first:border-l-0 border-glass-border", // spacing-ok: compact segmented control padding
             textSize,
           )}
           style={{
@@ -93,7 +93,6 @@ export function ButtonGroup({
               value === v
                 ? "var(--color-text-on-primary)"
                 : "var(--color-text-secondary)",
-            borderColor: "var(--color-glass-border)",
           }}
         >
           {label}
