@@ -45,6 +45,8 @@ export interface ProfileTab {
   label: string
 }
 
+export type RoleClass = 'freelance' | 'business'
+
 export interface RoleConfig {
   key: RoleKey
   clerkRole: ClerkRole
@@ -56,6 +58,7 @@ export interface RoleConfig {
   isOrganizer: boolean
   isResource: boolean
   displayGroup: 'operator' | 'resource'
+  roleClass: RoleClass
   tableName: string
   description: string
   profileTabs: ProfileTab[]
@@ -73,6 +76,7 @@ export const ROLES: RoleConfig[] = [
     isOrganizer: true,
     isResource: false,
     displayGroup: 'operator',
+    roleClass: 'business',
     tableName: 'diveCenters',
     description: 'Manage dive bookings, assign resources, and coordinate trips for customers.',
     profileTabs: [
@@ -93,6 +97,7 @@ export const ROLES: RoleConfig[] = [
     isOrganizer: true,
     isResource: false,
     displayGroup: 'operator',
+    roleClass: 'freelance',
     tableName: 'agents',
     description: 'Book dives on behalf of customers and earn commission from dive operators.',
     profileTabs: [
@@ -113,6 +118,7 @@ export const ROLES: RoleConfig[] = [
     isOrganizer: true,
     isResource: false,
     displayGroup: 'operator',
+    roleClass: 'business',
     tableName: 'liveaboards',
     description: 'Run multi-day dive expeditions with onboard accommodation and guided services.',
     profileTabs: [
@@ -132,6 +138,7 @@ export const ROLES: RoleConfig[] = [
     isOrganizer: true,
     isResource: false,
     displayGroup: 'operator',
+    roleClass: 'business',
     tableName: 'diveResorts',
     description: 'Offer dive packages, courses, and guided dives from a resort base.',
     profileTabs: [
@@ -151,6 +158,7 @@ export const ROLES: RoleConfig[] = [
     isOrganizer: true,
     isResource: false,
     displayGroup: 'operator',
+    roleClass: 'business',
     tableName: 'diveHostels',
     description: 'Provide budget-friendly accommodation and dive services to traveling divers.',
     profileTabs: [
@@ -170,6 +178,7 @@ export const ROLES: RoleConfig[] = [
     isOrganizer: false,
     isResource: true,
     displayGroup: 'operator',
+    roleClass: 'freelance',
     tableName: 'venues',
     description: 'Manage access and dive conditions for a specific underwater site.',
     profileTabs: [
@@ -191,6 +200,7 @@ export const ROLES: RoleConfig[] = [
     isOrganizer: false,
     isResource: true,
     displayGroup: 'resource',
+    roleClass: 'freelance',
     tableName: 'diveStaff',
     description: 'Dive professionals — Divemaster through Course Director. Lead courses, guide dives, and assist at operator-organized trips.',
     profileTabs: [
@@ -210,6 +220,7 @@ export const ROLES: RoleConfig[] = [
     isOrganizer: false,
     isResource: true,
     displayGroup: 'resource',
+    roleClass: 'freelance',
     tableName: 'boats',
     description: 'Provide vessel transport and surface support for dive operations.',
     profileTabs: [
@@ -229,6 +240,7 @@ export const ROLES: RoleConfig[] = [
     isOrganizer: false,
     isResource: true,
     displayGroup: 'resource',
+    roleClass: 'freelance',
     tableName: 'equipment',
     description: 'Supply rental gear and manage inventory across dive bookings.',
     profileTabs: [
@@ -248,6 +260,7 @@ export const ROLES: RoleConfig[] = [
     isOrganizer: false,
     isResource: true,
     displayGroup: 'resource',
+    roleClass: 'freelance',
     tableName: 'venues',
     description: 'Provide confined-water training space for beginner and refresher courses.',
     profileTabs: [
@@ -267,6 +280,7 @@ export const ROLES: RoleConfig[] = [
     isOrganizer: false,
     isResource: true,
     displayGroup: 'resource',
+    roleClass: 'freelance',
     tableName: 'compressors',
     description: 'Supply and track tank fills and gas blending for dive operations.',
     profileTabs: [

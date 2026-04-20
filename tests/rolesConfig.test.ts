@@ -41,6 +41,28 @@ describe('ROLES constant integrity', () => {
     const resources = ROLES.filter((r) => r.isResource)
     expect(resources.length).toBeGreaterThan(0)
   })
+
+  it('every role has roleClass of freelance or business', () => {
+    for (const role of ROLES) {
+      expect(['freelance', 'business']).toContain(role.roleClass)
+    }
+  })
+
+  it('DiveCenter / Liveaboard / DiveResort / DiveHostel are business', () => {
+    const businessKeys: ClerkRole[] = ['DiveCenter', 'Liveaboard', 'DiveResort', 'DiveHostel']
+    for (const key of businessKeys) {
+      expect(ROLE_BY_CLERK_ROLE[key].roleClass).toBe('business')
+    }
+  })
+
+  it('Agent / DiveSite / Instructor / Boat / Equipment / Pool / Compressor are freelance', () => {
+    const freelanceKeys: ClerkRole[] = [
+      'Agent', 'DiveSite', 'Instructor', 'Boat', 'Equipment', 'Pool', 'Compressor',
+    ]
+    for (const key of freelanceKeys) {
+      expect(ROLE_BY_CLERK_ROLE[key].roleClass).toBe('freelance')
+    }
+  })
 })
 
 describe('ROLE_BY_CLERK_ROLE', () => {
