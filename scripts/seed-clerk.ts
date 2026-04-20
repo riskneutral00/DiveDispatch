@@ -134,7 +134,7 @@ async function pruneOrphanSeedOrgs(seedOrgSlugs: Set<string>): Promise<number> {
 async function seedOrg(
   orgSlug: string,
   orgName: string,
-  createdByClerkUserId: string,
+  adminClerkUserId: string,
   result: OrgResult,
 ): Promise<string | null> {
   const existing = await clerk.organizations.getOrganizationList({ query: orgSlug, limit: 10 })
@@ -154,7 +154,7 @@ async function seedOrg(
   const created = await clerk.organizations.createOrganization({
     name: orgName,
     slug: orgSlug,
-    createdBy: createdByClerkUserId,
+    createdBy: adminClerkUserId,
     publicMetadata: { seedTag: 'dd_seed' },
   })
   result.created.push(orgSlug)
@@ -310,7 +310,7 @@ async function main(): Promise<void> {
     const createdBy = adminUserSlug ? userSlugToClerkId.get(adminUserSlug) : undefined
     if (!createdBy) {
       console.error(`  ${orgSlug} — SKIPPED (no admin user found in seeded users)`)
-      orgResult.failed.push({ slug: orgSlug, error: 'no admin user' })
+      orgResult.skipped.push(orgSlug)
       continue
     }
     const orgName = orgNames[orgSlug] ?? orgSlug
