@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { api } from '../convex/_generated/api'
-import { seedUser, seedDiveCenterProfile, seedStakeholderPreferences } from './fixtures'
+import { seedUser, seedDiveCenterProfile, seedStakeholderPreferences, findProfileByUser} from './fixtures'
 import { makeT } from './helpers/convex-helpers'
 import { createUserDefaults } from './helpers/createUser'
 
@@ -63,7 +63,7 @@ describe('getOnboardingStatus', () => {
       await ctx.db.patch(uid, { phone: '+66123456789', appLanguage: 'en' })
       await seedDiveCenterProfile(ctx, uid)
       // Set customerLanguages
-      const dc = await ctx.db.query('diveCenters').withIndex('by_userId', (q: any) => q.eq('userId', uid)).unique()
+      const dc = await findProfileByUser(ctx, uid, 'diveCenters')
       if (dc) await ctx.db.patch(dc._id, { customerLanguages: ['en'] })
       // Seed preferences — layers 4 (acceptanceMode) and 5 (coverage) for operator roles
       await seedStakeholderPreferences(ctx, 'dc-complete', {

@@ -38,7 +38,6 @@ async function seedCompleteOperator(ctx: Ctx, slug: string, role: StakeholderRol
   if (role === 'DiveCenter') {
     const organizationId = await getOrCreateTestOrg(ctx as SeedCtx, userId, `${slug} DC`)
     await ctx.db.insert('diveCenters', {
-      userId,
       organizationId,
       name: `${slug} DC`,
       placeName: 'Koh Tao',
@@ -55,7 +54,6 @@ async function seedCompleteOperator(ctx: Ctx, slug: string, role: StakeholderRol
   if (role === 'Agent') {
     const organizationId = await getOrCreateTestOrg(ctx as SeedCtx, userId, `${slug} Agency`)
     await ctx.db.insert('agents', {
-      userId,
       organizationId,
       name: `${slug} Agency`,
       placeName: 'Koh Tao',

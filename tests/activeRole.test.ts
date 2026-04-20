@@ -19,8 +19,7 @@ import {
   seedStakeholderPreferences,
   seedInstructorProfile,
   seedVenue,
-  type SeedCtx,
-} from './fixtures'
+  type SeedCtx, findProfileByUser } from './fixtures'
 import { makeT, expectConvexError } from './helpers/convex-helpers'
 
 // ─── Composite helper ────────────────────────────────────────────────────────
@@ -43,7 +42,7 @@ async function seedFullDc(ctx: SeedCtx, slug: string) {
     email: `${slug}@test.com`,
   })
   // Set customerLanguages on diveCenters (required field)
-  const dc = await ctx.db.query('diveCenters').withIndex('by_userId', (q: any) => q.eq('userId', userId)).unique()
+  const dc = await findProfileByUser(ctx, userId, 'diveCenters')
   if (dc) await ctx.db.patch(dc._id, { customerLanguages: ['en'] })
   await seedBookingTemplate(ctx, {
     ownerId: slug,

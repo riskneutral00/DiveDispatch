@@ -8,7 +8,6 @@ async function seedReadyAgent(ctx: SeedCtx, slug: string) {
   const userId = await seedUser(ctx, { slug, tokenIdentifier: `clerk|${slug}`, role: 'Agent' })
   const organizationId = await getOrCreateTestOrg(ctx, userId, `${slug} Agency`)
   await ctx.db.insert('agents', {
-    userId,
     organizationId,
     name: `${slug} Agency`,
     placeName: 'Koh Tao',

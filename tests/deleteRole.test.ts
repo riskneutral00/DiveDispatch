@@ -5,7 +5,7 @@
 
 import { describe, it, expect } from 'vitest'
 import { api } from '../convex/_generated/api'
-import { seedUser, TEST_TOKENS, TEST_SLUGS } from './fixtures'
+import { seedUser, TEST_TOKENS, TEST_SLUGS, findProfileByUser} from './fixtures'
 import { seedBooking, seedSession, seedReservation } from './fixtures/seedBookings'
 import { seedBookingResource } from './fixtures/seedBookings'
 import { seedInventoryUnit, seedSnapshot } from './fixtures/seedInventory'
@@ -239,10 +239,7 @@ describe('userRoles.deleteRole', () => {
       expect(role).toBeNull()
 
       // instructor profile gone
-      const profile = await ctx.db
-        .query('diveStaff')
-        .withIndex('by_userId', (q) => q.eq('userId', userId!))
-        .unique()
+      const profile = await findProfileByUser(ctx, userId!, 'diveStaff')
       expect(profile).toBeNull()
 
       // inventoryUnit gone

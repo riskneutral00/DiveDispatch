@@ -48,7 +48,7 @@ describe('instructors.create', () => {
       const instr = await ctx.db.get(instrId as Id<'diveStaff'>) as Doc<'diveStaff'> | null
       expect(instr).not.toBeNull()
       expect(instr!.name).toBe('new-instr Test')
-      expect(instr!.userId).toEqual(userId)
+      expect(instr!.organizationId).toBeDefined()
       expect(instr!.verified).toBe(false)
       expect(instr!.credential).toHaveLength(1)
       expect(instr!.credential[0].agency).toBe('PADI')

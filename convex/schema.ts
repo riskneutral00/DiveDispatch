@@ -320,7 +320,6 @@ export default defineSchema({
     .index('by_bookingId', ['bookingId']),
 
   diveCenters: defineTable({
-    userId: v.id('users'),
     organizationId: v.id('organizations'),
     name: v.string(),
     placeName: v.string(),
@@ -341,11 +340,9 @@ export default defineSchema({
     ...accessControlFields,
     verified: v.boolean(),
   })
-    .index('by_userId', ['userId'])
     .index('by_organizationId', ['organizationId']),
 
   diveStaff: defineTable({
-    userId: v.id('users'),
     organizationId: v.id('organizations'),
     role: v.literal('Instructor'),
     name: v.string(),
@@ -367,11 +364,9 @@ export default defineSchema({
     ...accessControlFields,
     verified: v.boolean(),
   })
-    .index('by_userId', ['userId'])
     .index('by_organizationId', ['organizationId']),
 
   boats: defineTable({
-    userId: v.id('users'),
     organizationId: v.id('organizations'),
     name: v.string(),
     placeName: v.string(),
@@ -402,11 +397,9 @@ export default defineSchema({
     ...accessControlFields,
     verified: v.boolean(),
   })
-    .index('by_userId', ['userId'])
     .index('by_organizationId', ['organizationId']),
 
   equipment: defineTable({
-    userId: v.id('users'),
     organizationId: v.id('organizations'),
     name: v.string(),
     placeName: v.string(),
@@ -419,11 +412,9 @@ export default defineSchema({
     ...accessControlFields,
     verified: v.boolean(),
   })
-    .index('by_userId', ['userId'])
     .index('by_organizationId', ['organizationId']),
 
   venues: defineTable({
-    userId: v.optional(v.id('users')),
     organizationId: v.optional(v.id('organizations')),
     name: v.string(),
     placeName: v.string(),
@@ -441,11 +432,9 @@ export default defineSchema({
     maxDepth: v.optional(v.number()),
     maxCapacity: v.optional(v.number()),
   })
-    .index('by_userId', ['userId'])
     .index('by_organizationId', ['organizationId']),
 
   compressors: defineTable({
-    userId: v.id('users'),
     organizationId: v.id('organizations'),
     name: v.string(),
     placeName: v.string(),
@@ -460,7 +449,6 @@ export default defineSchema({
     ...accessControlFields,
     verified: v.boolean(),
   })
-    .index('by_userId', ['userId'])
     .index('by_organizationId', ['organizationId']),
 
   equipmentBags: defineTable({
@@ -529,7 +517,6 @@ export default defineSchema({
   }).index('by_ownerId_ownerType', ['ownerId', 'ownerType']),
 
   agents: defineTable({
-    userId: v.id('users'),
     organizationId: v.id('organizations'),
     customerLanguages: v.optional(v.array(v.string())),
     name: v.string(),
@@ -543,11 +530,9 @@ export default defineSchema({
     ...accessControlFields,
     verified: v.boolean(),
   })
-    .index('by_userId', ['userId'])
     .index('by_organizationId', ['organizationId']),
 
   liveaboards: defineTable({
-    userId: v.id('users'),
     organizationId: v.id('organizations'),
     name: v.string(),
     placeName: v.string(),
@@ -559,7 +544,6 @@ export default defineSchema({
     ...accessControlFields,
     verified: v.boolean(),
   })
-    .index('by_userId', ['userId'])
     .index('by_organizationId', ['organizationId']),
 
   cabins: defineTable({
@@ -595,7 +579,6 @@ export default defineSchema({
     .index('by_startDate', ['startDate']),
 
   diveResorts: defineTable({
-    userId: v.id('users'),
     organizationId: v.id('organizations'),
     name: v.string(),
     placeName: v.string(),
@@ -607,7 +590,6 @@ export default defineSchema({
     ...accessControlFields,
     verified: v.boolean(),
   })
-    .index('by_userId', ['userId'])
     .index('by_organizationId', ['organizationId']),
 
   rooms: defineTable({
@@ -626,7 +608,6 @@ export default defineSchema({
   }).index('by_diveResortId', ['diveResortId']),
 
   diveHostels: defineTable({
-    userId: v.id('users'),
     organizationId: v.id('organizations'),
     name: v.string(),
     placeName: v.string(),
@@ -640,7 +621,6 @@ export default defineSchema({
     ...accessControlFields,
     verified: v.boolean(),
   })
-    .index('by_userId', ['userId'])
     .index('by_organizationId', ['organizationId']),
 
   cronRunLog: defineTable({

@@ -1,5 +1,5 @@
 import type { GenericMutationCtx, GenericActionCtx } from 'convex/server'
-import type { DataModel, Doc, Id } from '../../convex/_generated/dataModel'
+import type { DataModel, Doc, Id, TableNames } from '../../convex/_generated/dataModel'
 import type { StakeholderRole } from '../../convex/lib/validators'
 import { TEST_TOKENS, TEST_SLUGS } from '../helpers/testData'
 
@@ -27,6 +27,25 @@ export async function getOrCreateTestOrg(
     createdAt: now,
     updatedAt: now,
   })
+}
+
+export async function findProfileByUser<T extends TableNames>(
+  ctx: SeedCtx,
+  userId: Id<'users'>,
+  tableName: T,
+): Promise<Doc<T> | null> {
+  const user = await ctx.db.get(userId)
+  if (!user) return null
+  const org = await ctx.db
+    .query('organizations')
+    .withIndex('by_slug', (q) => q.eq('slug', user.slug))
+    .unique()
+  if (!org) return null
+  const doc = await ctx.db
+    .query(tableName as 'diveCenters')
+    .withIndex('by_organizationId', (q) => q.eq('organizationId', org._id))
+    .unique()
+  return doc as Doc<T> | null
 }
 
 export async function seedUser(

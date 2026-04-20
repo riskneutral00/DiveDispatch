@@ -18,8 +18,7 @@ import {
   seedCustomerProfile,
   seedBookingResource,
   seedEquipmentProfile,
-  type SeedCtx,
-} from './fixtures'
+  type SeedCtx, findProfileByUser } from './fixtures'
 
 // ── Well-known EM test constants ─────────────────────────────────────────────
 
@@ -45,10 +44,7 @@ async function seedEM(
   await seedEquipmentProfile(ctx, userId, { name: 'Test Equipment' })
   // Patch manufacturersByGearType if provided (seedEquipmentProfile doesn't support it)
   if (opts.manufacturersByGearType) {
-    const profile = await ctx.db
-      .query('equipment')
-      .withIndex('by_userId', (q) => q.eq('userId', userId))
-      .unique()
+    const profile = await findProfileByUser(ctx, userId, 'equipment')
     if (profile) {
       await ctx.db.patch(profile._id, {
         manufacturersByGearType: opts.manufacturersByGearType,

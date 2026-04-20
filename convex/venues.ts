@@ -107,7 +107,6 @@ export const create = mutation({
       venueCategory: resolved.venueCategory,
       diveSiteTypes: resolved.diveSiteTypes,
       confinedCapable: resolved.confinedCapable,
-      userId: user._id,
       organizationId: activeOrg._id,
       verified: false,
     })

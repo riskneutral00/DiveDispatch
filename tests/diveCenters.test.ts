@@ -48,7 +48,7 @@ describe('diveCenters.create', () => {
       const dc = await ctx.db.get(dcId as Id<'diveCenters'>) as Doc<'diveCenters'> | null
       expect(dc).not.toBeNull()
       expect(dc!.name).toBe('Sairee Dive')
-      expect(dc!.userId).toEqual(userId)
+      expect(dc!.organizationId).toBeDefined()
       expect(dc!.verified).toBe(false)
       expect(dc!.associations).toHaveLength(1)
       expect(dc!.associations[0].agency).toBe('PADI')

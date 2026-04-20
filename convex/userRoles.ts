@@ -299,8 +299,15 @@ async function deleteProfileForRole(
 ): Promise<void> {
   const tableName = ROLE_TABLE_MAP[role]
   if (!tableName) return
+  const user = await ctx.db.get(userId)
+  if (!user) return
+  const org = await ctx.db
+    .query('organizations')
+    .withIndex('by_slug', (q) => q.eq('slug', user.slug))
+    .unique()
+  if (!org) return
   const p = await queryDynamicTable(ctx.db, tableName)
-    .withIndex('by_userId', (q) => q.eq('userId', userId))
+    .withIndex('by_organizationId', (q) => q.eq('organizationId', org._id))
     .unique()
   if (p) await deleteDynamic(ctx.db, p._id)
 }

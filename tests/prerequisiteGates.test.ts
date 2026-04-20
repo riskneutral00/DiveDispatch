@@ -160,7 +160,6 @@ describe('prerequisite gate: Instructor w/ DM credential — credential depth', 
       await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
       const organizationId = await getOrCreateTestOrg(ctx as SeedCtx, userId, 'Test DM')
       await ctx.db.insert('diveStaff', {
-        userId,
         organizationId,
         role: 'Instructor',
         name: 'Test DM',
@@ -191,7 +190,6 @@ describe('prerequisite gate: Boat — fleet depth', () => {
       await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
       const organizationId = await getOrCreateTestOrg(ctx as SeedCtx, userId, 'Test Boat Biz')
       await ctx.db.insert('boats', {
-        userId,
         organizationId,
         name: 'Test Boat Biz',
         placeName: 'Koh Tao',

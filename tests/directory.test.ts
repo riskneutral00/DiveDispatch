@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { api } from '../convex/_generated/api'
 import type { Id } from '../convex/_generated/dataModel'
-import { getOrCreateTestOrg, type SeedCtx } from './fixtures'
+import { getOrCreateTestOrg, type SeedCtx, findProfileByUser} from './fixtures'
 import { makeT, expectConvexError } from './helpers/convex-helpers'
 
 // ─── Seed helpers ─────────────────────────────────────────────────────────────
@@ -28,7 +28,6 @@ async function seedInstructorUser(ctx: SeedCtx, slug: string) {
 async function seedInstructorProfile(ctx: SeedCtx, userId: Id<'users'>, name: string, placeName: string, country: string, verified = false) {
   const organizationId = await getOrCreateTestOrg(ctx, userId, name)
   return ctx.db.insert('diveStaff', {
-    userId,
     organizationId,
     role: 'Instructor',
     name,
@@ -214,9 +213,7 @@ describe('listByRole language propagation', () => {
       const u1 = await seedInstructorUser(ctx, 'inst-lang')
       // Set teachingLanguages on instructor profile (SHOULD appear)
       await seedInstructorProfile(ctx, u1, 'Nattaya', 'Koh Tao', 'Thailand', true)
-      const inst = await ctx.db.query('diveStaff')
-        .withIndex('by_userId', (q) => q.eq('userId', u1))
-        .unique()
+      const inst = await findProfileByUser(ctx, u1, 'diveStaff')
       await ctx.db.patch(inst!._id, { teachingLanguages: ['en-GB', 'th-TH'] })
     })
 
@@ -249,7 +246,6 @@ describe('listByRole language propagation', () => {
       })
       const dcOrgId = await getOrCreateTestOrg(ctx, dcUserId, 'Test DC')
       await ctx.db.insert('diveCenters', {
-        userId: dcUserId,
         organizationId: dcOrgId,
         name: 'Test DC',
         placeName: 'Koh Tao',
@@ -282,7 +278,6 @@ describe('listByRole credentials passthrough', () => {
       const u1 = await seedInstructorUser(ctx, 'inst-creds')
       const organizationId = await getOrCreateTestOrg(ctx, u1, 'Multi Cred Instructor')
       await ctx.db.insert('diveStaff', {
-        userId: u1,
         organizationId,
         role: 'Instructor',
         name: 'Multi Cred Instructor',
@@ -318,7 +313,6 @@ describe('listByRole credentials passthrough', () => {
       const u1 = await seedInstructorUser(ctx, 'inst-no-creds')
       const organizationId = await getOrCreateTestOrg(ctx, u1, 'No Cred Instructor')
       await ctx.db.insert('diveStaff', {
-        userId: u1,
         organizationId,
         role: 'Instructor',
         name: 'No Cred Instructor',
@@ -355,7 +349,6 @@ describe('listByRole credentials passthrough', () => {
       const u1 = await seedInstructorUser(ctx, 'inst-guard')
       const organizationId = await getOrCreateTestOrg(ctx, u1, 'Guard Path Instructor')
       await ctx.db.insert('diveStaff', {
-        userId: u1,
         organizationId,
         role: 'Instructor',
         name: 'Guard Path Instructor',

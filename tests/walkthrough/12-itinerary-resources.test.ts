@@ -19,8 +19,7 @@ import {
   seedBookingTemplate,
   seedVenue,
   seedStakeholderPreferences,
-  type SeedCtx,
-} from '../fixtures'
+  type SeedCtx, findProfileByUser } from '../fixtures'
 import { makeT } from '../helpers/convex-helpers'
 
 
@@ -31,7 +30,7 @@ async function seedUser(ctx: SeedCtx, slug: string, role: NonNullable<Parameters
 async function seedCoverage(ctx: SeedCtx, operatorSlug: string, operatorUserId: Id<'users'>) {
   await ctx.db.patch(operatorUserId, { phone: '+66123456789', appLanguage: 'en' })
   await seedDiveCenterProfile(ctx, operatorUserId, { email: `${operatorSlug}@test.com` })
-  const dc = await ctx.db.query('diveCenters').withIndex('by_userId', (q: any) => q.eq('userId', operatorUserId)).unique()
+  const dc = await findProfileByUser(ctx, operatorUserId, 'diveCenters')
   if (dc) await ctx.db.patch(dc._id, { customerLanguages: ['en'] })
   await seedBookingTemplate(ctx, { ownerId: operatorSlug, activityType: ['DSD'] })
   await _seedUser(ctx, { tokenIdentifier: 'clerk|instr-cov', slug: 'instr-cov', email: 'i@t.com', name: 'Instr', firstName: 'I', lastName: 'C', role: 'Instructor' })

@@ -13,7 +13,6 @@ async function seedUser(ctx: SeedCtx, slug: string, role: 'Compressor' | 'DiveCe
 async function seedCompressorProfile(ctx: SeedCtx, userId: Awaited<ReturnType<typeof seedUser>>) {
   const organizationId = await getOrCreateTestOrg(ctx, userId, 'Test Compressor')
   return ctx.db.insert('compressors', {
-    userId,
     organizationId,
     name: 'Test Compressor',
     placeName: 'Koh Tao',
@@ -63,7 +62,7 @@ describe('compressors.create', () => {
       const comp = await ctx.db.get(compId as Id<'compressors'>) as Doc<'compressors'> | null
       expect(comp).not.toBeNull()
       expect(comp!.name).toBe('Sairee Compressor')
-      expect(comp!.userId).toEqual(userId)
+      expect(comp!.organizationId).toBeDefined()
       expect(comp!.verified).toBe(false)
     })
   })
@@ -120,7 +119,6 @@ describe('directory.listByRole — Compressor picker gate', () => {
       const u1 = await seedUser(ctx, 'comp-undef', 'Compressor')
       const organizationId = await getOrCreateTestOrg(ctx, u1, 'Undef')
       await ctx.db.insert('compressors', {
-        userId: u1,
         organizationId,
         name: 'Undef', placeName: 'Chalong', country: 'Thailand',
         lat: 7.82, lng: 98.36, email: 'u@t.com', phone: '+66000',
@@ -140,7 +138,6 @@ describe('directory.listByRole — Compressor picker gate', () => {
       const u1 = await seedUser(ctx, 'comp-empty', 'Compressor')
       const organizationId = await getOrCreateTestOrg(ctx, u1, 'Empty')
       await ctx.db.insert('compressors', {
-        userId: u1,
         organizationId,
         name: 'Empty', placeName: 'Chalong', country: 'Thailand',
         lat: 7.82, lng: 98.36, email: 'e@t.com', phone: '+66000',
@@ -161,7 +158,6 @@ describe('directory.listByRole — Compressor picker gate', () => {
       const u1 = await seedUser(ctx, 'comp-ok', 'Compressor')
       const organizationId = await getOrCreateTestOrg(ctx, u1, 'Air Shop')
       await ctx.db.insert('compressors', {
-        userId: u1,
         organizationId,
         name: 'Air Shop', placeName: 'Chalong', country: 'Thailand',
         lat: 7.82, lng: 98.36, email: 'a@t.com', phone: '+66000',

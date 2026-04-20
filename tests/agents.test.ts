@@ -60,7 +60,7 @@ describe('agents.create', () => {
       const agent = await ctx.db.get(agentId as Id<'agents'>) as Doc<'agents'> | null
       expect(agent).not.toBeNull()
       expect(agent!.name).toBe('Test Agent')
-      expect(agent!.userId).toEqual(userId)
+      expect(agent!.organizationId).toBeDefined()
       expect(agent!.verified).toBe(false)
       expect(agent!.placeName).toBe('Koh Tao')
       expect(agent!.country).toBe('Thailand')

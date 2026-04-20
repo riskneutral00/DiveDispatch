@@ -251,7 +251,7 @@ export const listByRole = query({
 
     if (args.role === 'Pool' || args.role === 'DiveSite') {
       const allVenues = await ctx.db.query('venues').take(200)
-      const unowned = allVenues.filter((v) => !v.userId)
+      const unowned = allVenues.filter((v) => !v.organizationId)
       for (const venue of unowned) {
         if (!isResourceAccessible(venue, caller.slug)) continue
         const category = venue.venueCategory

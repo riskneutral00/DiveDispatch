@@ -159,7 +159,7 @@ export const updateProfile = mutation({
 
     await syncDiveStaffName(
       ctx,
-      user._id,
+      user.slug,
       sanitized.firstName ?? user.firstName ?? '',
       sanitized.lastName ?? user.lastName ?? '',
     )
@@ -168,13 +168,18 @@ export const updateProfile = mutation({
 
 async function syncDiveStaffName(
   ctx: { db: DatabaseWriter },
-  userId: Id<'users'>,
+  userSlug: string,
   firstName: string,
   lastName: string,
 ) {
+  const org = await ctx.db
+    .query('organizations')
+    .withIndex('by_slug', (q) => q.eq('slug', userSlug))
+    .unique()
+  if (!org) return
   const staff = await ctx.db
     .query('diveStaff')
-    .withIndex('by_userId', (q) => q.eq('userId', userId))
+    .withIndex('by_organizationId', (q) => q.eq('organizationId', org._id))
     .unique()
   if (staff) {
     await ctx.db.patch(staff._id, { name: `${firstName} ${lastName}`.trim() })

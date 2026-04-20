@@ -22,7 +22,6 @@ export async function seedDiveCenterProfile(
 ) {
   const organizationId = overrides.organizationId ?? (await getOrCreateTestOrg(ctx, userId, overrides.name ?? 'Test DC'))
   return ctx.db.insert('diveCenters', {
-    userId,
     organizationId,
     name: overrides.name ?? 'Test DC',
     placeName: overrides.placeName ?? 'Koh Tao',
@@ -52,7 +51,6 @@ export async function seedAgent(
 ) {
   const organizationId = overrides.organizationId ?? (await getOrCreateTestOrg(ctx, userId, overrides.name ?? 'Test Agent'))
   return ctx.db.insert('agents', {
-    userId,
     organizationId,
     name: overrides.name ?? 'Test Agent',
     placeName: 'Koh Tao',
@@ -102,7 +100,6 @@ export async function seedVenue(
       ? { confinedCapable: overrides.confinedCapable ?? true }
       : {}),
     hasCompressor: overrides.hasCompressor ?? false,
-    ...(overrides.userId !== undefined ? { userId: overrides.userId } : {}),
     ...(organizationId !== undefined ? { organizationId } : {}),
   })
 }
@@ -124,7 +121,6 @@ export async function seedInstructorProfile(
 ) {
   const organizationId = overrides.organizationId ?? (await getOrCreateTestOrg(ctx, userId, overrides.name ?? 'Test Instructor'))
   return ctx.db.insert('diveStaff', {
-    userId,
     organizationId,
     role: 'Instructor',
     name: overrides.name ?? 'Test Instructor',
@@ -159,7 +155,6 @@ export async function seedDiveMasterProfile(
 ) {
   const organizationId = overrides.organizationId ?? (await getOrCreateTestOrg(ctx, userId, overrides.name ?? 'Test DiveMaster'))
   return ctx.db.insert('diveStaff', {
-    userId,
     organizationId,
     role: 'Instructor',
     name: overrides.name ?? 'Test DiveMaster',
@@ -194,7 +189,6 @@ export async function seedBoatProfile(
 ) {
   const organizationId = overrides.organizationId ?? (await getOrCreateTestOrg(ctx, userId, overrides.name ?? 'Test Boat'))
   return ctx.db.insert('boats', {
-    userId,
     organizationId,
     name: overrides.name ?? 'Test Boat',
     placeName: overrides.placeName ?? 'Koh Tao',
@@ -224,7 +218,6 @@ export async function seedEquipmentProfile(
 ) {
   const organizationId = overrides.organizationId ?? (await getOrCreateTestOrg(ctx, userId, overrides.name ?? 'Test Equipment'))
   return ctx.db.insert('equipment', {
-    userId,
     organizationId,
     name: overrides.name ?? 'Test Equipment',
     placeName: overrides.placeName ?? 'Koh Tao',

@@ -18,8 +18,7 @@ import {
   seedBookingTemplate,
   seedVenue,
   getOrCreateTestOrg,
-  type SeedCtx,
-} from './fixtures'
+  type SeedCtx, findProfileByUser } from './fixtures'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -46,7 +45,6 @@ async function seedBoatUser(ctx: SeedCtx, slug: string, hasCompressor: boolean) 
   const userId = await seedUser(ctx, { tokenIdentifier: `clerk|${slug}`, slug, email: `${slug}@test.com`, name: `${slug} Display`, firstName: slug, lastName: 'Test', role: 'Boat' })
   const organizationId = await getOrCreateTestOrg(ctx, userId, `${slug} Boat`)
   await ctx.db.insert('boats', {
-    userId,
     organizationId,
     name: `${slug} Boat`,
     placeName: 'Koh Tao',
@@ -67,7 +65,7 @@ async function seedDCProfile(ctx: SeedCtx, userId: Id<'users'>, slug: string) {
   await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
   await seedDiveCenterProfile(ctx, userId, { email: `${slug}@test.com` })
   // customerLanguages is a DiveCenter ROLE_REQUIRED field
-  const dc = await ctx.db.query('diveCenters').withIndex('by_userId', (q: any) => q.eq('userId', userId)).unique()
+  const dc = await findProfileByUser(ctx, userId, 'diveCenters')
   if (dc) await ctx.db.patch(dc._id, { customerLanguages: ['en'] })
   await seedBookingTemplate(ctx, { ownerId: slug, activityType: ['DSD'] })
 }

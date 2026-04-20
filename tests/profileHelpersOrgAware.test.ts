@@ -67,7 +67,7 @@ describe('profileCreate — Rule 11 strict org requirement', () => {
 
     const dc = await t.run(async (ctx) => ctx.db.get(dcId as Id<'diveCenters'>))
     expect(dc?.organizationId).toBe(orgDocId)
-    expect(dc?.userId).toBeDefined()
+    expect(dc?.organizationId).toBeDefined()
   })
 
   it('throws NOT_FOUND org_not_synced when org claim present but org row missing', async () => {

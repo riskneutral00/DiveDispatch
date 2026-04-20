@@ -48,7 +48,7 @@ describe('boats.create', () => {
       const boat = await ctx.db.get(boatId as Id<'boats'>) as Doc<'boats'> | null
       expect(boat).not.toBeNull()
       expect(boat!.name).toBe('MV Seatran')
-      expect(boat!.userId).toEqual(userId)
+      expect(boat!.organizationId).toBeDefined()
       expect(boat!.hasCompressor).toBe(true) // day_boat → smart default true
       expect(boat!.verified).toBe(false)
       expect(boat!.fleet).toHaveLength(1)

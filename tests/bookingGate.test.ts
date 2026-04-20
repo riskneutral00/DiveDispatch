@@ -15,8 +15,7 @@ import {
   seedBookingTemplate,
   seedStakeholderPreferences,
   seedVenue,
-  type SeedCtx,
-} from './fixtures'
+  type SeedCtx, findProfileByUser } from './fixtures'
 import { testDate } from './helpers/dates'
 import { makeT, expectConvexError } from './helpers/convex-helpers'
 
@@ -39,7 +38,7 @@ async function seedFullDCWithCoverage(ctx: SeedCtx, slug: string) {
     email: 'info@testdc.com',
   })
   // customerLanguages on diveCenters table
-  const dc = await ctx.db.query('diveCenters').withIndex('by_userId', (q: any) => q.eq('userId', userId)).unique()
+  const dc = await findProfileByUser(ctx, userId, 'diveCenters')
   if (dc) await ctx.db.patch(dc._id, { customerLanguages: ['en'] })
 
   await seedBookingTemplate(ctx, {

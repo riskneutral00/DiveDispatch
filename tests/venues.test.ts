@@ -216,7 +216,7 @@ describe('venues.create — DiveSite auto-inventory', () => {
       expect(venue!.name).toBe('Shark Bay Reef')
       expect(venue!.venueCategory).toBe('diveSite')
       expect(venue!.diveSiteTypes).toEqual(['reef'])
-      expect(venue!.userId).toEqual(userId)
+      expect(venue!.organizationId).toBeDefined()
     })
   })
 })

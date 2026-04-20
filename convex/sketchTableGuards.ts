@@ -2,7 +2,6 @@ import type { MutationCtx } from './_generated/server'
 import type { Id } from './_generated/dataModel'
 
 type StakeholderProfileData = {
-  userId: Id<'users'>
   organizationId: Id<'organizations'>
   name: string
   placeName: string

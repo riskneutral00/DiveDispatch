@@ -6,8 +6,7 @@ import {
   seedEquipmentProfile,
   seedCompleteGearInventory,
   getOrCreateTestOrg,
-  type SeedCtx,
-} from './fixtures'
+  type SeedCtx, findProfileByUser } from './fixtures'
 import { makeT } from './helpers/convex-helpers'
 
 // ─── Composite helper: 100% Equipment profile (simplest role) ─────────────
@@ -49,9 +48,8 @@ async function seedCompleteDC(ctx: SeedCtx, slug: string) {
     associations: [{ agency: 'PADI', number: '12345' }],
   })
   // customerLanguages is a DiveCenter ROLE_REQUIRED field
-  await ctx.db.query('diveCenters').withIndex('by_userId', (q: any) => q.eq('userId', userId)).unique().then(async (dc: any) => {
-    if (dc) await ctx.db.patch(dc._id, { customerLanguages: ['en'] })
-  })
+  const dc = await findProfileByUser(ctx, userId, 'diveCenters')
+  if (dc) await ctx.db.patch(dc._id, { customerLanguages: ['en'] })
   return userId
 }
 
@@ -104,7 +102,6 @@ describe('getLowestProfileCompletion', () => {
 
       const organizationId = await getOrCreateTestOrg(ctx, userId, 'Test Boat Biz')
       await ctx.db.insert('boats', {
-        userId,
         organizationId,
         name: 'Test Boat Biz',
         placeName: 'Koh Tao',

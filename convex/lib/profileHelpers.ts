@@ -124,7 +124,6 @@ export async function profileCreate(
 
   return await insertDynamicTable(ctx.db, tableName, {
     ...mergedArgs,
-    userId: user._id,
     organizationId: activeOrg._id,
     ...extraDefaults,
   })
