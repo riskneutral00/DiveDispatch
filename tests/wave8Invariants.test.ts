@@ -113,29 +113,30 @@ describe('Wave 8 — C3 invariant (multi-role user shares one org)', () => {
     const poolId = await t.withIdentity(identity).mutation(api.venues.create, {
       name: 'Hug Ocean Pool', ...ADDR_ARGS,
       venueCategory: 'pool' as const,
-    }).catch(() => null)
+      hasCompressor: false,
+    })
     const boatId = await t.withIdentity(identity).mutation(api.boats.create, {
       name: 'Hug Ocean Boat', ...ADDR_ARGS,
-    }).catch(() => null)
+      fleet: [],
+    })
     const equipId = await t.withIdentity(identity).mutation(api.equipment.create, {
       name: 'Hug Ocean Gear', ...ADDR_ARGS,
-    }).catch(() => null)
+    })
+
+    expect(dcId).not.toBeNull()
+    expect(poolId).not.toBeNull()
+    expect(boatId).not.toBeNull()
+    expect(equipId).not.toBeNull()
 
     await t.run(async (ctx) => {
       const dc = await ctx.db.get(dcId as Id<'diveCenters'>)
+      const pool = await ctx.db.get(poolId as Id<'venues'>)
+      const boat = await ctx.db.get(boatId as Id<'boats'>)
+      const equip = await ctx.db.get(equipId as Id<'equipment'>)
       expect(dc?.organizationId).toBe(orgDocId)
-      if (poolId) {
-        const pool = await ctx.db.get(poolId as Id<'venues'>)
-        expect(pool?.organizationId).toBe(orgDocId)
-      }
-      if (boatId) {
-        const boat = await ctx.db.get(boatId as Id<'boats'>)
-        expect(boat?.organizationId).toBe(orgDocId)
-      }
-      if (equipId) {
-        const equip = await ctx.db.get(equipId as Id<'equipment'>)
-        expect(equip?.organizationId).toBe(orgDocId)
-      }
+      expect(pool?.organizationId).toBe(orgDocId)
+      expect(boat?.organizationId).toBe(orgDocId)
+      expect(equip?.organizationId).toBe(orgDocId)
     })
   })
 

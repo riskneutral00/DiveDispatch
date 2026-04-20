@@ -155,7 +155,11 @@
     "businessStepSubtitle": "We'll create your organization with this name.",
     "businessUrlPreview": "Your URL",
     "businessSlugTaken": "This name is taken — try another.",
-    "businessNameTooShort": "Business name must be at least 2 characters."
+    "businessNameTooShort": "Business name must be at least 2 characters.",
+    "stepSignUp": "Sign Up",
+    "stepRole": "Role",
+    "stepBusiness": "Business",
+    "stepProfile": "Profile"
   },
   "booking": {
     "status": {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { SignUp, useOrganizationList } from '@clerk/nextjs'
 import { useConvexAuth, useMutation, useQuery } from 'convex/react'
 import { useRouter } from 'next/navigation'
@@ -21,19 +21,6 @@ import { DEFAULT_LOCALE, normalizeLocale } from '@/lib/constants/locales'
 import { clerkGlassAppearance } from '../../clerk-glass-appearance'
 import { parseConvexErrorI18n } from '@/lib/utils/convex-error'
 import { CURRENT_TC_VERSION } from '@/../convex/shared/tcVersion'
-
-const SIGNUP_STEPS_FREELANCE = [
-  { key: 'signup', label: 'Sign Up' },
-  { key: 'role', label: 'Role' },
-  { key: 'profile', label: 'Profile' },
-] as const
-
-const SIGNUP_STEPS_BUSINESS = [
-  { key: 'signup', label: 'Sign Up' },
-  { key: 'role', label: 'Role' },
-  { key: 'business', label: 'Business' },
-  { key: 'profile', label: 'Profile' },
-] as const
 
 type PostAuthStage = 'role' | 'business' | 'profile'
 type OrgPhase = 'idle' | 'creating' | 'syncing' | 'done'
@@ -62,6 +49,24 @@ export default function SignUpPage() {
   const createUser = useMutation(api.users.createUser)
   const router = useRouter()
   const { createOrganization, setActive, isLoaded: orgListLoaded } = useOrganizationList()
+
+  const signupStepsFreelance = useMemo(
+    () => [
+      { key: 'signup', label: tAuth('stepSignUp') },
+      { key: 'role', label: tAuth('stepRole') },
+      { key: 'profile', label: tAuth('stepProfile') },
+    ],
+    [tAuth],
+  )
+  const signupStepsBusiness = useMemo(
+    () => [
+      { key: 'signup', label: tAuth('stepSignUp') },
+      { key: 'role', label: tAuth('stepRole') },
+      { key: 'business', label: tAuth('stepBusiness') },
+      { key: 'profile', label: tAuth('stepProfile') },
+    ],
+    [tAuth],
+  )
 
   const [appLanguage, setAppLanguageState] = useState<string>(DEFAULT_LOCALE)
   const [selectedRoles, setSelectedRoles] = useState<RoleConfig[]>([])
@@ -226,7 +231,7 @@ export default function SignUpPage() {
     return (
       <>
         <div className="w-full mb-6">
-          <StepIndicator steps={SIGNUP_STEPS_FREELANCE} currentIndex={0} />
+          <StepIndicator steps={signupStepsFreelance} currentIndex={0} />
         </div>
         <div className="w-full mb-6">
           <LanguageField
@@ -256,7 +261,7 @@ export default function SignUpPage() {
   const isBusinessFlow =
     selectedRoles.length > 0 &&
     deriveRoleClass(selectedRoles.map((r) => r.clerkRole)) === 'business'
-  const indicatorSteps = isBusinessFlow ? SIGNUP_STEPS_BUSINESS : SIGNUP_STEPS_FREELANCE
+  const indicatorSteps = isBusinessFlow ? signupStepsBusiness : signupStepsFreelance
   const currentIndex =
     stage === 'role' ? 1 : stage === 'business' ? 2 : isBusinessFlow ? 3 : 2
 
