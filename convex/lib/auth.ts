@@ -21,6 +21,20 @@ export function assertOwnership(
   }
 }
 
+export function assertOrgOwnership(
+  resource: { organizationId?: Id<'organizations'> },
+  activeOrg: { _id: Id<'organizations'> },
+  errorMessage?: string,
+): void {
+  if (resource.organizationId !== activeOrg._id) {
+    throw new ConvexError(
+      errorMessage
+        ? { code: ErrorCode.FORBIDDEN, reason: errorMessage }
+        : { code: ErrorCode.FORBIDDEN, reason: 'org_ownership' },
+    )
+  }
+}
+
 export type DbCtx = QueryCtx | MutationCtx
 
 export const OPERATOR_ROLE_SET: ReadonlySet<string> = new Set(OPERATOR_TYPES)
