@@ -58,6 +58,20 @@ export default defineSchema({
     .index('by_isActive', ['isActive'])
     .index('by_isActive_appearance', ['isActive', 'appearance']),
 
+  organizations: defineTable({
+    clerkOrgId: v.string(),
+    name: v.string(),
+    slug: v.string(),
+    phone: v.optional(v.string()),
+    email: v.optional(v.string()),
+    address: v.optional(v.string()),
+    country: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_clerkOrgId', ['clerkOrgId'])
+    .index('by_slug', ['slug']),
+
   bookingResources: defineTable({
     bookingId: v.id('bookings'),
     resourceType: resourceOwnerType,
@@ -308,6 +322,7 @@ export default defineSchema({
 
   diveCenters: defineTable({
     userId: v.id('users'),
+    organizationId: v.optional(v.id('organizations')),
     name: v.string(),
     placeName: v.string(),
     country: v.string(),
@@ -326,10 +341,13 @@ export default defineSchema({
     customerLanguages: v.optional(v.array(v.string())),
     ...accessControlFields,
     verified: v.boolean(),
-  }).index('by_userId', ['userId']),
+  })
+    .index('by_userId', ['userId'])
+    .index('by_organizationId', ['organizationId']),
 
   diveStaff: defineTable({
     userId: v.id('users'),
+    organizationId: v.optional(v.id('organizations')),
     role: v.literal('Instructor'),
     name: v.string(),
     placeName: v.string(),
@@ -349,10 +367,13 @@ export default defineSchema({
     teachingLanguages: v.array(v.string()),
     ...accessControlFields,
     verified: v.boolean(),
-  }).index('by_userId', ['userId']),
+  })
+    .index('by_userId', ['userId'])
+    .index('by_organizationId', ['organizationId']),
 
   boats: defineTable({
     userId: v.id('users'),
+    organizationId: v.optional(v.id('organizations')),
     name: v.string(),
     placeName: v.string(),
     country: v.string(),
@@ -381,10 +402,13 @@ export default defineSchema({
     hasCompressor: v.boolean(),
     ...accessControlFields,
     verified: v.boolean(),
-  }).index('by_userId', ['userId']),
+  })
+    .index('by_userId', ['userId'])
+    .index('by_organizationId', ['organizationId']),
 
   equipment: defineTable({
     userId: v.id('users'),
+    organizationId: v.optional(v.id('organizations')),
     name: v.string(),
     placeName: v.string(),
     country: v.string(),
@@ -395,10 +419,13 @@ export default defineSchema({
     manufacturersByGearType: v.optional(v.record(v.string(), v.array(v.string()))),
     ...accessControlFields,
     verified: v.boolean(),
-  }).index('by_userId', ['userId']),
+  })
+    .index('by_userId', ['userId'])
+    .index('by_organizationId', ['organizationId']),
 
   venues: defineTable({
     userId: v.optional(v.id('users')),
+    organizationId: v.optional(v.id('organizations')),
     name: v.string(),
     placeName: v.string(),
     country: v.string(),
@@ -414,10 +441,13 @@ export default defineSchema({
     hasCompressor: v.boolean(),
     maxDepth: v.optional(v.number()),
     maxCapacity: v.optional(v.number()),
-  }).index('by_userId', ['userId']),
+  })
+    .index('by_userId', ['userId'])
+    .index('by_organizationId', ['organizationId']),
 
   compressors: defineTable({
     userId: v.id('users'),
+    organizationId: v.optional(v.id('organizations')),
     name: v.string(),
     placeName: v.string(),
     country: v.string(),
@@ -430,7 +460,9 @@ export default defineSchema({
     nitroxMax: v.optional(v.number()),
     ...accessControlFields,
     verified: v.boolean(),
-  }).index('by_userId', ['userId']),
+  })
+    .index('by_userId', ['userId'])
+    .index('by_organizationId', ['organizationId']),
 
   equipmentBags: defineTable({
     bagNumber: v.string(),
@@ -499,6 +531,8 @@ export default defineSchema({
 
   agents: defineTable({
     userId: v.id('users'),
+    organizationId: v.optional(v.id('organizations')),
+    customerLanguages: v.optional(v.array(v.string())),
     name: v.string(),
     placeName: v.string(),
     country: v.string(),
@@ -509,10 +543,13 @@ export default defineSchema({
     associations: v.array(v.object({ agency: v.string(), number: v.string() })),
     ...accessControlFields,
     verified: v.boolean(),
-  }).index('by_userId', ['userId']),
+  })
+    .index('by_userId', ['userId'])
+    .index('by_organizationId', ['organizationId']),
 
   liveaboards: defineTable({
     userId: v.id('users'),
+    organizationId: v.optional(v.id('organizations')),
     name: v.string(),
     placeName: v.string(),
     country: v.string(),
@@ -522,7 +559,9 @@ export default defineSchema({
     phone: v.string(),
     ...accessControlFields,
     verified: v.boolean(),
-  }).index('by_userId', ['userId']),
+  })
+    .index('by_userId', ['userId'])
+    .index('by_organizationId', ['organizationId']),
 
   cabins: defineTable({
     liveaboardId: v.id('liveaboards'),
@@ -558,6 +597,7 @@ export default defineSchema({
 
   diveResorts: defineTable({
     userId: v.id('users'),
+    organizationId: v.optional(v.id('organizations')),
     name: v.string(),
     placeName: v.string(),
     country: v.string(),
@@ -567,7 +607,9 @@ export default defineSchema({
     phone: v.string(),
     ...accessControlFields,
     verified: v.boolean(),
-  }).index('by_userId', ['userId']),
+  })
+    .index('by_userId', ['userId'])
+    .index('by_organizationId', ['organizationId']),
 
   rooms: defineTable({
     diveResortId: v.id('diveResorts'),
@@ -586,6 +628,7 @@ export default defineSchema({
 
   diveHostels: defineTable({
     userId: v.id('users'),
+    organizationId: v.optional(v.id('organizations')),
     name: v.string(),
     placeName: v.string(),
     country: v.string(),
@@ -597,7 +640,9 @@ export default defineSchema({
     dormCount: v.number(),
     ...accessControlFields,
     verified: v.boolean(),
-  }).index('by_userId', ['userId']),
+  })
+    .index('by_userId', ['userId'])
+    .index('by_organizationId', ['organizationId']),
 
   cronRunLog: defineTable({
     jobName: v.string(),

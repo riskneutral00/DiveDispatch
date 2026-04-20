@@ -5,6 +5,7 @@ import { authorize, getAuthUser } from './auth'
 import { checkHasRole } from '../userRoles'
 import { ErrorCode } from './errorCodes'
 import { queryDynamicTable, insertDynamicTable, patchDynamic } from './typedDb'
+import { tryGetActiveOrg } from './activeOrg'
 
 export const ROLE_TABLE_MAP: Record<string, TableNames> = {
   Instructor: 'diveStaff',
@@ -26,6 +27,14 @@ export async function profileMine<T extends TableNames>(
 ): Promise<Doc<T> | null> {
   const user = await getAuthUser(ctx)
   if (!user) return null
+
+  const activeOrg = await tryGetActiveOrg(ctx)
+  if (activeOrg) {
+    const orgDoc = await queryDynamicTable(ctx.db, tableName)
+      .withIndex('by_organizationId', (q) => q.eq('organizationId', activeOrg._id))
+      .unique()
+    if (orgDoc) return orgDoc as Doc<T>
+  }
 
   const doc = await queryDynamicTable(ctx.db, tableName)
     .withIndex('by_userId', (q) => q.eq('userId', user._id))
@@ -67,6 +76,7 @@ export async function profileBySlug(
 const PROTECTED_FIELDS = new Set([
   'verified',
   'userId',
+  'organizationId',
   '_id',
   '_creationTime',
 ])
@@ -122,9 +132,12 @@ export async function profileCreate(
     mergedArgs.phone = user.phone ?? ''
   }
 
+  const activeOrg = await tryGetActiveOrg(ctx)
+
   return await insertDynamicTable(ctx.db, tableName, {
     ...mergedArgs,
     userId: user._id,
+    ...(activeOrg && { organizationId: activeOrg._id }),
     ...extraDefaults,
   })
 }

@@ -2,6 +2,7 @@ import { v } from 'convex/values'
 import { log } from './lib/logger'
 import { internalAction, internalMutation, internalQuery } from './_generated/server'
 import type { MutationCtx } from './_generated/server'
+import type { Id } from './_generated/dataModel'
 import { internal } from './_generated/api'
 import { OPERATOR_ROLE_SET } from './lib/auth'
 import type { OperatorType } from './shared/operatorTypes'
@@ -201,6 +202,27 @@ async function insertUser(ctx: MutationCtx, s: SeedStakeholder) {
   })
 }
 
+async function getOrCreateSeedOrg(
+  ctx: MutationCtx,
+  userSlug: string,
+  orgName: string,
+): Promise<Id<'organizations'>> {
+  const clerkOrgId = `seed_org_${userSlug}`
+  const existing = await ctx.db
+    .query('organizations')
+    .withIndex('by_clerkOrgId', (q) => q.eq('clerkOrgId', clerkOrgId))
+    .unique()
+  if (existing) return existing._id
+  const now = Date.now()
+  return ctx.db.insert('organizations', {
+    clerkOrgId,
+    name: orgName,
+    slug: userSlug,
+    createdAt: now,
+    updatedAt: now,
+  })
+}
+
 export const seedStakeholders = internalMutation({
   args: {},
   handler: async (ctx) => {
@@ -209,31 +231,33 @@ export const seedStakeholders = internalMutation({
 
     for (const s of ALL_STAKEHOLDERS) {
       const userId = await insertUser(ctx, s) // batch-exempt
+      const orgName = s.diveCenter?.name ?? s.boat?.name ?? s.equipment?.name ?? s.compressor?.name ?? s.agent?.name ?? s.liveaboard?.name ?? s.diveResort?.name ?? s.pool?.name ?? `Seed Org ${s.user.slug}`
+      const organizationId = await getOrCreateSeedOrg(ctx, s.user.slug, orgName) // batch-exempt
 
       if (s.diveCenter) {
-        await ctx.db.insert('diveCenters', { userId, ...s.diveCenter }) // batch-exempt
+        await ctx.db.insert('diveCenters', { userId, organizationId, ...s.diveCenter }) // batch-exempt
       }
       if (s.boat) {
-        await ctx.db.insert('boats', { userId, ...s.boat }) // batch-exempt
+        await ctx.db.insert('boats', { userId, organizationId, ...s.boat }) // batch-exempt
       }
       if (s.pool) {
-        await ctx.db.insert('venues', { userId, ...s.pool }) // batch-exempt
+        await ctx.db.insert('venues', { userId, organizationId, ...s.pool }) // batch-exempt
       }
       if (s.equipment) {
         const { inventoryOverrides: _overrides, ...equipmentProfile } = s.equipment
-        await ctx.db.insert('equipment', { userId, ...equipmentProfile }) // batch-exempt
+        await ctx.db.insert('equipment', { userId, organizationId, ...equipmentProfile }) // batch-exempt
       }
       if (s.compressor) {
-        await ctx.db.insert('compressors', { userId, ...s.compressor }) // batch-exempt
+        await ctx.db.insert('compressors', { userId, organizationId, ...s.compressor }) // batch-exempt
       }
       if (s.agent) {
-        await ctx.db.insert('agents', { userId, ...s.agent }) // batch-exempt
+        await ctx.db.insert('agents', { userId, organizationId, ...s.agent }) // batch-exempt
       }
       if (s.liveaboard) {
-        await insertLiveaboard(ctx, { userId, ...s.liveaboard }) // batch-exempt
+        await insertLiveaboard(ctx, { userId, organizationId, ...s.liveaboard }) // batch-exempt
       }
       if (s.diveResort) {
-        await insertDiveResort(ctx, { userId, ...s.diveResort }) // batch-exempt
+        await insertDiveResort(ctx, { userId, organizationId, ...s.diveResort }) // batch-exempt
       }
     }
   },
@@ -278,7 +302,8 @@ export const seedInstructors = internalMutation({
     for (const s of ALL_INSTRUCTORS) {
       const userId = await insertUser(ctx, s)
       if (s.instructor) {
-        await ctx.db.insert('diveStaff', { userId, ...s.instructor, role: 'Instructor' }) // batch-exempt: sequential per-instructor seed
+        const organizationId = await getOrCreateSeedOrg(ctx, s.user.slug, s.instructor.name ?? s.user.name) // batch-exempt
+        await ctx.db.insert('diveStaff', { userId, organizationId, ...s.instructor, role: 'Instructor' }) // batch-exempt: sequential per-instructor seed
       }
     }
   },

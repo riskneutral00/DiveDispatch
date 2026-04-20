@@ -86,10 +86,31 @@ type ClerkUserPayload = {
   deleted?: boolean
 }
 
-type ClerkWebhookEvent = {
-  type: string
-  data: ClerkUserPayload
+type ClerkOrganizationPayload = {
+  id: string
+  name?: string
+  slug?: string
+  deleted?: boolean
 }
+
+type ClerkMembershipPayload = {
+  id: string
+  organization?: { id: string }
+  public_user_data?: { user_id: string }
+  role?: string
+}
+
+type ClerkWebhookEvent =
+  | { type: 'user.created' | 'user.updated' | 'user.deleted'; data: ClerkUserPayload }
+  | { type: 'organization.created' | 'organization.updated' | 'organization.deleted'; data: ClerkOrganizationPayload }
+  | {
+      type:
+        | 'organizationMembership.created'
+        | 'organizationMembership.updated'
+        | 'organizationMembership.deleted'
+      data: ClerkMembershipPayload
+    }
+  | { type: string; data: unknown }
 
 http.route({
   path: '/webhooks/clerk',
@@ -128,15 +149,16 @@ http.route({
 
     const event = JSON.parse(payload) as ClerkWebhookEvent
     const issuerUrl = process.env.CLERK_ISSUER_URL ?? ''
-    const tokenIdentifier = `${issuerUrl}|${event.data.id}`
 
     if (event.type === 'user.created' || event.type === 'user.updated') {
+      const userData = event.data as ClerkUserPayload
+      const tokenIdentifier = `${issuerUrl}|${userData.id}`
       const primaryEmail =
-        event.data.email_addresses?.find((e) => e.primary)?.email_address ??
-        event.data.email_addresses?.[0]?.email_address ??
+        userData.email_addresses?.find((e) => e.primary)?.email_address ??
+        userData.email_addresses?.[0]?.email_address ??
         ''
-      const firstName = event.data.first_name ?? ''
-      const lastName = event.data.last_name ?? ''
+      const firstName = userData.first_name ?? ''
+      const lastName = userData.last_name ?? ''
       const name = [firstName, lastName].filter(Boolean).join(' ')
 
       await ctx.runMutation(internal.users.upsertFromWebhook, {
@@ -148,8 +170,24 @@ http.route({
         svixId,
       })
     } else if (event.type === 'user.deleted') {
+      const userData = event.data as ClerkUserPayload
+      const tokenIdentifier = `${issuerUrl}|${userData.id}`
       await ctx.runMutation(internal.users.deleteFromWebhook, {
         tokenIdentifier,
+        svixId,
+      })
+    } else if (event.type === 'organization.created' || event.type === 'organization.updated') {
+      const orgData = event.data as ClerkOrganizationPayload
+      await ctx.runMutation(internal.organizations.upsertFromWebhook, {
+        clerkOrgId: orgData.id,
+        name: orgData.name ?? '',
+        slug: orgData.slug ?? '',
+        svixId,
+      })
+    } else if (event.type === 'organization.deleted') {
+      const orgData = event.data as ClerkOrganizationPayload
+      await ctx.runMutation(internal.organizations.deleteFromWebhook, {
+        clerkOrgId: orgData.id,
         svixId,
       })
     }
