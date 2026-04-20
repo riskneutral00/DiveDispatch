@@ -1132,5 +1132,7 @@ export const ALL_STAKEHOLDERS: SeedStakeholder[] = [
   RESTORED_PRAWIT,
   RESTORED_SOMBAT,
   RESTORED_ALEX,
-  ...PARKED_STAKEHOLDERS.filter((p) => p.equipment).map(equipmentOnly),
+  WATER_PRO,
+  SHARK_BITES,
+  ...PARKED_STAKEHOLDERS.filter((p) => p.equipment && !p.pool && !p.boat).map(equipmentOnly),
 ]

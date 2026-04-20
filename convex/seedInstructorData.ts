@@ -174,4 +174,78 @@ export const RESTORED_ARISA: SeedStakeholder = {
   },
 }
 
-export const ALL_INSTRUCTORS: SeedStakeholder[] = [RESTORED_RYAN, RESTORED_ARISA]
+const PHUKET_ISLAND = {
+  placeName: 'Phuket',
+  country: 'Thailand',
+  lat: 7.8804,
+  lng: 98.3923,
+} as const
+
+export const RESTORED_LIMING: SeedStakeholder = {
+  user: {
+    slug: 'lkp3zm',
+    email: 'li-ming+clerk_test@divedispatch.dev',
+    name: 'Li Ming',
+    firstName: 'Li',
+    lastName: 'Ming',
+    appLanguage: 'en',
+    phone: '+66816031003',
+    dateOfBirth: '1991-07-14',
+  },
+  roles: [{ role: 'Instructor' }],
+  instructor: {
+    name: 'Li Ming',
+    role: 'Instructor',
+    ...PHUKET_ISLAND,
+    email: 'li-ming+clerk_test@divedispatch.dev',
+    phone: '+66816031003',
+    teachingLanguages: ['zh-CN', 'en', 'ko'],
+    credential: [
+      {
+        agency: 'SSI',
+        level: 'OWI',
+        agencyID: 'SSI-500030',
+        specialtyRatings: ['Deep'],
+      },
+    ],
+    verified: false,
+  },
+}
+
+export const RESTORED_WEICHEN: SeedStakeholder = {
+  user: {
+    slug: 'wc8qg2',
+    email: 'wei-chen+clerk_test@divedispatch.dev',
+    name: 'Wei Chen',
+    firstName: 'Wei',
+    lastName: 'Chen',
+    appLanguage: 'en',
+    phone: '+66816021002',
+    dateOfBirth: '1989-02-10',
+  },
+  roles: [{ role: 'Instructor' }],
+  instructor: {
+    name: 'Wei Chen',
+    role: 'Instructor',
+    ...PHUKET_ISLAND,
+    email: 'wei-chen+clerk_test@divedispatch.dev',
+    phone: '+66816021002',
+    teachingLanguages: ['zh-CN', 'zh-TW', 'th', 'en'],
+    credential: [
+      {
+        agency: 'PADI',
+        level: 'MSDT',
+        agencyID: 'PADI-300020',
+        specialtyRatings: ['Deep', 'Enriched Air', 'Wreck', 'Navigation', 'Night'],
+      },
+    ],
+    verified: false,
+  },
+}
+
+export const ALL_INSTRUCTORS: SeedStakeholder[] = [
+  RESTORED_RYAN,
+  RESTORED_ARISA,
+  RESTORED_LIMING,
+  RESTORED_WEICHEN,
+]
