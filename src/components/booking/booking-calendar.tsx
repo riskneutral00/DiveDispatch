@@ -89,6 +89,7 @@ export function BookingCalendar({
   const [pickerYear, setPickerYear] = useState(viewYear)
   const pickerRef = useRef<HTMLDivElement>(null)
 
+  /* eslint-disable-next-line react-hooks/set-state-in-effect -- comments-ok resets picker year when calendar range jumps; user-controlled state synced to external input */
   useEffect(() => { setPickerYear(viewYear) }, [viewYear])
 
   const collapseExpanded = useCallback(() => setExpanded(false), [])

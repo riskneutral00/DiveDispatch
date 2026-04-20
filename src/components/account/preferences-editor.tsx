@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
@@ -48,7 +48,6 @@ const ACCEPTANCE_MODES = [
   },
 ] as const
 
-type AcceptanceMode = 'Auto' | 'PrePayRequired' | 'PostPayAllowed'
 type PreferencesRecord = Record<string, unknown>
 
 const DISPLAY_OPERATOR_ROLE_KEYS = new Set(DISPLAY_OPERATOR_ROLES.map((r) => r.clerkRole))
@@ -119,13 +118,13 @@ function PreferredOperatorPicker({
   onChange: (slug: string | undefined) => void
 }) {
   const t = useTranslations('booking')
-  const dc = useQuery(api.directory.listByRole, { role: 'DiveCenter' }) ?? []
-  const lb = useQuery(api.directory.listByRole, { role: 'Liveaboard' }) ?? []
-  const dr = useQuery(api.directory.listByRole, { role: 'DiveResort' }) ?? []
-  const dh = useQuery(api.directory.listByRole, { role: 'DiveHostel' }) ?? []
+  const dc = useQuery(api.directory.listByRole, { role: 'DiveCenter' })
+  const lb = useQuery(api.directory.listByRole, { role: 'Liveaboard' })
+  const dr = useQuery(api.directory.listByRole, { role: 'DiveResort' })
+  const dh = useQuery(api.directory.listByRole, { role: 'DiveHostel' })
 
   const options = useMemo(() => {
-    const merged = [...dc, ...lb, ...dr, ...dh]
+    const merged = [...(dc ?? []), ...(lb ?? []), ...(dr ?? []), ...(dh ?? [])]
     return merged
       .map((e) => ({
         value: `${e.role}:${e.slug}`,
@@ -182,7 +181,7 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp,
   const [resourceSubTab, setResourceSubTab] = useState<ResourceSubTab>('instructors')
   const [resourceSaving, setResourceSaving] = useState(false)
   const [savedSection, setSavedSection] = useState<ResourceSubTab | null>(null)
-  const resourceBaselineRef = useRef<PrefsFormData | null>(null)
+  const [resourceBaseline, setResourceBaseline] = useState<PrefsFormData | null>(null)
   const defaults = useMemo(() => defaultFormData(), [])
   const savePreferences = useCallback(
     async (payload: PrefsFormData) => {
@@ -191,7 +190,7 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp,
       }
       await upsert({ ...payload, activeRole })
     },
-    [activeRole, upsert],
+    [activeRole, upsert, tErrors],
   )
 
   const {
@@ -254,14 +253,14 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp,
       preferredOperatorSlug: form.preferredOperatorSlug,
       autoAssignPreferred: form.autoAssignPreferred,
     })
-  }, [activeRole, form, upsert])
+  }, [activeRole, form, upsert, tErrors])
 
   const handleSaveResourceSection = useCallback(async (section: ResourceSubTab) => {
     setResourceSaving(true)
     try {
       await saveStakeholderPreferences()
       markBaselineCurrent()
-      resourceBaselineRef.current = { ...form }
+      setResourceBaseline({ ...form })
       setSavedSection(section)
       toast.success(tBooking('preferencesSaved'))
     } catch {
@@ -269,19 +268,21 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp,
     } finally {
       setResourceSaving(false)
     }
-  }, [form, markBaselineCurrent, saveStakeholderPreferences])
+  }, [form, markBaselineCurrent, saveStakeholderPreferences, tBooking, tCommon])
 
   useEffect(() => {
     if (activeRole !== 'Agent' && resourceSubTab === 'operator') {
+      /* eslint-disable-next-line react-hooks/set-state-in-effect -- comments-ok resets tab when role loses access; external-trigger sync */
       setResourceSubTab('instructors')
     }
   }, [activeRole, resourceSubTab])
 
   useEffect(() => {
-    if (!loading && resourceBaselineRef.current === null) {
-      resourceBaselineRef.current = { ...form }
+    if (!loading && resourceBaseline === null) {
+      /* eslint-disable-next-line react-hooks/set-state-in-effect -- comments-ok one-shot baseline capture once async prefs finish loading */
+      setResourceBaseline({ ...form })
     }
-  }, [loading, form])
+  }, [loading, form, resourceBaseline])
 
   useEffect(() => {
     if (savedSection) {
@@ -291,13 +292,13 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp,
   }, [savedSection])
 
   const isSectionDirty = useCallback((section: ResourceSubTab): boolean => {
-    if (!resourceBaselineRef.current) return false
+    if (!resourceBaseline) return false
     const field = SECTION_FIELDS[section]
     if (Array.isArray(field)) {
-      return field.some((f) => JSON.stringify(form[f]) !== JSON.stringify(resourceBaselineRef.current![f]))
+      return field.some((f) => JSON.stringify(form[f]) !== JSON.stringify(resourceBaseline[f]))
     }
-    return JSON.stringify(form[field]) !== JSON.stringify(resourceBaselineRef.current[field])
-  }, [form])
+    return JSON.stringify(form[field]) !== JSON.stringify(resourceBaseline[field])
+  }, [form, resourceBaseline])
 
   return (
     <ProfileFormShell

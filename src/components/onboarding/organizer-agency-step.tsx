@@ -52,6 +52,7 @@ function AgencyStepInner({ roleApi, onSaved, onBack }: AgencyStepInnerProps) {
   useEffect(() => {
     if (existing !== undefined && !initialized) {
       if (existing && 'associations' in existing && existing.associations.length > 0) {
+        /* eslint-disable-next-line react-hooks/set-state-in-effect -- comments-ok one-shot init from async-loaded role record, guarded by initialized flag */
         setAssociations(existing.associations)
       }
       setInitialized(true)

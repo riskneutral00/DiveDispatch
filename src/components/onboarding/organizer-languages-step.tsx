@@ -63,6 +63,7 @@ function LanguagesStepInner({ role, roleApi, onSaved, onBack }: LanguagesStepInn
     if (existing !== undefined && me !== undefined && !initialized) {
       const lang = existing as { customerLanguages?: string[] } | null | undefined
       const langCodes: string[] = lang?.customerLanguages ?? me?.customerLanguages ?? []
+      /* eslint-disable-next-line react-hooks/set-state-in-effect -- comments-ok one-shot init from async-loaded role record */
       setFocusedLanguages(resolveLanguages(langCodes))
       if (supportsCoursePreferences) {
         const assocs = existing && 'associations' in existing ? existing.associations : []

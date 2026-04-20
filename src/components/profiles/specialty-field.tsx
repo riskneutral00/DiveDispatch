@@ -358,10 +358,9 @@ function SpecialtyPill({
 function MandatoryPill({ label }: { label: string }) {
   return (
     <span
-      className="inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-full text-label font-medium cursor-not-allowed"
+      className="inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-full text-label font-medium cursor-not-allowed text-on-primary"
       style={{
         background: "var(--color-primary)",
-        color: "var(--color-text-on-primary)",
         border: "1px solid var(--color-primary)",
         opacity: 0.5,
       }}

@@ -205,10 +205,14 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
   const { customers, days, agency, sameForAll } = state
   const prevCoursesRef = useRef<string>('')
 
-  const instructors = useQuery(api.directory.listByRole, { role: 'Instructor' }) ?? []
-  const boats = useQuery(api.directory.listByRole, { role: 'Boat' }) ?? []
-  const pools = useQuery(api.directory.listByRole, { role: 'Pool' }) ?? []
-  const shoreOptions = useQuery(api.availability.listDiveSites) ?? []
+  const instructorsRaw = useQuery(api.directory.listByRole, { role: 'Instructor' })
+  const boatsRaw = useQuery(api.directory.listByRole, { role: 'Boat' })
+  const poolsRaw = useQuery(api.directory.listByRole, { role: 'Pool' })
+  const shoreOptionsRaw = useQuery(api.availability.listDiveSites)
+  const instructors = useMemo(() => instructorsRaw ?? [], [instructorsRaw])
+  const boats = useMemo(() => boatsRaw ?? [], [boatsRaw])
+  const pools = useMemo(() => poolsRaw ?? [], [poolsRaw])
+  const shoreOptions = useMemo(() => shoreOptionsRaw ?? [], [shoreOptionsRaw])
   const instructorOptions = instructors.map((r) => ({ id: r.slug, label: r.name, languages: r.languages, isPreferred: r.isPreferred }))
   const diveMasterOptions = instructorOptions
   const customerLanguageCodes = customers.flatMap(c => (c.flags ?? []).map(f => f.code))
@@ -267,9 +271,12 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
     return warnings
   }, [days, credentialsBySlug, allSpecialtyCodes])
 
-  const instructorInventory = useQuery(api.availability.listInventoryByType, { type: 'Instructor' }) ?? []
-  const boatInventory = useQuery(api.availability.listInventoryByType, { type: 'Boat' }) ?? []
-  const poolInventory = useQuery(api.availability.listInventoryByType, { type: 'Pool' }) ?? []
+  const instructorInventoryRaw = useQuery(api.availability.listInventoryByType, { type: 'Instructor' })
+  const boatInventoryRaw = useQuery(api.availability.listInventoryByType, { type: 'Boat' })
+  const poolInventoryRaw = useQuery(api.availability.listInventoryByType, { type: 'Pool' })
+  const instructorInventory = useMemo(() => instructorInventoryRaw ?? [], [instructorInventoryRaw])
+  const boatInventory = useMemo(() => boatInventoryRaw ?? [], [boatInventoryRaw])
+  const poolInventory = useMemo(() => poolInventoryRaw ?? [], [poolInventoryRaw])
   const inventoryMap = useMemo(() => {
     const map: Record<string, string> = {}
     for (const r of instructorInventory) map[r.ownerId] = r.id
@@ -287,7 +294,8 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
   const targetOperatorSlug = state.isReferral ? (state.targetOperatorSlug ?? null) : null
   const { prefs: cascadePrefs, isLoading: cascadePrefsLoading } = useWizardPreferences(targetOperatorSlug)
 
-  const operatorDirectory = useQuery(api.directory.listByRole, { role: 'DiveCenter' }) ?? []
+  const operatorDirectoryRaw = useQuery(api.directory.listByRole, { role: 'DiveCenter' })
+  const operatorDirectory = useMemo(() => operatorDirectoryRaw ?? [], [operatorDirectoryRaw])
   const targetOperatorOptions = useMemo(
     () => operatorDirectory
       .map((e) => ({ value: e.slug, label: `${e.name} — ${e.placeName}` }))
@@ -459,7 +467,9 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
     let newDays = generateDays(allCourseCodes, state.startDate, 3, state.endDate)
 
     if (!preFillAppliedRef.current && newDays.length > 0) {
-      const { preFillInstructorSlug, preFillVenueSlug, preFillBoatSlug } = state
+      const preFillInstructorSlug = state.preFillInstructorSlug
+      const preFillVenueSlug = state.preFillVenueSlug
+      const preFillBoatSlug = state.preFillBoatSlug
       if (preFillInstructorSlug || preFillVenueSlug || preFillBoatSlug) {
         preFillAppliedRef.current = true
         newDays = newDays.map((day) => ({

@@ -7,7 +7,6 @@ import { api } from '@/lib/convex-generated'
 import { Card, Badge, Button, EmptyState, ErrorAlert, FormSectionHeader } from '@/components/ui'
 import { parseConvexError } from '@/lib/utils/convex-error'
 import { TOUCH_TARGET_CLASS } from '@/lib/constants/button-sizes'
-import { Spinner } from '@/components/ui/spinner'
 import { LoadingCard } from '@/components/ui/loading-card'
 import {
   suggestGearSizes,

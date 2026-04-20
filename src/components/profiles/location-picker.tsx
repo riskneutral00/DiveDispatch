@@ -1,3 +1,4 @@
+/// <reference types="google.maps" />
 'use client'
 
 import { useState, useCallback, useEffect, useId, useRef, useReducer } from 'react'
@@ -74,7 +75,7 @@ function LocationPickerModalInner({ value, onConfirm, onCancel }: ModalInnerProp
 
   useEffect(() => {
     if (!value) handleGPS()
-    // eslint-disable-next-line react-hooks/exhaustive-deps // comments-ok
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only GPS prefill; rerunning on handleGPS identity would loop
   }, [])
 
   const {

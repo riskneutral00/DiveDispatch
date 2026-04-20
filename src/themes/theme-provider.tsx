@@ -118,6 +118,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     : false;
 
   useLayoutEffect(() => {
+    /* eslint-disable-next-line react-hooks/set-state-in-effect -- comments-ok reads window.innerWidth on mount; SSR-safe (needs client) */
     setViewportWidth(window.innerWidth);
   }, []);
 
@@ -234,6 +235,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     const app = selectedThemeDoc.appearance;
     if (app === "light" || app === "dark") {
       if (app !== mode) {
+        /* eslint-disable-next-line react-hooks/set-state-in-effect -- comments-ok syncs local mode from server-side theme doc on initial alignment */
         setModeState(app);
         localStorage.setItem(MODE_KEY, app);
       }

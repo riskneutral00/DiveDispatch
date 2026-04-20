@@ -7,7 +7,7 @@ import { api } from '@/lib/convex-generated'
 import type { Id } from '@/lib/convex-generated'
 import type { BookingDetail, BookingDetailStakeholder } from '../../../convex/bookings'
 import type { BookingLinkInfo } from '../../../convex/bookingLinks'
-import { Button, ButtonGroup, Badge, Card, RoleIcon, EmptyState, ListRow, Skeleton, Input } from '@/components/ui'
+import { Button, ButtonGroup, Badge, Card, RoleIcon, EmptyState, ListRow, Skeleton } from '@/components/ui'
 import { EmailField } from '@/components/ui/email-field'
 import { NameField } from '@/components/ui/name-field'
 import { DashboardPageFrame } from '@/components/layout/dashboard-page-frame'
@@ -33,6 +33,29 @@ export function useTTLCountdown(expiresAt: number | undefined): string | null {
   }, [expiresAt])
 
   return label
+}
+
+function useIsExpired(expiresAt: number | undefined): boolean {
+  const [expired, setExpired] = useState<boolean>(() =>
+    expiresAt !== undefined && expiresAt < Date.now(),
+  )
+
+  useEffect(() => {
+    if (expiresAt === undefined) {
+      /* eslint-disable-next-line react-hooks/set-state-in-effect -- comments-ok resets derived expiry when expiresAt cleared */
+      setExpired(false)
+      return
+    }
+    const remaining = expiresAt - Date.now()
+    if (remaining <= 0) {
+      setExpired(true)
+      return
+    }
+    const timer = setTimeout(() => setExpired(true), remaining)
+    return () => clearTimeout(timer)
+  }, [expiresAt])
+
+  return expired
 }
 
 interface PortalPill {
@@ -196,9 +219,9 @@ function PortalLinkSection({
 
   const iconSize = compact ? 12 : 14
   const buttonIconSize = compact ? 13 : 14
+  const isExpired = useIsExpired(portalLink?.expiresAt)
 
   if (portalLink) {
-    const isExpired = portalLink.expiresAt < Date.now()
     return (
       <div className="space-y-2">
         <div

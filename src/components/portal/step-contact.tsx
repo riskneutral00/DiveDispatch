@@ -136,10 +136,11 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
     }))
   })
 
+  const activityTypeKey = (context?.activityType ?? []).join(',')
   const schema = useMemo(
     () => makeCustomerContactSchema(context?.activityType ?? []),
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- comments-ok
-    [(context?.activityType ?? []).join(',')],
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- comments-ok keyed on joined activityType
+    [activityTypeKey],
   )
   const { validate, errors, clearError } = useFormValidation(schema)
 
@@ -147,6 +148,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
     if (!context) return
     if (context.customer) {
       const c = context.customer
+      /* eslint-disable-next-line react-hooks/set-state-in-effect -- comments-ok loads async portal context into form state on first arrival */
       setFormState({
         legalFirstName: c.legalFirstName,
         legalLastName: c.legalLastName,

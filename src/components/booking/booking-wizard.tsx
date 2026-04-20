@@ -82,7 +82,6 @@ export function BookingWizard({
     saveDraftState,
     discardDraft,
     editBooking,
-    convexUserForPortal,
     existingBooking,
     autoSaveError,
     cancelPending,

@@ -3,7 +3,6 @@
 import { type LocationValue } from '@/components/profiles/location-picker-lazy'
 import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
-import { SectionDivider } from '@/components/ui/section-divider'
 import {
   INITIAL_ACCESS_CONTROL,
   accessFromProfile,

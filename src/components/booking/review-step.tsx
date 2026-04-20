@@ -102,10 +102,9 @@ export function ReviewStep({ state, dispatch, isEditMode = false }: ReviewStepPr
               {activityType.map((code) => (
                 <span
                   key={code}
-                  className="px-2 py-0.5 rounded-full text-label font-medium"
+                  className="px-2 py-0.5 rounded-full text-label font-medium text-accent"
                   style={{
                     background: 'var(--color-accent-muted)',
-                    color: 'var(--color-accent)',
                     border: '1px solid var(--color-accent-border)',
                   }}
                 >

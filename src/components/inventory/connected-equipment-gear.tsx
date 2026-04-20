@@ -137,6 +137,7 @@ export function ConnectedEquipmentGear() {
     hasAutoSeededRef.current[activeGearType] = true
     if (isMatrixGearType(activeGearType)) {
       const gt = activeGearType
+      /* eslint-disable-next-line react-hooks/set-state-in-effect -- comments-ok one-shot auto-seed per gearType, ref-guarded against re-run */
       setPendingMatrices((prev) =>
         prev.some((p) => p.gearType === gt)
           ? prev

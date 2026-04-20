@@ -195,13 +195,13 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
     onChangeRef.current(data)
   }, [data])
 
-  const validationMessages: ValidationMessages = {
+  const validationMessages: ValidationMessages = useMemo(() => ({
     rentalRequired: t('rentalRequired'),
     heightRequired: t('heightRequired'),
     weightRequired: t('weightRequired'),
     shoeSizeRequired: t('shoeSizeRequired'),
     prescriptionRequired: t('prescriptionRequired'),
-  }
+  }), [t])
 
   const validationErrors = useMemo(
     () =>
@@ -225,6 +225,7 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
       shoeSizeValue,
       needsPoweredLenses,
       prescriptionDetails,
+      validationMessages,
     ],
   )
 

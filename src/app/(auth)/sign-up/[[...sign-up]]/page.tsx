@@ -65,6 +65,7 @@ export default function SignUpPage() {
   const [error, setError] = useState('')
 
   useEffect(() => {
+    /* eslint-disable-next-line react-hooks/set-state-in-effect -- comments-ok reads localStorage on mount; SSR-safe (default locale used during hydration) */
     setAppLanguageState(readInitialAppLanguage())
   }, [])
 

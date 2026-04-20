@@ -100,6 +100,7 @@ export function VenueCapabilitiesSection<T extends VenueCapabilitiesFormState>({
             step={0.5}
             decimals={1}
             suffix="m"
+            placeholder={depthPlaceholder}
             error={errors.maxDepth}
             className="field-number"
           />
@@ -110,6 +111,7 @@ export function VenueCapabilitiesSection<T extends VenueCapabilitiesFormState>({
             min={1}
             max={100}
             required={venueType === 'pool'}
+            placeholder={capacityPlaceholder}
             error={errors.maxCapacity}
             className="field-number"
           />

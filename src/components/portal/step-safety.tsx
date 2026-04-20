@@ -50,6 +50,7 @@ export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
 
   useEffect(() => {
     if (saved) {
+      /* eslint-disable-next-line react-hooks/set-state-in-effect -- comments-ok loads async-saved portal safety data into form on first arrival */
       setForm({
         bloodType: saved.bloodType,
         allergies: saved.allergies,

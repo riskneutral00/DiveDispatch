@@ -93,6 +93,7 @@ function DevSwitcherInner() {
   const [selections, setSelections] = useState<Map<RoleKey, string>>(new Map())
 
   useEffect(() => {
+    /* eslint-disable-next-line react-hooks/set-state-in-effect -- comments-ok auto-defaults per-role selection from async-loaded users */
     setSelections((prev) => {
       const next = new Map(prev)
       for (const config of ROLES) {

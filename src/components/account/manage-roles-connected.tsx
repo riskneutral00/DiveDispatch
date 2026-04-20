@@ -64,7 +64,7 @@ export function ManageRolesConnected({ onNavigateToRole }: ManageRolesConnectedP
         setLoading(false)
       }
     },
-    [addRole, tCommon, tErr],
+    [addRole, tCommon, tErr, onNavigateToRole],
   )
 
   const handleDeleteRole = useCallback(
