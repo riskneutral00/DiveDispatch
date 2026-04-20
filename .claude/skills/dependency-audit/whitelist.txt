@@ -35,6 +35,7 @@ mrz
 
 # === devDependencies ===
 @clerk/testing
+@eslint/compat
 @axe-core/playwright
 @axe-core/react
 @chromatic-com/storybook

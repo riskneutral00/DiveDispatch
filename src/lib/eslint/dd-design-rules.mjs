@@ -369,7 +369,7 @@ const noTokenizableInlineStyle = {
 
 // ── Plugin export ────────────────────────────────────────────────────────────
 
-export default {
+const ddDesignPlugin = {
   meta: { name: 'dd-design', version: '1.0.0' },
   rules: {
     'no-hardcoded-palette': noHardcodedPalette,
@@ -382,3 +382,5 @@ export default {
     'no-tokenizable-inline-style': noTokenizableInlineStyle,
   },
 }
+
+export default ddDesignPlugin

@@ -2,13 +2,28 @@
 import storybook from "eslint-plugin-storybook";
 
 import { defineConfig, globalIgnores } from "eslint/config";
+import { fixupPluginRules } from "@eslint/compat";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
 import ddDesign from "./src/lib/eslint/dd-design-rules.mjs";
 
+const LEGACY_PLUGINS = new Set(["react", "jsx-a11y", "import"]);
+
+function fixupNextConfig(configs) {
+  return configs.map((c) => {
+    if (!c?.plugins) return c;
+    const plugins = Object.fromEntries(
+      Object.entries(c.plugins).map(([name, plugin]) =>
+        LEGACY_PLUGINS.has(name) ? [name, fixupPluginRules(plugin)] : [name, plugin]
+      )
+    );
+    return { ...c, plugins };
+  });
+}
+
 const eslintConfig = defineConfig([
-  ...nextVitals,
-  ...nextTs,
+  ...fixupNextConfig(nextVitals),
+  ...fixupNextConfig(nextTs),
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:
