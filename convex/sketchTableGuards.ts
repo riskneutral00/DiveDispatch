@@ -3,7 +3,7 @@ import type { Id } from './_generated/dataModel'
 
 type StakeholderProfileData = {
   userId: Id<'users'>
-  organizationId?: Id<'organizations'>
+  organizationId: Id<'organizations'>
   name: string
   placeName: string
   country: string

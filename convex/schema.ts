@@ -321,7 +321,7 @@ export default defineSchema({
 
   diveCenters: defineTable({
     userId: v.id('users'),
-    organizationId: v.optional(v.id('organizations')),
+    organizationId: v.id('organizations'),
     name: v.string(),
     placeName: v.string(),
     country: v.string(),
@@ -346,7 +346,7 @@ export default defineSchema({
 
   diveStaff: defineTable({
     userId: v.id('users'),
-    organizationId: v.optional(v.id('organizations')),
+    organizationId: v.id('organizations'),
     role: v.literal('Instructor'),
     name: v.string(),
     placeName: v.string(),
@@ -372,7 +372,7 @@ export default defineSchema({
 
   boats: defineTable({
     userId: v.id('users'),
-    organizationId: v.optional(v.id('organizations')),
+    organizationId: v.id('organizations'),
     name: v.string(),
     placeName: v.string(),
     country: v.string(),
@@ -407,7 +407,7 @@ export default defineSchema({
 
   equipment: defineTable({
     userId: v.id('users'),
-    organizationId: v.optional(v.id('organizations')),
+    organizationId: v.id('organizations'),
     name: v.string(),
     placeName: v.string(),
     country: v.string(),
@@ -446,7 +446,7 @@ export default defineSchema({
 
   compressors: defineTable({
     userId: v.id('users'),
-    organizationId: v.optional(v.id('organizations')),
+    organizationId: v.id('organizations'),
     name: v.string(),
     placeName: v.string(),
     country: v.string(),
@@ -530,7 +530,7 @@ export default defineSchema({
 
   agents: defineTable({
     userId: v.id('users'),
-    organizationId: v.optional(v.id('organizations')),
+    organizationId: v.id('organizations'),
     customerLanguages: v.optional(v.array(v.string())),
     name: v.string(),
     placeName: v.string(),
@@ -548,7 +548,7 @@ export default defineSchema({
 
   liveaboards: defineTable({
     userId: v.id('users'),
-    organizationId: v.optional(v.id('organizations')),
+    organizationId: v.id('organizations'),
     name: v.string(),
     placeName: v.string(),
     country: v.string(),
@@ -596,7 +596,7 @@ export default defineSchema({
 
   diveResorts: defineTable({
     userId: v.id('users'),
-    organizationId: v.optional(v.id('organizations')),
+    organizationId: v.id('organizations'),
     name: v.string(),
     placeName: v.string(),
     country: v.string(),
@@ -627,7 +627,7 @@ export default defineSchema({
 
   diveHostels: defineTable({
     userId: v.id('users'),
-    organizationId: v.optional(v.id('organizations')),
+    organizationId: v.id('organizations'),
     name: v.string(),
     placeName: v.string(),
     country: v.string(),
