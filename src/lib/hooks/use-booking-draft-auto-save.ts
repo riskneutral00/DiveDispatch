@@ -22,7 +22,9 @@ export function useBookingDraftAutoSave(
   const latestStateRef = useRef(state)
   const latestBookingIdRef = useRef(bookingId)
 
+  /* eslint-disable-next-line react-hooks/refs -- comments-ok mirror-ref for latest props captured inside debounced effect closure */
   latestStateRef.current = state
+  /* eslint-disable-next-line react-hooks/refs -- comments-ok mirror-ref for latest props captured inside debounced effect closure */
   latestBookingIdRef.current = bookingId
 
   const cancelPending = useCallback(() => {
@@ -31,6 +33,8 @@ export function useBookingDraftAutoSave(
       timerRef.current = null
     }
   }, [])
+
+  const doSaveRef = useRef<(() => void) | null>(null)
 
   const doSave = useCallback(() => {
     const currentBookingId = latestBookingIdRef.current
@@ -44,7 +48,7 @@ export function useBookingDraftAutoSave(
       isSavingRef.current = false
       if (pendingRef.current) {
         pendingRef.current = false
-        doSave()
+        doSaveRef.current?.()
       }
     }
 
@@ -70,6 +74,9 @@ export function useBookingDraftAutoSave(
 
     attempt()
   }, [saveDraftState])
+
+  /* eslint-disable-next-line react-hooks/refs -- comments-ok breaks doSave self-reference cycle flagged by react-hooks/immutability */
+  doSaveRef.current = doSave
 
   useEffect(() => {
     if (isFirstRenderRef.current) {

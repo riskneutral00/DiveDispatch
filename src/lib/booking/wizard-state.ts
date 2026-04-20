@@ -1,5 +1,4 @@
 import type { CourseCode } from '@/lib/constants/course-catalog'
-import { COURSE_CATALOG } from '@/lib/constants/course-catalog'
 import {
   validatePrerequisiteOrder,
   validateCourseDateOverlap,

@@ -101,6 +101,7 @@ export function useProfileForm<
       } else if (me && fromMe) {
         initial = fromMe(me, defaults)
       }
+      /* eslint-disable-next-line react-hooks/set-state-in-effect -- comments-ok one-shot form init from async profile/me; guarded by initialized flag */
       setForm(initial)
       baselineRef.current = initial
       setInitialized(true)
@@ -194,6 +195,7 @@ export function useProfileForm<
     footerErrorMessage,
     saving,
     saved,
+    /* eslint-disable-next-line react-hooks/refs -- comments-ok isDirty reads baselineRef snapshot; baseline is only mutated on save */
     isDirty: isDirty(),
     isValid,
     loading:

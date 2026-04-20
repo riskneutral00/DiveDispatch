@@ -20,6 +20,7 @@ export function useMutationWithFeedback<TArgs extends unknown[], TResult>(
 ) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const { successMessage, errorFallback, onError } = opts ?? {}
 
   const execute = useCallback(
     async (...args: TArgs): Promise<MutationResult<TResult>> => {
@@ -27,14 +28,14 @@ export function useMutationWithFeedback<TArgs extends unknown[], TResult>(
       setLoading(true)
       try {
         const result = await mutationFn(...args)
-        if (opts?.successMessage) {
-          toast.success(opts.successMessage, { duration: 3000 })
+        if (successMessage) {
+          toast.success(successMessage, { duration: 3000 })
         }
         return { ok: true, value: result }
       } catch (e: unknown) {
-        const message = opts?.onError
-          ? opts.onError(e)
-          : parseConvexError(e, opts?.errorFallback ?? 'Something went wrong')
+        const message = onError
+          ? onError(e)
+          : parseConvexError(e, errorFallback ?? 'Something went wrong')
         setError(message)
         toast.error(message, { duration: 5000 })
         return { ok: false, error: message, raw: e }
@@ -42,7 +43,7 @@ export function useMutationWithFeedback<TArgs extends unknown[], TResult>(
         setLoading(false)
       }
     },
-    [mutationFn, opts?.successMessage, opts?.errorFallback, opts?.onError],
+    [mutationFn, successMessage, errorFallback, onError],
   )
 
   const clearError = useCallback(() => setError(null), [])

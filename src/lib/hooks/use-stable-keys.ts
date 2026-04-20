@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/refs -- comments-ok stable-key cache: useMemo intentionally reads/writes a ref to diff prev items and mint new ids only for additions */
 import { useMemo, useRef } from 'react'
 
 let idCounter = 0
