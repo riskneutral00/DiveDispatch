@@ -29,6 +29,10 @@ function getLocationRoleBlock(stakeholder: typeof ALL_STAKEHOLDERS[number]): Rol
 }
 
 describe('seedFixtures integrity — stakeholders', () => {
+  it('ALL_STAKEHOLDERS is an array', () => {
+    expect(Array.isArray(ALL_STAKEHOLDERS)).toBe(true)
+  })
+
   for (const stakeholder of ALL_STAKEHOLDERS) {
     const slug = stakeholder.user.slug
     const userPhone = stakeholder.user.phone
@@ -77,6 +81,10 @@ describe('seedFixtures integrity — stakeholders', () => {
 })
 
 describe('seedFixtures integrity — instructors', () => {
+  it('ALL_INSTRUCTORS is an array', () => {
+    expect(Array.isArray(ALL_INSTRUCTORS)).toBe(true)
+  })
+
   for (const instructor of ALL_INSTRUCTORS) {
     const slug = instructor.user.slug
     const userPhone = instructor.user.phone
