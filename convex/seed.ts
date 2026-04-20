@@ -16,6 +16,7 @@ import {
   themeConfigForSeedSpec,
 } from './lib/defaultThemes'
 import { stakeholderPreferenceIdsToDelete } from './lib/stakeholderPreferencesDedupe'
+import { insertUserRole } from './lib/userRoleHelpers'
 import { ALL_INSTRUCTORS } from './seedInstructorData'
 import {
   ALL_GEAR_SIZING,
@@ -247,7 +248,7 @@ export const seedStakeholders = internalMutation({
       }
       if (s.agent) {
         const agentPayload = { organizationId, ...s.agent, customerLanguages: s.user.customerLanguages ?? [] }
-        await ctx.db.insert('agents', agentPayload) // batch-exempt
+        await ctx.db.insert('agents', agentPayload) // batch-exempt orgid-helper-ok
       }
       if (s.liveaboard) {
         await insertLiveaboard(ctx, { organizationId, ...s.liveaboard }) // batch-exempt
@@ -276,10 +277,9 @@ export const seedUserRoles = internalMutation({
       if (!user) continue
 
       for (const r of s.roles) {
-        await ctx.db.insert('userRoles', { // batch-exempt
+        await insertUserRole(ctx, { // batch-exempt
           userId: user._id,
           role: r.role,
-          createdAt: Date.now(),
         })
       }
     }
@@ -426,7 +426,7 @@ export const seedResourceInventory = internalMutation({
         ownerId: '__unowned__',
         ownerType: 'DiveSite',
       })
-      await ctx.db.insert('venues', { // batch-exempt
+      await ctx.db.insert('venues', { // batch-exempt orgid-helper-ok unowned-dive-site
         name: site.name,
         address: { city: 'Phuket', country: 'TH' },
         lat: 7.8206,

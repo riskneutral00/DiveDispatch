@@ -29,10 +29,9 @@ export const captureBySlug = query({
 
     const userRoles = await getAllUserRoles(ctx, user._id)
 
-    const organization = await ctx.db
-      .query('organizations')
-      .withIndex('by_slug', (q) => q.eq('slug', slug))
-      .unique()
+    const organization = user.organizationId
+      ? await ctx.db.get(user.organizationId)
+      : null
 
     const profiles: Record<string, unknown> = {}
     if (organization) {

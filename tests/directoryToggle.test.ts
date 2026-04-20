@@ -8,8 +8,13 @@
 
 import { describe, it, expect } from 'vitest'
 import { api } from '../convex/_generated/api'
-import { seedUser, seedStakeholderPreferences, TEST_TOKENS, TEST_SLUGS } from './fixtures'
+import { seedUser, seedStakeholderPreferences, seedInstructorProfile, TEST_TOKENS, TEST_SLUGS, type SeedCtx } from './fixtures'
 import { makeT } from './helpers/convex-helpers'
+
+async function seedCompleteInstructor(ctx: SeedCtx, slug: string) {
+  const userId = await seedUser(ctx, { tokenIdentifier: `clerk|${slug}`, slug, role: 'Instructor', email: `${slug}@test.com` })
+  await seedInstructorProfile(ctx, userId)
+}
 
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
@@ -27,6 +32,7 @@ describe('togglePreferredInstructor', () => {
     await t.run(async (ctx) => {
       await seedUser(ctx)
       await seedStakeholderPreferences(ctx, TEST_SLUGS.diveCenter)
+      await seedCompleteInstructor(ctx, 'instr-1')
     })
 
     const result = await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter })
@@ -70,6 +76,7 @@ describe('togglePreferredInstructor', () => {
     await t.run(async (ctx) => {
       await seedUser(ctx)
       await seedStakeholderPreferences(ctx, TEST_SLUGS.diveCenter, { preferredInstructorSlugs: ['instr-1'] })
+      await seedCompleteInstructor(ctx, 'instr-2')
     })
 
     await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter })
@@ -89,7 +96,7 @@ describe('togglePreferredInstructor', () => {
     const t = makeT()
     await t.run(async (ctx) => {
       await seedUser(ctx)
-      // No prefs row seeded — tests the code path even though onboarding should create it
+      await seedCompleteInstructor(ctx, 'instr-new')
     })
 
     const result = await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter })

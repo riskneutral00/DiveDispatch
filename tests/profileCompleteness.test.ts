@@ -325,3 +325,52 @@ describe('getProfileCompletionForRole query', () => {
     expect(result.incomplete).toContain('name')
   })
 })
+
+describe('checkProfileCompleteness kind discriminator', () => {
+  it('returns kind: not_started when role-table row missing', async () => {
+    await t.run(async (ctx) => {
+      const userId = await seedUser(ctx, { role: 'Compressor' })
+      await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
+      const result = await checkProfileCompleteness(ctx, { _id: userId }, 'Compressor')
+      expect(result.kind).toBe('not_started')
+    })
+  })
+
+  it('returns kind: partial when row exists but fields incomplete', async () => {
+    await t.run(async (ctx) => {
+      const userId = await seedUser(ctx, { role: 'Compressor' })
+      await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
+      const { getOrCreateTestOrg } = await import('./fixtures')
+      const orgId = await getOrCreateTestOrg(ctx, userId, 'slug')
+      await ctx.db.insert('compressors', {
+        organizationId: orgId,
+        name: 'Partial',
+        address: { city: 'Koh Tao', country: 'TH' },
+        lat: 10, lng: 99, email: 'p@t.com', phone: '+66000',
+        gasMixes: [],
+        verified: true,
+      })
+      const result = await checkProfileCompleteness(ctx, { _id: userId }, 'Compressor')
+      expect(result.kind).toBe('partial')
+    })
+  })
+
+  it('returns kind: complete when all required fields set', async () => {
+    await t.run(async (ctx) => {
+      const userId = await seedUser(ctx, { role: 'Compressor' })
+      await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
+      const { getOrCreateTestOrg } = await import('./fixtures')
+      const orgId = await getOrCreateTestOrg(ctx, userId, 'slug')
+      await ctx.db.insert('compressors', {
+        organizationId: orgId,
+        name: 'Full',
+        address: { city: 'Koh Tao', country: 'TH' },
+        lat: 10, lng: 99, email: 'f@t.com', phone: '+66000',
+        gasMixes: ['air'],
+        verified: true,
+      })
+      const result = await checkProfileCompleteness(ctx, { _id: userId }, 'Compressor')
+      expect(result.kind).toBe('complete')
+    })
+  })
+})

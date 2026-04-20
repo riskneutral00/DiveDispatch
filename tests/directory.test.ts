@@ -27,7 +27,7 @@ async function seedInstructorUser(ctx: SeedCtx, slug: string) {
 
 async function seedInstructorProfile(ctx: SeedCtx, userId: Id<'users'>, name: string, city: string, country: string, verified = false) {
   const organizationId = await getOrCreateTestOrg(ctx, userId, name)
-  return ctx.db.insert('diveStaff', {
+  const id = await ctx.db.insert('diveStaff', {
     organizationId,
     role: 'Instructor',
     name,
@@ -42,6 +42,20 @@ async function seedInstructorProfile(ctx: SeedCtx, userId: Id<'users'>, name: st
     teachingLanguages: ['en'],
     verified,
   })
+  const row = await ctx.db
+    .query('userRoles')
+    .withIndex('by_userId_role', (q) => q.eq('userId', userId).eq('role', 'Instructor'))
+    .unique()
+  if (row) await ctx.db.patch(row._id, { profileComplete: true })
+  return id
+}
+
+async function markRoleComplete(ctx: SeedCtx, userId: Id<'users'>, role: 'Instructor' | 'DiveCenter' | 'Agent' | 'Compressor' | 'Boat' | 'Equipment') {
+  const row = await ctx.db
+    .query('userRoles')
+    .withIndex('by_userId_role', (q) => q.eq('userId', userId).eq('role', role))
+    .unique()
+  if (row) await ctx.db.patch(row._id, { profileComplete: true })
 }
 
 async function seedCallerUser(ctx: SeedCtx, slug: string) {
@@ -256,6 +270,7 @@ describe('listByRole language propagation', () => {
         customerLanguages: ['ko-KR', 'ja-JP'],
         verified: true,
       })
+      await markRoleComplete(ctx, dcUserId, 'DiveCenter')
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'user|caller-lang-dc' })
@@ -291,6 +306,7 @@ describe('listByRole credentials passthrough', () => {
         teachingLanguages: ['en-GB'],
         verified: true,
       })
+      await markRoleComplete(ctx, u1, 'Instructor')
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'user|caller-creds' })
@@ -322,6 +338,7 @@ describe('listByRole credentials passthrough', () => {
         teachingLanguages: ['en-GB'],
         verified: false,
       })
+      await markRoleComplete(ctx, u1, 'Instructor')
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'user|caller-no-creds' })
@@ -357,6 +374,7 @@ describe('listByRole credentials passthrough', () => {
         teachingLanguages: ['en-GB'],
         verified: false,
       })
+      await markRoleComplete(ctx, u1, 'Instructor')
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'user|caller-guard' })

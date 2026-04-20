@@ -90,6 +90,7 @@ type ClerkOrganizationPayload = {
   id: string
   name?: string
   slug?: string
+  created_by?: string
   deleted?: boolean
 }
 
@@ -183,6 +184,7 @@ http.route({
         name: orgData.name ?? '',
         slug: orgData.slug ?? '',
         svixId,
+        ...(orgData.created_by && { creatorTokenIdentifier: `${issuerUrl}|${orgData.created_by}` }),
       })
     } else if (event.type === 'organization.deleted') {
       const orgData = event.data as ClerkOrganizationPayload

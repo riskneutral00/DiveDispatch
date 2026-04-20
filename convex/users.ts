@@ -20,6 +20,9 @@ import { batchDelete, batchPatch } from './lib/batch'
 import { sanitizeFields, USER_FIELDS } from './lib/sanitize'
 import { isAdult, MIN_SIGNUP_AGE_YEARS } from './lib/age'
 import { normalizeAppLanguageOrThrow } from './lib/i18nValidators'
+import { readOrgClaims } from './lib/activeOrg'
+import { parseTokenIdentifier, isAllowedRebind } from './lib/tokenIdentifier'
+import { insertUserRole } from './lib/userRoleHelpers'
 
 function publicUser(user: Doc<'users'>) {
   const { tokenIdentifier: _ti, email: _e, ...rest } = user
@@ -36,6 +39,26 @@ async function generateUniqueSlug(db: DatabaseWriter): Promise<string> {
     if (!existing) return slug
   }
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 6)
+}
+
+async function ensurePersonalOrg(
+  db: DatabaseWriter,
+  userId: Id<'users'>,
+  userSlug: string,
+  firstName: string,
+  lastName: string,
+  email: string,
+  now: number,
+): Promise<Id<'organizations'>> {
+  const displayName = `${firstName} ${lastName}`.trim() || email || userSlug
+  const orgId = await db.insert('organizations', {
+    slug: userSlug,
+    name: displayName,
+    createdAt: now,
+    updatedAt: now,
+  })
+  await db.patch(userId, { organizationId: orgId })
+  return orgId
 }
 
 export const createUser = mutation({
@@ -75,6 +98,16 @@ export const createUser = mutation({
     const email = identity.email ?? ''
     const now = Date.now()
 
+    const { orgId: clerkOrgId } = readOrgClaims(identity)
+    let activeOrgId: Id<'organizations'> | undefined
+    if (clerkOrgId) {
+      const clerkOrg = await ctx.db
+        .query('organizations')
+        .withIndex('by_clerkOrgId', (q) => q.eq('clerkOrgId', clerkOrgId))
+        .unique()
+      if (clerkOrg) activeOrgId = clerkOrg._id
+    }
+
     if (existing) {
       await ctx.db.patch(existing._id, {
         firstName: args.firstName,
@@ -86,6 +119,33 @@ export const createUser = mutation({
         ...(existing.tcAcceptedAt === undefined && { tcAcceptedAt: now }),
         ...(args.tcVersion !== existing.tcVersion && { tcVersion: args.tcVersion, tcAcceptedAt: now }),
       })
+
+      if (activeOrgId) {
+        if (existing.organizationId !== activeOrgId) {
+          await ctx.db.patch(existing._id, { organizationId: activeOrgId })
+        }
+      } else if (!existing.organizationId) {
+        await ensurePersonalOrg(ctx.db, existing._id, existing.slug, args.firstName, args.lastName, email, now)
+      }
+
+      if (args.roles && args.roles.length > 0) {
+        const existingRoles = await ctx.db
+          .query('userRoles')
+          .withIndex('by_userId', (q) => q.eq('userId', existing._id))
+          .collect() // bounded: per-user roles, max ~12
+        const existingRoleSet = new Set(existingRoles.map((r) => r.role))
+        const uniqueRoles = [...new Set(args.roles)]
+        for (const role of uniqueRoles) {
+          if (!existingRoleSet.has(role)) {
+            await insertUserRole(ctx, { // batch-exempt: roles is a tiny bounded array (user-selected roles, max ~5)
+              userId: existing._id,
+              role,
+              createdAt: now,
+            })
+          }
+        }
+      }
+
       return existing._id
     }
 
@@ -106,14 +166,20 @@ export const createUser = mutation({
       appLanguage: args.appLanguage ? normalizeAppLanguageOrThrow(args.appLanguage) : 'en',
     })
 
+    if (activeOrgId) {
+      await ctx.db.patch(userId, { organizationId: activeOrgId })
+    } else {
+      await ensurePersonalOrg(ctx.db, userId, slug, args.firstName, args.lastName, email, now)
+    }
+
     if (args.roles && args.roles.length > 0) {
       const uniqueRoles = [...new Set(args.roles)]
-      const now = Date.now()
+      const insertAt = Date.now()
       for (let i = 0; i < uniqueRoles.length; i++) {
-        await ctx.db.insert('userRoles', { // batch-exempt: roles is a tiny bounded array (user-selected roles, max ~5)
+        await insertUserRole(ctx, { // batch-exempt: roles is a tiny bounded array (user-selected roles, max ~5)
           userId,
           role: uniqueRoles[i],
-          createdAt: now,
+          createdAt: insertAt,
         })
       }
     }
@@ -160,7 +226,7 @@ export const updateProfile = mutation({
 
     await syncDiveStaffName(
       ctx,
-      user.slug,
+      user.organizationId,
       sanitized.firstName ?? user.firstName ?? '',
       sanitized.lastName ?? user.lastName ?? '',
     )
@@ -169,18 +235,14 @@ export const updateProfile = mutation({
 
 async function syncDiveStaffName(
   ctx: { db: DatabaseWriter },
-  userSlug: string,
+  organizationId: Id<'organizations'> | undefined,
   firstName: string,
   lastName: string,
 ) {
-  const org = await ctx.db
-    .query('organizations')
-    .withIndex('by_slug', (q) => q.eq('slug', userSlug))
-    .unique()
-  if (!org) return
+  if (!organizationId) return
   const staff = await ctx.db
     .query('diveStaff')
-    .withIndex('by_organizationId', (q) => q.eq('organizationId', org._id))
+    .withIndex('by_organizationId', (q) => q.eq('organizationId', organizationId))
     .unique()
   if (staff) {
     await ctx.db.patch(staff._id, { name: `${firstName} ${lastName}`.trim() })
@@ -337,8 +399,57 @@ export const upsertFromWebhook = internalMutation({
         firstName: args.firstName,
         lastName: args.lastName,
       })
-      await syncDiveStaffName(ctx, existing._id, args.firstName, args.lastName)
+      await syncDiveStaffName(ctx, existing.organizationId, args.firstName, args.lastName)
       return existing._id
+    }
+
+    if (args.email !== '') {
+      const byEmail = await ctx.db
+        .query('users')
+        .withIndex('by_email', (q) => q.eq('email', args.email))
+        .unique()
+      if (byEmail) {
+        const allowed = isAllowedRebind(byEmail.tokenIdentifier, args.tokenIdentifier)
+        const existingParsed = parseTokenIdentifier(byEmail.tokenIdentifier)
+        const incomingParsed = parseTokenIdentifier(args.tokenIdentifier)
+        const oldIssuer = existingParsed?.issuer ?? '(unparseable)'
+        const newIssuer = incomingParsed?.issuer ?? '(unparseable)'
+        const now = Date.now()
+
+        if (allowed) {
+          await ctx.db.patch(byEmail._id, {
+            tokenIdentifier: args.tokenIdentifier,
+            originalTokenIdentifier: args.tokenIdentifier,
+            name: args.name,
+            firstName: args.firstName,
+            lastName: args.lastName,
+          })
+          await ctx.db.insert('webhookAuditLog', {
+            eventType: 'user_rebind',
+            userId: byEmail._id,
+            oldTokenIdentifier: byEmail.tokenIdentifier,
+            newTokenIdentifier: args.tokenIdentifier,
+            oldIssuer,
+            newIssuer,
+            email: args.email,
+            at: now,
+          })
+          await syncDiveStaffName(ctx, byEmail.organizationId, args.firstName, args.lastName)
+          return byEmail._id
+        }
+
+        await ctx.db.insert('webhookAuditLog', {
+          eventType: 'user_rebind_rejected',
+          userId: byEmail._id,
+          oldTokenIdentifier: byEmail.tokenIdentifier,
+          newTokenIdentifier: args.tokenIdentifier,
+          oldIssuer,
+          newIssuer,
+          email: args.email,
+          at: now,
+        })
+        return byEmail._id
+      }
     }
 
     const slug = await generateUniqueSlug(ctx.db)
@@ -351,12 +462,6 @@ export const upsertFromWebhook = internalMutation({
       firstName: args.firstName,
       lastName: args.lastName,
       appLanguage: 'en',
-    })
-
-    await ctx.db.insert('userRoles', {
-      userId,
-      role: 'DiveCenter',
-      createdAt: Date.now(),
     })
 
     return userId

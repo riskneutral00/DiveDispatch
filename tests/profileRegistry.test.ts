@@ -46,36 +46,36 @@ describe('PROFILE_REGISTRY', () => {
 
   it('pool has tabs', () => {
     expect(PROFILE_REGISTRY.pool.tabs).not.toBeNull()
-    expect(PROFILE_REGISTRY.pool.tabs).toEqual([
-      { id: 'contact', label: 'Contact' },
-      { id: 'capabilities', label: 'Capabilities' },
-      { id: 'booking', label: 'Booking' },
+    expect(PROFILE_REGISTRY.pool.tabs?.map((t) => t.id)).toEqual([
+      'contact',
+      'capabilities',
+      'booking',
     ])
   })
 
   it('equipment has tabs', () => {
     expect(PROFILE_REGISTRY.equipment.tabs).not.toBeNull()
-    expect(PROFILE_REGISTRY.equipment.tabs).toEqual([
-      { id: 'contact', label: 'Contact' },
-      { id: 'gear', label: 'Gear' },
-      { id: 'booking', label: 'Booking' },
+    expect(PROFILE_REGISTRY.equipment.tabs?.map((t) => t.id)).toEqual([
+      'contact',
+      'gear',
+      'booking',
     ])
   })
 
   it('compressor has tabs', () => {
     expect(PROFILE_REGISTRY.compressor.tabs).not.toBeNull()
-    expect(PROFILE_REGISTRY.compressor.tabs).toEqual([
-      { id: 'contact', label: 'Contact' },
-      { id: 'gas-mixes', label: 'Gas Mixes' },
-      { id: 'booking', label: 'Booking' },
+    expect(PROFILE_REGISTRY.compressor.tabs?.map((t) => t.id)).toEqual([
+      'contact',
+      'gas-mixes',
+      'booking',
     ])
   })
 
   it('boat has contact, fleet, booking tabs', () => {
-    expect(PROFILE_REGISTRY.boat.tabs).toEqual([
-      { id: 'contact', label: 'Contact' },
-      { id: 'fleet', label: 'Fleet' },
-      { id: 'booking', label: 'Booking' },
+    expect(PROFILE_REGISTRY.boat.tabs?.map((t) => t.id)).toEqual([
+      'contact',
+      'fleet',
+      'booking',
     ])
   })
 

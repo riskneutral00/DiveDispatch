@@ -7,6 +7,7 @@ import { ErrorCode } from './errorCodes'
 import { queryDynamicTable, insertDynamicTable, patchDynamic } from './typedDb'
 import { getActiveOrg, tryGetActiveOrg } from './activeOrg'
 import { assertCountryCode } from './i18nValidators'
+import { setRoleProfileComplete } from './setRoleProfileComplete'
 
 function validateStructuredAddress(args: Record<string, unknown>): void {
   const address = args.address
@@ -67,8 +68,11 @@ export async function profileByUser<T extends TableNames>(
   tableName: T,
 ): Promise<Doc<T> | null> {
   const user = await ctx.db.get(userId)
-  if (!user) return null
-  return profileBySlug(ctx, user.slug, tableName)
+  if (!user?.organizationId) return null
+  const doc = await queryDynamicTable(ctx.db, tableName)
+    .withIndex('by_organizationId', (q) => q.eq('organizationId', user.organizationId!))
+    .unique()
+  return doc as Doc<T> | null
 }
 
 const PROTECTED_FIELDS = new Set([
@@ -85,7 +89,7 @@ export async function profileUpdate(
   tableName: TableNames,
   role?: string,
 ) {
-  await authorize(ctx, null, 'profile:manage', { type: 'profile' })
+  const { user } = await authorize(ctx, null, 'profile:manage', { type: 'profile' })
   const { org: activeOrg } = await getActiveOrg(ctx)
 
   const profile = await queryDynamicTable(ctx.db, tableName)
@@ -101,6 +105,8 @@ export async function profileUpdate(
   }
 
   await patchDynamic(ctx.db, profile._id, safeArgs)
+
+  if (role) await setRoleProfileComplete(ctx, user._id, role)
 }
 
 export async function profileCreate(
@@ -137,11 +143,17 @@ export async function profileCreate(
     mergedArgs.phone = user.phone ?? ''
   }
 
-  return await insertDynamicTable(ctx.db, tableName, {
+  const insertedId = await insertDynamicTable(ctx.db, tableName, {
     ...mergedArgs,
     organizationId: activeOrg._id,
     ...extraDefaults,
   })
+
+  for (const r of roles) {
+    await setRoleProfileComplete(ctx, user._id, r)
+  }
+
+  return insertedId
 }
 
 export async function getProfileName(

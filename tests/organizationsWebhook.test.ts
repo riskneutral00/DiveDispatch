@@ -2,24 +2,6 @@ import { describe, it, expect } from 'vitest'
 import { api, internal } from '../convex/_generated/api'
 import { makeT, expectConvexError } from './helpers/convex-helpers'
 
-describe('organizations.isSlugAvailable', () => {
-  it('returns true when no org has the slug', async () => {
-    const t = makeT()
-    expect(await t.query(api.organizations.isSlugAvailable, { slug: 'never-used' })).toBe(true)
-  })
-
-  it('returns false when an org with the slug exists', async () => {
-    const t = makeT()
-    await t.mutation(internal.organizations.upsertFromWebhook, {
-      clerkOrgId: `org_${crypto.randomUUID()}`,
-      name: 'Hug Ocean',
-      slug: 'hug-ocean',
-      svixId: `msg_${crypto.randomUUID()}`,
-    })
-    expect(await t.query(api.organizations.isSlugAvailable, { slug: 'hug-ocean' })).toBe(false)
-  })
-})
-
 function makeSvixId(): string {
   return `msg_${crypto.randomUUID()}`
 }
@@ -124,6 +106,51 @@ describe('organizations.upsertFromWebhook', () => {
     expect(logEntries).toHaveLength(1)
   })
 
+  it('links creator user.organizationId when creatorTokenIdentifier is passed', async () => {
+    const t = makeT()
+    const clerkOrgId = makeClerkOrgId('creator-link')
+    const tokenIdentifier = 'clerk|org-creator'
+
+    const userId = await t.run(async (ctx) => {
+      return ctx.db.insert('users', {
+        tokenIdentifier,
+        originalTokenIdentifier: tokenIdentifier,
+        slug: 'creator-slug',
+        email: 'creator@test.com',
+        name: 'Creator',
+        firstName: 'Cre',
+        lastName: 'Ator',
+        appLanguage: 'en',
+      })
+    })
+
+    const orgId = await t.mutation(internal.organizations.upsertFromWebhook, {
+      clerkOrgId,
+      name: 'Creator Org',
+      slug: 'creator-org',
+      svixId: makeSvixId(),
+      creatorTokenIdentifier: tokenIdentifier,
+    })
+
+    const user = await t.run(async (ctx) => ctx.db.get(userId))
+    expect(user?.organizationId).toBe(orgId)
+  })
+
+  it('silently skips link when creatorTokenIdentifier has no matching user', async () => {
+    const t = makeT()
+    const clerkOrgId = makeClerkOrgId('no-creator')
+
+    const orgId = await t.mutation(internal.organizations.upsertFromWebhook, {
+      clerkOrgId,
+      name: 'Ghost Creator Org',
+      slug: 'ghost-creator',
+      svixId: makeSvixId(),
+      creatorTokenIdentifier: 'clerk|does-not-exist',
+    })
+
+    expect(orgId).not.toBeNull()
+  })
+
   it('works without svixId (backwards-compat no guard)', async () => {
     const t = makeT()
     const clerkOrgId = makeClerkOrgId('no-svix')
@@ -222,6 +249,200 @@ describe('organizations.deleteFromWebhook', () => {
         svixId: makeSvixId(),
       }),
     ).resolves.toBeNull()
+  })
+
+  it('cascades: unbinds users.organizationId + userRoles.organizationId, deletes role profile rows and grandchildren', async () => {
+    const t = makeT()
+    const clerkOrgId = makeClerkOrgId('cascade')
+
+    const orgId = await t.mutation(internal.organizations.upsertFromWebhook, {
+      clerkOrgId,
+      name: 'Cascade Test Co',
+      slug: 'cascade-co',
+      svixId: makeSvixId(),
+    })
+
+    const {
+      userId,
+      userRoleId,
+      diveCenterId,
+      liveaboardId,
+      cabinId,
+      tripScheduleId,
+      diveResortId,
+      roomId,
+    } = await t.run(async (ctx) => {
+      const userId = await ctx.db.insert('users', {
+        tokenIdentifier: `clerk|cascade-user-${crypto.randomUUID().slice(0, 8)}`,
+        originalTokenIdentifier: `clerk|cascade-user`,
+        slug: 'cascade-user',
+        email: 'cascade@test.com',
+        name: 'Cascade User',
+        firstName: 'Cascade',
+        lastName: 'User',
+        appLanguage: 'en',
+        organizationId: orgId,
+      })
+      const userRoleId = await ctx.db.insert('userRoles', {
+        userId,
+        role: 'DiveCenter',
+        createdAt: Date.now(),
+        organizationId: orgId,
+      })
+      const diveCenterId = await ctx.db.insert('diveCenters', {
+        organizationId: orgId,
+        name: 'Cascade Dive Center',
+        address: { city: 'Phuket', country: 'TH' },
+        lat: 7.88,
+        lng: 98.39,
+        email: 'dc@test.com',
+        phone: '+66800000001',
+        associations: [],
+        verified: false,
+      })
+      const liveaboardId = await ctx.db.insert('liveaboards', {
+        organizationId: orgId,
+        name: 'Cascade Liveaboard',
+        address: { city: 'Phuket', country: 'TH' },
+        lat: 7.88,
+        lng: 98.39,
+        email: 'la@test.com',
+        phone: '+66800000002',
+        verified: false,
+      })
+      const cabinId = await ctx.db.insert('cabins', {
+        liveaboardId,
+        name: 'Deluxe Cabin 1',
+        cabinType: 'Double',
+        totalBerths: 2,
+        amenities: [],
+      })
+      const tripScheduleId = await ctx.db.insert('tripSchedules', {
+        liveaboardId,
+        name: 'Trip Week 1',
+        startDate: '2026-05-01',
+        endDate: '2026-05-07',
+        itinerary: 'Similan Islands',
+        maxPassengers: 16,
+        currentPassengers: 0,
+        status: 'Scheduled',
+      })
+      const diveResortId = await ctx.db.insert('diveResorts', {
+        organizationId: orgId,
+        name: 'Cascade Resort',
+        address: { city: 'Phuket', country: 'TH' },
+        lat: 7.88,
+        lng: 98.39,
+        email: 'dr@test.com',
+        phone: '+66800000003',
+        verified: false,
+      })
+      const roomId = await ctx.db.insert('rooms', {
+        diveResortId,
+        name: 'Deluxe Room 1',
+        roomType: 'Deluxe',
+        totalCount: 3,
+        maxOccupancy: 2,
+        amenities: [],
+      })
+      return {
+        userId,
+        userRoleId,
+        diveCenterId,
+        liveaboardId,
+        cabinId,
+        tripScheduleId,
+        diveResortId,
+        roomId,
+      }
+    })
+
+    await t.mutation(internal.organizations.deleteFromWebhook, {
+      clerkOrgId,
+      svixId: makeSvixId(),
+    })
+
+    const results = await t.run(async (ctx) => ({
+      user: await ctx.db.get(userId),
+      userRole: await ctx.db.get(userRoleId),
+      diveCenter: await ctx.db.get(diveCenterId),
+      liveaboard: await ctx.db.get(liveaboardId),
+      cabin: await ctx.db.get(cabinId),
+      tripSchedule: await ctx.db.get(tripScheduleId),
+      diveResort: await ctx.db.get(diveResortId),
+      room: await ctx.db.get(roomId),
+      org: await ctx.db.get(orgId),
+    }))
+
+    expect(results.user?.organizationId).toBeUndefined()
+    expect(results.user?.email).toBe('cascade@test.com')
+    expect(results.userRole?.organizationId).toBeUndefined()
+    expect(results.userRole?.role).toBe('DiveCenter')
+    expect(results.diveCenter).toBeNull()
+    expect(results.liveaboard).toBeNull()
+    expect(results.cabin).toBeNull()
+    expect(results.tripSchedule).toBeNull()
+    expect(results.diveResort).toBeNull()
+    expect(results.room).toBeNull()
+    expect(results.org).toBeNull()
+  })
+
+  it('cascade leaves users from OTHER orgs untouched', async () => {
+    const t = makeT()
+    const targetClerkOrgId = makeClerkOrgId('cascade-target')
+    const otherClerkOrgId = makeClerkOrgId('cascade-other')
+
+    const targetOrgId = await t.mutation(internal.organizations.upsertFromWebhook, {
+      clerkOrgId: targetClerkOrgId,
+      name: 'Target',
+      slug: 'target',
+      svixId: makeSvixId(),
+    })
+    const otherOrgId = await t.mutation(internal.organizations.upsertFromWebhook, {
+      clerkOrgId: otherClerkOrgId,
+      name: 'Other',
+      slug: 'other',
+      svixId: makeSvixId(),
+    })
+
+    const { targetUserId, otherUserId } = await t.run(async (ctx) => {
+      const targetUserId = await ctx.db.insert('users', {
+        tokenIdentifier: 'clerk|isolation-target',
+        originalTokenIdentifier: 'clerk|isolation-target',
+        slug: 'target-user',
+        email: 'target@test.com',
+        name: '',
+        firstName: '',
+        lastName: '',
+        appLanguage: 'en',
+        organizationId: targetOrgId,
+      })
+      const otherUserId = await ctx.db.insert('users', {
+        tokenIdentifier: 'clerk|isolation-other',
+        originalTokenIdentifier: 'clerk|isolation-other',
+        slug: 'other-user',
+        email: 'other@test.com',
+        name: '',
+        firstName: '',
+        lastName: '',
+        appLanguage: 'en',
+        organizationId: otherOrgId,
+      })
+      return { targetUserId, otherUserId }
+    })
+
+    await t.mutation(internal.organizations.deleteFromWebhook, {
+      clerkOrgId: targetClerkOrgId,
+      svixId: makeSvixId(),
+    })
+
+    const { targetUser, otherUser } = await t.run(async (ctx) => ({
+      targetUser: await ctx.db.get(targetUserId),
+      otherUser: await ctx.db.get(otherUserId),
+    }))
+
+    expect(targetUser?.organizationId).toBeUndefined()
+    expect(otherUser?.organizationId).toBe(otherOrgId)
   })
 })
 

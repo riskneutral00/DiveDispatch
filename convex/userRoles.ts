@@ -1,7 +1,7 @@
 import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import { getAuthUser, OPERATOR_ROLE_SET, authorize } from './lib/auth'
-import { getAllUserRoles } from './lib/userRoleHelpers'
+import { getAllUserRoles, insertUserRole } from './lib/userRoleHelpers'
 import type { QueryCtx, MutationCtx } from './_generated/server'
 import type { Id, Doc } from './_generated/dataModel'
 import { stakeholderTypeValidator as stakeholderType, effectiveResourceType } from './lib/validators'
@@ -131,10 +131,9 @@ export const addRole = mutation({
       .unique()
     if (existing) throw new ConvexError({ code: ErrorCode.DUPLICATE_ROLE })
 
-    return ctx.db.insert('userRoles', {
+    return insertUserRole(ctx, {
       userId: user._id,
       role,
-      createdAt: Date.now(),
     })
   },
 })

@@ -4,13 +4,17 @@ import type { Doc } from '../_generated/dataModel'
 import type { DbCtx } from './auth'
 import { ErrorCode } from './errorCodes'
 
+export function isPersonalOrg(org: Doc<'organizations'>): boolean {
+  return org.clerkOrgId === undefined
+}
+
 type OrgIdentityClaims = {
   orgId?: string
   orgRole?: string
   orgSlug?: string
 }
 
-function readOrgClaims(identity: UserIdentity): OrgIdentityClaims {
+export function readOrgClaims(identity: UserIdentity): OrgIdentityClaims {
   const claims = identity as unknown as Record<string, unknown>
   return {
     orgId: typeof claims.orgId === 'string' ? claims.orgId : undefined,
@@ -26,7 +30,18 @@ export async function getActiveOrg(
   if (!identity) throw new ConvexError({ code: ErrorCode.UNAUTHENTICATED })
 
   const { orgId: clerkOrgId, orgRole } = readOrgClaims(identity)
-  if (!clerkOrgId) throw new ConvexError({ code: ErrorCode.FORBIDDEN, reason: 'no_active_org' })
+
+  if (!clerkOrgId) {
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_tokenIdentifier', (q) => q.eq('tokenIdentifier', identity.tokenIdentifier))
+      .unique()
+    if (user?.organizationId) {
+      const org = await ctx.db.get(user.organizationId)
+      if (org && isPersonalOrg(org)) return { org, orgRole: 'admin' }
+    }
+    throw new ConvexError({ code: ErrorCode.FORBIDDEN, reason: 'no_active_org' })
+  }
 
   const org = await ctx.db
     .query('organizations')
@@ -54,7 +69,17 @@ export async function tryGetActiveOrg(
   const identity = await ctx.auth.getUserIdentity()
   if (!identity) return null
   const { orgId: clerkOrgId } = readOrgClaims(identity)
-  if (!clerkOrgId) return null
+  if (!clerkOrgId) {
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_tokenIdentifier', (q) => q.eq('tokenIdentifier', identity.tokenIdentifier))
+      .unique()
+    if (user?.organizationId) {
+      const org = await ctx.db.get(user.organizationId)
+      if (org && isPersonalOrg(org)) return org
+    }
+    return null
+  }
   return await ctx.db
     .query('organizations')
     .withIndex('by_clerkOrgId', (q) => q.eq('clerkOrgId', clerkOrgId))

@@ -1,10 +1,12 @@
 import { ConvexError, v } from 'convex/values'
 import { internalMutation, mutation, query } from './_generated/server'
+import type { Id } from './_generated/dataModel'
 import { checkIdempotency } from './lib/idempotency'
 import { requireOrgAdmin } from './lib/activeOrg'
 import { ErrorCode } from './lib/errorCodes'
 import { addressStructuredValidator } from './shared/addressValidator'
 import { assertCountryCode } from './lib/i18nValidators'
+import { cascadeOrgDelete } from './lib/orgCascade'
 
 export const upsertFromWebhook = internalMutation({
   args: {
@@ -12,6 +14,7 @@ export const upsertFromWebhook = internalMutation({
     name: v.string(),
     slug: v.string(),
     svixId: v.optional(v.string()),
+    creatorTokenIdentifier: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     if (args.svixId) {
@@ -32,22 +35,35 @@ export const upsertFromWebhook = internalMutation({
 
     const now = Date.now()
 
+    let orgId: Id<'organizations'>
     if (existing) {
       await ctx.db.patch(existing._id, {
         name: args.name,
         slug: args.slug,
         updatedAt: now,
       })
-      return existing._id
+      orgId = existing._id
+    } else {
+      orgId = await ctx.db.insert('organizations', {
+        clerkOrgId: args.clerkOrgId,
+        name: args.name,
+        slug: args.slug,
+        createdAt: now,
+        updatedAt: now,
+      })
     }
 
-    return await ctx.db.insert('organizations', {
-      clerkOrgId: args.clerkOrgId,
-      name: args.name,
-      slug: args.slug,
-      createdAt: now,
-      updatedAt: now,
-    })
+    if (args.creatorTokenIdentifier) {
+      const creator = await ctx.db
+        .query('users')
+        .withIndex('by_tokenIdentifier', (q) => q.eq('tokenIdentifier', args.creatorTokenIdentifier!))
+        .unique()
+      if (creator) {
+        await ctx.db.patch(creator._id, { organizationId: orgId })
+      }
+    }
+
+    return orgId
   },
 })
 
@@ -68,6 +84,7 @@ export const deleteFromWebhook = internalMutation({
       .unique()
     if (!org) return
 
+    await cascadeOrgDelete(ctx, org._id)
     await ctx.db.delete(org._id)
   },
 })
@@ -79,17 +96,6 @@ export const getBySlug = query({
       .query('organizations')
       .withIndex('by_slug', (q) => q.eq('slug', args.slug))
       .unique()
-  },
-})
-
-export const isSlugAvailable = query({
-  args: { slug: v.string() },
-  handler: async (ctx, args) => {
-    const existing = await ctx.db
-      .query('organizations')
-      .withIndex('by_slug', (q) => q.eq('slug', args.slug))
-      .unique()
-    return existing === null
   },
 })
 

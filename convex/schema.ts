@@ -42,10 +42,12 @@ export default defineSchema({
     defaultLocation: v.optional(v.string()),
     tcAcceptedAt: v.optional(v.number()),
     tcVersion: v.optional(v.string()),
+    organizationId: v.optional(v.id('organizations')),
   })
     .index('by_tokenIdentifier', ['tokenIdentifier'])
     .index('by_slug', ['slug'])
-    .index('by_email', ['email']),
+    .index('by_email', ['email'])
+    .index('by_organizationId', ['organizationId']),
 
   themes: defineTable({
     name: v.string(),
@@ -66,7 +68,7 @@ export default defineSchema({
     .index('by_isActive_appearance', ['isActive', 'appearance']),
 
   organizations: defineTable({
-    clerkOrgId: v.string(),
+    clerkOrgId: v.optional(v.string()),
     name: v.string(),
     slug: v.string(),
     phone: v.optional(v.string()),
@@ -501,10 +503,12 @@ export default defineSchema({
     role: stakeholderType,
     createdAt: v.number(),
     profileComplete: v.optional(v.boolean()),
+    organizationId: v.optional(v.id('organizations')),
   })
     .index('by_userId', ['userId'])
     .index('by_userId_role', ['userId', 'role'])
-    .index('by_role', ['role']),
+    .index('by_role', ['role'])
+    .index('by_organizationId', ['organizationId']),
 
   bookingTemplates: defineTable({
     ownerId: v.string(),
@@ -654,6 +658,22 @@ export default defineSchema({
     lastRefill: v.number(),
   }).index('by_key', ['key'])
     .index('by_lastRefill', ['lastRefill']),
+
+  webhookAuditLog: defineTable({
+    eventType: v.union(
+      v.literal('user_rebind'),
+      v.literal('user_rebind_rejected'),
+    ),
+    userId: v.optional(v.id('users')),
+    oldTokenIdentifier: v.string(),
+    newTokenIdentifier: v.string(),
+    oldIssuer: v.string(),
+    newIssuer: v.string(),
+    email: v.string(),
+    at: v.number(),
+  })
+    .index('by_userId', ['userId'])
+    .index('by_at', ['at']),
 
   bookingAuditLog: defineTable({
     bookingId: v.id('bookings'),

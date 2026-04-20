@@ -162,6 +162,11 @@ describe('directory.listByRole — Compressor picker gate', () => {
         gasMixes: ['air'],
         verified: true,
       })
+      const row = await ctx.db
+        .query('userRoles')
+        .withIndex('by_userId_role', (q) => q.eq('userId', u1).eq('role', 'Compressor'))
+        .unique()
+      if (row) await ctx.db.patch(row._id, { profileComplete: true })
     })
 
     const result = await t.withIdentity(orgIdentityFor('caller-comp3'))

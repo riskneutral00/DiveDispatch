@@ -10,8 +10,40 @@ import { api } from '../convex/_generated/api'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-import { seedUser } from './fixtures'
+import { seedUser, seedInstructorProfile, seedEquipmentProfile, seedBoatProfile, type SeedCtx } from './fixtures'
 import { makeT } from './helpers/convex-helpers'
+import type { Id } from '../convex/_generated/dataModel'
+
+async function seedCompleteCompressor(ctx: SeedCtx, slug: string) {
+  const userId = await seedUser(ctx, { tokenIdentifier: `clerk|${slug}`, slug, role: 'Compressor', email: `${slug}@test.com` })
+  await (await import('./fixtures/seedUsers')).getOrCreateTestOrg(ctx, userId, slug)
+  // seedProfiles doesn't export seedCompressorProfile — inline insert + mark complete
+  const user = await ctx.db.get(userId)
+  if (!user?.organizationId) throw new Error('no org')
+  await ctx.db.insert('compressors', {
+    organizationId: user.organizationId,
+    name: slug,
+    address: { city: 'Koh Tao', country: 'TH' },
+    lat: 10, lng: 99, email: `${slug}@t.com`, phone: '+66000',
+    gasMixes: ['air'],
+    verified: true,
+  })
+  const row = await ctx.db
+    .query('userRoles')
+    .withIndex('by_userId_role', (q) => q.eq('userId', userId).eq('role', 'Compressor'))
+    .unique()
+  if (row) await ctx.db.patch(row._id, { profileComplete: true })
+  return userId
+}
+
+async function seedRoleUser(ctx: SeedCtx, slug: string, role: 'Instructor' | 'Equipment' | 'Boat' | 'Compressor'): Promise<Id<'users'>> {
+  if (role === 'Compressor') return seedCompleteCompressor(ctx, slug)
+  const userId = await seedUser(ctx, { tokenIdentifier: `clerk|${slug}`, slug, role, email: `${slug}@test.com` })
+  if (role === 'Instructor') await seedInstructorProfile(ctx, userId)
+  else if (role === 'Equipment') await seedEquipmentProfile(ctx, userId)
+  else if (role === 'Boat') await seedBoatProfile(ctx, userId)
+  return userId
+}
 
 /** Base args with all required fields filled in for the upsert mutation. */
 function baseArgs(overrides: Record<string, unknown> = {}) {
@@ -95,7 +127,10 @@ describe('stakeholderPreferences.upsert — preferred resource arrays', () => {
 
   it('persists preferredEquipmentSlugs on upsert', async () => {
     const t = makeT()
-    await t.run(async (ctx) => seedUser(ctx, { slug: 'dc-equip', tokenIdentifier: 'clerk|dc-equip', role: 'DiveCenter' }))
+    await t.run(async (ctx) => {
+      await seedUser(ctx, { slug: 'dc-equip', tokenIdentifier: 'clerk|dc-equip', role: 'DiveCenter' })
+      await seedRoleUser(ctx, 'equip-1', 'Equipment')
+    })
 
     await t.withIdentity({ tokenIdentifier: 'clerk|dc-equip' }).mutation(
       api.stakeholderPreferences.upsert,
@@ -111,7 +146,11 @@ describe('stakeholderPreferences.upsert — preferred resource arrays', () => {
 
   it('persists preferredBoatSlugs on upsert', async () => {
     const t = makeT()
-    await t.run(async (ctx) => seedUser(ctx, { slug: 'dc-boat', tokenIdentifier: 'clerk|dc-boat', role: 'DiveCenter' }))
+    await t.run(async (ctx) => {
+      await seedUser(ctx, { slug: 'dc-boat', tokenIdentifier: 'clerk|dc-boat', role: 'DiveCenter' })
+      await seedRoleUser(ctx, 'boat-a', 'Boat')
+      await seedRoleUser(ctx, 'boat-b', 'Boat')
+    })
 
     await t.withIdentity({ tokenIdentifier: 'clerk|dc-boat' }).mutation(
       api.stakeholderPreferences.upsert,
@@ -127,7 +166,10 @@ describe('stakeholderPreferences.upsert — preferred resource arrays', () => {
 
   it('persists preferredCompressorSlugs on upsert', async () => {
     const t = makeT()
-    await t.run(async (ctx) => seedUser(ctx, { slug: 'dc-comp', tokenIdentifier: 'clerk|dc-comp', role: 'DiveCenter' }))
+    await t.run(async (ctx) => {
+      await seedUser(ctx, { slug: 'dc-comp', tokenIdentifier: 'clerk|dc-comp', role: 'DiveCenter' })
+      await seedRoleUser(ctx, 'comp-1', 'Compressor')
+    })
 
     await t.withIdentity({ tokenIdentifier: 'clerk|dc-comp' }).mutation(
       api.stakeholderPreferences.upsert,
@@ -143,7 +185,14 @@ describe('stakeholderPreferences.upsert — preferred resource arrays', () => {
 
   it('persists all 5 preferred arrays in a single upsert', async () => {
     const t = makeT()
-    await t.run(async (ctx) => seedUser(ctx, { slug: 'dc-all5', tokenIdentifier: 'clerk|dc-all5', role: 'DiveCenter' }))
+    await t.run(async (ctx) => {
+      await seedUser(ctx, { slug: 'dc-all5', tokenIdentifier: 'clerk|dc-all5', role: 'DiveCenter' })
+      await seedRoleUser(ctx, 'inst-1', 'Instructor')
+      await seedRoleUser(ctx, 'inst-2', 'Instructor')
+      await seedRoleUser(ctx, 'equip-1', 'Equipment')
+      await seedRoleUser(ctx, 'boat-1', 'Boat')
+      await seedRoleUser(ctx, 'comp-1', 'Compressor')
+    })
 
     await t.withIdentity({ tokenIdentifier: 'clerk|dc-all5' }).mutation(
       api.stakeholderPreferences.upsert,
@@ -170,7 +219,10 @@ describe('stakeholderPreferences.upsert — preferred resource arrays', () => {
 
   it('upsert with only instructor slugs leaves new arrays undefined', async () => {
     const t = makeT()
-    await t.run(async (ctx) => seedUser(ctx, { slug: 'dc-inst-only', tokenIdentifier: 'clerk|dc-inst-only', role: 'DiveCenter' }))
+    await t.run(async (ctx) => {
+      await seedUser(ctx, { slug: 'dc-inst-only', tokenIdentifier: 'clerk|dc-inst-only', role: 'DiveCenter' })
+      await seedRoleUser(ctx, 'inst-1', 'Instructor')
+    })
 
     await t.withIdentity({ tokenIdentifier: 'clerk|dc-inst-only' }).mutation(
       api.stakeholderPreferences.upsert,
@@ -190,7 +242,13 @@ describe('stakeholderPreferences.upsert — preferred resource arrays', () => {
 
   it('second upsert updates arrays without losing existing data', async () => {
     const t = makeT()
-    await t.run(async (ctx) => seedUser(ctx, { slug: 'dc-update', tokenIdentifier: 'clerk|dc-update', role: 'DiveCenter' }))
+    await t.run(async (ctx) => {
+      await seedUser(ctx, { slug: 'dc-update', tokenIdentifier: 'clerk|dc-update', role: 'DiveCenter' })
+      await seedRoleUser(ctx, 'inst-1', 'Instructor')
+      await seedRoleUser(ctx, 'equip-1', 'Equipment')
+      await seedRoleUser(ctx, 'boat-1', 'Boat')
+      await seedRoleUser(ctx, 'comp-1', 'Compressor')
+    })
 
     // First upsert: set all 5 arrays
     await t.withIdentity({ tokenIdentifier: 'clerk|dc-update' }).mutation(

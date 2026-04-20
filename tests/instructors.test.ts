@@ -122,6 +122,11 @@ describe('directory.listByRole — Instructor picker gate', () => {
       await seedUser(ctx, 'caller-instr', 'DiveCenter')
       const u1 = await seedUser(ctx, 'instr-empty', 'Instructor')
       await seedInstructorProfile(ctx, u1, { teachingLanguages: [] })
+      const row = await ctx.db
+        .query('userRoles')
+        .withIndex('by_userId_role', (q) => q.eq('userId', u1).eq('role', 'Instructor'))
+        .unique()
+      if (row) await ctx.db.patch(row._id, { profileComplete: false })
     })
 
     const result = await t.withIdentity(orgIdentityFor('caller-instr'))

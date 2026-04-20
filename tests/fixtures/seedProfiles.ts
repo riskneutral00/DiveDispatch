@@ -3,6 +3,18 @@ import { GEAR_TYPES, type GearType } from '../../convex/shared/gearSizing'
 import type { SeedCtx } from './seedUsers'
 import { getOrCreateTestOrg } from './seedUsers'
 
+async function markRoleComplete(
+  ctx: SeedCtx,
+  userId: Id<'users'>,
+  role: Doc<'userRoles'>['role'],
+): Promise<void> {
+  const row = await ctx.db
+    .query('userRoles')
+    .withIndex('by_userId_role', (q) => q.eq('userId', userId).eq('role', role))
+    .unique()
+  if (row) await ctx.db.patch(row._id, { profileComplete: true })
+}
+
 type AddressOverride = {
   city?: string
   country?: string
@@ -39,7 +51,7 @@ export async function seedDiveCenterProfile(
 ) {
   const organizationId = overrides.organizationId ?? (await getOrCreateTestOrg(ctx, userId, overrides.name ?? 'Test DC'))
   const address = resolveAddress(overrides)
-  return ctx.db.insert('diveCenters', {
+  const id = await ctx.db.insert('diveCenters', {
     organizationId,
     name: overrides.name ?? 'Test DC',
     address,
@@ -51,6 +63,8 @@ export async function seedDiveCenterProfile(
     customerLanguages: overrides.customerLanguages ?? ['en'],
     verified: overrides.verified ?? true,
   })
+  await markRoleComplete(ctx, userId, 'DiveCenter')
+  return id
 }
 
 export async function seedAgent(
@@ -69,7 +83,7 @@ export async function seedAgent(
 ) {
   const organizationId = overrides.organizationId ?? (await getOrCreateTestOrg(ctx, userId, overrides.name ?? 'Test Agent'))
   const address = resolveAddress(overrides)
-  return ctx.db.insert('agents', {
+  const id = await ctx.db.insert('agents', {
     organizationId,
     name: overrides.name ?? 'Test Agent',
     address,
@@ -81,6 +95,8 @@ export async function seedAgent(
     customerLanguages: overrides.customerLanguages ?? ['en'],
     verified: overrides.verified ?? false,
   })
+  await markRoleComplete(ctx, userId, 'Agent')
+  return id
 }
 
 export async function seedVenue(
@@ -141,7 +157,7 @@ export async function seedInstructorProfile(
 ) {
   const organizationId = overrides.organizationId ?? (await getOrCreateTestOrg(ctx, userId, overrides.name ?? 'Test Instructor'))
   const address = resolveAddress(overrides)
-  return ctx.db.insert('diveStaff', {
+  const id = await ctx.db.insert('diveStaff', {
     organizationId,
     role: 'Instructor',
     name: overrides.name ?? 'Test Instructor',
@@ -156,6 +172,8 @@ export async function seedInstructorProfile(
     verified: overrides.verified ?? true,
     teachingLanguages: overrides.teachingLanguages ?? ['en'],
   })
+  await markRoleComplete(ctx, userId, 'Instructor')
+  return id
 }
 
 export async function seedDiveMasterProfile(
@@ -176,7 +194,7 @@ export async function seedDiveMasterProfile(
 ) {
   const organizationId = overrides.organizationId ?? (await getOrCreateTestOrg(ctx, userId, overrides.name ?? 'Test DiveMaster'))
   const address = resolveAddress(overrides)
-  return ctx.db.insert('diveStaff', {
+  const id = await ctx.db.insert('diveStaff', {
     organizationId,
     role: 'Instructor',
     name: overrides.name ?? 'Test DiveMaster',
@@ -191,6 +209,8 @@ export async function seedDiveMasterProfile(
     verified: overrides.verified ?? true,
     teachingLanguages: overrides.teachingLanguages ?? ['en'],
   })
+  await markRoleComplete(ctx, userId, 'Instructor')
+  return id
 }
 
 export async function seedBoatProfile(
@@ -211,7 +231,7 @@ export async function seedBoatProfile(
 ) {
   const organizationId = overrides.organizationId ?? (await getOrCreateTestOrg(ctx, userId, overrides.name ?? 'Test Boat'))
   const address = resolveAddress(overrides)
-  return ctx.db.insert('boats', {
+  const id = await ctx.db.insert('boats', {
     organizationId,
     name: overrides.name ?? 'Test Boat',
     address,
@@ -223,6 +243,8 @@ export async function seedBoatProfile(
     hasCompressor: overrides.hasCompressor ?? true,
     verified: overrides.verified ?? true,
   })
+  await markRoleComplete(ctx, userId, 'Boat')
+  return id
 }
 
 export async function seedEquipmentProfile(
@@ -241,7 +263,7 @@ export async function seedEquipmentProfile(
 ) {
   const organizationId = overrides.organizationId ?? (await getOrCreateTestOrg(ctx, userId, overrides.name ?? 'Test Equipment'))
   const address = resolveAddress(overrides)
-  return ctx.db.insert('equipment', {
+  const id = await ctx.db.insert('equipment', {
     organizationId,
     name: overrides.name ?? 'Test Equipment',
     address,
@@ -251,6 +273,8 @@ export async function seedEquipmentProfile(
     phone: overrides.phone ?? '+66123456789',
     verified: overrides.verified ?? true,
   })
+  await markRoleComplete(ctx, userId, 'Equipment')
+  return id
 }
 
 export async function seedCompleteGearInventory(

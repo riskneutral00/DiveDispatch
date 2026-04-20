@@ -5,6 +5,52 @@ import { makeT } from './helpers/convex-helpers'
 import { createUserDefaults } from './helpers/createUser'
 
 describe('createUser mutation', () => {
+  it('auto-creates a personal org and links user.organizationId on new user', async () => {
+    const t = makeT()
+    vi.useFakeTimers({ now: Date.now() })
+    const userId = await t
+      .withIdentity({ tokenIdentifier: 'clerk|personal-org-new', email: 'solo@test.com' })
+      .mutation(api.users.createUser, { ...createUserDefaults, role: 'Compressor' })
+
+    await t.finishAllScheduledFunctions(vi.runAllTimers)
+    vi.useRealTimers()
+
+    const user = await t.run(async (ctx) => ctx.db.get(userId))
+    expect(user?.organizationId).toBeDefined()
+
+    const org = await t.run(async (ctx) =>
+      user?.organizationId ? ctx.db.get(user.organizationId) : null,
+    )
+    expect(org?.slug).toBe(user?.slug)
+    expect(org?.clerkOrgId).toBeUndefined()
+  })
+
+  it('backfills user.organizationId on second createUser call when missing', async () => {
+    const t = makeT()
+    const identity = { tokenIdentifier: 'clerk|backfill-personal-org', email: 'bf@test.com' }
+
+    const userId = await t.run(async (ctx) => {
+      return ctx.db.insert('users', {
+        tokenIdentifier: identity.tokenIdentifier,
+        originalTokenIdentifier: identity.tokenIdentifier,
+        slug: 'bf-slug',
+        email: identity.email,
+        name: '',
+        firstName: '',
+        lastName: '',
+        appLanguage: 'en',
+      })
+    })
+
+    vi.useFakeTimers({ now: Date.now() })
+    await t.withIdentity(identity).mutation(api.users.createUser, { ...createUserDefaults, role: 'Instructor' })
+    await t.finishAllScheduledFunctions(vi.runAllTimers)
+    vi.useRealTimers()
+
+    const user = await t.run(async (ctx) => ctx.db.get(userId))
+    expect(user?.organizationId).toBeDefined()
+  })
+
   it('uses identity.email and ignores args.email on new user', async () => {
     const t = makeT()
     vi.useFakeTimers({ now: Date.now() })
@@ -449,5 +495,246 @@ describe('upsertFromWebhook email path', () => {
     })
     expect(user?.email).toBe('new@clerk.dev')
     expect(user?.name).toBe('New Name')
+  })
+})
+
+describe('createUser — userRoles organizationId invariant', () => {
+  it('sets userRoles.organizationId to user.organizationId at insert time', async () => {
+    const t = makeT()
+    vi.useFakeTimers({ now: Date.now() })
+    const userId = await t
+      .withIdentity({ tokenIdentifier: 'clerk|role-org-binding', email: 'rob@test.com' })
+      .mutation(api.users.createUser, {
+        ...createUserDefaults,
+        role: 'DiveCenter',
+        roles: ['DiveCenter', 'Instructor'],
+      })
+    await t.finishAllScheduledFunctions(vi.runAllTimers)
+    vi.useRealTimers()
+
+    const { user, roles } = await t.run(async (ctx) => ({
+      user: await ctx.db.get(userId),
+      roles: await ctx.db
+        .query('userRoles')
+        .withIndex('by_userId', (q) => q.eq('userId', userId))
+        .collect(),
+    }))
+
+    expect(user?.organizationId).toBeDefined()
+    expect(roles.length).toBeGreaterThan(0)
+    for (const r of roles) {
+      expect(r.organizationId).toBe(user?.organizationId)
+    }
+  })
+
+  it('addRole inherits user.organizationId into new userRoles row', async () => {
+    const t = makeT()
+    const identity = { tokenIdentifier: 'clerk|addrole-binding', email: 'ar@test.com' }
+
+    vi.useFakeTimers({ now: Date.now() })
+    await t.withIdentity(identity).mutation(api.users.createUser, {
+      ...createUserDefaults,
+      role: 'DiveCenter',
+    })
+    await t.finishAllScheduledFunctions(vi.runAllTimers)
+    vi.useRealTimers()
+
+    await t.withIdentity(identity).mutation(api.userRoles.addRole, { role: 'Instructor' })
+
+    const user = await t.withIdentity(identity).query(api.users.me, {})
+    const roles = await t.run(async (ctx) =>
+      user
+        ? await ctx.db
+            .query('userRoles')
+            .withIndex('by_userId', (q) => q.eq('userId', user._id))
+            .collect()
+        : [],
+    )
+    const instructorRole = roles.find((r) => r.role === 'Instructor')
+    expect(instructorRole).toBeDefined()
+    expect(instructorRole?.organizationId).toBe(user?.organizationId)
+  })
+})
+
+describe('upsertFromWebhook email-rebind safety', () => {
+  const DEV_ISSUER = 'https://canonical-clerk.test'
+  const PROD_ISSUER = 'https://other-clerk.test'
+
+  it('rebinds a seed-bound user to a real Clerk token when emails match (seed migration path)', async () => {
+    const t = makeT()
+    const email = `seed-migrate-${crypto.randomUUID().slice(0, 8)}@test.com`
+    const seedToken = `seed|seed-slug-${crypto.randomUUID().slice(0, 8)}`
+    const newToken = `${DEV_ISSUER}|user_${crypto.randomUUID().slice(0, 8)}`
+
+    const seedId = await t.run(async (ctx) => {
+      return ctx.db.insert('users', {
+        tokenIdentifier: seedToken,
+        originalTokenIdentifier: seedToken,
+        slug: 'seed-slug',
+        email,
+        name: 'Seed User',
+        firstName: 'Seed',
+        lastName: 'User',
+        appLanguage: 'en',
+      })
+    })
+
+    const resultId = await t.mutation(internal.users.upsertFromWebhook, {
+      tokenIdentifier: newToken,
+      email,
+      name: 'Clerk User',
+      firstName: 'Clerk',
+      lastName: 'User',
+    })
+
+    expect(resultId).toBe(seedId)
+    const user = await t.run(async (ctx) => ctx.db.get(seedId))
+    expect(user?.tokenIdentifier).toBe(newToken)
+    expect(user?.originalTokenIdentifier).toBe(newToken)
+    expect(user?.firstName).toBe('Clerk')
+
+    const audit = await t.run(async (ctx) => {
+      return await ctx.db
+        .query('webhookAuditLog')
+        .withIndex('by_userId', (q) => q.eq('userId', seedId))
+        .collect()
+    })
+    expect(audit).toHaveLength(1)
+    expect(audit[0].eventType).toBe('user_rebind')
+    expect(audit[0].oldIssuer).toBe('seed')
+    expect(audit[0].newIssuer).toBe(DEV_ISSUER)
+  })
+
+  it('rebinds when a Clerk user is deleted and recreated in the same instance (same issuer)', async () => {
+    const t = makeT()
+    const email = `same-issuer-${crypto.randomUUID().slice(0, 8)}@test.com`
+    const oldToken = `${DEV_ISSUER}|user_old_${crypto.randomUUID().slice(0, 8)}`
+    const newToken = `${DEV_ISSUER}|user_new_${crypto.randomUUID().slice(0, 8)}`
+
+    const userId = await t.run(async (ctx) => {
+      return ctx.db.insert('users', {
+        tokenIdentifier: oldToken,
+        originalTokenIdentifier: oldToken,
+        slug: 'same-issuer-slug',
+        email,
+        name: 'Original',
+        firstName: 'Orig',
+        lastName: 'Inal',
+        appLanguage: 'en',
+      })
+    })
+
+    const resultId = await t.mutation(internal.users.upsertFromWebhook, {
+      tokenIdentifier: newToken,
+      email,
+      name: 'Recreated',
+      firstName: 'Re',
+      lastName: 'Created',
+    })
+
+    expect(resultId).toBe(userId)
+    const user = await t.run(async (ctx) => ctx.db.get(userId))
+    expect(user?.tokenIdentifier).toBe(newToken)
+    expect(user?.originalTokenIdentifier).toBe(newToken)
+
+    const audit = await t.run(async (ctx) => {
+      return await ctx.db
+        .query('webhookAuditLog')
+        .withIndex('by_userId', (q) => q.eq('userId', userId))
+        .collect()
+    })
+    expect(audit).toHaveLength(1)
+    expect(audit[0].eventType).toBe('user_rebind')
+    expect(audit[0].oldIssuer).toBe(DEV_ISSUER)
+    expect(audit[0].newIssuer).toBe(DEV_ISSUER)
+  })
+
+  it('rejects rebind from a different Clerk issuer and logs the rejection', async () => {
+    const t = makeT()
+    const email = `cross-issuer-${crypto.randomUUID().slice(0, 8)}@test.com`
+    const victimToken = `${DEV_ISSUER}|user_victim_${crypto.randomUUID().slice(0, 8)}`
+    const attackerToken = `${PROD_ISSUER}|user_attacker_${crypto.randomUUID().slice(0, 8)}`
+
+    const victimId = await t.run(async (ctx) => {
+      return ctx.db.insert('users', {
+        tokenIdentifier: victimToken,
+        originalTokenIdentifier: victimToken,
+        slug: 'victim-slug',
+        email,
+        name: 'Victim',
+        firstName: 'Vic',
+        lastName: 'Tim',
+        appLanguage: 'en',
+      })
+    })
+
+    const resultId = await t.mutation(internal.users.upsertFromWebhook, {
+      tokenIdentifier: attackerToken,
+      email,
+      name: 'Attacker',
+      firstName: 'Att',
+      lastName: 'Acker',
+    })
+
+    expect(resultId).toBe(victimId)
+    const victim = await t.run(async (ctx) => ctx.db.get(victimId))
+    expect(victim?.tokenIdentifier).toBe(victimToken)
+    expect(victim?.originalTokenIdentifier).toBe(victimToken)
+    expect(victim?.firstName).toBe('Vic')
+
+    const attackerLookup = await t.run(async (ctx) => {
+      return await ctx.db
+        .query('users')
+        .withIndex('by_tokenIdentifier', (q) => q.eq('tokenIdentifier', attackerToken))
+        .unique()
+    })
+    expect(attackerLookup).toBeNull()
+
+    const audit = await t.run(async (ctx) => {
+      return await ctx.db
+        .query('webhookAuditLog')
+        .withIndex('by_userId', (q) => q.eq('userId', victimId))
+        .collect()
+    })
+    expect(audit).toHaveLength(1)
+    expect(audit[0].eventType).toBe('user_rebind_rejected')
+    expect(audit[0].oldIssuer).toBe(DEV_ISSUER)
+    expect(audit[0].newIssuer).toBe(PROD_ISSUER)
+  })
+
+  it('deleteFromWebhook by the new token after rebind finds the row (no orphan)', async () => {
+    const t = makeT()
+    const email = `rebind-then-delete-${crypto.randomUUID().slice(0, 8)}@test.com`
+    const oldToken = `${DEV_ISSUER}|user_first_${crypto.randomUUID().slice(0, 8)}`
+    const newToken = `${DEV_ISSUER}|user_second_${crypto.randomUUID().slice(0, 8)}`
+
+    const userId = await t.run(async (ctx) => {
+      return ctx.db.insert('users', {
+        tokenIdentifier: oldToken,
+        originalTokenIdentifier: oldToken,
+        slug: 'rebind-delete-slug',
+        email,
+        name: 'Original',
+        firstName: 'Orig',
+        lastName: 'Inal',
+        appLanguage: 'en',
+      })
+    })
+
+    await t.mutation(internal.users.upsertFromWebhook, {
+      tokenIdentifier: newToken,
+      email,
+      name: 'Recreated',
+      firstName: 'Re',
+      lastName: 'Created',
+    })
+
+    await t.mutation(internal.users.deleteFromWebhook, {
+      tokenIdentifier: newToken,
+    })
+
+    const user = await t.run(async (ctx) => ctx.db.get(userId))
+    expect(user?.email).toBe('deleted@deleted.invalid')
+    expect(user?.firstName).toBe('')
   })
 })

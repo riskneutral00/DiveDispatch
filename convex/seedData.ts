@@ -124,6 +124,7 @@ interface CompressorProfile {
   address: SeedAddress
   lat: number
   lng: number
+  placeId?: string
   email: string
   phone: string
   gasMixes?: GasMixType[]
@@ -1008,28 +1009,35 @@ export const UNOWNED_DIVE_SITES: SeedDiveSite[] = [
   { name: 'Kata Beach', slug: 'kata-beach', capacity: 50 },
 ]
 
-export const RESTORED_PRAWIT: SeedStakeholder = {
+export const SEA_FUN_OWNER: SeedStakeholder = {
   user: {
-    slug: 'wkxhew',
+    slug: 'mkk9c4',
     email: 'scuba-market+clerk_test@divedispatch.dev',
     name: 'Prawit Suksawat',
     firstName: 'Prawit',
     lastName: 'Suksawat',
-    appLanguage: 'th',
+    appLanguage: 'en',
     phone: '+6676330345',
     dateOfBirth: '1975-08-12',
   },
   roles: [{ role: 'Compressor' }],
   compressor: {
-    name: 'Scuba Market Thailand',
-    address: { street: '44 Thanon Kata, Tambon Karon', city: 'Phuket', state: 'Phuket', country: 'TH', postalCode: '83100' },
-    lat: 7.8215228,
-    lng: 98.3062015,
+    name: 'Scuba Market',
+    address: {
+      street: '51 Patak Road',
+      city: 'Tambon Karon',
+      state: 'Chang Wat Phuket',
+      country: 'TH',
+      postalCode: '83100',
+    },
+    lat: 7.820196400000013,
+    lng: 98.30618609999999,
+    placeId: 'ChIJoVcYq4klUDARy3hTaTDdFRY',
     email: 'scuba-market+clerk_test@divedispatch.dev',
     phone: '+6676330345',
     gasMixes: ['air', 'nitrox'],
-    nitroxMin: 32,
-    nitroxMax: 32,
+    nitroxMin: 22,
+    nitroxMax: 40,
     isAllowed: [],
     notAllowed: [],
     verified: false,
@@ -1113,9 +1121,8 @@ export const PARKED_STAKEHOLDERS: SeedStakeholder[] = [
   SCUBA_REVOLUTION,
   ANDAMAN_EXPLORER,
   CORAL_BAY_RESORT,
-  RESTORED_PRAWIT,
   RESTORED_SOMBAT,
   RESTORED_ALEX,
 ]
 
-export const ALL_STAKEHOLDERS: SeedStakeholder[] = []
+export const ALL_STAKEHOLDERS: SeedStakeholder[] = [SEA_FUN_OWNER]

@@ -35,6 +35,70 @@ describe('users.upsertFromWebhook', () => {
     })
   })
 
+  it('converges on seed-stub user by email when tokenIdentifier differs', async () => {
+    const t = makeT()
+    let seedUserId: Doc<'users'>['_id']
+    await t.run(async (ctx) => {
+      seedUserId = await seedUser(ctx, {
+        tokenIdentifier: 'seed|test-slug',
+        email: 'converge@test.com',
+        firstName: 'Seed',
+        lastName: 'Stub',
+        name: 'Seed Stub',
+      })
+    })
+
+    const returnedId = await t.mutation(internal.users.upsertFromWebhook, {
+      tokenIdentifier: 'https://clerk.example|user_abc',
+      email: 'converge@test.com',
+      name: 'Real Name',
+      firstName: 'Real',
+      lastName: 'Name',
+    })
+
+    expect(returnedId).toBe(seedUserId!)
+
+    await t.run(async (ctx) => {
+      const all = await ctx.db
+        .query('users')
+        .withIndex('by_email', (q) => q.eq('email', 'converge@test.com'))
+        .collect()
+      expect(all).toHaveLength(1)
+      expect(all[0]._id).toBe(seedUserId!)
+      expect(all[0].tokenIdentifier).toBe('https://clerk.example|user_abc')
+      expect(all[0].firstName).toBe('Real')
+      expect(all[0].lastName).toBe('Name')
+      expect(all[0].name).toBe('Real Name')
+    })
+  })
+
+  it('does not email-converge when email is empty string', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => {
+      await seedUser(ctx, {
+        tokenIdentifier: 'seed|no-email',
+        email: '',
+      })
+    })
+
+    const newId = await t.mutation(internal.users.upsertFromWebhook, {
+      tokenIdentifier: 'clerk|different',
+      email: '',
+      name: 'X',
+      firstName: 'X',
+      lastName: 'Y',
+    })
+
+    await t.run(async (ctx) => {
+      const all = await ctx.db
+        .query('users')
+        .withIndex('by_email', (q) => q.eq('email', ''))
+        .collect()
+      expect(all).toHaveLength(2)
+      expect(all.some((u) => u._id === newId)).toBe(true)
+    })
+  })
+
   it('patches existing user on duplicate tokenIdentifier (idempotent)', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
@@ -58,7 +122,7 @@ describe('users.upsertFromWebhook', () => {
 })
 
 describe('users.upsertFromWebhook — userRoles', () => {
-  it('seeds a default DiveCenter userRoles entry when creating a new user', async () => {
+  it('does not assign any role when creating a new user (role selection owned by signup wizard)', async () => {
     const t = makeT()
 
     const userId = await t.mutation(internal.users.upsertFromWebhook, {
@@ -74,8 +138,7 @@ describe('users.upsertFromWebhook — userRoles', () => {
         .query('userRoles')
         .withIndex('by_userId', (q) => q.eq('userId', userId))
         .collect()
-      expect(roles).toHaveLength(1)
-      expect(roles[0].role).toBe('DiveCenter')
+      expect(roles).toHaveLength(0)
     })
   })
 

@@ -8,6 +8,9 @@ import type { Doc, Id } from './_generated/dataModel'
 import { queryDynamicTable } from './lib/typedDb'
 import { ROLE_TABLE_MAP } from './lib/profileHelpers'
 import { isResourceAccessible } from './lib/accessControl'
+import { isUserRoleComplete, isRoleProfileComplete } from './lib/setRoleProfileComplete'
+import { ConvexError } from 'convex/values'
+import { ErrorCode } from './lib/errorCodes'
 
 export const DIRECTORY_LIST_LIMIT = 500
 
@@ -65,14 +68,9 @@ async function queryProfileByUser(
   const table = ROLE_TABLE_MAP[role]
   if (!table) return null
   const user = await db.get(userId)
-  if (!user) return null
-  const org = await db
-    .query('organizations')
-    .withIndex('by_slug', (q) => q.eq('slug', user.slug))
-    .unique()
-  if (!org) return null
+  if (!user?.organizationId) return null
   const result = await queryDynamicTable(db, table)
-    .withIndex('by_organizationId', (q) => q.eq('organizationId', org._id))
+    .withIndex('by_organizationId', (q) => q.eq('organizationId', user.organizationId!))
     .unique()
   return result as Record<string, unknown> | null
 }
@@ -191,6 +189,8 @@ export const listByRole = query({
     const results = await Promise.all(
       users
         .map(async (u): Promise<DirectoryEntry | null> => {
+          if (!(await isUserRoleComplete(ctx, u._id, args.role))) return null
+
           const rawProfile = await queryProfileByUser(ctx.db, args.role, u._id)
           if (!rawProfile) return null
           if (!isResourceAccessible(
@@ -201,8 +201,6 @@ export const listByRole = query({
           const profile = await fetchProfile(ctx.db, u._id, args.role, u.slug, rawProfile)
           if (!profile) return null
 
-          if (args.role === 'Compressor' && (profile.gasMixes?.length ?? 0) === 0) return null
-          if (args.role === 'Instructor' && (profile.teachingLanguages?.length ?? 0) === 0) return null
           if (args.placeName && profile.placeName.toLowerCase() !== args.placeName.toLowerCase()) return null
           if (args.country && profile.country.toLowerCase() !== args.country.toLowerCase()) return null
           if (args.agency && args.agency !== 'all') {
@@ -304,6 +302,7 @@ export const listOperators = query({
       const users = await Promise.all(roleEntries.map((r) => ctx.db.get(r.userId)))
       for (const u of users) {
         if (!u) continue
+        if (!(await isUserRoleComplete(ctx, u._id, role))) continue
         const tableName = role === 'DiveCenter' ? 'diveCenters' : 'agents'
         const org = await ctx.db
           .query('organizations')
@@ -337,6 +336,16 @@ export const togglePreferredInstructor = mutation({
       .query('stakeholderPreferences').withIndex('by_stakeholderId', (q: any) => q.eq('stakeholderId', user.slug)) // eslint-disable-line @typescript-eslint/no-explicit-any {/* comments-ok */}
       .unique()
 
+    const current = prefs?.preferredInstructorSlugs ?? []
+    const isRemoval = current.includes(args.instructorSlug)
+
+    if (!isRemoval) {
+      const complete = await isRoleProfileComplete(ctx, args.instructorSlug, 'Instructor')
+      if (!complete) {
+        throw new ConvexError({ code: ErrorCode.PROFILE_INCOMPLETE, slug: args.instructorSlug, role: 'Instructor' })
+      }
+    }
+
     if (!prefs) {
       await ctx.db.insert('stakeholderPreferences', {
         stakeholderId: user.slug,
@@ -351,13 +360,11 @@ export const togglePreferredInstructor = mutation({
       return { starred: true }
     }
 
-    const current = prefs.preferredInstructorSlugs ?? []
-    const alreadyStarred = current.includes(args.instructorSlug)
-    const updated = alreadyStarred
+    const updated = isRemoval
       ? current.filter((s) => s !== args.instructorSlug)
       : [...current, args.instructorSlug]
 
     await ctx.db.patch(prefs._id, { preferredInstructorSlugs: updated })
-    return { starred: !alreadyStarred }
+    return { starred: !isRemoval }
   },
 })

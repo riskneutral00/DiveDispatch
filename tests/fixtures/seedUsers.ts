@@ -18,15 +18,22 @@ export async function getOrCreateTestOrg(
     .query('organizations')
     .withIndex('by_clerkOrgId', (q) => q.eq('clerkOrgId', clerkOrgId))
     .unique()
-  if (existing) return existing._id
+  if (existing) {
+    if (!user.organizationId) {
+      await ctx.db.patch(userId, { organizationId: existing._id })
+    }
+    return existing._id
+  }
   const now = Date.now()
-  return ctx.db.insert('organizations', {
+  const orgId = await ctx.db.insert('organizations', {
     clerkOrgId,
     name: orgName ?? `Test Org for ${user.slug}`,
     slug: user.slug,
     createdAt: now,
     updatedAt: now,
   })
+  await ctx.db.patch(userId, { organizationId: orgId })
+  return orgId
 }
 
 export async function findProfileByUser<T extends TableNames>(
@@ -35,15 +42,10 @@ export async function findProfileByUser<T extends TableNames>(
   tableName: T,
 ): Promise<Doc<T> | null> {
   const user = await ctx.db.get(userId)
-  if (!user) return null
-  const org = await ctx.db
-    .query('organizations')
-    .withIndex('by_slug', (q) => q.eq('slug', user.slug))
-    .unique()
-  if (!org) return null
+  if (!user?.organizationId) return null
   const doc = await ctx.db
     .query(tableName as 'diveCenters')
-    .withIndex('by_organizationId', (q) => q.eq('organizationId', org._id))
+    .withIndex('by_organizationId', (q) => q.eq('organizationId', user.organizationId!))
     .unique()
   return doc as Doc<T> | null
 }

@@ -4,17 +4,20 @@ import { PROFILE_REQUIRED, SETTINGS_REQUIRED, ROLE_REQUIRED } from './requiredFi
 import { OPERATOR_ROLE_SET } from './auth'
 import { profileBySlug } from './profileHelpers'
 import { ROLE_TABLE_MAP } from './profileHelpers'
+import { tryGetActiveOrg } from './activeOrg'
 import { AOW_REQUIRED_SPECIALTY_COUNT } from '../shared/agencies'
 import { evaluateGearInventoryCompleteness } from './equipmentGearCompleteness'
+
+export type CompletenessKind = 'not_started' | 'partial' | 'complete'
 
 export async function checkProfileCompleteness(
   ctx: QueryCtx,
   user: { _id: Id<'users'> },
   role: string,
-): Promise<{ percentage: number; incomplete: string[] }> {
+): Promise<{ percentage: number; incomplete: string[]; kind: CompletenessKind }> {
   const incomplete: string[] = []
   const userDoc = await ctx.db.get(user._id)
-  if (!userDoc) return { percentage: 0, incomplete: ['User not found'] }
+  if (!userDoc) return { percentage: 0, incomplete: ['User not found'], kind: 'not_started' }
 
   const str = (v: unknown) => typeof v === 'string' && v.trim().length > 0
   const arr = (v: unknown) => Array.isArray(v) && v.length > 0
@@ -62,14 +65,15 @@ export async function checkProfileCompleteness(
   const table = ROLE_TABLE_MAP[role]
   let profile: Record<string, unknown> | null = null
   if (table) {
-    const org = await ctx.db
-      .query('organizations')
-      .withIndex('by_slug', (q) => q.eq('slug', userDoc.slug))
-      .unique()
-    if (org) {
+    let orgId = userDoc.organizationId
+    if (!orgId) {
+      const activeOrg = await tryGetActiveOrg(ctx)
+      orgId = activeOrg?._id
+    }
+    if (orgId) {
       profile = await ctx.db
         .query(table as 'diveCenters')
-        .withIndex('by_organizationId', (q) => q.eq('organizationId', org._id))
+        .withIndex('by_organizationId', (q) => q.eq('organizationId', orgId))
         .unique()
     }
   }
@@ -165,7 +169,12 @@ export async function checkProfileCompleteness(
   const filled = total - incomplete.length
   const percentage = total === 0 ? 100 : Math.round((filled / total) * 100)
 
-  return { percentage, incomplete }
+  const kind: CompletenessKind =
+    table && !profile ? 'not_started' :
+    percentage === 100 ? 'complete' :
+    'partial'
+
+  return { percentage, incomplete, kind }
 }
 
 export async function checkAllRolesCompleteness(
@@ -173,7 +182,7 @@ export async function checkAllRolesCompleteness(
   userId: Id<'users'>,
 ): Promise<{
   allComplete: boolean
-  roles: Array<{ role: string; percentage: number; incomplete: string[] }>
+  roles: Array<{ role: string; percentage: number; incomplete: string[]; kind: CompletenessKind }>
 }> {
   const user = await ctx.db.get(userId)
   if (!user) return { allComplete: true, roles: [] }
@@ -185,7 +194,7 @@ export async function checkAllRolesCompleteness(
 
   const rolesToCheck = userRoles.map((r) => r.role)
 
-  const roles: Array<{ role: string; percentage: number; incomplete: string[] }> = []
+  const roles: Array<{ role: string; percentage: number; incomplete: string[]; kind: CompletenessKind }> = []
   let allComplete = true
 
   for (const role of rolesToCheck) {
