@@ -150,7 +150,12 @@
     "roleResource": "Provide services",
     "profileStepTitle": "Complete your profile",
     "iAgreeToTerms": "I agree to the <link>Terms and Conditions</link>",
-    "termsPageTitle": "Terms and Conditions"
+    "termsPageTitle": "Terms and Conditions",
+    "businessStepTitle": "Set up your business",
+    "businessStepSubtitle": "We'll create your organization with this name.",
+    "businessUrlPreview": "Your URL",
+    "businessSlugTaken": "This name is taken — try another.",
+    "businessNameTooShort": "Business name must be at least 2 characters."
   },
   "booking": {
     "status": {

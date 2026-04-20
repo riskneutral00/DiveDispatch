@@ -8,11 +8,13 @@ import { useTranslations } from 'next-intl'
 import { api } from '@/lib/convex-generated'
 import { ROLE_BY_CLERK_ROLE, type ClerkRole, type RoleConfig } from '@/lib/constants/roles'
 import { deriveDefaultRole, deriveRoleClass } from '@/lib/utils/role'
+import { kebabBusinessName } from '@/lib/utils/slug'
 import { InlineError } from '@/components/ui/inline-error'
 import { Spinner } from '@/components/ui/spinner'
 import { StepIndicator } from '@/components/ui/step-indicator'
 import { StepRoleSelection } from '@/components/onboarding/step-role-selection'
 import { StepProfileCompletion } from '@/components/onboarding/step-profile-completion'
+import { StepBusinessSetup } from '@/components/onboarding/step-business-setup'
 import { LanguageField } from '@/components/ui/language-field'
 import { ALL_LANGUAGES, languageToCode } from '@/lib/constants/dive-languages'
 import { DEFAULT_LOCALE, normalizeLocale } from '@/lib/constants/locales'
@@ -20,13 +22,20 @@ import { clerkGlassAppearance } from '../../clerk-glass-appearance'
 import { parseConvexErrorI18n } from '@/lib/utils/convex-error'
 import { CURRENT_TC_VERSION } from '@/../convex/shared/tcVersion'
 
-const SIGNUP_STEPS = [
+const SIGNUP_STEPS_FREELANCE = [
   { key: 'signup', label: 'Sign Up' },
   { key: 'role', label: 'Role' },
   { key: 'profile', label: 'Profile' },
 ] as const
 
-type PostAuthStage = 'role' | 'profile'
+const SIGNUP_STEPS_BUSINESS = [
+  { key: 'signup', label: 'Sign Up' },
+  { key: 'role', label: 'Role' },
+  { key: 'business', label: 'Business' },
+  { key: 'profile', label: 'Profile' },
+] as const
+
+type PostAuthStage = 'role' | 'business' | 'profile'
 type OrgPhase = 'idle' | 'creating' | 'syncing' | 'done'
 
 const LOCALE_COOKIE = 'dd-locale'
@@ -53,14 +62,25 @@ export default function SignUpPage() {
   const createUser = useMutation(api.users.createUser)
   const router = useRouter()
   const { createOrganization, setActive, isLoaded: orgListLoaded } = useOrganizationList()
-  const orgRow = useQuery(
-    api.organizations.getBySlug,
-    user?.slug ? { slug: user.slug } : 'skip',
-  )
 
   const [appLanguage, setAppLanguageState] = useState<string>(DEFAULT_LOCALE)
   const [selectedRoles, setSelectedRoles] = useState<RoleConfig[]>([])
   const [stage, setStage] = useState<PostAuthStage>('role')
+  const [businessName, setBusinessName] = useState('')
+  const [pendingOrgSlug, setPendingOrgSlug] = useState<string | null>(null)
+
+  const orgLookupSlug =
+    pendingOrgSlug ??
+    (selectedRoles.length > 0 &&
+    deriveRoleClass(selectedRoles.map((r) => r.clerkRole)) === 'business'
+      ? kebabBusinessName(businessName.trim())
+      : user?.slug ?? null)
+
+  const orgRow = useQuery(
+    api.organizations.getBySlug,
+    orgLookupSlug ? { slug: orgLookupSlug } : 'skip',
+  )
+
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [dateOfBirth, setDateOfBirth] = useState('')
@@ -87,23 +107,36 @@ export default function SignUpPage() {
     }
 
     const roleClass = deriveRoleClass(userRoles.map((r) => r.role) as ClerkRole[])
-    if (roleClass !== 'freelance') return
+    const fullName = `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || user.slug
 
-    const userSlug = user.slug
-    const fullName = `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || userSlug
+    let orgName: string
+    let orgSlug: string
+    if (roleClass === 'business') {
+      const trimmedName = businessName.trim()
+      if (trimmedName.length < 2) return
+      orgName = trimmedName
+      orgSlug = kebabBusinessName(trimmedName)
+      if (!orgSlug) return
+    } else {
+      orgName = fullName
+      orgSlug = user.slug
+    }
+
     setOrgPhase('creating')
+    setPendingOrgSlug(orgSlug)
     ;(async () => {
       try {
-        const org = await createOrganization({ name: fullName, slug: userSlug })
+        const org = await createOrganization({ name: orgName, slug: orgSlug })
         await setActive({ organization: org.id })
         setOrgPhase('syncing')
       } catch (err) {
         setError(parseConvexErrorI18n(err, tErr))
         setOrgPhase('idle')
+        setPendingOrgSlug(null)
         setSubmitting(false)
       }
     })()
-  }, [orgPhase, user, userRoles, orgListLoaded, createOrganization, setActive, orgRow, tErr])
+  }, [orgPhase, user, userRoles, orgListLoaded, createOrganization, setActive, orgRow, businessName, tErr])
 
   useEffect(() => {
     if (orgPhase !== 'syncing') return
@@ -140,6 +173,13 @@ export default function SignUpPage() {
 
   function handleRoleContinue() {
     if (!selectedRoles.length) return
+    setError('')
+    const roleClass = deriveRoleClass(selectedRoles.map((r) => r.clerkRole))
+    setStage(roleClass === 'business' ? 'business' : 'profile')
+  }
+
+  function handleBusinessContinue() {
+    if (businessName.trim().length < 2) return
     setError('')
     setStage('profile')
   }
@@ -186,7 +226,7 @@ export default function SignUpPage() {
     return (
       <>
         <div className="w-full mb-6">
-          <StepIndicator steps={SIGNUP_STEPS} currentIndex={0} />
+          <StepIndicator steps={SIGNUP_STEPS_FREELANCE} currentIndex={0} />
         </div>
         <div className="w-full mb-6">
           <LanguageField
@@ -213,12 +253,17 @@ export default function SignUpPage() {
     return <Spinner label={t('redirecting')} />
   }
 
-  const currentIndex = stage === 'role' ? 1 : 2
+  const isBusinessFlow =
+    selectedRoles.length > 0 &&
+    deriveRoleClass(selectedRoles.map((r) => r.clerkRole)) === 'business'
+  const indicatorSteps = isBusinessFlow ? SIGNUP_STEPS_BUSINESS : SIGNUP_STEPS_FREELANCE
+  const currentIndex =
+    stage === 'role' ? 1 : stage === 'business' ? 2 : isBusinessFlow ? 3 : 2
 
   return (
     <>
       <div className="w-full mb-6">
-        <StepIndicator steps={SIGNUP_STEPS} currentIndex={currentIndex} />
+        <StepIndicator steps={indicatorSteps} currentIndex={currentIndex} />
       </div>
 
       {stage === 'role' ? (
@@ -226,6 +271,15 @@ export default function SignUpPage() {
           selectedRoles={selectedRoles}
           onToggle={toggleRole}
           onContinue={handleRoleContinue}
+        />
+      ) : stage === 'business' ? (
+        <StepBusinessSetup
+          businessName={businessName}
+          onBusinessNameChange={setBusinessName}
+          onBack={() => setStage('role')}
+          onContinue={handleBusinessContinue}
+          submitting={submitting}
+          error={error}
         />
       ) : (
         <StepProfileCompletion
@@ -241,7 +295,7 @@ export default function SignUpPage() {
           onPhoneChange={setPhone}
           onNicknameChange={setNickname}
           onTcAcceptedChange={setTcAccepted}
-          onBack={() => setStage('role')}
+          onBack={() => setStage(isBusinessFlow ? 'business' : 'role')}
           onContinue={handleProfileSubmit}
           submitting={submitting}
           error={error}
