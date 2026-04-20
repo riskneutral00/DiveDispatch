@@ -44,8 +44,8 @@ The happy-path spec set lives in `ultraplan/`. **Read `ultraplan/INDEX.md` first
 
 Three layers diverge by design:
 
-1. **`ultraplan/canonical.json`** — the *happy-path walkthrough spec*. Audit reference. Never seeded, never consumed at runtime. Values may be aspirational (e.g. `appLanguage: 'en'` guess).
-2. **Hand-created users in the live dev DB** — the *ground truth*. Whatever the UI + validators produce when a real human onboards (e.g. `appLanguage: 'en-GB'` because that's what the locale picker emits).
+1. **`ultraplan/canonical.json`** — the *happy-path walkthrough spec*. Audit reference. Never seeded, never consumed at runtime. Post-Wave-5 it is ajv-gated (`scripts/validate-canonical.sh`) and matches the 6-literal appLanguage union + ISO-2 country + E.164 phone shape, so the values are no longer aspirational guesses — but the *selection* of which user exists, which role they hold, which org they belong to is still a spec, not a mirror of reality.
+2. **Hand-created users in the live dev DB** — the *ground truth*. Whatever the UI + validators produce when a real human onboards. `normalizeAppLanguageOrThrow` collapses incoming dialect tags (`en-GB` → `en`, `zh-Hans-CN` → `zh-CN`) so storage always lands inside the 6-literal union — but the path from browser locale to stored value is where reality can still diverge from canonical (e.g. UI collects a field canonical doesn't mention, a default changes, a validator tightens).
 3. **`convex/seedData.ts` + `convex/seedInstructorData.ts`** — the *dev replay layer*. Restored users are copied from (2) as TypeScript literals so `npm run seed:force` reproduces the hand-created state.
 
 When (1) and (2) disagree, (2) wins — because (2) is what actually ships. Seed entries should be captured from live DB via MCP, not invented from canonical. Canonical drift is a governance debt item, not a bug to "fix" by rewriting seed to match canonical.

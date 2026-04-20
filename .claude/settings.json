@@ -63,6 +63,12 @@
             "command": "bash .claude/hooks/i18n-pre-commit.sh",
             "timeout": 15,
             "statusMessage": "Verifying i18n key parity\u2026"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/canonical-pre-commit.sh",
+            "timeout": 30,
+            "statusMessage": "Validating canonical.json\u2026"
           }
         ]
       },
@@ -295,6 +301,18 @@
             "command": "bash .claude/hooks/auth-gateway-guard.sh",
             "timeout": 5,
             "statusMessage": "Checking auth gateway usage\u2026"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/by-userid-role-table-guard.sh",
+            "timeout": 5,
+            "statusMessage": "Checking role-table by_userId regressions\u2026"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/org-id-required-insert.sh",
+            "timeout": 5,
+            "statusMessage": "Checking role-table organizationId\u2026"
           },
           {
             "type": "command",

@@ -3,24 +3,51 @@ description: DRY-first discipline — check for existing implementations before 
 ---
 
 ## Check before you create
-Before defining a new constant, type, schema, or utility function, grep `src/lib/constants/`, `src/lib/utils/`, `src/lib/profile-form/`, and `convex/lib/` for an existing implementation. If one exists, import it. Do not create a local copy.
+Before defining a new constant, type, schema, or utility function, grep `src/lib/constants/`, `src/lib/utils/`, `src/lib/schemas/`, `src/lib/profile-form/`, and `convex/lib/` for an existing implementation. If one exists, import it. Do not create a local copy.
 
 ## Canonical sources
-- **Role config:** `src/lib/constants/roles.ts` (`ROLE_BY_KEY`, `ROLE_BY_CLERK_ROLE`, `tableName`, `profileTabs`)
+
+### Frontend — constants + utils
+- **Role config:** `src/lib/constants/roles.ts` (`ROLE_BY_KEY`, `ROLE_BY_CLERK_ROLE`, `tableName`, `profileTabs`, `roleClass` per-entry)
 - **Boat types:** `src/lib/constants/boat-types.ts`
 - **Gas mixes:** `src/lib/constants/gas-mixes.ts`
-- **Profile section props:** `src/lib/profile-form/types.ts` (`BaseProfileSectionProps`)
-- **Contact field helpers:** `src/lib/profile-form/location.ts` (`contactFieldsFromProfile`, `locationToPayload`, `defaultFromMe`)
+- **i18n constants:** `src/lib/constants/i18n.ts` (`COUNTRY_CODES`, `LANGUAGE_CODES`, `LOCALE_CODES`, `E164_REGEX`, `isValidCountryCode`, `isValidPhoneE164`, `isValidLocale`, `isValidLanguageCode`, `normalizePhone`)
+- **Supported locales:** `src/lib/constants/locales.ts` (`SUPPORTED_LOCALES`, `SupportedLocale`)
+- **Button sizes:** `src/lib/constants/button-sizes.ts` (`BUTTON_SIZE_MAP`, `ICON_BUTTON_SIZE`, `MENU_BUTTON_SIZE_MAP`, `TOUCH_TARGET_CLASS`)
 - **Number parsing:** `src/lib/utils/numbers.ts` (`parseNumber`)
 - **Date formatters:** `src/lib/utils/date.ts` (`formatDateRange`, `formatDateRangeLocalized`, `formatDateRangeCompact`, `formatDateShort`, `toISODateString`, `addDays`, `diffDays`)
-- **Button sizes:** `src/lib/constants/button-sizes.ts` (`BUTTON_SIZE_MAP`, `ICON_BUTTON_SIZE`, `MENU_BUTTON_SIZE_MAP`, `TOUCH_TARGET_CLASS`)
-- **Role-to-table map:** `convex/lib/profileHelpers.ts` (`ROLE_TABLE_MAP`, `profileByUserId`, `requireProfile`)
-- **Auth gateway:** `convex/lib/auth.ts` (`authorize()` — the single entry point per `Architecture/auth-model.md` Rule 1. `authorizeWithRole()` is the composite when a mutation needs `authorize` + `requireActiveRole` + optional readiness. `getRequiredUserBySlug()` replaces slug-lookup + NOT_FOUND throw. Internal helpers `requireAuth`, `assertOwnership`, `requireOwnerOrResourceAccess` are consumed by `authorize()` — do NOT call them directly in mutations.)
-- **Per-user role collection:** `convex/lib/userRoleHelpers.ts` (`getAllUserRoles` — replaces inline `.withIndex('by_userId').collect()` on `userRoles`)
-- **FSM transitions:** `convex/lib/fsm.ts` (`assertBookingTransition`, `assertReservationTransition`, `assertBagTransition` — single throw path for all FSM denials)
-- **Booking resource context:** `convex/bookings.ts` (`buildResourceContext`)
+- **Slug helpers (Wave 8):** `src/lib/utils/slug.ts` (`kebabBusinessName`, `appendCollisionHash`)
+- **Role-class driver (Wave 8):** `src/lib/utils/role.ts` (`deriveRoleClass` — returns `customer | freelance | business` from selected roles; drives signup branching)
+
+### Frontend — Zod schemas
+- **Address shape:** `src/lib/schemas/location.ts` (`addressLocationSchema`, `AddressLocationValue`)
+- **i18n validators:** `src/lib/schemas/i18n.ts` (`e164Schema` — phone, `localeSchema` — 6-literal appLanguage)
+- **Profile shared:** `src/lib/schemas/profile-shared.ts` (re-exports `addressLocationSchema`)
+
+### Frontend — profile form helpers
+- **Profile section props:** `src/lib/profile-form/types.ts` (`BaseProfileSectionProps`)
+- **Contact field helpers:** `src/lib/profile-form/location.ts` (`contactFieldsFromProfile`, `locationToPayload`, `defaultFromMe`)
+
+### Frontend — UI primitives
 - **Save button:** `src/components/ui/save-button.tsx` (`SaveButton` — supports form submit and standalone onClick)
 - **Menu button:** `src/components/ui/menu-button.tsx` (`MenuButton` — navigation items, tabs, dropdown entries)
+
+### Convex — profile + role resolution
+- **Role-to-table map:** `convex/lib/profileHelpers.ts` (`ROLE_TABLE_MAP`, `profileMine`, `profileBySlug`, `profileByUser`, `profileUpdate`, `profileCreate`, `getProfileName`)
+- **Per-user role collection:** `convex/lib/userRoleHelpers.ts` (`getAllUserRoles` — replaces inline `.withIndex('by_userId').collect()` on `userRoles`)
+
+### Convex — auth gateway
+- **Primary entry points:** `convex/lib/auth.ts` — `authorize()` is the single entry point per `Architecture/auth-model.md` Rule 1. `authorizeWithRole()` is the composite when a mutation needs `authorize` + `requireActiveRole` + optional readiness. `getRequiredUserBySlug()` replaces slug-lookup + NOT_FOUND throw. `assertOrgOwnership()` asserts a resource's `organizationId` matches the active org. Internal helpers `requireAuth`, `assertOwnership`, `requireOwnerOrResourceAccess` are consumed by `authorize()` — do NOT call them directly in mutations.
+- **Active-org resolution:** `convex/lib/activeOrg.ts` (`getActiveOrg` — throws if no JWT org claim, `requireOrgAdmin` — composite active-org + admin-role assertion, `tryGetActiveOrg` — non-throwing variant). See `Architecture/auth-model.md` Rules 8, 9, 11 and entity `[[organization]]`.
+
+### Convex — validation (mutation boundary, defense-in-depth)
+- **i18n validators:** `convex/lib/i18nValidators.ts` (`assertCountryCode`, `assertPhoneE164`, `assertSupportedLocale`, `assertLanguageCodes`, `normalizeAppLanguage`, `normalizeAppLanguageOrThrow`). Every org-scoped mutation accepting address/phone/locale must call these at the boundary — Zod at the form is not sufficient.
+- **Shared i18n constants:** `convex/shared/i18nConstants.ts` (`normalizeChineseScript`, supported locale list, ISO country set mirrored from frontend)
+- **FSM transitions:** `convex/lib/fsm.ts` (`assertBookingTransition`, `assertReservationTransition`, `assertBagTransition` — single throw path for all FSM denials)
+
+### Convex — domain
+- **Booking resource context:** `convex/bookings.ts` (`buildResourceContext`)
+- **Slug bindings (seed):** `convex/shared/seedSlugs.generated.ts` (`SEED_USER_TO_ORG_SLUG`, `SEED_ORG_NAME_BY_SLUG` — generated by `scripts/gen-seed-slugs.ts`)
 
 ## Three copies = extract
 If the same logic exists in 3+ places, extract it to a shared file before adding a 4th. If it exists in 2 places, flag it in the PR description or `/gate` output for the next `/design propagate` run — do not add inline comments (per no-comments rule).
