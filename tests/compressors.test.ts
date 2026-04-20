@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { api } from '../convex/_generated/api'
 import type { Doc, Id } from '../convex/_generated/dataModel'
-import { seedUser as _seedUser, type SeedCtx } from './fixtures'
+import { seedUser as _seedUser, getOrCreateTestOrg, type SeedCtx } from './fixtures'
 import { makeT } from './helpers/convex-helpers'
 
 async function seedUser(ctx: SeedCtx, slug: string, role: 'Compressor' | 'DiveCenter' = 'Compressor') {
@@ -9,8 +9,10 @@ async function seedUser(ctx: SeedCtx, slug: string, role: 'Compressor' | 'DiveCe
 }
 
 async function seedCompressorProfile(ctx: SeedCtx, userId: Awaited<ReturnType<typeof seedUser>>) {
+  const organizationId = await getOrCreateTestOrg(ctx, userId, 'Test Compressor')
   return ctx.db.insert('compressors', {
     userId,
+    organizationId,
     name: 'Test Compressor',
     placeName: 'Koh Tao',
     country: 'Thailand',

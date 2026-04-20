@@ -1,5 +1,5 @@
 export { TEST_TOKENS, TEST_SLUGS } from '../helpers/testData'
-export { type SeedCtx, seedUser, seedBlockedDates } from './seedUsers'
+export { type SeedCtx, seedUser, seedBlockedDates, getOrCreateTestOrg } from './seedUsers'
 export { seedInventoryUnit, seedSnapshot } from './seedInventory'
 export {
   seedBooking,

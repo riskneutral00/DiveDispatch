@@ -1,10 +1,33 @@
 import type { GenericMutationCtx, GenericActionCtx } from 'convex/server'
-import type { DataModel, Doc } from '../../convex/_generated/dataModel'
+import type { DataModel, Doc, Id } from '../../convex/_generated/dataModel'
 import type { StakeholderRole } from '../../convex/lib/validators'
 import { TEST_TOKENS, TEST_SLUGS } from '../helpers/testData'
 
 export type SeedCtx = GenericMutationCtx<DataModel> &
   Pick<GenericActionCtx<DataModel>, 'storage'>
+
+export async function getOrCreateTestOrg(
+  ctx: SeedCtx,
+  userId: Id<'users'>,
+  orgName?: string,
+): Promise<Id<'organizations'>> {
+  const user = await ctx.db.get(userId)
+  if (!user) throw new Error(`getOrCreateTestOrg: user ${userId} not found`)
+  const clerkOrgId = `test_${user.slug}`
+  const existing = await ctx.db
+    .query('organizations')
+    .withIndex('by_clerkOrgId', (q) => q.eq('clerkOrgId', clerkOrgId))
+    .unique()
+  if (existing) return existing._id
+  const now = Date.now()
+  return ctx.db.insert('organizations', {
+    clerkOrgId,
+    name: orgName ?? `Test Org for ${user.slug}`,
+    slug: user.slug,
+    createdAt: now,
+    updatedAt: now,
+  })
+}
 
 export async function seedUser(
   ctx: SeedCtx,
