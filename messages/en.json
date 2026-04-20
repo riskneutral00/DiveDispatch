@@ -136,7 +136,8 @@
     "account": "Account",
     "userMenu": "User menu",
     "addRoleTitle": "Add a Role",
-    "addRoleDescription": "Select a new role to add to your account."
+    "addRoleDescription": "Select a new role to add to your account.",
+    "startProfile": "Start your {role} profile"
   },
   "auth": {
     "signUp": "Sign Up",
@@ -159,7 +160,9 @@
     "stepSignUp": "Sign Up",
     "stepRole": "Role",
     "stepBusiness": "Business",
-    "stepProfile": "Profile"
+    "stepProfile": "Profile",
+    "syncingOrganization": "Setting up your organization…",
+    "noActiveOrg": "No active organization. Please refresh and try again."
   },
   "booking": {
     "status": {

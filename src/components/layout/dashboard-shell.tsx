@@ -32,9 +32,11 @@ export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps
 
   const [overlayOpen, setOverlayOpen] = useState(false)
   const [overlayTab, setOverlayTab] = useState<ProfileOverlayTab>('profile')
+  const [overlaySection, setOverlaySection] = useState<string | undefined>(undefined)
 
-  const openProfileOverlay = useCallback((tab: ProfileOverlayTab = 'profile') => {
+  const openProfileOverlay = useCallback((tab: ProfileOverlayTab = 'profile', section?: string) => {
     setOverlayTab(tab)
+    setOverlaySection(section)
     setOverlayOpen(true)
   }, [])
 
@@ -74,7 +76,7 @@ export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps
 
   return (
     <>
-      <TopNav onOpenOverlay={openProfileOverlay} profileCompletion={profileCompletion} />
+      <TopNav onOpenOverlay={openProfileOverlay} profileCompletion={profileCompletion} roleSlug={roleSlug} />
 
       <HierarchySubBar slug={slug} roleSlug={roleSlug} />
 
@@ -91,6 +93,7 @@ export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps
         open={overlayOpen}
         onClose={closeProfileOverlay}
         initialTab={overlayTab}
+        initialSection={overlaySection}
         roleSlug={roleSlug}
         slug={slug}
       />

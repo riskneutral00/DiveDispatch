@@ -80,11 +80,11 @@ describe('ProfileOverlay — Roles tab visibility', () => {
     mockMyRoles = []
   })
 
-  it('hides Roles tab for pure-resource users', () => {
+  it('shows Roles tab for pure-resource users', () => {
     renderOverlay({ roles: ['Instructor', 'Boat'] })
     const tabs = screen.getAllByRole('tab', { hidden: true })
     const tabLabels = tabs.map((t) => t.textContent)
-    expect(tabLabels).not.toContain('Roles')
+    expect(tabLabels).toContain('Roles')
   })
 
   it('shows Roles tab for single-operator user', () => {
@@ -101,9 +101,9 @@ describe('ProfileOverlay — Roles tab visibility', () => {
     expect(tabLabels).toContain('Roles')
   })
 
-  it('falls back to Profile tab when pure-resource user opens with initialTab=roles', () => {
+  it('renders Roles panel when pure-resource user opens with initialTab=roles', () => {
     renderOverlay({ roles: ['Instructor', 'Boat'], initialTab: 'roles' })
-    expect(screen.getByTestId('profile-tab', { })).toBeInTheDocument()
-    expect(screen.queryByTestId('manage-roles-connected')).not.toBeInTheDocument()
+    expect(screen.getByTestId('manage-roles-connected')).toBeInTheDocument()
+    expect(screen.queryByTestId('profile-tab')).not.toBeInTheDocument()
   })
 })

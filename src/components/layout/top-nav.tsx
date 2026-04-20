@@ -6,24 +6,27 @@ import { LogOut, User } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { Button, Menu, MenuItem, MenuTrigger, Popover } from 'react-aria-components'
 import { api } from '@/lib/convex-generated'
-import { ROLE_BY_CLERK_ROLE, type ClerkRole } from '@/lib/constants/roles'
+import { ROLE_BY_CLERK_ROLE, type ClerkRole, type RoleKey } from '@/lib/constants/roles'
 import { ICON_BUTTON_SIZE } from '@/lib/constants/button-sizes'
 import { useCurrentUser } from '@/lib/hooks/use-current-user'
+import { firstIncompleteTab } from '@/lib/utils/first-incomplete-tab'
 import { ProfileCompletionPill } from '../profiles/profile-completion-pill'
+import { ProfileStartBanner } from '../profiles/profile-start-banner'
 import type { ProfileOverlayTab } from '../profiles/profile-overlay'
 import { NotificationBell } from '../notifications/notification-bell'
 import { ThemeSwitcher } from './theme-switcher'
 import { BgSwitcher } from './bg-switcher'
 
 interface TopNavProps {
-  onOpenOverlay: (tab: ProfileOverlayTab) => void
-  profileCompletion?: { percentage: number } | null
+  onOpenOverlay: (tab: ProfileOverlayTab, section?: string) => void
+  profileCompletion?: { percentage: number; incomplete: string[]; kind?: 'not_started' | 'partial' | 'complete' } | null
+  roleSlug: RoleKey
 }
 
 const MENU_ITEM_CLASS =
   'flex items-center gap-2 px-3 py-2 text-body cursor-pointer text-secondary outline-none data-[focused]:bg-[color-mix(in_oklab,var(--color-primary)_10%,transparent)]'
 
-export function TopNav({ onOpenOverlay, profileCompletion }: TopNavProps) {
+export function TopNav({ onOpenOverlay, profileCompletion, roleSlug }: TopNavProps) {
   const tNav = useTranslations('nav')
   const { user: clerkUser } = useUser()
   const { user: convexUser } = useCurrentUser()
@@ -55,10 +58,22 @@ export function TopNav({ onOpenOverlay, profileCompletion }: TopNavProps) {
 
   return (
     <div className="sticky top-0 z-[var(--z-sticky)] flex items-center justify-end gap-2 px-4 py-2 bg-surface-elevated glass-divider">
-      {profileCompletion && profileCompletion.percentage < 100 && (
+      {profileCompletion && profileCompletion.kind === 'not_started' && (
+        <ProfileStartBanner
+          roleSlug={roleSlug}
+          onOpenOverlay={() => {
+            const { tab, section } = firstIncompleteTab(roleSlug, profileCompletion.incomplete)
+            onOpenOverlay(tab, section)
+          }}
+        />
+      )}
+      {profileCompletion && profileCompletion.kind !== 'not_started' && profileCompletion.percentage < 100 && (
         <ProfileCompletionPill
           percentage={profileCompletion.percentage}
-          onOpenOverlay={() => onOpenOverlay('profile')}
+          onOpenOverlay={() => {
+            const { tab, section } = firstIncompleteTab(roleSlug, profileCompletion.incomplete)
+            onOpenOverlay(tab, section)
+          }}
         />
       )}
       <ThemeSwitcher />

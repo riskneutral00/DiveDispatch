@@ -57,7 +57,11 @@ export function useBlockedDateToggle({
     setIsToggling(true)
 
     try {
-      await toggleBlockedDate({ date, roleType })
+      await toggleBlockedDate({
+        date,
+        roleType,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      })
     } finally {
       setIsToggling(false)
       setOptimisticBlocked(null)

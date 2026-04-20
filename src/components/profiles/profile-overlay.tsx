@@ -5,6 +5,7 @@ import { useQuery } from 'convex/react'
 import { useTranslations } from 'next-intl'
 import { Dialog, MenuButton } from '@/components/ui'
 import { ROLE_BY_CLERK_ROLE, type ClerkRole, type RoleKey } from '@/lib/constants/roles'
+import type { ProfileOverlayTab } from '@/lib/utils/first-incomplete-tab'
 import { api } from '@/lib/convex-generated'
 import { ProfileTab } from '@/components/account/profile-tab'
 import { ProfileSectionTabBar } from '@/components/account/profile-section-tab-bar'
@@ -16,12 +17,13 @@ import { DashboardPageFrame } from '@/components/layout/dashboard-page-frame'
 import { ConnectedEquipmentGear } from '@/components/inventory/connected-equipment-gear'
 import { PreferencesEditor } from '@/components/account/preferences-editor'
 
-export type ProfileOverlayTab = 'profile' | 'roles' | `role:${RoleKey}`
+export type { ProfileOverlayTab }
 
 interface ProfileOverlayProps {
   open: boolean
   onClose: () => void
   initialTab?: ProfileOverlayTab
+  initialSection?: string
   roleSlug: RoleKey
   slug: string
 }
@@ -31,29 +33,25 @@ const STATIC_TAB_IDS: { id: ProfileOverlayTab; labelKey: 'profile' | 'roles' }[]
   { id: 'roles', labelKey: 'roles' },
 ]
 
-export function ProfileOverlay({ open, onClose, initialTab = 'profile', roleSlug: _roleSlug, slug: _slug }: ProfileOverlayProps) {
+export function ProfileOverlay({ open, onClose, initialTab = 'profile', initialSection, roleSlug: _roleSlug, slug: _slug }: ProfileOverlayProps) {
   const tNav = useTranslations('nav')
   const [activeTab, setActiveTab] = useState<string>(initialTab)
-  const [roleProfileSection, setRoleProfileSection] = useState<string>('')
+  const [roleProfileSection, setRoleProfileSection] = useState<string>(initialSection ?? '')
   const userRoles = useQuery(api.userRoles.myRoles)
 
   const roleConfigs = (userRoles ?? [])
     .map((r) => ROLE_BY_CLERK_ROLE[r.role as ClerkRole])
     .filter(Boolean)
 
-  const hasOperatorRole = roleConfigs.some((r) => r.displayGroup === 'operator')
-  const visibleStaticTabs = STATIC_TAB_IDS.filter(
-    (tab) => tab.id !== 'roles' || hasOperatorRole,
-  )
-
-  if (activeTab === 'roles' && !hasOperatorRole) {
-    setActiveTab('profile')
-  }
+  const visibleStaticTabs = STATIC_TAB_IDS
 
   const [prevOpen, setPrevOpen] = useState(open)
   if (open !== prevOpen) {
     setPrevOpen(open)
-    if (open) setActiveTab(initialTab)
+    if (open) {
+      setActiveTab(initialTab)
+      setRoleProfileSection(initialSection ?? '')
+    }
   }
 
   const isRoleTab = activeTab.startsWith('role:')

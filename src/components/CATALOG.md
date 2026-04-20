@@ -139,7 +139,8 @@ Role-agnostic building blocks for stakeholder profile forms (`PatternLibrary/one
 | `ProfileBasicInfo` | `@/components/profiles/profile-basic-info` | Name + location + email + phone inputs. Used by every role's contact section. |
 | `ProfileAgencyInfo` | `@/components/profiles/profile-agency-info` | Agency/certification info block (generic over row type). |
 | `ProfileOverlay` | `@/components/profiles/profile-overlay` | Full-screen profile editor overlay. |
-| `ProfileCompletionPill` | `@/components/profiles/profile-completion-pill` | % completion badge that opens the overlay. |
+| `ProfileCompletionPill` | `@/components/profiles/profile-completion-pill` | % completion badge that opens the overlay (kind: 'partial'). |
+| `ProfileStartBanner` | `@/components/profiles/profile-start-banner` | "Start your X profile" destructive-tone banner when role-table row is missing (kind: 'not_started'). |
 | `BusinessContactSection` | `@/components/profiles/business-contact-section` | Contact fields for business roles (name, location, email, phone). |
 | `AccessControlSection` | `@/components/profiles/access-control-section` | allow/not-allow controls. Exports `accessFromProfile`, `accessToPayload`, `INITIAL_ACCESS_CONTROL`. |
 | `VenueCapabilitiesSection` | `@/components/profiles/venue-capabilities-section` | Generic venue capabilities — pool + dive-site delegate to this. |

@@ -2,22 +2,20 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render } from '../helpers/render'
 
-// ─── Mocks ────────────────────────────────────────────────────────────────────
-
 const mockReplace = vi.fn()
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ replace: mockReplace, push: vi.fn(), back: vi.fn() }),
   useSearchParams: () => ({ get: () => null }),
 }))
 
-// Convex auth + query/mutation
 const mockConvexAuth = vi.fn<() => { isLoading: boolean; isAuthenticated: boolean }>()
 let mockUserMe: unknown = undefined
 let mockUserRoles: unknown = undefined
-let mockOrgRow: unknown = { _id: 'org_test', clerkOrgId: 'clerk_org_test', slug: 'test-org', name: 'Test Org', createdAt: 0, updatedAt: 0 }
+let mockOrgRow: unknown = { _id: 'org_test', clerkOrgId: 'clerk_org_test', slug: 'sea-fun', name: 'Sea Fun', createdAt: 0, updatedAt: 0 }
 let queryCallIndex = 0
 const mockMutate = vi.fn()
 
+// mock-ok: page-level render test; mocks useQuery/useMutation to drive UI states, not Convex behavior. Backend flows live in convex-test integration suites.
 vi.mock('convex/react', async (importOriginal) => {
   const actual = await importOriginal<typeof import('convex/react')>()
   return {
@@ -35,18 +33,19 @@ vi.mock('convex/react', async (importOriginal) => {
   }
 })
 
-// Clerk
+let mockActiveOrg: { id: string; slug: string; name: string } | null = {
+  id: 'org_test',
+  slug: 'sea-fun',
+  name: 'Sea Fun',
+}
+let mockOrgLoaded = true
+
 vi.mock('@clerk/nextjs', () => ({
   SignUp: () => <div data-testid="clerk-signup">Clerk Sign Up</div>,
   useClerk: () => ({ signOut: vi.fn() }),
-  useOrganizationList: () => ({
-    isLoaded: true,
-    createOrganization: vi.fn().mockResolvedValue({ id: 'org_test' }),
-    setActive: vi.fn().mockResolvedValue(undefined),
-  }),
+  useOrganization: () => ({ organization: mockActiveOrg, isLoaded: mockOrgLoaded }),
 }))
 
-// Stub heavy children
 vi.mock('@/components/icons/role-icons', () => {
   const stub = () => <svg data-testid="icon" />
   return {
@@ -57,19 +56,16 @@ vi.mock('@/components/icons/role-icons', () => {
   }
 })
 
-// Stub LanguagePicker (depends on Convex useQuery)
 vi.mock('@/components/profiles/language-picker', () => ({
   LanguagePicker: ({ disabled }: { disabled?: boolean }) => (
     <div data-testid="language-picker" data-disabled={disabled} />
   ),
 }))
 
-// Clerk glass appearance
 vi.mock('@/app/(auth)/clerk-glass-appearance', () => ({
   clerkGlassAppearance: {},
 }))
 
-// ─── Import after mocks ──────────────────────────────────────────────────────
 import SignUpPage from '@/app/(auth)/sign-up/[[...sign-up]]/page'
 
 beforeEach(() => {
@@ -77,6 +73,9 @@ beforeEach(() => {
   queryCallIndex = 0
   mockUserMe = undefined
   mockUserRoles = undefined
+  mockOrgRow = { _id: 'org_test', clerkOrgId: 'clerk_org_test', slug: 'sea-fun', name: 'Sea Fun', createdAt: 0, updatedAt: 0 }
+  mockActiveOrg = { id: 'org_test', slug: 'sea-fun', name: 'Sea Fun' }
+  mockOrgLoaded = true
 })
 
 describe('Sign-up wizard (3-step: Clerk + Role + Profile)', () => {
@@ -160,7 +159,7 @@ describe('Sign-up wizard (3-step: Clerk + Role + Profile)', () => {
     expect(mockReplace).not.toHaveBeenCalledWith('/dashboard')
   })
 
-  it('shows Redirecting… for any user with an existing record', () => {
+  it('shows Redirecting… for any user with an existing record and synced org', () => {
     mockConvexAuth.mockReturnValue({ isLoading: false, isAuthenticated: true })
     mockUserMe = {
       businessName: 'Deep Blue Diving',
@@ -170,6 +169,29 @@ describe('Sign-up wizard (3-step: Clerk + Role + Profile)', () => {
 
     const { getByText } = render(<SignUpPage />)
     expect(getByText('Redirecting…')).toBeInTheDocument()
+  })
+
+  it('shows syncingOrganization spinner when orgRow has not landed yet', () => {
+    mockConvexAuth.mockReturnValue({ isLoading: false, isAuthenticated: true })
+    mockUserMe = { slug: 'deep-blue-diving' }
+    mockUserRoles = [{ role: 'DiveCenter' }]
+    mockOrgRow = null
+
+    const { getByText } = render(<SignUpPage />)
+    expect(getByText('Setting up your organization…')).toBeInTheDocument()
+    expect(mockReplace).not.toHaveBeenCalled()
+  })
+
+  it('shows noActiveOrg error when Clerk task did not set an active org', () => {
+    mockConvexAuth.mockReturnValue({ isLoading: false, isAuthenticated: true })
+    mockUserMe = { slug: 'deep-blue-diving' }
+    mockUserRoles = [{ role: 'DiveCenter' }]
+    mockActiveOrg = null
+    mockOrgLoaded = true
+
+    const { getByText } = render(<SignUpPage />)
+    expect(getByText(/No active organization/)).toBeInTheDocument()
+    expect(mockReplace).not.toHaveBeenCalled()
   })
 
   it('renders StepIndicator with 3 steps', () => {
