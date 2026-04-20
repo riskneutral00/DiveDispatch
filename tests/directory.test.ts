@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { api } from '../convex/_generated/api'
 import type { Id } from '../convex/_generated/dataModel'
-import { type SeedCtx } from './fixtures'
+import { getOrCreateTestOrg, type SeedCtx } from './fixtures'
 import { makeT, expectConvexError } from './helpers/convex-helpers'
 
 // ─── Seed helpers ─────────────────────────────────────────────────────────────
@@ -26,8 +26,10 @@ async function seedInstructorUser(ctx: SeedCtx, slug: string) {
 }
 
 async function seedInstructorProfile(ctx: SeedCtx, userId: Id<'users'>, name: string, placeName: string, country: string, verified = false) {
+  const organizationId = await getOrCreateTestOrg(ctx, userId, name)
   return ctx.db.insert('diveStaff', {
     userId,
+    organizationId,
     role: 'Instructor',
     name,
     placeName,
@@ -248,8 +250,10 @@ describe('listByRole language propagation', () => {
         role: 'DiveCenter',
         createdAt: Date.now(),
       })
+      const dcOrgId = await getOrCreateTestOrg(ctx, dcUserId, 'Test DC')
       await ctx.db.insert('diveCenters', {
         userId: dcUserId,
+        organizationId: dcOrgId,
         name: 'Test DC',
         placeName: 'Koh Tao',
         country: 'Thailand',
@@ -278,8 +282,10 @@ describe('listByRole credentials passthrough', () => {
     await t.run(async (ctx) => {
       await seedCallerUser(ctx, 'caller-creds')
       const u1 = await seedInstructorUser(ctx, 'inst-creds')
+      const organizationId = await getOrCreateTestOrg(ctx, u1, 'Multi Cred Instructor')
       await ctx.db.insert('diveStaff', {
         userId: u1,
+        organizationId,
         role: 'Instructor',
         name: 'Multi Cred Instructor',
         placeName: 'Phuket',
@@ -312,8 +318,10 @@ describe('listByRole credentials passthrough', () => {
     await t.run(async (ctx) => {
       await seedCallerUser(ctx, 'caller-no-creds')
       const u1 = await seedInstructorUser(ctx, 'inst-no-creds')
+      const organizationId = await getOrCreateTestOrg(ctx, u1, 'No Cred Instructor')
       await ctx.db.insert('diveStaff', {
         userId: u1,
+        organizationId,
         role: 'Instructor',
         name: 'No Cred Instructor',
         placeName: 'Krabi',
@@ -347,8 +355,10 @@ describe('listByRole credentials passthrough', () => {
     await t.run(async (ctx) => {
       await seedCallerUser(ctx, 'caller-guard')
       const u1 = await seedInstructorUser(ctx, 'inst-guard')
+      const organizationId = await getOrCreateTestOrg(ctx, u1, 'Guard Path Instructor')
       await ctx.db.insert('diveStaff', {
         userId: u1,
+        organizationId,
         role: 'Instructor',
         name: 'Guard Path Instructor',
         placeName: 'Phuket',

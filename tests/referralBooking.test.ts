@@ -1,14 +1,16 @@
 import { describe, it, expect } from 'vitest'
 import { api } from '../convex/_generated/api'
 import type { Id } from '../convex/_generated/dataModel'
-import { seedUser, seedDiveCenterProfile, seedStakeholderPreferences, type SeedCtx } from './fixtures'
+import { seedUser, seedDiveCenterProfile, seedStakeholderPreferences, getOrCreateTestOrg, type SeedCtx } from './fixtures'
 import { makeT } from './helpers/convex-helpers'
 
 async function seedReadyAgent(ctx: SeedCtx, slug: string) {
   const userId = await seedUser(ctx, { slug, tokenIdentifier: `clerk|${slug}`, role: 'Agent' })
   await ctx.db.patch(userId, { customerLanguages: ['en'] })
+  const organizationId = await getOrCreateTestOrg(ctx, userId, `${slug} Agency`)
   await ctx.db.insert('agents', {
     userId,
+    organizationId,
     name: `${slug} Agency`,
     placeName: 'Koh Tao',
     country: 'Thailand',

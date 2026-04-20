@@ -18,6 +18,7 @@ import type { Id } from '../../convex/_generated/dataModel'
 import { HOLD_TTL_MS as HOLD_TTL } from '../../convex/lib/auth'
 import { testDate } from '../helpers/dates'
 import { makeT, expectConvexError } from '../helpers/convex-helpers'
+import { getOrCreateTestOrg, type SeedCtx } from '../fixtures'
 
 type Ctx = Parameters<Parameters<ReturnType<typeof makeT>['run']>[0]>[0]
 
@@ -40,9 +41,11 @@ async function seedUser(
     appLanguage: 'en',
   })
   if (role === 'Instructor') {
+    const organizationId = await getOrCreateTestOrg(ctx as SeedCtx, userId, `${slug} Display`)
     await ctx.db.insert('diveStaff', {
       userId,
-    role: 'Instructor',
+      organizationId,
+      role: 'Instructor',
       name: `${slug} Display`,
       placeName: 'Koh Tao',
       country: 'Thailand',

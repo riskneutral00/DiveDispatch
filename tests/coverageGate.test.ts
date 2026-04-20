@@ -17,6 +17,7 @@ import {
   seedDiveCenterProfile,
   seedBookingTemplate,
   seedVenue,
+  getOrCreateTestOrg,
   type SeedCtx,
 } from './fixtures'
 
@@ -43,8 +44,10 @@ async function seedVenueUser(
 
 async function seedBoatUser(ctx: SeedCtx, slug: string, hasCompressor: boolean) {
   const userId = await seedUser(ctx, { tokenIdentifier: `clerk|${slug}`, slug, email: `${slug}@test.com`, name: `${slug} Display`, firstName: slug, lastName: 'Test', role: 'Boat' })
+  const organizationId = await getOrCreateTestOrg(ctx, userId, `${slug} Boat`)
   await ctx.db.insert('boats', {
     userId,
+    organizationId,
     name: `${slug} Boat`,
     placeName: 'Koh Tao',
     country: 'Thailand',

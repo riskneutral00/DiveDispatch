@@ -6,6 +6,8 @@ import {
   seedInstructorProfile,
   seedBoatProfile,
   seedAgent,
+  getOrCreateTestOrg,
+  type SeedCtx,
 } from './fixtures'
 import { makeT } from './helpers/convex-helpers'
 
@@ -157,9 +159,11 @@ describe('prerequisite gate: Instructor w/ DM credential — credential depth', 
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx, { role: 'Instructor' })
       await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
+      const organizationId = await getOrCreateTestOrg(ctx as SeedCtx, userId, 'Test DM')
       await ctx.db.insert('diveStaff', {
         userId,
-    role: 'Instructor',
+        organizationId,
+        role: 'Instructor',
         name: 'Test DM',
         placeName: 'Koh Tao',
         country: 'Thailand',
@@ -186,8 +190,10 @@ describe('prerequisite gate: Boat — fleet depth', () => {
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx, { role: 'Boat' })
       await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
+      const organizationId = await getOrCreateTestOrg(ctx as SeedCtx, userId, 'Test Boat Biz')
       await ctx.db.insert('boats', {
         userId,
+        organizationId,
         name: 'Test Boat Biz',
         placeName: 'Koh Tao',
         country: 'Thailand',

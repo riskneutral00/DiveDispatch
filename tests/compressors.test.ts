@@ -116,8 +116,10 @@ describe('directory.listByRole — Compressor picker gate', () => {
     await t.run(async (ctx) => {
       await seedUser(ctx, 'caller-comp', 'DiveCenter')
       const u1 = await seedUser(ctx, 'comp-undef', 'Compressor')
+      const organizationId = await getOrCreateTestOrg(ctx, u1, 'Undef')
       await ctx.db.insert('compressors', {
         userId: u1,
+        organizationId,
         name: 'Undef', placeName: 'Chalong', country: 'Thailand',
         lat: 7.82, lng: 98.36, email: 'u@t.com', phone: '+66000',
         verified: true,
@@ -134,8 +136,10 @@ describe('directory.listByRole — Compressor picker gate', () => {
     await t.run(async (ctx) => {
       await seedUser(ctx, 'caller-comp2', 'DiveCenter')
       const u1 = await seedUser(ctx, 'comp-empty', 'Compressor')
+      const organizationId = await getOrCreateTestOrg(ctx, u1, 'Empty')
       await ctx.db.insert('compressors', {
         userId: u1,
+        organizationId,
         name: 'Empty', placeName: 'Chalong', country: 'Thailand',
         lat: 7.82, lng: 98.36, email: 'e@t.com', phone: '+66000',
         gasMixes: [],
@@ -153,8 +157,10 @@ describe('directory.listByRole — Compressor picker gate', () => {
     await t.run(async (ctx) => {
       await seedUser(ctx, 'caller-comp3', 'DiveCenter')
       const u1 = await seedUser(ctx, 'comp-ok', 'Compressor')
+      const organizationId = await getOrCreateTestOrg(ctx, u1, 'Air Shop')
       await ctx.db.insert('compressors', {
         userId: u1,
+        organizationId,
         name: 'Air Shop', placeName: 'Chalong', country: 'Thailand',
         lat: 7.82, lng: 98.36, email: 'a@t.com', phone: '+66000',
         gasMixes: ['air'],

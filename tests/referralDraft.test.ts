@@ -11,7 +11,7 @@ import { api } from '../convex/_generated/api'
 import type { Id } from '../convex/_generated/dataModel'
 import { makeT, expectConvexError } from './helpers/convex-helpers'
 import type { StakeholderRole } from '../convex/lib/validators'
-import { seedUser as seedBaseUser } from './fixtures/seedUsers'
+import { seedUser as seedBaseUser, getOrCreateTestOrg, type SeedCtx } from './fixtures/seedUsers'
 
 type Ctx = Parameters<Parameters<ReturnType<typeof makeT>['run']>[0]>[0]
 
@@ -37,8 +37,10 @@ async function seedReadyAgent(ctx: Ctx, slug: string) {
 /** Seed the role-profile table + stakeholderPreferences so the operator passes checkProfileCompleteness. */
 async function seedCompleteOperator(ctx: Ctx, slug: string, role: StakeholderRole, userId: Id<'users'>) {
   if (role === 'DiveCenter') {
+    const organizationId = await getOrCreateTestOrg(ctx as SeedCtx, userId, `${slug} DC`)
     await ctx.db.insert('diveCenters', {
       userId,
+      organizationId,
       name: `${slug} DC`,
       placeName: 'Koh Tao',
       country: 'Thailand',
@@ -52,8 +54,10 @@ async function seedCompleteOperator(ctx: Ctx, slug: string, role: StakeholderRol
     })
   }
   if (role === 'Agent') {
+    const organizationId = await getOrCreateTestOrg(ctx as SeedCtx, userId, `${slug} Agency`)
     await ctx.db.insert('agents', {
       userId,
+      organizationId,
       name: `${slug} Agency`,
       placeName: 'Koh Tao',
       country: 'Thailand',

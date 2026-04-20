@@ -5,6 +5,7 @@ import {
   seedDiveCenterProfile,
   seedEquipmentProfile,
   seedCompleteGearInventory,
+  getOrCreateTestOrg,
   type SeedCtx,
 } from './fixtures'
 import { makeT } from './helpers/convex-helpers'
@@ -101,8 +102,10 @@ describe('getLowestProfileCompletion', () => {
         createdAt: Date.now(),
       })
 
+      const organizationId = await getOrCreateTestOrg(ctx, userId, 'Test Boat Biz')
       await ctx.db.insert('boats', {
         userId,
+        organizationId,
         name: 'Test Boat Biz',
         placeName: 'Koh Tao',
         country: 'Thailand',
