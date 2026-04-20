@@ -3,6 +3,22 @@ import { GEAR_TYPES, type GearType } from '../../convex/shared/gearSizing'
 import type { SeedCtx } from './seedUsers'
 import { getOrCreateTestOrg } from './seedUsers'
 
+type AddressOverride = {
+  city?: string
+  country?: string
+}
+
+const DEFAULT_ADDRESS = { city: 'Koh Tao', country: 'TH' } as const
+
+function resolveAddress(
+  overrides: { placeName?: string; country?: string; address?: AddressOverride } = {},
+): { city: string; country: string } {
+  return {
+    city: overrides.address?.city ?? overrides.placeName ?? DEFAULT_ADDRESS.city,
+    country: overrides.address?.country ?? overrides.country ?? DEFAULT_ADDRESS.country,
+  }
+}
+
 export async function seedDiveCenterProfile(
   ctx: SeedCtx,
   userId: Id<'users'>,
@@ -10,6 +26,7 @@ export async function seedDiveCenterProfile(
     name?: string
     placeName?: string
     country?: string
+    address?: AddressOverride
     lat?: number
     lng?: number
     email?: string
@@ -21,11 +38,13 @@ export async function seedDiveCenterProfile(
   } = {},
 ) {
   const organizationId = overrides.organizationId ?? (await getOrCreateTestOrg(ctx, userId, overrides.name ?? 'Test DC'))
+  const address = resolveAddress(overrides)
   return ctx.db.insert('diveCenters', {
     organizationId,
     name: overrides.name ?? 'Test DC',
-    placeName: overrides.placeName ?? 'Koh Tao',
+    placeName: overrides.placeName ?? address.city,
     country: overrides.country ?? 'Thailand',
+    address,
     lat: overrides.lat ?? 10.0957,
     lng: overrides.lng ?? 99.8408,
     email: overrides.email ?? 'dc@test.com',
@@ -43,6 +62,7 @@ export async function seedAgent(
     name?: string
     email?: string
     phone?: string
+    address?: AddressOverride
     associations?: Array<{ agency: string; number: string }>
     customerLanguages?: string[]
     verified?: boolean
@@ -50,11 +70,13 @@ export async function seedAgent(
   } = {},
 ) {
   const organizationId = overrides.organizationId ?? (await getOrCreateTestOrg(ctx, userId, overrides.name ?? 'Test Agent'))
+  const address = resolveAddress(overrides)
   return ctx.db.insert('agents', {
     organizationId,
     name: overrides.name ?? 'Test Agent',
-    placeName: 'Koh Tao',
+    placeName: address.city,
     country: 'Thailand',
+    address,
     lat: 10.09,
     lng: 99.84,
     email: overrides.email ?? 'agent@test.com',
@@ -72,6 +94,7 @@ export async function seedVenue(
     name?: string
     placeName?: string
     country?: string
+    address?: AddressOverride
     lat?: number
     lng?: number
     venueCategory?: Doc<'venues'>['venueCategory']
@@ -85,10 +108,12 @@ export async function seedVenue(
   const venueCategory = overrides.venueCategory ?? 'pool'
   const organizationId = overrides.organizationId
     ?? (overrides.userId ? await getOrCreateTestOrg(ctx, overrides.userId, overrides.name ?? 'Test Venue') : undefined)
+  const address = resolveAddress(overrides)
   return ctx.db.insert('venues', {
     name: overrides.name ?? 'Test Venue',
-    placeName: overrides.placeName ?? 'Koh Tao',
+    placeName: overrides.placeName ?? address.city,
     country: overrides.country ?? 'Thailand',
+    address,
     lat: overrides.lat ?? 10.0957,
     lng: overrides.lng ?? 99.8408,
     venueCategory,
@@ -111,6 +136,7 @@ export async function seedInstructorProfile(
     name?: string
     placeName?: string
     country?: string
+    address?: AddressOverride
     email?: string
     phone?: string
     credential?: Array<{ agency: string; level: string; agencyID: string; specialtyRatings: string[] }>
@@ -120,12 +146,14 @@ export async function seedInstructorProfile(
   } = {},
 ) {
   const organizationId = overrides.organizationId ?? (await getOrCreateTestOrg(ctx, userId, overrides.name ?? 'Test Instructor'))
+  const address = resolveAddress(overrides)
   return ctx.db.insert('diveStaff', {
     organizationId,
     role: 'Instructor',
     name: overrides.name ?? 'Test Instructor',
-    placeName: overrides.placeName ?? 'Koh Tao',
+    placeName: overrides.placeName ?? address.city,
     country: overrides.country ?? 'Thailand',
+    address,
     lat: 10.0957,
     lng: 99.8408,
     email: overrides.email ?? 'instructor@test.com',
@@ -145,6 +173,7 @@ export async function seedDiveMasterProfile(
     name?: string
     placeName?: string
     country?: string
+    address?: AddressOverride
     email?: string
     phone?: string
     credential?: Array<{ agency: string; level: string; agencyID: string }>
@@ -154,12 +183,14 @@ export async function seedDiveMasterProfile(
   } = {},
 ) {
   const organizationId = overrides.organizationId ?? (await getOrCreateTestOrg(ctx, userId, overrides.name ?? 'Test DiveMaster'))
+  const address = resolveAddress(overrides)
   return ctx.db.insert('diveStaff', {
     organizationId,
     role: 'Instructor',
     name: overrides.name ?? 'Test DiveMaster',
-    placeName: overrides.placeName ?? 'Koh Tao',
+    placeName: overrides.placeName ?? address.city,
     country: overrides.country ?? 'Thailand',
+    address,
     lat: 10.0957,
     lng: 99.8408,
     email: overrides.email ?? 'dm@test.com',
@@ -179,6 +210,7 @@ export async function seedBoatProfile(
     name?: string
     placeName?: string
     country?: string
+    address?: AddressOverride
     email?: string
     phone?: string
     fleet?: Array<{ boatName: string; maxPax: number; boatType: 'day_boat' | 'speedboat' | 'longtail' | 'liveaboard' | 'catamaran' | 'rib' }>
@@ -188,11 +220,13 @@ export async function seedBoatProfile(
   } = {},
 ) {
   const organizationId = overrides.organizationId ?? (await getOrCreateTestOrg(ctx, userId, overrides.name ?? 'Test Boat'))
+  const address = resolveAddress(overrides)
   return ctx.db.insert('boats', {
     organizationId,
     name: overrides.name ?? 'Test Boat',
-    placeName: overrides.placeName ?? 'Koh Tao',
+    placeName: overrides.placeName ?? address.city,
     country: overrides.country ?? 'Thailand',
+    address,
     lat: 10.0957,
     lng: 99.8408,
     email: overrides.email ?? 'boat@test.com',
@@ -210,6 +244,7 @@ export async function seedEquipmentProfile(
     name?: string
     placeName?: string
     country?: string
+    address?: AddressOverride
     email?: string
     phone?: string
     verified?: boolean
@@ -217,11 +252,13 @@ export async function seedEquipmentProfile(
   } = {},
 ) {
   const organizationId = overrides.organizationId ?? (await getOrCreateTestOrg(ctx, userId, overrides.name ?? 'Test Equipment'))
+  const address = resolveAddress(overrides)
   return ctx.db.insert('equipment', {
     organizationId,
     name: overrides.name ?? 'Test Equipment',
-    placeName: overrides.placeName ?? 'Koh Tao',
+    placeName: overrides.placeName ?? address.city,
     country: overrides.country ?? 'Thailand',
+    address,
     lat: 10.0957,
     lng: 99.8408,
     email: overrides.email ?? 'equip@test.com',
