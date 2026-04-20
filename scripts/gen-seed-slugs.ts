@@ -42,6 +42,29 @@ const userSlugByEntry: Record<string, string> = {}
 const orgSlugByEntry: Record<string, string> = {}
 const userHintBySlug: Record<string, string> = {}
 const orgHintBySlug: Record<string, string> = {}
+const userSlugToOrgSlug: Record<string, string> = {}
+const orgSlugToOrgName: Record<string, string> = {}
+
+const ENTRY_NAMES: Record<string, string> = {
+  compressor_1: 'Scuba Market Thailand',
+  compressor_2: 'Compressor Shop Chalong Pier',
+  equipment_manager_1: 'Hug Ocean',
+  equipment_manager_2: 'Scuba Revolution Phuket',
+  equipment_manager_3: 'Nicole Dive Center',
+  boat_1: 'Hug Ocean',
+  boat_2: 'Mandarin Queen',
+  instructor_1: 'Ryan Clarke',
+  instructor_2: 'Li Ming',
+  instructor_3: 'Wei Chen',
+  instructor_4: 'Arisa Kanchanaburi',
+  pool_1: 'Hug Ocean',
+  pool_2: 'Neptune',
+  pool_3: 'Water Pro',
+  pool_4: 'Shark Bites',
+  dive_center_1: 'Hug Ocean',
+  dive_center_2: 'Nicole Dive Center',
+  agent: 'Alex Walker Dive Travel',
+}
 
 for (const id of canonical.order) {
   const entry = canonical.stakeholders[id]
@@ -66,6 +89,12 @@ for (const id of canonical.order) {
     orgSlugByEntry[id] = orgSlug
     if (!orgHintBySlug[orgSlug]) {
       orgHintBySlug[orgSlug] = `org_seed_${orgSlug}`
+    }
+    if (userSlug && !userSlugToOrgSlug[userSlug]) {
+      userSlugToOrgSlug[userSlug] = orgSlug
+    }
+    if (!orgSlugToOrgName[orgSlug]) {
+      orgSlugToOrgName[orgSlug] = ENTRY_NAMES[id] ?? orgSlug
     }
   }
 }
@@ -97,6 +126,10 @@ const content = [
   emitRecord('SEED_CLERK_USER_ID_HINTS', userHintBySlug, alpha),
   '',
   emitRecord('SEED_CLERK_ORG_ID_HINTS', orgHintBySlug, alpha),
+  '',
+  emitRecord('SEED_USER_TO_ORG_SLUG', userSlugToOrgSlug, alpha),
+  '',
+  emitRecord('SEED_ORG_NAME_BY_SLUG', orgSlugToOrgName, alpha),
   '',
   'export type SeedStakeholderId = keyof typeof SEED_USER_SLUGS_BY_ENTRY',
   'export type SeedOrgStakeholderId = keyof typeof SEED_ORG_SLUGS_BY_ENTRY',

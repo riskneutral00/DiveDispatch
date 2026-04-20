@@ -73,6 +73,40 @@ export const SEED_CLERK_ORG_ID_HINTS = {
   "wei-chen": "org_seed_wei-chen",
 } as const
 
+export const SEED_USER_TO_ORG_SLUG = {
+  "arisa-kanchanaburi": "arisa-kanchanaburi",
+  "ax3k7p": "alex-walker",
+  "b3wt9f": "water-pro",
+  "g2hn6x": "shark-bites",
+  "h0a5zl": "compressor-shop-chalong-pier",
+  "li-ming": "li-ming",
+  "n7rq5j": "hug-ocean",
+  "p5ky3w": "mandarin-queen",
+  "q9bz7r": "nicole-dive-center",
+  "ryan-clarke": "ryan-clarke",
+  "v8sr2p": "scuba-revolution-phuket",
+  "wei-chen": "wei-chen",
+  "wkxhew": "scuba-market-thailand",
+  "z8mv4c": "neptune",
+} as const
+
+export const SEED_ORG_NAME_BY_SLUG = {
+  "alex-walker": "Alex Walker Dive Travel",
+  "arisa-kanchanaburi": "Arisa Kanchanaburi",
+  "compressor-shop-chalong-pier": "Compressor Shop Chalong Pier",
+  "hug-ocean": "Hug Ocean",
+  "li-ming": "Li Ming",
+  "mandarin-queen": "Mandarin Queen",
+  "neptune": "Neptune",
+  "nicole-dive-center": "Nicole Dive Center",
+  "ryan-clarke": "Ryan Clarke",
+  "scuba-market-thailand": "Scuba Market Thailand",
+  "scuba-revolution-phuket": "Scuba Revolution Phuket",
+  "shark-bites": "Shark Bites",
+  "water-pro": "Water Pro",
+  "wei-chen": "Wei Chen",
+} as const
+
 export type SeedStakeholderId = keyof typeof SEED_USER_SLUGS_BY_ENTRY
 export type SeedOrgStakeholderId = keyof typeof SEED_ORG_SLUGS_BY_ENTRY
 export type SeedUserSlug = keyof typeof SEED_CLERK_USER_ID_HINTS
