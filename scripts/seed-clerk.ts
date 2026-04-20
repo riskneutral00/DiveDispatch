@@ -1,14 +1,4 @@
 #!/usr/bin/env tsx
-/**
- * Creates Clerk users matching all seeded Convex stakeholders + instructors,
- * then patches each Convex user record with the real Clerk tokenIdentifier.
- * Idempotent: skips users that already exist (by email).
- * Pass --force to update existing users in-place (preserves user IDs + sessions).
- *
- * Usage:
- *   CLERK_SECRET_KEY=sk_test_xxx npx tsx scripts/seed-clerk.ts
- *   CLERK_SECRET_KEY=sk_test_xxx npx tsx scripts/seed-clerk.ts --force
- */
 
 import { createClerkClient } from '@clerk/backend'
 import { readFileSync } from 'fs'
@@ -16,6 +6,11 @@ import { join } from 'path'
 import { spawnSync } from 'child_process'
 import { ALL_STAKEHOLDERS, type SeedUser } from '../convex/seedData'
 import { ALL_INSTRUCTORS } from '../convex/seedInstructorData'
+import {
+  SEED_USER_TO_ORG_SLUG,
+  SEED_ORG_NAME_BY_SLUG,
+  SEED_CLERK_ORG_ID_HINTS,
+} from '../convex/shared/seedSlugs.generated'
 
 const SEED_PASSWORD = 'divedispatch123'
 const DELAY_MS = 500 // spacing between Clerk API calls to avoid rate limits
@@ -25,8 +20,6 @@ function sleep(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms))
 }
 
-// Derive the Clerk JWT issuer from the publishable key.
-// pk_test_BASE64 → base64decode → "domain$" → "https://domain"
 function getClerkIssuer(publishableKey: string): string {
   const raw = publishableKey.replace(/^pk_(test|live)_/, '')
   const decoded = Buffer.from(raw, 'base64').toString('utf-8').replace(/\$+$/, '')
@@ -75,17 +68,21 @@ interface Result {
   failed: { email: string; error: string }[]
 }
 
-/**
- * Delete Clerk users whose +clerk_test@divedispatch.dev email is not in the
- * current seed dataset. Only runs with --force. Never touches non-test accounts.
- */
+interface OrgResult {
+  created: string[]
+  updated: string[]
+  skipped: string[]
+  pruned: number
+  failed: { slug: string; error: string }[]
+  slugToClerkId: Map<string, string>
+}
+
 async function pruneOrphanClerkUsers(seedEmails: Set<string>): Promise<number> {
   console.log('Pruning orphaned Clerk users...')
   let pruned = 0
   let offset = 0
   const PAGE = 100
 
-  // Paginate through all Clerk users
   while (true) {
     const page = await clerk.users.getUserList({ limit: PAGE, offset })
     if (page.data.length === 0) break
@@ -94,7 +91,7 @@ async function pruneOrphanClerkUsers(seedEmails: Set<string>): Promise<number> {
       const devEmail = user.emailAddresses.find((e) =>
         e.emailAddress.endsWith('@divedispatch.dev')
       )
-      if (!devEmail) continue // not a divedispatch.dev user — leave it alone
+      if (!devEmail) continue
 
       await clerk.users.deleteUser(user.id)
       console.log(`  ${devEmail.emailAddress} — pruned (not in seed data)`)
@@ -110,11 +107,79 @@ async function pruneOrphanClerkUsers(seedEmails: Set<string>): Promise<number> {
   return pruned
 }
 
-// Returns the Clerk user ID (for patching Convex tokenIdentifier), or null on failure.
+async function pruneOrphanSeedOrgs(seedOrgSlugs: Set<string>): Promise<number> {
+  console.log('Pruning orphaned seed Clerk orgs...')
+  let pruned = 0
+  let offset = 0
+  const PAGE = 100
+  while (true) {
+    const page = await clerk.organizations.getOrganizationList({ limit: PAGE, offset })
+    if (page.data.length === 0) break
+    for (const org of page.data) {
+      const tag = (org.publicMetadata as Record<string, unknown>)?.seedTag
+      if (tag !== 'dd_seed') continue
+      if (seedOrgSlugs.has(org.slug ?? '')) continue
+      await clerk.organizations.deleteOrganization(org.id)
+      console.log(`  ${org.slug} — pruned (not in seed data)`)
+      pruned++
+      await sleep(DELAY_MS)
+    }
+    if (page.data.length < PAGE) break
+    offset += PAGE
+  }
+  console.log(`Pruned ${pruned} orphaned seed Clerk org${pruned === 1 ? '' : 's'}.`)
+  return pruned
+}
+
+async function seedOrg(
+  orgSlug: string,
+  orgName: string,
+  createdByClerkUserId: string,
+  result: OrgResult,
+): Promise<string | null> {
+  const existing = await clerk.organizations.getOrganizationList({ query: orgSlug, limit: 10 })
+  const match = existing.data.find((o) => o.slug === orgSlug)
+  if (match) {
+    if (force) {
+      await clerk.organizations.updateOrganization(match.id, {
+        name: orgName,
+        publicMetadata: { seedTag: 'dd_seed' },
+      })
+      result.updated.push(orgSlug)
+      return match.id
+    }
+    result.skipped.push(orgSlug)
+    return match.id
+  }
+  const created = await clerk.organizations.createOrganization({
+    name: orgName,
+    slug: orgSlug,
+    createdBy: createdByClerkUserId,
+    publicMetadata: { seedTag: 'dd_seed' },
+  })
+  result.created.push(orgSlug)
+  return created.id
+}
+
+async function ensureMembership(
+  orgId: string,
+  userId: string,
+  role: string,
+): Promise<void> {
+  const existing = await clerk.organizations.getOrganizationMembershipList({ organizationId: orgId, limit: 100 })
+  const match = existing.data.find((m) => m.publicUserData?.userId === userId)
+  if (match) {
+    if (match.role !== role) {
+      await clerk.organizations.updateOrganizationMembership({ organizationId: orgId, userId, role })
+    }
+    return
+  }
+  await clerk.organizations.createOrganizationMembership({ organizationId: orgId, userId, role })
+}
+
 async function seedUser(user: SeedUser, result: Result): Promise<string | null> {
   const { email, firstName, lastName } = user
 
-  // Also look up old email format (without +clerk_test) to handle migration
   const oldEmail = email.replace('+clerk_test', '')
   const emailsToCheck = email !== oldEmail ? [email, oldEmail] : [email]
 
@@ -122,7 +187,6 @@ async function seedUser(user: SeedUser, result: Result): Promise<string | null> 
 
   if (existing.totalCount > 0) {
     if (force) {
-      // Update in-place — preserves user ID so existing sessions survive
       const existingUser = existing.data[0]
       await clerk.users.updateUser(existingUser.id, {
         password: SEED_PASSWORD,
@@ -201,7 +265,6 @@ async function main(): Promise<void> {
       console.log(`  ${user.email} — ${status}`)
     }
 
-    // Space out API calls to stay under Clerk rate limits
     if (i < users.length - 1) await sleep(DELAY_MS)
   }
 
@@ -214,7 +277,82 @@ async function main(): Promise<void> {
     process.exit(1)
   }
 
-  // Patch Convex users with real tokenIdentifiers so dev logins work immediately.
+  const emailToClerkId = new Map<string, string>()
+  for (const p of patches) {
+    const clerkId = p.tokenIdentifier.split('|')[1]
+    emailToClerkId.set(p.email, clerkId)
+  }
+  const userSlugToClerkId = new Map<string, string>()
+  for (const u of users) {
+    const clerkId = emailToClerkId.get(u.email)
+    if (clerkId) userSlugToClerkId.set(u.slug, clerkId)
+  }
+
+  const orgResult: OrgResult = { created: [], updated: [], skipped: [], pruned: 0, failed: [], slugToClerkId: new Map() }
+  const seedOrgSlugs = new Set(Object.keys(SEED_CLERK_ORG_ID_HINTS))
+
+  if (force) {
+    orgResult.pruned = await pruneOrphanSeedOrgs(seedOrgSlugs)
+  }
+
+  console.log(`\nSeeding ${seedOrgSlugs.size} Clerk orgs${force ? ' (--force)' : ''}...`)
+  const userToOrg = SEED_USER_TO_ORG_SLUG as Record<string, string>
+  const orgSlugToAdminUserSlug = new Map<string, string>()
+  for (const [userSlug, orgSlug] of Object.entries(userToOrg)) {
+    if (!orgSlugToAdminUserSlug.has(orgSlug)) {
+      orgSlugToAdminUserSlug.set(orgSlug, userSlug)
+    }
+  }
+
+  const orgNames = SEED_ORG_NAME_BY_SLUG as Record<string, string>
+  for (const orgSlug of seedOrgSlugs) {
+    const adminUserSlug = orgSlugToAdminUserSlug.get(orgSlug)
+    const createdBy = adminUserSlug ? userSlugToClerkId.get(adminUserSlug) : undefined
+    if (!createdBy) {
+      console.error(`  ${orgSlug} — SKIPPED (no admin user found in seeded users)`)
+      orgResult.failed.push({ slug: orgSlug, error: 'no admin user' })
+      continue
+    }
+    const orgName = orgNames[orgSlug] ?? orgSlug
+    try {
+      const clerkOrgId = await seedOrg(orgSlug, orgName, createdBy, orgResult)
+      if (clerkOrgId) {
+        orgResult.slugToClerkId.set(orgSlug, clerkOrgId)
+        const status = orgResult.created.includes(orgSlug) ? 'created' : orgResult.updated.includes(orgSlug) ? 'updated' : 'skipped'
+        console.log(`  ${orgSlug} (${orgName}) — ${status}`)
+      }
+      await sleep(DELAY_MS)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      orgResult.failed.push({ slug: orgSlug, error: message })
+      console.error(`  ${orgSlug} — FAILED: ${message}`)
+    }
+  }
+
+  console.log(`\nOrgs — Created: ${orgResult.created.length}, Updated: ${orgResult.updated.length}, Skipped: ${orgResult.skipped.length}, Pruned: ${orgResult.pruned}, Failed: ${orgResult.failed.length}`)
+
+  console.log(`\nCreating org memberships...`)
+  let membershipCount = 0
+  for (const [userSlug, orgSlug] of Object.entries(userToOrg)) {
+    const clerkUserId = userSlugToClerkId.get(userSlug)
+    const clerkOrgId = orgResult.slugToClerkId.get(orgSlug)
+    if (!clerkUserId || !clerkOrgId) {
+      console.error(`  ${userSlug} -> ${orgSlug} — SKIPPED (missing clerk ids)`)
+      continue
+    }
+    try {
+      await ensureMembership(clerkOrgId, clerkUserId, 'org:admin')
+      membershipCount++
+      await sleep(DELAY_MS / 2)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      console.error(`  ${userSlug} -> ${orgSlug} — FAILED: ${message}`)
+    }
+  }
+  console.log(`Memberships established: ${membershipCount}`)
+
+  if (orgResult.failed.length > 0) process.exit(1)
+
   if (patches.length > 0) {
     console.log(`\nPatching ${patches.length} Convex tokenIdentifiers...`)
     const spawnResult = spawnSync(
