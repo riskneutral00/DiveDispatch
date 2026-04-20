@@ -9,6 +9,7 @@ import { FieldError } from '@/components/ui/field-shell'
 import { RequiredAsterisk } from '@/components/ui/required-asterisk'
 import { FlagEmoji, countryCodeToEmoji } from '@/components/ui/flag-emoji'
 import { useFloatingLabel } from '@/lib/hooks/use-floating-label'
+import { detectDefaultCountryFromLocale } from '@/lib/constants/i18n'
 import { cn } from '@/lib/utils/cn'
 
 type CountryCode = string
@@ -269,8 +270,6 @@ function safeCallingCode(country: string | undefined): string {
 }
 
 function detectDefaultCountry(): string {
-  if (typeof navigator === 'undefined') return 'US'
-  const lang = navigator.language || 'en-US'
-  const match = lang.match(/-([A-Z]{2})$/i)
-  return (match?.[1] || 'US').toUpperCase()
+  if (typeof navigator === 'undefined') return 'TH'
+  return detectDefaultCountryFromLocale(navigator.language)
 }
