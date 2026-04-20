@@ -59,7 +59,7 @@
     },
     "compressor_2": {
       "role": "Compressor",
-      "note": "Deliberate-incomplete per rule: starts with empty gasMixes → cannot fulfill tank fills → booking picker excludes. Happy-path scene walks gas-mix-add before this compressor becomes selectable.",
+      "note": "Deliberate-incomplete per rule: starts with empty gasMixes \u2192 cannot fulfill tank fills \u2192 booking picker excludes. Happy-path scene walks gas-mix-add before this compressor becomes selectable.",
       "users": {
         "email": "compressor-chalong+clerk_test@divedispatch.dev",
         "name": "Sombat Charoensuk",
@@ -138,13 +138,13 @@
           "country": "TH"
         }
       },
-      "inventoryOverrides": "[30 SKUs @ totalUnits=4 each: wetsuit 3 brands × 4 sizes; bcd 3 brands × 3 sizes; fins 5 sizes (no brand); mask 1 regular (no brand); regulator 3 brands (no size). 4-customer capacity.]",
+      "inventoryOverrides": "[30 SKUs @ totalUnits=4 each: wetsuit 3 brands \u00d7 4 sizes; bcd 3 brands \u00d7 3 sizes; fins 5 sizes (no brand); mask 1 regular (no brand); regulator 3 brands (no size). 4-customer capacity.]",
       "clerkOrgIdHint": "org_seed_equipment-manager-1"
     },
     "equipment_manager_2": {
       "role": "Equipment",
       "slugRef": "v8sr2p",
-      "note": "Scuba Revolution Phuket — external equipment rental; open access. Nicknamed 'Ta'.",
+      "note": "Scuba Revolution Phuket \u2014 external equipment rental; open access. Nicknamed 'Ta'.",
       "users": {
         "email": "scuba-revolution+clerk_test@divedispatch.dev",
         "name": "Anong Petcharat",
@@ -193,7 +193,7 @@
     "equipment_manager_3": {
       "role": "Equipment",
       "slugRef": "q9bz7r",
-      "note": "Nicole Dive Center — external; shared user with DC role (see dive_center_2 canonical). Starts deliberately incomplete: ZERO mask SKUs. Happy-path scene walks mask-inventory add before she becomes selectable in bookings.",
+      "note": "Nicole Dive Center \u2014 external; shared user with DC role (see dive_center_2 canonical). Starts deliberately incomplete: ZERO mask SKUs. Happy-path scene walks mask-inventory add before she becomes selectable in bookings.",
       "users": {
         "email": "nicole-dive-center+clerk_test@divedispatch.dev",
         "name": "Nicole Huang",
@@ -383,8 +383,8 @@
         "appLanguage": "en",
         "dateOfBirth": "1985-03-22",
         "phone": "+66816001000",
-        "slug": "ryan-clarke",
-        "clerkUserIdHint": "user_seed_instructor-1"
+        "slug": "geprkx",
+        "clerkUserIdHint": "user_seed_geprkx"
       },
       "instructors": {
         "name": "Ryan Clarke",
@@ -429,8 +429,8 @@
         "appLanguage": "en",
         "dateOfBirth": "1991-07-14",
         "phone": "+66816031003",
-        "slug": "li-ming",
-        "clerkUserIdHint": "user_seed_instructor-2"
+        "slug": "lkp3zm",
+        "clerkUserIdHint": "user_seed_lkp3zm"
       },
       "instructors": {
         "name": "Li Ming",
@@ -466,8 +466,8 @@
     "instructor_3": {
       "role": "Instructor",
       "slugRef": "wei-chen",
-      "label": "Simplified + Traditional Chinese + Thai + English (seed needs +en — P0-12)",
-      "note": "Deliberate-incomplete per rule: starts with teachingLanguages_initial: [] — unbookable until languages added. Walkthrough exercises instructor-picker language filter + profile-complete gate.",
+      "label": "Simplified + Traditional Chinese + Thai + English (seed needs +en \u2014 P0-12)",
+      "note": "Deliberate-incomplete per rule: starts with teachingLanguages_initial: [] \u2014 unbookable until languages added. Walkthrough exercises instructor-picker language filter + profile-complete gate.",
       "users": {
         "email": "wei-chen+clerk_test@divedispatch.dev",
         "name": "Wei Chen",
@@ -476,8 +476,8 @@
         "appLanguage": "en",
         "dateOfBirth": "1989-02-10",
         "phone": "+66816021002",
-        "slug": "wei-chen",
-        "clerkUserIdHint": "user_seed_instructor-3"
+        "slug": "wc8qg2",
+        "clerkUserIdHint": "user_seed_wc8qg2"
       },
       "instructors": {
         "name": "Wei Chen",
@@ -518,7 +518,7 @@
     "instructor_4": {
       "role": "Instructor",
       "slugRef": "arisa-kanchanaburi",
-      "note": "Post-DM-collapse (2026-04-17): Arisa is now an Instructor-role user whose credential level is DM. Operational DM slot class preserved on bookingResources.roleType. Deliberate-incomplete per rule: starts with teachingLanguages_initial: [] — unbookable until languages added. Parallel to instructor_3 gap pattern.",
+      "note": "Post-DM-collapse (2026-04-17): Arisa is now an Instructor-role user whose credential level is DM. Operational DM slot class preserved on bookingResources.roleType. Deliberate-incomplete per rule: starts with teachingLanguages_initial: [] \u2014 unbookable until languages added. Parallel to instructor_3 gap pattern.",
       "users": {
         "email": "arisa-kanchanaburi+clerk_test@divedispatch.dev",
         "name": "Arisa Kanchanaburi",
@@ -527,8 +527,8 @@
         "appLanguage": "en",
         "dateOfBirth": "1993-12-01",
         "phone": "+66816151015",
-        "slug": "arisa-kanchanaburi",
-        "clerkUserIdHint": "user_seed_instructor-4"
+        "slug": "z039zt",
+        "clerkUserIdHint": "user_seed_z039zt"
       },
       "instructors": {
         "name": "Arisa Kanchanaburi",
@@ -585,7 +585,7 @@
     "pool_2": {
       "role": "Pool",
       "slugRef": "z8mv4c",
-      "note": "Neptune's pool — private to Neptune-driven bookings via isAllowed. Shared user with Neptune DC + Equipment (first appearance of Neptune; Stops 7/9 reference via slugRef).",
+      "note": "Neptune's pool \u2014 private to Neptune-driven bookings via isAllowed. Shared user with Neptune DC + Equipment (first appearance of Neptune; Stops 7/9 reference via slugRef).",
       "users": {
         "email": "neptune+clerk_test@divedispatch.dev",
         "name": "Wei Lin",
@@ -623,7 +623,7 @@
     "pool_3": {
       "role": "Pool",
       "slugRef": "b3wt9f",
-      "note": "Deliberate-incomplete per rule: starts with maxCapacity_initial: 0 — zero bookable seats → picker excludes. Walkthrough exercises capacity-add to 25.",
+      "note": "Deliberate-incomplete per rule: starts with maxCapacity_initial: 0 \u2014 zero bookable seats \u2192 picker excludes. Walkthrough exercises capacity-add to 25.",
       "users": {
         "email": "water-pro+clerk_test@divedispatch.dev",
         "name": "Niran Jantarakul",
@@ -694,7 +694,7 @@
     "dive_center_1": {
       "role": "DiveCenter",
       "slugRef": "n7rq5j",
-      "note": "Hug Ocean — primary DC, multi-role with boat_1 / pool_1 / equipment_manager_1. Shared user Somchai Prasert (n7rq5j).",
+      "note": "Hug Ocean \u2014 primary DC, multi-role with boat_1 / pool_1 / equipment_manager_1. Shared user Somchai Prasert (n7rq5j).",
       "diveCenters": {
         "name": "Hug Ocean",
         "lat": 7.896,
@@ -736,7 +736,7 @@
     "dive_center_2": {
       "role": "DiveCenter",
       "slugRef": "q9bz7r",
-      "note": "Nicole Dive Center — secondary DC, multi-role with equipment_manager_3 (mask-empty). Shared user Nicole Huang (q9bz7r). Carries deliberate-incomplete gap: associations_initial: [] (no agency affiliation → courses can't be offered until completed).",
+      "note": "Nicole Dive Center \u2014 secondary DC, multi-role with equipment_manager_3 (mask-empty). Shared user Nicole Huang (q9bz7r). Carries deliberate-incomplete gap: associations_initial: [] (no agency affiliation \u2192 courses can't be offered until completed).",
       "diveCenters": {
         "name": "Nicole Dive Center",
         "lat": 7.8804,
@@ -774,7 +774,7 @@
     },
     "customer_1": {
       "role": "Customer",
-      "note": "Primary customer — zh-TW speaker. Language exercises Cluster B.3 language-fallback cascade: Hug's preferred order starts Ryan (no zh-TW), cascade falls to Wei Chen (has zh-TW). Reservation.instructorId resolves to wei-chen on Day 2. No medical flag.",
+      "note": "Primary customer \u2014 zh-TW speaker. Language exercises Cluster B.3 language-fallback cascade: Hug's preferred order starts Ryan (no zh-TW), cascade falls to Wei Chen (has zh-TW). Reservation.instructorId resolves to wei-chen on Day 2. No medical flag.",
       "customer": {
         "firstName": "Mei-Ling",
         "lastName": "Chen",
@@ -804,7 +804,7 @@
     },
     "customer_2": {
       "role": "Customer",
-      "note": "Medical-block customer — zh-CN speaker. medicalFlag: true triggers Scene 6 hard-block in Act IV Phase 1 (operator contacts → physician clearance → resume). Full emergencyContact on initial submit.",
+      "note": "Medical-block customer \u2014 zh-CN speaker. medicalFlag: true triggers Scene 6 hard-block in Act IV Phase 1 (operator contacts \u2192 physician clearance \u2192 resume). Full emergencyContact on initial submit.",
       "customer": {
         "firstName": "Jun",
         "lastName": "Wang",
@@ -834,7 +834,7 @@
     },
     "customer_3": {
       "role": "Customer",
-      "note": "Deliberate-incomplete customer — en speaker. Carries emergencyContact_initial: null gap (submits portal Step 1 without emergency contact). Portal flow re-prompts in Act II Phase 3; gap closes before auto-advance to Upcoming.",
+      "note": "Deliberate-incomplete customer \u2014 en speaker. Carries emergencyContact_initial: null gap (submits portal Step 1 without emergency contact). Portal flow re-prompts in Act II Phase 3; gap closes before auto-advance to Upcoming.",
       "customer": {
         "firstName": "James",
         "lastName": "Thompson",
@@ -864,7 +864,7 @@
     },
     "agent": {
       "role": "Agent",
-      "note": "Fresh-signup agent onboarded in Act I Phase 8. stakeholderPreferences.preferredOperatorSlug points at dive_center_1 (Hug Ocean, n7rq5j) — exercises Act III.4 referral-toggle flow.",
+      "note": "Fresh-signup agent onboarded in Act I Phase 8. stakeholderPreferences.preferredOperatorSlug points at dive_center_1 (Hug Ocean, n7rq5j) \u2014 exercises Act III.4 referral-toggle flow.",
       "users": {
         "email": "agent.walker@phukettravel.example",
         "name": "Alex Walker",
@@ -911,7 +911,7 @@
   "admin_venues": {
     "kata_beach": {
       "category": "AdminVenue",
-      "note": "Admin-added venue — no stakeholder user signs in. Pre-seeded via UNOWNED_DIVE_SITES in convex/seedData.ts and convex/seed.ts. venues.userId is omitted (schema v.optional allows); inventoryUnits uses sentinel ownerId '__unowned__' / ownerType 'DiveSite'. DiveSite stakeholder role is v0.1.1 defer — this row is a booking-form location reference only, not an operator-run resource.",
+      "note": "Admin-added venue \u2014 no stakeholder user signs in. Pre-seeded via UNOWNED_DIVE_SITES in convex/seedData.ts and convex/seed.ts. venues.userId is omitted (schema v.optional allows); inventoryUnits uses sentinel ownerId '__unowned__' / ownerType 'DiveSite'. DiveSite stakeholder role is v0.1.1 defer \u2014 this row is a booking-form location reference only, not an operator-run resource.",
       "venues": {
         "name": "Kata Beach",
         "lat": 7.8206,

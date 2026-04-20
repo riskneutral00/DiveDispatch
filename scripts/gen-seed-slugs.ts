@@ -18,24 +18,24 @@ const canonical = JSON.parse(raw) as {
 }
 
 const ORG_SLUGS: Record<string, string> = {
-  compressor_1: 'scuba-market-thailand',
-  compressor_2: 'compressor-shop-chalong-pier',
-  equipment_manager_1: 'hug-ocean',
-  equipment_manager_2: 'scuba-revolution-phuket',
-  equipment_manager_3: 'nicole-dive-center',
-  boat_1: 'hug-ocean',
-  boat_2: 'mandarin-queen',
-  instructor_1: 'ryan-clarke',
-  instructor_2: 'li-ming',
-  instructor_3: 'wei-chen',
-  instructor_4: 'arisa-kanchanaburi',
-  pool_1: 'hug-ocean',
-  pool_2: 'neptune',
-  pool_3: 'water-pro',
-  pool_4: 'shark-bites',
-  dive_center_1: 'hug-ocean',
-  dive_center_2: 'nicole-dive-center',
-  agent: 'alex-walker',
+  compressor_1: 'wkxhew',
+  compressor_2: 'h0a5zl',
+  equipment_manager_1: 'n7rq5j',
+  equipment_manager_2: 'v8sr2p',
+  equipment_manager_3: 'q9bz7r',
+  boat_1: 'n7rq5j',
+  boat_2: 'p5ky3w',
+  instructor_1: 'geprkx',
+  instructor_2: 'lkp3zm',
+  instructor_3: 'wc8qg2',
+  instructor_4: 'z039zt',
+  pool_1: 'n7rq5j',
+  pool_2: 'z8mv4c',
+  pool_3: 'b3wt9f',
+  pool_4: 'g2hn6x',
+  dive_center_1: 'n7rq5j',
+  dive_center_2: 'q9bz7r',
+  agent: 'ax3k7p',
 }
 
 const userSlugByEntry: Record<string, string> = {}
@@ -65,6 +65,8 @@ const ENTRY_NAMES: Record<string, string> = {
   dive_center_2: 'Nicole Dive Center',
   agent: 'Alex Walker Dive Travel',
 }
+
+
 
 for (const id of canonical.order) {
   const entry = canonical.stakeholders[id]
