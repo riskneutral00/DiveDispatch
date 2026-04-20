@@ -64,8 +64,15 @@ async function queryProfileByUser(
 ): Promise<Record<string, unknown> | null> {
   const table = ROLE_TABLE_MAP[role]
   if (!table) return null
+  const user = await db.get(userId)
+  if (!user) return null
+  const org = await db
+    .query('organizations')
+    .withIndex('by_slug', (q) => q.eq('slug', user.slug))
+    .unique()
+  if (!org) return null
   const result = await queryDynamicTable(db, table)
-    .withIndex('by_userId', (q) => q.eq('userId', userId))
+    .withIndex('by_organizationId', (q) => q.eq('organizationId', org._id))
     .unique()
   return result as Record<string, unknown> | null
 }
@@ -297,8 +304,13 @@ export const listOperators = query({
       for (const u of users) {
         if (!u) continue
         const tableName = role === 'DiveCenter' ? 'diveCenters' : 'agents'
+        const org = await ctx.db
+          .query('organizations')
+          .withIndex('by_slug', (q) => q.eq('slug', u.slug))
+          .unique()
+        if (!org) continue
         const profile = await queryDynamicTable(ctx.db, tableName)
-          .withIndex('by_userId', (q) => q.eq('userId', u._id))
+          .withIndex('by_organizationId', (q) => q.eq('organizationId', org._id))
           .unique()
         if (!profile) continue
         const name = (profile as { name?: string }).name ?? u.slug

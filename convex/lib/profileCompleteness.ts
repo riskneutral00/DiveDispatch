@@ -62,10 +62,16 @@ export async function checkProfileCompleteness(
   const table = ROLE_TABLE_MAP[role]
   let profile: Record<string, unknown> | null = null
   if (table) {
-    profile = await ctx.db
-      .query(table as 'diveCenters')
-      .withIndex('by_userId', (q) => q.eq('userId', user._id))
+    const org = await ctx.db
+      .query('organizations')
+      .withIndex('by_slug', (q) => q.eq('slug', userDoc.slug))
       .unique()
+    if (org) {
+      profile = await ctx.db
+        .query(table as 'diveCenters')
+        .withIndex('by_organizationId', (q) => q.eq('organizationId', org._id))
+        .unique()
+    }
   }
 
   const roleFields = ROLE_REQUIRED[role] ?? []

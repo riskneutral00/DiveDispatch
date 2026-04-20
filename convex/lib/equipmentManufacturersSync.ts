@@ -4,15 +4,15 @@ export async function syncManufacturersByGearType(
   ctx: MutationCtx,
   equipmentManagerId: string,
 ): Promise<void> {
-  const user = await ctx.db
-    .query('users')
+  const org = await ctx.db
+    .query('organizations')
     .withIndex('by_slug', (q) => q.eq('slug', equipmentManagerId))
     .unique()
-  if (!user) return
+  if (!org) return
 
   const profile = await ctx.db
     .query('equipment')
-    .withIndex('by_userId', (q) => q.eq('userId', user._id))
+    .withIndex('by_organizationId', (q) => q.eq('organizationId', org._id))
     .unique()
   if (!profile) return
 

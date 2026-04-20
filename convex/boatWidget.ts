@@ -204,14 +204,14 @@ export const getManifestData = query({
                 (r) => r.resourceType === 'DiveSite' && r.resourceId,
               )
               if (diveSiteRow?.resourceId) {
-                const siteUser = await ctx.db
-                  .query('users')
+                const siteOrg = await ctx.db
+                  .query('organizations')
                   .withIndex('by_slug', (q) => q.eq('slug', diveSiteRow.resourceId!))
                   .unique()
-                if (siteUser) {
+                if (siteOrg) {
                   const venue = await ctx.db
                     .query('venues')
-                    .withIndex('by_userId', (q) => q.eq('userId', siteUser._id))
+                    .withIndex('by_organizationId', (q) => q.eq('organizationId', siteOrg._id))
                     .unique()
                   diveSiteName = venue?.name
                 }
