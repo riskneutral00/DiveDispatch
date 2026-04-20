@@ -17,13 +17,15 @@ export type BoatType = 'day_boat' | 'speedboat' | 'longtail' | 'liveaboard' | 'c
 
 export type GasMixType = 'air' | 'nitrox'
 
+export type SeedAppLanguage = 'en' | 'zh-CN' | 'zh-TW' | 'th' | 'fr' | 'ko'
+
 export interface SeedUser {
   slug: string
   email: string
   name: string
   firstName: string
   lastName: string
-  appLanguage: string
+  appLanguage: SeedAppLanguage
   phone: string
   dateOfBirth?: string
   customerLanguages?: string[]
@@ -674,7 +676,7 @@ export const UMI_DIVE: SeedStakeholder = {
     name: 'Tanaka Haruto',
     firstName: 'Haruto',
     lastName: 'Tanaka',
-    appLanguage: 'ja',
+    appLanguage: 'en',
     phone: '+66-81-234-5015',
   },
   roles: [
@@ -701,7 +703,7 @@ export const AQUA_PRO: SeedStakeholder = {
     name: 'Sergei Kozlov',
     firstName: 'Sergei',
     lastName: 'Kozlov',
-    appLanguage: 'ru',
+    appLanguage: 'en',
     phone: '+66-81-234-5016',
   },
   roles: [
@@ -728,7 +730,7 @@ export const PACIFIC_DIVERS: SeedStakeholder = {
     name: 'Carlos Mendoza',
     firstName: 'Carlos',
     lastName: 'Mendoza',
-    appLanguage: 'es',
+    appLanguage: 'en',
     phone: '+66-81-234-5017',
   },
   roles: [
@@ -755,7 +757,7 @@ export const BLUE_PLANET: SeedStakeholder = {
     name: 'Willem de Groot',
     firstName: 'Willem',
     lastName: 'de Groot',
-    appLanguage: 'nl',
+    appLanguage: 'en',
     phone: '+66-81-234-5018',
   },
   roles: [
@@ -834,7 +836,7 @@ export const KENJI_AGENT: SeedStakeholder = {
     name: 'Kenji Watanabe',
     firstName: 'Kenji',
     lastName: 'Watanabe',
-    appLanguage: 'ja',
+    appLanguage: 'en',
     phone: '+81-90-1234-5678',
     customerLanguages: ['ja', 'en'],
   },
@@ -862,7 +864,7 @@ export const EVA_AGENT: SeedStakeholder = {
     name: 'Eva Klein',
     firstName: 'Eva',
     lastName: 'Klein',
-    appLanguage: 'de',
+    appLanguage: 'en',
     phone: '+49-170-1234567',
     customerLanguages: ['de', 'fr', 'nl'],
   },
@@ -1017,7 +1019,7 @@ export const RESTORED_PRAWIT: SeedStakeholder = {
     name: 'Prawit Suksawat',
     firstName: 'Prawit',
     lastName: 'Suksawat',
-    appLanguage: 'th-TH',
+    appLanguage: 'th',
     phone: '+6676330345',
     dateOfBirth: '1975-08-12',
   },
@@ -1046,7 +1048,7 @@ export const RESTORED_SOMBAT: SeedStakeholder = {
     name: 'Sombat Charoensuk',
     firstName: 'Sombat',
     lastName: 'Charoensuk',
-    appLanguage: 'th-TH',
+    appLanguage: 'th',
     phone: '+6676395001',
     dateOfBirth: '1982-04-20',
   },
@@ -1075,7 +1077,7 @@ export const RESTORED_ALEX: SeedStakeholder = {
     name: 'Alex Walker',
     firstName: 'Alex',
     lastName: 'Walker',
-    appLanguage: 'en-GB',
+    appLanguage: 'en',
     phone: '+66819001234',
     dateOfBirth: '1992-04-17',
     customerLanguages: ['en'],

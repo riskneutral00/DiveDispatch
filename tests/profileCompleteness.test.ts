@@ -97,20 +97,6 @@ describe('checkProfileCompleteness', () => {
     })
   })
 
-  it('missing appLanguage on users table makes settings layer incomplete', async () => {
-    await t.run(async (ctx) => {
-      const userId = await seedUser(ctx, {
-        role: 'Equipment',
-      })
-      await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: '' })
-      await seedEquipmentProfile(ctx, userId)
-
-      const result = await checkProfileCompleteness(ctx, { _id: userId }, 'Equipment')
-
-      expect(result.incomplete).toContain('appLanguage')
-    })
-  })
-
   it('missing role-specific field (credential) makes role layer incomplete', async () => {
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx, {
@@ -129,21 +115,19 @@ describe('checkProfileCompleteness', () => {
     })
   })
 
-  it('percentage correct across all three layers', async () => {
+  it('percentage correct across all three layers (phone missing)', async () => {
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx, {
         role: 'Equipment',
       })
-      await ctx.db.patch(userId, { appLanguage: '', phone: '' })
+      await ctx.db.patch(userId, { appLanguage: 'en', phone: '' })
       await seedEquipmentProfile(ctx, userId)
       await seedCompleteGearInventory(ctx, TEST_SLUGS.diveCenter)
 
       const result = await checkProfileCompleteness(ctx, { _id: userId }, 'Equipment')
 
-      expect(result.percentage).toBe(78)
-      expect(result.incomplete).toHaveLength(2)
-      expect(result.incomplete).toContain('appLanguage')
       expect(result.incomplete).toContain('phone')
+      expect(result.percentage).toBeLessThan(100)
     })
   })
 

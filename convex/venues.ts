@@ -104,6 +104,8 @@ export const create = mutation({
 
     const venueId = await ctx.db.insert('venues', {
       ...rest,
+      placeName: rest.placeName ?? '',
+      country: rest.country ?? '',
       venueCategory: resolved.venueCategory,
       diveSiteTypes: resolved.diveSiteTypes,
       confinedCapable: resolved.confinedCapable,

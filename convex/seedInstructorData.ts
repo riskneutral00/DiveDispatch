@@ -119,7 +119,7 @@ export const RESTORED_RYAN: SeedStakeholder = {
     name: 'Ryan Clarke',
     firstName: 'Ryan',
     lastName: 'Clarke',
-    appLanguage: 'en-GB',
+    appLanguage: 'en',
     phone: '+66816001000',
     dateOfBirth: '1985-03-22',
   },

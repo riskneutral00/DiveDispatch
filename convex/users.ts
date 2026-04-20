@@ -19,7 +19,7 @@ import { extractErrorCode, ISOLATABLE_ERRORS } from './lib/errorClassification'
 import { batchDelete, batchPatch } from './lib/batch'
 import { sanitizeFields, USER_FIELDS } from './lib/sanitize'
 import { isAdult, MIN_SIGNUP_AGE_YEARS } from './lib/age'
-import { normalizeAppLanguage } from './lib/i18nValidators'
+import { normalizeAppLanguageOrThrow } from './lib/i18nValidators'
 
 function publicUser(user: Doc<'users'>) {
   const { tokenIdentifier: _ti, email: _e, ...rest } = user
@@ -82,7 +82,7 @@ export const createUser = mutation({
         ...(existing.dateOfBirth === undefined && { dateOfBirth: args.dateOfBirth }),
         ...(args.nickname !== undefined && { nickname: args.nickname }),
         ...(args.phone !== undefined && { phone: args.phone }),
-        ...(args.appLanguage !== undefined && { appLanguage: normalizeAppLanguage(args.appLanguage) }),
+        ...(args.appLanguage !== undefined && { appLanguage: normalizeAppLanguageOrThrow(args.appLanguage) }),
         ...(existing.tcAcceptedAt === undefined && { tcAcceptedAt: now }),
         ...(args.tcVersion !== existing.tcVersion && { tcVersion: args.tcVersion, tcAcceptedAt: now }),
       })
@@ -103,7 +103,7 @@ export const createUser = mutation({
       tcVersion: args.tcVersion,
       ...(args.nickname !== undefined && { nickname: args.nickname }),
       ...(args.phone !== undefined && { phone: args.phone }),
-      appLanguage: args.appLanguage ? normalizeAppLanguage(args.appLanguage) : 'en',
+      appLanguage: args.appLanguage ? normalizeAppLanguageOrThrow(args.appLanguage) : 'en',
     })
 
     if (args.roles && args.roles.length > 0) {
@@ -155,7 +155,7 @@ export const updateProfile = mutation({
       ...(sanitized.nickname !== undefined && { nickname: sanitized.nickname }),
       ...(sanitized.phone !== undefined && { phone: sanitized.phone }),
       ...(args.dateOfBirth !== undefined && { dateOfBirth: args.dateOfBirth }),
-      ...(args.appLanguage !== undefined && { appLanguage: normalizeAppLanguage(args.appLanguage) }),
+      ...(args.appLanguage !== undefined && { appLanguage: normalizeAppLanguageOrThrow(args.appLanguage) }),
     })
 
     await syncDiveStaffName(
