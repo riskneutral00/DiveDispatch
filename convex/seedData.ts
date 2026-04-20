@@ -6,8 +6,9 @@ import {
 } from './shared/gearSizing'
 export type { StakeholderRole }
 
-export const PHUKET = { placeName: 'Phuket', country: 'Thailand', lat: 7.8804, lng: 98.3923 } as const
-const CHALONG = { placeName: 'Phuket', country: 'Thailand', lat: 7.8386, lng: 98.3519 } as const
+const PHUKET_TH_ADDRESS = { city: 'Phuket', country: 'TH' } as const
+export const PHUKET = { placeName: 'Phuket', country: 'Thailand', address: PHUKET_TH_ADDRESS, lat: 7.8804, lng: 98.3923 } as const
+const CHALONG = { placeName: 'Phuket', country: 'Thailand', address: { city: 'Phuket', state: 'Phuket', country: 'TH' } as const, lat: 7.8386, lng: 98.3519 } as const
 const VERIFIED = true
 
 const PADI_PREFS = { owDays: 3, aowDays: 2, oaDays: 4, selectedSpecialties: ['Deep', 'Drift', 'Wreck', 'Navigation'] }
@@ -18,6 +19,14 @@ export type BoatType = 'day_boat' | 'speedboat' | 'longtail' | 'liveaboard' | 'c
 export type GasMixType = 'air' | 'nitrox'
 
 export type SeedAppLanguage = 'en' | 'zh-CN' | 'zh-TW' | 'th' | 'fr' | 'ko'
+
+export interface SeedAddress {
+  street?: string
+  city: string
+  state?: string
+  country: string
+  postalCode?: string
+}
 
 export interface SeedUser {
   slug: string
@@ -35,6 +44,7 @@ interface DiveCenterProfile {
   name: string
   placeName: string
   country: string
+  address?: SeedAddress
   lat: number
   lng: number
   email: string
@@ -55,6 +65,7 @@ interface BoatProfile {
   name: string
   placeName: string
   country: string
+  address?: SeedAddress
   lat: number
   lng: number
   email: string
@@ -76,6 +87,7 @@ interface VenueProfile {
   name: string
   placeName: string
   country: string
+  address?: SeedAddress
   lat: number
   lng: number
   email: string
@@ -103,6 +115,7 @@ interface EquipmentProfile {
   name: string
   placeName: string
   country: string
+  address?: SeedAddress
   lat: number
   lng: number
   email: string
@@ -118,6 +131,7 @@ interface CompressorProfile {
   name: string
   placeName: string
   country: string
+  address?: SeedAddress
   lat: number
   lng: number
   email: string
@@ -134,6 +148,7 @@ interface LiveaboardProfile {
   name: string
   placeName: string
   country: string
+  address?: SeedAddress
   lat: number
   lng: number
   email: string
@@ -145,6 +160,7 @@ interface DiveResortProfile {
   name: string
   placeName: string
   country: string
+  address?: SeedAddress
   lat: number
   lng: number
   email: string
@@ -156,6 +172,7 @@ interface AgentProfile {
   name: string
   placeName: string
   country: string
+  address?: SeedAddress
   lat: number
   lng: number
   email: string
@@ -171,6 +188,7 @@ interface InstructorProfile {
   role: 'Instructor'
   placeName: string
   country: string
+  address?: SeedAddress
   lat: number
   lng: number
   email: string
@@ -260,7 +278,7 @@ export const HUG_OCEAN: SeedStakeholder = {
     firstName: 'Somchai',
     lastName: 'Prasert',
     appLanguage: 'zh-CN',
-    phone: '+66-81-234-5001',
+    phone: '+66812345001',
   },
   roles: [
     { role: 'DiveCenter' },
@@ -272,7 +290,7 @@ export const HUG_OCEAN: SeedStakeholder = {
     name: 'Hug Ocean',
     ...PHUKET,
     email: 'hug-ocean@divedispatch.dev',
-    phone: '+66-76-381-100',
+    phone: '+6676381100',
     associations: [{ agency: 'PADI', number: 'S-34782', ...PADI_PREFS }],
     customerLanguages: ['zh-CN', 'zh-TW', 'th', 'en'],
     verified: VERIFIED,
@@ -281,7 +299,7 @@ export const HUG_OCEAN: SeedStakeholder = {
     name: 'M.V. Hug Ocean',
     ...PHUKET,
     email: 'hug-ocean@divedispatch.dev',
-    phone: '+66-76-381-101',
+    phone: '+6676381101',
     fleet: [
       {
         boatName: 'M.V. Hug Ocean',
@@ -297,7 +315,7 @@ export const HUG_OCEAN: SeedStakeholder = {
     name: 'Hug Ocean',
     ...PHUKET,
     email: 'hug-ocean@divedispatch.dev',
-    phone: '+66-76-381-102',
+    phone: '+6676381102',
     maxDepth: 3,
     maxCapacity: 15,
     verified: VERIFIED,
@@ -309,7 +327,7 @@ export const HUG_OCEAN: SeedStakeholder = {
     name: 'Hug Ocean',
     ...PHUKET,
     email: 'hug-ocean@divedispatch.dev',
-    phone: '+66-76-381-103',
+    phone: '+6676381103',
     manufacturersByGearType: { wetsuit: ['ScubaPro'], bcd: ['ScubaPro'] },
     isAllowed: ['n7rq5j'],
     verified: VERIFIED,
@@ -324,7 +342,7 @@ export const NEPTUNE: SeedStakeholder = {
     firstName: 'Wei',
     lastName: 'Lin',
     appLanguage: 'zh-CN',
-    phone: '+66-81-234-5002',
+    phone: '+66812345002',
   },
   roles: [
     { role: 'DiveCenter' },
@@ -335,7 +353,7 @@ export const NEPTUNE: SeedStakeholder = {
     name: 'Neptune',
     ...PHUKET,
     email: 'neptune@divedispatch.dev',
-    phone: '+66-76-383-001',
+    phone: '+6676383001',
     associations: [{ agency: 'PADI', number: 'S-41256', ...PADI_PREFS }],
     customerLanguages: ['zh-CN', 'zh-TW', 'en', 'th'],
     verified: VERIFIED,
@@ -344,7 +362,7 @@ export const NEPTUNE: SeedStakeholder = {
     name: 'Neptune',
     ...PHUKET,
     email: 'neptune@divedispatch.dev',
-    phone: '+66-76-383-002',
+    phone: '+6676383002',
     maxDepth: 2.5,
     maxCapacity: 6,
     verified: VERIFIED,
@@ -356,7 +374,7 @@ export const NEPTUNE: SeedStakeholder = {
     name: 'Neptune',
     ...PHUKET,
     email: 'neptune@divedispatch.dev',
-    phone: '+66-76-383-003',
+    phone: '+6676383003',
     manufacturersByGearType: { wetsuit: ['Aqua Lung'], bcd: ['Aqua Lung'] },
     isAllowed: ['z8mv4c'],
     verified: VERIFIED,
@@ -371,7 +389,7 @@ export const PHUKET_DC: SeedStakeholder = {
     firstName: 'Kittisak',
     lastName: 'Charoen',
     appLanguage: 'th',
-    phone: '+66-81-234-5003',
+    phone: '+66812345003',
   },
   roles: [
     { role: 'DiveCenter' },
@@ -382,7 +400,7 @@ export const PHUKET_DC: SeedStakeholder = {
     name: 'Phuket Dive Center',
     ...PHUKET,
     email: 'phuket-dive-center@divedispatch.dev',
-    phone: '+66-76-385-001',
+    phone: '+6676385001',
     associations: [{ agency: 'PADI', number: 'S-29815', ...PADI_PREFS }],
     customerLanguages: ['th', 'en', 'zh-CN', 'ko'],
     verified: VERIFIED,
@@ -391,7 +409,7 @@ export const PHUKET_DC: SeedStakeholder = {
     name: 'Mandarin Queen',
     ...PHUKET,
     email: 'phuket-dive-center@divedispatch.dev',
-    phone: '+66-76-385-002',
+    phone: '+6676385002',
     fleet: [
       {
         boatName: 'M.V. Mandarin Queen 5',
@@ -421,7 +439,7 @@ export const PHUKET_DC: SeedStakeholder = {
     name: 'Phuket Dive Center',
     ...PHUKET,
     email: 'phuket-dive-center@divedispatch.dev',
-    phone: '+66-76-385-003',
+    phone: '+6676385003',
     manufacturersByGearType: { wetsuit: ['Mares'], bcd: ['Mares'] },
     isAllowed: ['p5ky3w'],
     verified: VERIFIED,
@@ -436,7 +454,7 @@ export const NICOLE_DC: SeedStakeholder = {
     firstName: 'Nicole',
     lastName: 'Huang',
     appLanguage: 'zh-TW',
-    phone: '+66-81-234-5004',
+    phone: '+66812345004',
   },
   roles: [
     { role: 'DiveCenter' },
@@ -446,7 +464,7 @@ export const NICOLE_DC: SeedStakeholder = {
     name: 'Nicole Dive Center',
     ...PHUKET,
     email: 'nicole-dive-center@divedispatch.dev',
-    phone: '+66-76-386-001',
+    phone: '+6676386001',
     associations: [{ agency: 'PADI', number: 'S-55198', ...PADI_PREFS }],
     customerLanguages: ['zh-TW', 'zh-CN', 'en', 'th'],
     verified: VERIFIED,
@@ -455,7 +473,7 @@ export const NICOLE_DC: SeedStakeholder = {
     name: 'Nicole Dive Center',
     ...PHUKET,
     email: 'nicole-dive-center@divedispatch.dev',
-    phone: '+66-76-386-002',
+    phone: '+6676386002',
     manufacturersByGearType: {
       wetsuit: ['ScubaPro', 'Aqua Lung', 'Mares'],
       bcd: ['ScubaPro', 'Aqua Lung', 'Mares'],
@@ -473,7 +491,7 @@ export const MANTA_DC: SeedStakeholder = {
     firstName: 'Pierre',
     lastName: 'Duval',
     appLanguage: 'fr',
-    phone: '+66-81-234-5005',
+    phone: '+66812345005',
   },
   roles: [
     { role: 'DiveCenter' },
@@ -482,7 +500,7 @@ export const MANTA_DC: SeedStakeholder = {
     name: 'Manta Dive Center',
     ...PHUKET,
     email: 'manta-dive-center@divedispatch.dev',
-    phone: '+66-76-387-001',
+    phone: '+6676387001',
     associations: [{ agency: 'SSI', number: 'DC-80234', ...SSI_PREFS }],
     customerLanguages: ['fr', 'en', 'th'],
     verified: VERIFIED,
@@ -497,7 +515,7 @@ export const SCUBANICKS: SeedStakeholder = {
     firstName: 'Nick',
     lastName: 'Harrison',
     appLanguage: 'en',
-    phone: '+66-81-234-5006',
+    phone: '+66812345006',
   },
   roles: [
     { role: 'DiveCenter' },
@@ -507,7 +525,7 @@ export const SCUBANICKS: SeedStakeholder = {
     name: 'ScubaNicks',
     ...PHUKET,
     email: 'scubanicks@divedispatch.dev',
-    phone: '+66-76-388-001',
+    phone: '+6676388001',
     associations: [{ agency: 'SSI', number: 'DC-91547', ...SSI_PREFS }],
     customerLanguages: ['en', 'th', 'zh-CN'],
     verified: VERIFIED,
@@ -516,7 +534,7 @@ export const SCUBANICKS: SeedStakeholder = {
     name: 'ScubaNicks',
     ...PHUKET,
     email: 'scubanicks@divedispatch.dev',
-    phone: '+66-76-388-002',
+    phone: '+6676388002',
     manufacturersByGearType: { wetsuit: ['ScubaPro'], bcd: ['ScubaPro'] },
     isAllowed: ['m4fx8d'],
     verified: VERIFIED,
@@ -531,7 +549,7 @@ export const SCUBA_DEEP: SeedStakeholder = {
     firstName: 'James',
     lastName: 'Mitchell',
     appLanguage: 'en',
-    phone: '+66-81-234-5007',
+    phone: '+66812345007',
   },
   roles: [
     { role: 'DiveCenter' },
@@ -541,7 +559,7 @@ export const SCUBA_DEEP: SeedStakeholder = {
     name: 'Scuba Deep',
     ...PHUKET,
     email: 'scuba-deep@divedispatch.dev',
-    phone: '+66-76-389-001',
+    phone: '+6676389001',
     associations: [
       { agency: 'SSI', number: 'DC-72019', ...SSI_PREFS },
       { agency: 'PADI', number: 'S-61834', ...PADI_PREFS },
@@ -553,7 +571,7 @@ export const SCUBA_DEEP: SeedStakeholder = {
     name: 'Scuba Deep',
     ...PHUKET,
     email: 'scuba-deep@divedispatch.dev',
-    phone: '+66-76-389-003',
+    phone: '+6676389003',
     manufacturersByGearType: { wetsuit: ['Mares'], bcd: ['Mares'] },
     isAllowed: ['h3cp6n'],
     verified: VERIFIED,
@@ -568,7 +586,7 @@ export const SIROLO: SeedStakeholder = {
     firstName: 'Prasit',
     lastName: 'Wongsawat',
     appLanguage: 'th',
-    phone: '+66-81-234-5008',
+    phone: '+66812345008',
   },
   roles: [
     { role: 'DiveCenter' },
@@ -579,7 +597,7 @@ export const SIROLO: SeedStakeholder = {
     name: 'Sirolo',
     ...CHALONG,
     email: 'sirolo@divedispatch.dev',
-    phone: '+66-76-391-001',
+    phone: '+6676391001',
     associations: [
       { agency: 'SSI', number: 'DC-70123', ...SSI_PREFS },
       { agency: 'PADI', number: 'S-70124', ...PADI_PREFS },
@@ -591,7 +609,7 @@ export const SIROLO: SeedStakeholder = {
     name: 'Sirolo',
     ...CHALONG,
     email: 'sirolo@divedispatch.dev',
-    phone: '+66-76-391-002',
+    phone: '+6676391002',
     fleet: [
       {
         boatName: 'M.V. Sirolo',
@@ -611,7 +629,7 @@ export const SIROLO: SeedStakeholder = {
     name: 'Sirolo',
     ...CHALONG,
     email: 'sirolo@divedispatch.dev',
-    phone: '+66-76-391-003',
+    phone: '+6676391003',
     manufacturersByGearType: { wetsuit: ['Mares'], bcd: ['Mares'] },
     isAllowed: ['sirolo'],
     verified: VERIFIED,
@@ -626,7 +644,7 @@ export const PRAY_DC: SeedStakeholder = {
     firstName: 'Anong',
     lastName: 'Srisuk',
     appLanguage: 'en',
-    phone: '+66-81-234-5009',
+    phone: '+66812345009',
   },
   roles: [
     { role: 'DiveCenter' },
@@ -635,7 +653,7 @@ export const PRAY_DC: SeedStakeholder = {
     name: 'Pray Dive Center',
     ...PHUKET,
     email: 'pray-dive-center@divedispatch.dev',
-    phone: '+66-76-390-001',
+    phone: '+6676390001',
     associations: [{ agency: 'PADI', number: 'S-48203', ...PADI_PREFS }],
     customerLanguages: ['en', 'th', 'fr', 'de'],
     verified: VERIFIED,
@@ -650,7 +668,7 @@ export const HANUL_DIVE: SeedStakeholder = {
     firstName: 'Joon-Woo',
     lastName: 'Park',
     appLanguage: 'ko',
-    phone: '+66-81-234-5013',
+    phone: '+66812345013',
   },
   roles: [
     { role: 'DiveCenter' },
@@ -659,7 +677,7 @@ export const HANUL_DIVE: SeedStakeholder = {
     name: 'Hanul Dive',
     ...PHUKET,
     email: 'hanul-dive@divedispatch.dev',
-    phone: '+66-76-396-001',
+    phone: '+6676396001',
     associations: [
       { agency: 'PADI', number: 'S-82301', ...PADI_PREFS },
       { agency: 'SSI', number: 'DC-82302', ...SSI_PREFS },
@@ -677,7 +695,7 @@ export const UMI_DIVE: SeedStakeholder = {
     firstName: 'Haruto',
     lastName: 'Tanaka',
     appLanguage: 'en',
-    phone: '+66-81-234-5015',
+    phone: '+66812345015',
   },
   roles: [
     { role: 'DiveCenter' },
@@ -686,7 +704,7 @@ export const UMI_DIVE: SeedStakeholder = {
     name: 'Umi Dive Center',
     ...PHUKET,
     email: 'umi-dive@divedispatch.dev',
-    phone: '+66-76-396-002',
+    phone: '+6676396002',
     associations: [
       { agency: 'PADI', number: 'S-83101', ...PADI_PREFS },
       { agency: 'SSI', number: 'DC-83102', ...SSI_PREFS },
@@ -704,7 +722,7 @@ export const AQUA_PRO: SeedStakeholder = {
     firstName: 'Sergei',
     lastName: 'Kozlov',
     appLanguage: 'en',
-    phone: '+66-81-234-5016',
+    phone: '+66812345016',
   },
   roles: [
     { role: 'DiveCenter' },
@@ -713,7 +731,7 @@ export const AQUA_PRO: SeedStakeholder = {
     name: 'Aqua Pro Dive',
     ...PHUKET,
     email: 'aqua-pro@divedispatch.dev',
-    phone: '+66-76-396-003',
+    phone: '+6676396003',
     associations: [
       { agency: 'PADI', number: 'S-84203', ...PADI_PREFS },
       { agency: 'SSI', number: 'DC-84204', ...SSI_PREFS },
@@ -731,7 +749,7 @@ export const PACIFIC_DIVERS: SeedStakeholder = {
     firstName: 'Carlos',
     lastName: 'Mendoza',
     appLanguage: 'en',
-    phone: '+66-81-234-5017',
+    phone: '+66812345017',
   },
   roles: [
     { role: 'DiveCenter' },
@@ -740,7 +758,7 @@ export const PACIFIC_DIVERS: SeedStakeholder = {
     name: 'Pacific Divers',
     ...PHUKET,
     email: 'pacific-divers@divedispatch.dev',
-    phone: '+66-76-396-004',
+    phone: '+6676396004',
     associations: [
       { agency: 'PADI', number: 'S-85104', ...PADI_PREFS },
       { agency: 'SSI', number: 'DC-85105', ...SSI_PREFS },
@@ -758,7 +776,7 @@ export const BLUE_PLANET: SeedStakeholder = {
     firstName: 'Willem',
     lastName: 'de Groot',
     appLanguage: 'en',
-    phone: '+66-81-234-5018',
+    phone: '+66812345018',
   },
   roles: [
     { role: 'DiveCenter' },
@@ -767,7 +785,7 @@ export const BLUE_PLANET: SeedStakeholder = {
     name: 'Blue Planet Diving',
     ...PHUKET,
     email: 'blue-planet@divedispatch.dev',
-    phone: '+66-76-396-005',
+    phone: '+6676396005',
     associations: [
       { agency: 'PADI', number: 'S-86200', ...PADI_PREFS },
       { agency: 'SSI', number: 'DC-86201', ...SSI_PREFS },
@@ -785,7 +803,7 @@ export const AMANDA: SeedStakeholder = {
     firstName: 'Amanda',
     lastName: 'Chen',
     appLanguage: 'zh-CN',
-    phone: '+66-81-234-5010',
+    phone: '+66812345010',
     customerLanguages: ['zh-CN', 'zh-TW', 'en', 'th'],
   },
   roles: [
@@ -795,7 +813,7 @@ export const AMANDA: SeedStakeholder = {
     name: 'Amanda',
     ...PHUKET,
     email: 'amanda@divedispatch.dev',
-    phone: '+66-81-555-0012',
+    phone: '+66815550012',
     associations: [{ agency: 'PADI', number: 'A-10482' }],
     verified: VERIFIED,
   },
@@ -809,7 +827,7 @@ export const JIYEON_AGENT: SeedStakeholder = {
     firstName: 'Ji-Yeon',
     lastName: 'Park',
     appLanguage: 'ko',
-    phone: '+82-10-3456-7890',
+    phone: '+821034567890',
     customerLanguages: ['ko', 'en'],
   },
   roles: [{ role: 'Agent' }],
@@ -820,7 +838,7 @@ export const JIYEON_AGENT: SeedStakeholder = {
     lat: 37.5665,
     lng: 126.9780,
     email: 'jiyeon@divedispatch.dev',
-    phone: '+82-10-3456-7890',
+    phone: '+821034567890',
     associations: [
       { agency: 'PADI', number: 'A-20501' },
       { agency: 'SSI', number: 'A-20502' },
@@ -837,7 +855,7 @@ export const KENJI_AGENT: SeedStakeholder = {
     firstName: 'Kenji',
     lastName: 'Watanabe',
     appLanguage: 'en',
-    phone: '+81-90-1234-5678',
+    phone: '+819012345678',
     customerLanguages: ['ja', 'en'],
   },
   roles: [{ role: 'Agent' }],
@@ -848,7 +866,7 @@ export const KENJI_AGENT: SeedStakeholder = {
     lat: 35.6762,
     lng: 139.6503,
     email: 'kenji@divedispatch.dev',
-    phone: '+81-90-1234-5678',
+    phone: '+819012345678',
     associations: [
       { agency: 'PADI', number: 'A-20503' },
       { agency: 'SSI', number: 'A-20504' },
@@ -865,7 +883,7 @@ export const EVA_AGENT: SeedStakeholder = {
     firstName: 'Eva',
     lastName: 'Klein',
     appLanguage: 'en',
-    phone: '+49-170-1234567',
+    phone: '+491701234567',
     customerLanguages: ['de', 'fr', 'nl'],
   },
   roles: [{ role: 'Agent' }],
@@ -876,7 +894,7 @@ export const EVA_AGENT: SeedStakeholder = {
     lat: 52.5200,
     lng: 13.4050,
     email: 'eva@divedispatch.dev',
-    phone: '+49-170-1234567',
+    phone: '+491701234567',
     associations: [
       { agency: 'PADI', number: 'A-20505' },
       { agency: 'SSI', number: 'A-20506' },
@@ -893,7 +911,7 @@ export const ANDAMAN_EXPLORER: SeedStakeholder = {
     firstName: 'Chaiwat',
     lastName: 'Meesuk',
     appLanguage: 'en',
-    phone: '+66-81-234-5011',
+    phone: '+66812345011',
   },
   roles: [
     { role: 'Liveaboard' },
@@ -902,7 +920,7 @@ export const ANDAMAN_EXPLORER: SeedStakeholder = {
     name: 'Andaman Explorer',
     ...PHUKET,
     email: 'andaman-explorer@divedispatch.dev',
-    phone: '+66-76-392-001',
+    phone: '+6676392001',
     verified: VERIFIED,
   },
 }
@@ -915,7 +933,7 @@ export const CORAL_BAY_RESORT: SeedStakeholder = {
     firstName: 'Supattra',
     lastName: 'Laohakul',
     appLanguage: 'th',
-    phone: '+66-81-234-5012',
+    phone: '+66812345012',
   },
   roles: [
     { role: 'DiveResort' },
@@ -924,7 +942,7 @@ export const CORAL_BAY_RESORT: SeedStakeholder = {
     name: 'Coral Bay Resort',
     ...PHUKET,
     email: 'coral-bay-resort@divedispatch.dev',
-    phone: '+66-76-393-001',
+    phone: '+6676393001',
     verified: VERIFIED,
   },
 }
@@ -937,7 +955,7 @@ export const WATER_PRO: SeedStakeholder = {
     firstName: 'Niran',
     lastName: 'Jantarakul',
     appLanguage: 'th',
-    phone: '+66-76-394-001',
+    phone: '+6676394001',
   },
   roles: [
     { role: 'Pool' },
@@ -946,7 +964,7 @@ export const WATER_PRO: SeedStakeholder = {
     name: 'Water Pro',
     ...PHUKET,
     email: 'water-pro@divedispatch.dev',
-    phone: '+66-76-394-001',
+    phone: '+6676394001',
     maxDepth: 2.5,
     maxCapacity: 25,
     verified: VERIFIED,
@@ -963,7 +981,7 @@ export const SHARK_BITES: SeedStakeholder = {
     firstName: 'Kittisak',
     lastName: 'Wongsawat',
     appLanguage: 'th',
-    phone: '+66-76-394-002',
+    phone: '+6676394002',
   },
   roles: [
     { role: 'Pool' },
@@ -972,7 +990,7 @@ export const SHARK_BITES: SeedStakeholder = {
     name: 'Shark Bites',
     ...PHUKET,
     email: 'shark-bites@divedispatch.dev',
-    phone: '+66-76-394-002',
+    phone: '+6676394002',
     maxDepth: 2.5,
     maxCapacity: 8,
     verified: VERIFIED,
@@ -989,17 +1007,18 @@ export const SCUBA_REVOLUTION: SeedStakeholder = {
     firstName: 'Anong',
     lastName: 'Petcharat',
     appLanguage: 'th',
-    phone: '+66-76-330-678',
+    phone: '+6676330678',
   },
   roles: [{ role: 'Equipment' }],
   equipment: {
     name: 'Scuba Revolution Phuket',
     placeName: 'Phuket',
     country: 'Thailand',
+    address: PHUKET_TH_ADDRESS,
     lat: 7.8207,
     lng: 98.3425,
     email: 'scuba-revolution@divedispatch.dev',
-    phone: '+66-76-330-678',
+    phone: '+6676330678',
     manufacturersByGearType: {
       wetsuit: ['ScubaPro', 'Aqua Lung', 'Mares'],
       bcd: ['ScubaPro', 'Aqua Lung', 'Mares'],
@@ -1028,6 +1047,7 @@ export const RESTORED_PRAWIT: SeedStakeholder = {
     name: 'Scuba Market Thailand',
     placeName: 'Wat Kitti Sangkharam, 44 Thanon Kata, Tambon Karon, Amphoe Mueang Phuket, Chang Wat Phuket 83100',
     country: 'Thailand',
+    address: { street: '44 Thanon Kata, Tambon Karon', city: 'Phuket', state: 'Phuket', country: 'TH', postalCode: '83100' },
     lat: 7.8215228,
     lng: 98.3062015,
     email: 'scuba-market+clerk_test@divedispatch.dev',
@@ -1057,6 +1077,7 @@ export const RESTORED_SOMBAT: SeedStakeholder = {
     name: 'Compressor Shop Chalong Pier',
     placeName: 'Asian Divers, Wiset Rd, Tambon Karon, Amphoe Mueang Phuket, Chang Wat Phuket 83100',
     country: 'Thailand',
+    address: { street: 'Asian Divers, Wiset Rd, Tambon Karon', city: 'Phuket', state: 'Phuket', country: 'TH', postalCode: '83100' },
     lat: 7.8203607,
     lng: 98.3423974,
     email: 'compressor-chalong+clerk_test@divedispatch.dev',

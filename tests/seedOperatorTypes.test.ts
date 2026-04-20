@@ -19,7 +19,7 @@ describe('Non-DiveCenter operator seed data', () => {
       expect(user.name).toBe('Chaiwat Meesuk')
       expect(user.firstName).toBe('Chaiwat')
       expect(user.lastName).toBe('Meesuk')
-      expect(user.phone).toBe('+66-81-234-5011')
+      expect(user.phone).toBe('+66812345011')
     })
 
     it('has the Liveaboard role assigned', () => {
@@ -34,7 +34,7 @@ describe('Non-DiveCenter operator seed data', () => {
       expect(profile.lat).toBe(7.8804)
       expect(profile.lng).toBe(98.3923)
       expect(profile.email).toBe('andaman-explorer@divedispatch.dev')
-      expect(profile.phone).toBe('+66-76-392-001')
+      expect(profile.phone).toBe('+6676392001')
       expect(profile.verified).toBe(true)
     })
 
@@ -63,7 +63,7 @@ describe('Non-DiveCenter operator seed data', () => {
       expect(user.name).toBe('Supattra Laohakul')
       expect(user.firstName).toBe('Supattra')
       expect(user.lastName).toBe('Laohakul')
-      expect(user.phone).toBe('+66-81-234-5012')
+      expect(user.phone).toBe('+66812345012')
     })
 
     it('has the DiveResort role assigned', () => {
@@ -78,7 +78,7 @@ describe('Non-DiveCenter operator seed data', () => {
       expect(profile.lat).toBe(7.8804)
       expect(profile.lng).toBe(98.3923)
       expect(profile.email).toBe('coral-bay-resort@divedispatch.dev')
-      expect(profile.phone).toBe('+66-76-393-001')
+      expect(profile.phone).toBe('+6676393001')
       expect(profile.verified).toBe(true)
     })
 
@@ -107,7 +107,7 @@ describe('Non-DiveCenter operator seed data', () => {
       expect(user.name).toBe('Amanda Chen')
       expect(user.firstName).toBe('Amanda')
       expect(user.lastName).toBe('Chen')
-      expect(user.phone).toBe('+66-81-234-5010')
+      expect(user.phone).toBe('+66812345010')
     })
 
     it('has the Agent role assigned', () => {
@@ -122,7 +122,7 @@ describe('Non-DiveCenter operator seed data', () => {
       expect(profile.lat).toBe(7.8804)
       expect(profile.lng).toBe(98.3923)
       expect(profile.email).toBe('amanda@divedispatch.dev')
-      expect(profile.phone).toBe('+66-81-555-0012')
+      expect(profile.phone).toBe('+66815550012')
       expect(profile.verified).toBe(true)
     })
 

@@ -108,6 +108,7 @@ export const PARKED_INSTRUCTORS: SeedStakeholder[] = ROSTER.map((def, i) => buil
 const PHUKET_CHALONG = {
   placeName: 'Chalong, Mueang Phuket District, Phuket',
   country: 'Thailand',
+  address: { city: 'Phuket', state: 'Phuket', country: 'TH' } as const,
   lat: 7.8367169,
   lng: 98.3483897,
 } as const
@@ -177,6 +178,7 @@ export const RESTORED_ARISA: SeedStakeholder = {
 const PHUKET_ISLAND = {
   placeName: 'Phuket',
   country: 'Thailand',
+  address: { city: 'Phuket', country: 'TH' } as const,
   lat: 7.8804,
   lng: 98.3923,
 } as const
