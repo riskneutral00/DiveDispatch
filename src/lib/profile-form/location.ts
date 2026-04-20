@@ -1,6 +1,17 @@
+import countries from 'i18n-iso-countries'
+import enCountries from 'i18n-iso-countries/langs/en.json'
 import { locationSchema, type LocationValue } from '@/lib/schemas/location'
 
+countries.registerLocale(enCountries as unknown as Parameters<typeof countries.registerLocale>[0])
+
 export type ProfileLocationValue = LocationValue
+
+function toIsoCountryCode(value: string): string | undefined {
+  if (!value) return undefined
+  if (/^[A-Z]{2}$/.test(value) && countries.isValid(value)) return value
+  const iso = countries.getAlpha2Code(value, 'en')
+  return iso || undefined
+}
 
 const DEFAULT_LOCATION_REQUIRED = 'Location is required'
 
@@ -57,12 +68,20 @@ export function defaultFromMe<T extends Record<string, unknown>>(
 }
 
 export function locationToPayload(loc: ProfileLocationValue) {
-  return {
+  const iso = toIsoCountryCode(loc.country)
+  const base = {
     placeName: loc.placeName,
     country: loc.country,
     lat: loc.lat,
     lng: loc.lng,
   }
+  if (iso) {
+    return {
+      ...base,
+      address: { city: loc.placeName, country: iso },
+    }
+  }
+  return base
 }
 
 export type ContactFormState = {
