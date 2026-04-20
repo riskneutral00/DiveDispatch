@@ -320,7 +320,7 @@ export const checkPreferredAvailability = query({
 
 export async function _toggleBlockedDate(
   ctx: MutationCtx,
-  args: { date: string; roleType: StakeholderRole },
+  args: { date: string; roleType: StakeholderRole; timezone?: string },
 ): Promise<boolean> {
   const { user } = await authorize(ctx, null, 'resource:manage', { type: 'resource' })
 
@@ -342,7 +342,7 @@ export async function _toggleBlockedDate(
     }
     return false
   } else {
-    if (args.date < todayISO()) {
+    if (args.date < todayISO(args.timezone)) {
       throw new ConvexError({ code: ErrorCode.PAST_DATE, date: args.date })
     }
 
@@ -493,7 +493,7 @@ export async function _toggleBlockedDate(
 }
 
 export const toggleBlockedDate = mutation({
-  args: { date: v.string(), roleType: stakeholderType },
+  args: { date: v.string(), roleType: stakeholderType, timezone: v.optional(v.string()) },
   handler: _toggleBlockedDate,
 })
 
