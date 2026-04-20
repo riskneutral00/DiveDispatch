@@ -17,7 +17,6 @@ const AGENT_TOKEN = 'clerk|ref-agent'
 
 async function seedReadyReferrerAgent(ctx: Parameters<ReturnType<typeof makeT>['run']>[0] extends (c: infer C) => unknown ? C : never) {
   const agentId = await seedUser(ctx, { slug: AGENT_SLUG, tokenIdentifier: AGENT_TOKEN, role: 'Agent' })
-  await ctx.db.patch(agentId, { customerLanguages: ['en'] })
   await seedAgent(ctx, agentId, { verified: true })
   await seedStakeholderPreferences(ctx, AGENT_SLUG, {
     stakeholderType: 'Agent',

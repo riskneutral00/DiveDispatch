@@ -212,8 +212,6 @@ describe('listByRole language propagation', () => {
     await t.run(async (ctx) => {
       const callerId = await seedCallerUser(ctx, 'caller-lang')
       const u1 = await seedInstructorUser(ctx, 'inst-lang')
-      // Set customerLanguages on user (should NOT appear in result)
-      await ctx.db.patch(u1, { customerLanguages: ['fr-FR', 'de-DE'] })
       // Set teachingLanguages on instructor profile (SHOULD appear)
       await seedInstructorProfile(ctx, u1, 'Nattaya', 'Koh Tao', 'Thailand', true)
       const inst = await ctx.db.query('diveStaff')
@@ -242,8 +240,7 @@ describe('listByRole language propagation', () => {
         firstName: 'DC',
         lastName: 'Lang',
         dateOfBirth: '1990-01-01',
-            appLanguage: 'en',
-        customerLanguages: ['ko-KR', 'ja-JP'],
+        appLanguage: 'en',
       })
       await ctx.db.insert('userRoles', {
         userId: dcUserId,
@@ -262,6 +259,7 @@ describe('listByRole language propagation', () => {
         email: 'dc@test.com',
         phone: '+66123456789',
         associations: [{ agency: 'PADI', number: '12345' }],
+        customerLanguages: ['ko-KR', 'ja-JP'],
         verified: true,
       })
     })

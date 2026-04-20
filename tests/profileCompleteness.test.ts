@@ -147,11 +147,11 @@ describe('checkProfileCompleteness', () => {
     })
   })
 
-  it('Agent with profile but no users.customerLanguages marks customerLanguages incomplete', async () => {
+  it('Agent with profile but empty agents.customerLanguages marks customerLanguages incomplete', async () => {
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx, { role: 'Agent' })
       await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
-      await seedAgent(ctx, userId)
+      await seedAgent(ctx, userId, { customerLanguages: [] })
 
       const result = await checkProfileCompleteness(ctx, { _id: userId }, 'Agent')
 

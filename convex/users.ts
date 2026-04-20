@@ -49,7 +49,6 @@ export const createUser = mutation({
     nickname: v.optional(v.string()),
     phone: v.optional(v.string()),
     appLanguage: v.optional(v.string()),
-    customerLanguages: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity()
@@ -83,7 +82,6 @@ export const createUser = mutation({
         ...(args.nickname !== undefined && { nickname: args.nickname }),
         ...(args.phone !== undefined && { phone: args.phone }),
         ...(args.appLanguage !== undefined && { appLanguage: args.appLanguage }),
-        ...(args.customerLanguages !== undefined && { customerLanguages: args.customerLanguages }),
         ...(existing.tcAcceptedAt === undefined && { tcAcceptedAt: now }),
         ...(args.tcVersion !== existing.tcVersion && { tcVersion: args.tcVersion, tcAcceptedAt: now }),
       })
@@ -104,7 +102,6 @@ export const createUser = mutation({
       tcVersion: args.tcVersion,
       ...(args.nickname !== undefined && { nickname: args.nickname }),
       ...(args.phone !== undefined && { phone: args.phone }),
-      customerLanguages: args.customerLanguages,
       appLanguage: args.appLanguage ?? 'en',
     })
 
@@ -141,7 +138,6 @@ export const updateProfile = mutation({
     phone: v.optional(v.string()),
     dateOfBirth: v.optional(v.string()),
     appLanguage: v.optional(v.string()),
-    customerLanguages: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     const { user } = await authorize(ctx, null, 'profile:manage', { type: 'profile' })
@@ -159,7 +155,6 @@ export const updateProfile = mutation({
       ...(sanitized.phone !== undefined && { phone: sanitized.phone }),
       ...(args.dateOfBirth !== undefined && { dateOfBirth: args.dateOfBirth }),
       ...(args.appLanguage !== undefined && { appLanguage: args.appLanguage }),
-      ...(args.customerLanguages !== undefined && { customerLanguages: args.customerLanguages }),
     })
 
     await syncDiveStaffName(
@@ -297,7 +292,6 @@ export const getAccountDefaults = query({
 
     return {
       defaultLocation: user.defaultLocation,
-      customerLanguages: user.customerLanguages,
     }
   },
 })

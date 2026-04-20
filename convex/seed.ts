@@ -194,11 +194,6 @@ async function insertUser(ctx: MutationCtx, s: SeedStakeholder) {
     appLanguage: s.user.appLanguage,
     phone: s.user.phone,
     dateOfBirth: s.user.dateOfBirth ?? '1990-01-01',
-    ...(s.diveCenter?.customerLanguages
-      ? { customerLanguages: s.diveCenter.customerLanguages }
-      : s.user.customerLanguages
-        ? { customerLanguages: s.user.customerLanguages }
-        : {}),
   })
 }
 
@@ -251,7 +246,8 @@ export const seedStakeholders = internalMutation({
         await ctx.db.insert('compressors', { userId, organizationId, ...s.compressor }) // batch-exempt
       }
       if (s.agent) {
-        await ctx.db.insert('agents', { userId, organizationId, ...s.agent }) // batch-exempt
+        const agentPayload = { userId, organizationId, ...s.agent, customerLanguages: s.user.customerLanguages ?? [] }
+        await ctx.db.insert('agents', agentPayload) // batch-exempt
       }
       if (s.liveaboard) {
         await insertLiveaboard(ctx, { userId, organizationId, ...s.liveaboard }) // batch-exempt

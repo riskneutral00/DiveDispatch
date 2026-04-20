@@ -29,7 +29,6 @@ async function seedUser(ctx: Ctx, slug: string, role: StakeholderRole = 'Agent')
 
 async function seedReadyAgent(ctx: Ctx, slug: string) {
   const userId = await seedUser(ctx, slug, 'Agent')
-  await ctx.db.patch(userId, { customerLanguages: ['en'] })
   await seedCompleteOperator(ctx, slug, 'Agent', userId)
   return userId
 }
@@ -66,6 +65,7 @@ async function seedCompleteOperator(ctx: Ctx, slug: string, role: StakeholderRol
       email: `${slug}@test.com`,
       phone: '+66123456789',
       associations: [{ agency: 'PADI', number: '99999' }],
+      customerLanguages: ['en'],
       verified: true,
     })
   }

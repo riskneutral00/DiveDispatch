@@ -160,7 +160,6 @@ describe('createDraftShell — activeRole ownership stamping', () => {
         createdAt: Date.now(),
       })
       await seedAgent(ctx, userId)
-      await ctx.db.patch(userId, { customerLanguages: ['en-GB'] })
       await seedBookingTemplate(ctx, {
         ownerId: 'dc-own-2',
         ownerType: 'Agent',

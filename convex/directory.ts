@@ -235,8 +235,7 @@ export const listByRole = query({
             isPreferred,
             languages:
               profile.teachingLanguages
-              ?? profile.customerLanguages
-              ?? u.customerLanguages,
+              ?? profile.customerLanguages,
           }
         }),
     )

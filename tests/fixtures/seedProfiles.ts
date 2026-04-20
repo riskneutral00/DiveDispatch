@@ -45,6 +45,7 @@ export async function seedAgent(
     email?: string
     phone?: string
     associations?: Array<{ agency: string; number: string }>
+    customerLanguages?: string[]
     verified?: boolean
     organizationId?: Id<'organizations'>
   } = {},
@@ -61,6 +62,7 @@ export async function seedAgent(
     email: overrides.email ?? 'agent@test.com',
     phone: overrides.phone ?? '+66123456789',
     associations: overrides.associations ?? [{ agency: 'PADI', number: '12345' }],
+    customerLanguages: overrides.customerLanguages ?? ['en'],
     verified: overrides.verified ?? false,
   })
 }

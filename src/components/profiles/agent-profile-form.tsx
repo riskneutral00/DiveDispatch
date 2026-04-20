@@ -71,12 +71,11 @@ export function contactFromProfile(
 
 function contactFromProfileMerged(
   p: Record<string, unknown>,
-  me?: Record<string, unknown> | null,
 ): AgentContactFormState {
   return {
     ...contactFromProfile(p),
     customerLanguages: languagesFromProfile(
-      (me as { customerLanguages?: string[] } | undefined)?.customerLanguages,
+      (p as { customerLanguages?: string[] }).customerLanguages,
     ),
   };
 }
@@ -87,9 +86,7 @@ function agentMergedFromMe(
 ): AgentContactFormState {
   return {
     ...defaultFromMe(u, defaults),
-    customerLanguages: languagesFromProfile(
-      (u as { customerLanguages?: string[] }).customerLanguages,
-    ),
+    customerLanguages: [],
     access: defaults.access,
   };
 }

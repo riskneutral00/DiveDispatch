@@ -75,11 +75,6 @@ export async function checkProfileCompleteness(
       continue
     }
 
-    if (role === 'Agent' && field === 'customerLanguages') {
-      if (!arr(userDoc.customerLanguages)) incomplete.push(field)
-      continue
-    }
-
     if (role === 'Agent' && field === 'placeName') {
       if (!str(profile.placeName)) incomplete.push(field)
       continue

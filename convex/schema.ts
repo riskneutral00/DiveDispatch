@@ -27,7 +27,6 @@ export default defineSchema({
     lastName: v.string(),
     nickname: v.optional(v.string()),
     appLanguage: v.string(),
-    customerLanguages: v.optional(v.array(v.string())),
     phone: v.optional(v.string()),
     dateOfBirth: v.optional(v.string()),
     selectedThemeId: v.optional(v.id('themes')),

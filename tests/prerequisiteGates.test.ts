@@ -139,7 +139,6 @@ describe('prerequisite gate: Agent — associations depth', () => {
       await ctx.db.patch(userId, {
         phone: '+66123456789',
         appLanguage: 'en',
-        customerLanguages: ['en-GB'],
       })
       await seedAgent(ctx, userId, {
         associations: [{ agency: '', number: '' }],

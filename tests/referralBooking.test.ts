@@ -6,7 +6,6 @@ import { makeT } from './helpers/convex-helpers'
 
 async function seedReadyAgent(ctx: SeedCtx, slug: string) {
   const userId = await seedUser(ctx, { slug, tokenIdentifier: `clerk|${slug}`, role: 'Agent' })
-  await ctx.db.patch(userId, { customerLanguages: ['en'] })
   const organizationId = await getOrCreateTestOrg(ctx, userId, `${slug} Agency`)
   await ctx.db.insert('agents', {
     userId,
@@ -19,6 +18,7 @@ async function seedReadyAgent(ctx: SeedCtx, slug: string) {
     email: `${slug}@test.com`,
     phone: '+66123456789',
     associations: [{ agency: 'PADI', number: '99999' }],
+    customerLanguages: ['en'],
     verified: true,
   })
   await seedStakeholderPreferences(ctx, slug, {
