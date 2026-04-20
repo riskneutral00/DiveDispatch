@@ -53,6 +53,7 @@ mrz
 @types/react
 @types/react-dom
 @vitest/coverage-v8
+ajv
 ajv-cli
 ajv-formats
 axe-core

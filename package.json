@@ -83,6 +83,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitest/coverage-v8": "^4.1.4",
+    "ajv": "8.18.0",
     "ajv-cli": "5.0.0",
     "ajv-formats": "3.0.1",
     "axe-core": "^4.11.3",
