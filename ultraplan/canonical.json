@@ -33,24 +33,29 @@
         "lastName": "Suksawat",
         "appLanguage": "th",
         "dateOfBirth": "1975-08-12",
-        "phone": "+66-76-330-345"
+        "phone": "+6676330345",
+        "slug": "wkxhew",
+        "clerkUserIdHint": "user_seed_compressor-1"
       },
       "compressors": {
         "name": "Scuba Market Thailand",
-        "placeName": "Phuket",
-        "country": "Thailand",
         "lat": 7.8202,
         "lng": 98.3062,
         "email": "scuba-market+clerk_test@divedispatch.dev",
-        "phone": "+66-76-330-345",
+        "phone": "+6676330345",
         "gasMixes": [
           "air",
           "nitrox"
         ],
         "nitroxMin": 32,
         "nitroxMax": 32,
-        "verified": false
-      }
+        "verified": false,
+        "address": {
+          "city": "Phuket",
+          "country": "TH"
+        }
+      },
+      "clerkOrgIdHint": "org_seed_compressor-1"
     },
     "compressor_2": {
       "role": "Compressor",
@@ -62,25 +67,29 @@
         "lastName": "Charoensuk",
         "appLanguage": "th",
         "dateOfBirth": "1982-04-20",
-        "phone": "+66-81-234-5014"
+        "phone": "+66812345014",
+        "slug": "h0a5zl",
+        "clerkUserIdHint": "user_seed_compressor-2"
       },
       "compressors": {
         "name": "Compressor Shop Chalong Pier",
-        "placeName": "Phuket",
-        "country": "Thailand",
         "lat": 7.8386,
         "lng": 98.3519,
         "email": "compressor-chalong+clerk_test@divedispatch.dev",
-        "phone": "+66-76-395-001",
-        "gasMixes_initial": [],
-        "gasMixes_completed": [
-          "air",
-          "nitrox"
-        ],
+        "phone": "+6676395001",
         "nitroxMin": 32,
         "nitroxMax": 32,
-        "verified": false
-      }
+        "verified": false,
+        "address": {
+          "city": "Phuket",
+          "country": "TH"
+        },
+        "gasMixes": [
+          "air",
+          "nitrox"
+        ]
+      },
+      "clerkOrgIdHint": "org_seed_compressor-2"
     },
     "equipment_manager_1": {
       "role": "Equipment",
@@ -93,16 +102,16 @@
         "lastName": "Prasert",
         "appLanguage": "zh-CN",
         "dateOfBirth": "1980-01-15",
-        "phone": "+66-81-234-5001"
+        "phone": "+66812345001",
+        "slug": "n7rq5j",
+        "clerkUserIdHint": "user_seed_equipment-manager-1"
       },
       "equipment": {
         "name": "Hug Ocean",
-        "placeName": "Phuket",
-        "country": "Thailand",
         "lat": 7.8804,
         "lng": 98.3923,
         "email": "hug-ocean+clerk_test@divedispatch.dev",
-        "phone": "+66-76-381-103",
+        "phone": "+6676381103",
         "manufacturersByGearType": {
           "wetsuit": [
             "ScubaPro",
@@ -123,9 +132,14 @@
         "isAllowed": [
           "n7rq5j"
         ],
-        "verified": false
+        "verified": false,
+        "address": {
+          "city": "Phuket",
+          "country": "TH"
+        }
       },
-      "inventoryOverrides": "[30 SKUs @ totalUnits=4 each: wetsuit 3 brands × 4 sizes; bcd 3 brands × 3 sizes; fins 5 sizes (no brand); mask 1 regular (no brand); regulator 3 brands (no size). 4-customer capacity.]"
+      "inventoryOverrides": "[30 SKUs @ totalUnits=4 each: wetsuit 3 brands × 4 sizes; bcd 3 brands × 3 sizes; fins 5 sizes (no brand); mask 1 regular (no brand); regulator 3 brands (no size). 4-customer capacity.]",
+      "clerkOrgIdHint": "org_seed_equipment-manager-1"
     },
     "equipment_manager_2": {
       "role": "Equipment",
@@ -139,16 +153,16 @@
         "nickname": "Ta",
         "appLanguage": "th",
         "dateOfBirth": "1990-06-03",
-        "phone": "+66-76-330-678"
+        "phone": "+6676330678",
+        "slug": "v8sr2p",
+        "clerkUserIdHint": "user_seed_equipment-manager-2"
       },
       "equipment": {
         "name": "Scuba Revolution Phuket",
-        "placeName": "Phuket",
-        "country": "Thailand",
         "lat": 7.8207,
         "lng": 98.3425,
         "email": "scuba-revolution+clerk_test@divedispatch.dev",
-        "phone": "+66-76-330-678",
+        "phone": "+6676330678",
         "manufacturersByGearType": {
           "wetsuit": [
             "ScubaPro",
@@ -167,9 +181,14 @@
           ]
         },
         "isAllowed": [],
-        "verified": false
+        "verified": false,
+        "address": {
+          "city": "Phuket",
+          "country": "TH"
+        }
       },
-      "inventoryOverrides": "[Same 30-SKU spread as equipment_manager_1 @ 4-customer capacity.]"
+      "inventoryOverrides": "[Same 30-SKU spread as equipment_manager_1 @ 4-customer capacity.]",
+      "clerkOrgIdHint": "org_seed_equipment-manager-2"
     },
     "equipment_manager_3": {
       "role": "Equipment",
@@ -182,16 +201,16 @@
         "lastName": "Huang",
         "appLanguage": "zh-TW",
         "dateOfBirth": "1987-11-28",
-        "phone": "+66-81-234-5004"
+        "phone": "+66812345004",
+        "slug": "q9bz7r",
+        "clerkUserIdHint": "user_seed_equipment-manager-3"
       },
       "equipment": {
         "name": "Nicole Dive Center",
-        "placeName": "Phuket",
-        "country": "Thailand",
         "lat": 7.8804,
         "lng": 98.3923,
         "email": "nicole-dive-center+clerk_test@divedispatch.dev",
-        "phone": "+66-76-386-002",
+        "phone": "+6676386002",
         "manufacturersByGearType": {
           "wetsuit": [
             "ScubaPro",
@@ -210,22 +229,24 @@
           ]
         },
         "isAllowed": [],
-        "verified": false
+        "verified": false,
+        "address": {
+          "city": "Phuket",
+          "country": "TH"
+        }
       },
-      "inventoryOverrides_initial": "[29 SKUs @ totalUnits=4 each: wetsuit/bcd/regulator brand matrix + fins 5 sizes. NO mask SKUs — intentional gap.]",
-      "inventoryOverrides_completed": "[Add 1 mask SKU @ totalUnits=4 to reach parity with equipment_manager_1 and equipment_manager_2.]"
+      "inventoryOverrides": "[Add 1 mask SKU @ totalUnits=4 to reach parity with equipment_manager_1 and equipment_manager_2.]",
+      "clerkOrgIdHint": "org_seed_equipment-manager-3"
     },
     "boat_1": {
       "role": "Boat",
       "slugRef": "n7rq5j",
       "boats": {
         "name": "M.V. Hug Ocean",
-        "placeName": "Phuket",
-        "country": "Thailand",
         "lat": 7.8804,
         "lng": 98.3923,
         "email": "hug-ocean+clerk_test@divedispatch.dev",
-        "phone": "+66-76-381-101",
+        "phone": "+6676381101",
         "vessels": [
           {
             "name": "M.V. Hug Ocean",
@@ -250,8 +271,13 @@
         "hasCompressor": true,
         "isAllowed": [],
         "notAllowed": [],
-        "verified": false
-      }
+        "verified": false,
+        "address": {
+          "city": "Phuket",
+          "country": "TH"
+        }
+      },
+      "clerkOrgIdHint": "org_seed_boat-1"
     },
     "boat_2": {
       "role": "Boat",
@@ -264,18 +290,25 @@
         "lastName": "Charoen",
         "appLanguage": "th",
         "dateOfBirth": "1978-09-05",
-        "phone": "+66-81-234-5003"
+        "phone": "+66812345003",
+        "slug": "p5ky3w",
+        "clerkUserIdHint": "user_seed_boat-2"
       },
       "boats": {
         "name": "Mandarin Queen",
-        "placeName": "Phuket",
-        "country": "Thailand",
         "lat": 7.8804,
         "lng": 98.3923,
         "email": "phuket-dive-center+clerk_test@divedispatch.dev",
-        "phone": "+66-76-385-002",
-        "vessels_initial": [],
-        "vessels_completed": [
+        "phone": "+6676385002",
+        "hasCompressor": true,
+        "isAllowed": [],
+        "notAllowed": [],
+        "verified": false,
+        "address": {
+          "city": "Phuket",
+          "country": "TH"
+        },
+        "vessels": [
           {
             "name": "M.V. Mandarin Queen 5",
             "maxPax": 70,
@@ -334,12 +367,9 @@
               }
             ]
           }
-        ],
-        "hasCompressor": true,
-        "isAllowed": [],
-        "notAllowed": [],
-        "verified": false
-      }
+        ]
+      },
+      "clerkOrgIdHint": "org_seed_boat-2"
     },
     "instructor_1": {
       "role": "Instructor",
@@ -352,16 +382,16 @@
         "lastName": "Clarke",
         "appLanguage": "en",
         "dateOfBirth": "1985-03-22",
-        "phone": "+66-81-600-1000"
+        "phone": "+66816001000",
+        "slug": "ryan-clarke",
+        "clerkUserIdHint": "user_seed_instructor-1"
       },
       "instructors": {
         "name": "Ryan Clarke",
-        "placeName": "Phuket",
-        "country": "Thailand",
         "lat": 7.8804,
         "lng": 98.3923,
         "email": "ryan-clarke+clerk_test@divedispatch.dev",
-        "phone": "+66-81-600-1000",
+        "phone": "+66816001000",
         "credential": [
           {
             "agency": "PADI",
@@ -379,8 +409,13 @@
         ],
         "isAllowed": [],
         "notAllowed": [],
-        "verified": false
-      }
+        "verified": false,
+        "address": {
+          "city": "Phuket",
+          "country": "TH"
+        }
+      },
+      "clerkOrgIdHint": "org_seed_instructor-1"
     },
     "instructor_2": {
       "role": "Instructor",
@@ -393,16 +428,16 @@
         "lastName": "Ming",
         "appLanguage": "en",
         "dateOfBirth": "1991-07-14",
-        "phone": "+66-81-603-1003"
+        "phone": "+66816031003",
+        "slug": "li-ming",
+        "clerkUserIdHint": "user_seed_instructor-2"
       },
       "instructors": {
         "name": "Li Ming",
-        "placeName": "Phuket",
-        "country": "Thailand",
         "lat": 7.8804,
         "lng": 98.3923,
         "email": "li-ming+clerk_test@divedispatch.dev",
-        "phone": "+66-81-603-1003",
+        "phone": "+66816031003",
         "credential": [
           {
             "agency": "SSI",
@@ -420,8 +455,13 @@
         ],
         "isAllowed": [],
         "notAllowed": [],
-        "verified": false
-      }
+        "verified": false,
+        "address": {
+          "city": "Phuket",
+          "country": "TH"
+        }
+      },
+      "clerkOrgIdHint": "org_seed_instructor-2"
     },
     "instructor_3": {
       "role": "Instructor",
@@ -435,16 +475,16 @@
         "lastName": "Chen",
         "appLanguage": "en",
         "dateOfBirth": "1989-02-10",
-        "phone": "+66-81-602-1002"
+        "phone": "+66816021002",
+        "slug": "wei-chen",
+        "clerkUserIdHint": "user_seed_instructor-3"
       },
       "instructors": {
         "name": "Wei Chen",
-        "placeName": "Phuket",
-        "country": "Thailand",
         "lat": 7.8804,
         "lng": 98.3923,
         "email": "wei-chen+clerk_test@divedispatch.dev",
-        "phone": "+66-81-602-1002",
+        "phone": "+66816021002",
         "credential": [
           {
             "agency": "PADI",
@@ -459,17 +499,21 @@
             ]
           }
         ],
-        "teachingLanguages_initial": [],
-        "teachingLanguages_completed": [
+        "isAllowed": [],
+        "notAllowed": [],
+        "verified": false,
+        "address": {
+          "city": "Phuket",
+          "country": "TH"
+        },
+        "teachingLanguages": [
           "zh-CN",
           "zh-TW",
           "th",
           "en"
-        ],
-        "isAllowed": [],
-        "notAllowed": [],
-        "verified": false
-      }
+        ]
+      },
+      "clerkOrgIdHint": "org_seed_instructor-3"
     },
     "instructor_4": {
       "role": "Instructor",
@@ -482,16 +526,16 @@
         "lastName": "Kanchanaburi",
         "appLanguage": "en",
         "dateOfBirth": "1993-12-01",
-        "phone": "+66-81-615-1015"
+        "phone": "+66816151015",
+        "slug": "arisa-kanchanaburi",
+        "clerkUserIdHint": "user_seed_instructor-4"
       },
       "instructors": {
         "name": "Arisa Kanchanaburi",
-        "placeName": "Phuket",
-        "country": "Thailand",
         "lat": 7.8804,
         "lng": 98.3923,
         "email": "arisa-kanchanaburi+clerk_test@divedispatch.dev",
-        "phone": "+66-81-615-1015",
+        "phone": "+66816151015",
         "credential": [
           {
             "agency": "PADI",
@@ -500,27 +544,29 @@
             "specialtyRatings": []
           }
         ],
-        "teachingLanguages_initial": [],
-        "teachingLanguages_completed": [
-          "th",
-          "en"
-        ],
         "isAllowed": [],
         "notAllowed": [],
-        "verified": false
-      }
+        "verified": false,
+        "address": {
+          "city": "Phuket",
+          "country": "TH"
+        },
+        "teachingLanguages": [
+          "th",
+          "en"
+        ]
+      },
+      "clerkOrgIdHint": "org_seed_instructor-4"
     },
     "pool_1": {
       "role": "Pool",
       "slugRef": "n7rq5j",
       "venues": {
         "name": "Hug Ocean",
-        "placeName": "Phuket",
-        "country": "Thailand",
         "lat": 7.8804,
         "lng": 98.3923,
         "email": "hug-ocean+clerk_test@divedispatch.dev",
-        "phone": "+66-76-381-102",
+        "phone": "+6676381102",
         "venueCategory": "pool",
         "hasCompressor": false,
         "maxDepth": 3,
@@ -528,8 +574,13 @@
         "confinedCapable": true,
         "isAllowed": [],
         "notAllowed": [],
-        "verified": false
-      }
+        "verified": false,
+        "address": {
+          "city": "Phuket",
+          "country": "TH"
+        }
+      },
+      "clerkOrgIdHint": "org_seed_pool-1"
     },
     "pool_2": {
       "role": "Pool",
@@ -542,16 +593,16 @@
         "lastName": "Lin",
         "appLanguage": "zh-CN",
         "dateOfBirth": "1983-05-18",
-        "phone": "+66-81-234-5002"
+        "phone": "+66812345002",
+        "slug": "z8mv4c",
+        "clerkUserIdHint": "user_seed_pool-2"
       },
       "venues": {
         "name": "Neptune",
-        "placeName": "Phuket",
-        "country": "Thailand",
         "lat": 7.8804,
         "lng": 98.3923,
         "email": "neptune+clerk_test@divedispatch.dev",
-        "phone": "+66-76-383-002",
+        "phone": "+6676383002",
         "venueCategory": "pool",
         "hasCompressor": false,
         "maxDepth": 2.5,
@@ -561,8 +612,13 @@
           "z8mv4c"
         ],
         "notAllowed": [],
-        "verified": false
-      }
+        "verified": false,
+        "address": {
+          "city": "Phuket",
+          "country": "TH"
+        }
+      },
+      "clerkOrgIdHint": "org_seed_pool-2"
     },
     "pool_3": {
       "role": "Pool",
@@ -575,26 +631,30 @@
         "lastName": "Jantarakul",
         "appLanguage": "th",
         "dateOfBirth": "1977-10-30",
-        "phone": "+66-76-394-001"
+        "phone": "+6676394001",
+        "slug": "b3wt9f",
+        "clerkUserIdHint": "user_seed_pool-3"
       },
       "venues": {
         "name": "Water Pro",
-        "placeName": "Phuket",
-        "country": "Thailand",
         "lat": 7.8804,
         "lng": 98.3923,
         "email": "water-pro+clerk_test@divedispatch.dev",
-        "phone": "+66-76-394-001",
+        "phone": "+6676394001",
         "venueCategory": "pool",
         "hasCompressor": false,
         "maxDepth": 2.5,
-        "maxCapacity_initial": 0,
-        "maxCapacity_completed": 25,
         "confinedCapable": true,
         "isAllowed": [],
         "notAllowed": [],
-        "verified": false
-      }
+        "verified": false,
+        "address": {
+          "city": "Phuket",
+          "country": "TH"
+        },
+        "maxCapacity": 25
+      },
+      "clerkOrgIdHint": "org_seed_pool-3"
     },
     "pool_4": {
       "role": "Pool",
@@ -606,16 +666,16 @@
         "lastName": "Wongsawat",
         "appLanguage": "th",
         "dateOfBirth": "1986-08-25",
-        "phone": "+66-76-394-002"
+        "phone": "+6676394002",
+        "slug": "g2hn6x",
+        "clerkUserIdHint": "user_seed_pool-4"
       },
       "venues": {
         "name": "Shark Bites",
-        "placeName": "Phuket",
-        "country": "Thailand",
         "lat": 7.8804,
         "lng": 98.3923,
         "email": "shark-bites+clerk_test@divedispatch.dev",
-        "phone": "+66-76-394-002",
+        "phone": "+6676394002",
         "venueCategory": "pool",
         "hasCompressor": false,
         "maxDepth": 2.5,
@@ -623,8 +683,13 @@
         "confinedCapable": true,
         "isAllowed": [],
         "notAllowed": [],
-        "verified": false
-      }
+        "verified": false,
+        "address": {
+          "city": "Phuket",
+          "country": "TH"
+        }
+      },
+      "clerkOrgIdHint": "org_seed_pool-4"
     },
     "dive_center_1": {
       "role": "DiveCenter",
@@ -632,12 +697,10 @@
       "note": "Hug Ocean — primary DC, multi-role with boat_1 / pool_1 / equipment_manager_1. Shared user Somchai Prasert (n7rq5j).",
       "diveCenters": {
         "name": "Hug Ocean",
-        "placeName": "Patong Beach, Phuket",
-        "country": "Thailand",
         "lat": 7.896,
         "lng": 98.298,
         "email": "hug-ocean+clerk_test@divedispatch.dev",
-        "phone": "+66-76-381-100",
+        "phone": "+6676381100",
         "associations": [
           {
             "agency": "PADI",
@@ -662,8 +725,13 @@
         ],
         "isAllowed": [],
         "notAllowed": [],
-        "verified": true
-      }
+        "verified": true,
+        "address": {
+          "city": "Patong Beach, Phuket",
+          "country": "TH"
+        }
+      },
+      "clerkOrgIdHint": "org_seed_dive-center-1"
     },
     "dive_center_2": {
       "role": "DiveCenter",
@@ -671,14 +739,24 @@
       "note": "Nicole Dive Center — secondary DC, multi-role with equipment_manager_3 (mask-empty). Shared user Nicole Huang (q9bz7r). Carries deliberate-incomplete gap: associations_initial: [] (no agency affiliation → courses can't be offered until completed).",
       "diveCenters": {
         "name": "Nicole Dive Center",
-        "placeName": "Phuket",
-        "country": "Thailand",
         "lat": 7.8804,
         "lng": 98.3923,
         "email": "nicole-dive-center+clerk_test@divedispatch.dev",
-        "phone": "+66-76-386-001",
-        "associations_initial": [],
-        "associations_completed": [
+        "phone": "+6676386001",
+        "customerLanguages": [
+          "zh-TW",
+          "zh-CN",
+          "en",
+          "th"
+        ],
+        "isAllowed": [],
+        "notAllowed": [],
+        "verified": true,
+        "address": {
+          "city": "Phuket",
+          "country": "TH"
+        },
+        "associations": [
           {
             "agency": "PADI",
             "number": "PAD-DC-90002",
@@ -690,17 +768,9 @@
               "Navigation"
             ]
           }
-        ],
-        "customerLanguages": [
-          "zh-TW",
-          "zh-CN",
-          "en",
-          "th"
-        ],
-        "isAllowed": [],
-        "notAllowed": [],
-        "verified": true
-      }
+        ]
+      },
+      "clerkOrgIdHint": "org_seed_dive-center-2"
     },
     "customer_1": {
       "role": "Customer",
@@ -709,13 +779,13 @@
         "firstName": "Mei-Ling",
         "lastName": "Chen",
         "email": "mei-ling.chen@example.com",
-        "phone": "+886-912-345-001",
+        "phone": "+886912345001",
         "dateOfBirth": "1994-03-15",
         "certLevel": "none",
         "medicalFlag": false,
         "emergencyContact": {
           "name": "David Chen",
-          "phone": "+886-912-345-999",
+          "phone": "+886912345999",
           "relationship": "spouse"
         },
         "languages": [
@@ -739,13 +809,13 @@
         "firstName": "Jun",
         "lastName": "Wang",
         "email": "jun.wang@example.com",
-        "phone": "+86-138-0013-8001",
+        "phone": "+8613800138001",
         "dateOfBirth": "1988-07-22",
         "certLevel": "none",
         "medicalFlag": true,
         "emergencyContact": {
           "name": "Li Wang",
-          "phone": "+86-138-0013-8999",
+          "phone": "+8613800138999",
           "relationship": "spouse"
         },
         "languages": [
@@ -769,16 +839,10 @@
         "firstName": "James",
         "lastName": "Thompson",
         "email": "james.thompson@example.com",
-        "phone": "+1-415-555-0103",
+        "phone": "+14155550103",
         "dateOfBirth": "2001-11-08",
         "certLevel": "none",
         "medicalFlag": false,
-        "emergencyContact_initial": null,
-        "emergencyContact_completed": {
-          "name": "Sarah Thompson",
-          "phone": "+1-415-555-0199",
-          "relationship": "mother"
-        },
         "languages": [
           "en"
         ],
@@ -790,6 +854,11 @@
           "mask": "Standard",
           "height": 183,
           "weight": 77
+        },
+        "emergencyContact": {
+          "name": "Sarah Thompson",
+          "phone": "+14155550199",
+          "relationship": "mother"
         }
       }
     },
@@ -806,16 +875,16 @@
         "customerLanguages": [
           "en"
         ],
-        "phone": "+66 81 900 1234"
+        "phone": "+66819001234",
+        "slug": "ax3k7p",
+        "clerkUserIdHint": "user_seed_agent"
       },
       "agents": {
         "name": "Alex Walker",
-        "placeName": "Phuket",
-        "country": "Thailand",
         "lat": 7.88,
         "lng": 98.39,
         "email": "agent.walker@phukettravel.example",
-        "phone": "+66 81 900 1234",
+        "phone": "+66819001234",
         "associations": [
           {
             "agency": "PADI",
@@ -827,11 +896,16 @@
         ],
         "isAllowed": [],
         "notAllowed": [],
-        "verified": true
+        "verified": true,
+        "address": {
+          "city": "Phuket",
+          "country": "TH"
+        }
       },
       "stakeholderPreferences": {
         "preferredOperatorSlug": "n7rq5j"
-      }
+      },
+      "clerkOrgIdHint": "org_seed_agent"
     }
   },
   "admin_venues": {
@@ -840,8 +914,6 @@
       "note": "Admin-added venue — no stakeholder user signs in. Pre-seeded via UNOWNED_DIVE_SITES in convex/seedData.ts and convex/seed.ts. venues.userId is omitted (schema v.optional allows); inventoryUnits uses sentinel ownerId '__unowned__' / ownerType 'DiveSite'. DiveSite stakeholder role is v0.1.1 defer — this row is a booking-form location reference only, not an operator-run resource.",
       "venues": {
         "name": "Kata Beach",
-        "placeName": "Phuket",
-        "country": "Thailand",
         "lat": 7.8206,
         "lng": 98.3003,
         "venueCategory": "diveSite",
@@ -853,7 +925,11 @@
         "maxCapacity": 50,
         "isAllowed": [],
         "notAllowed": [],
-        "verified": true
+        "verified": true,
+        "address": {
+          "city": "Phuket",
+          "country": "TH"
+        }
       },
       "inventoryUnits": {
         "resourceType": "DiveSite",

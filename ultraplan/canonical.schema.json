@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://divedispatch.local/ultraplan/canonical.schema.json",
   "title": "DiveDispatch Happy-Path Canonical Ledger",
-  "description": "Product-intent-driven canonical field shapes for every stakeholder in the happy path. Handwritten — NOT auto-derived from convex/schema.ts. When canonical, convex schema, or FE disagree, the disagreement is a P0 blocker. See ultraplan/INDEX.md for the ledger's role.",
+  "description": "Product-intent-driven canonical field shapes for every stakeholder in the happy path. Wave 4 update: ISO 3166-1 alpha-2 countries, E.164 phones, structured address, collapsed deliberate-incomplete pairs, promoted slug + clerkUserIdHint + clerkOrgIdHint. Handwritten — NOT auto-derived from convex/schema.ts.",
   "type": "object",
   "required": ["order", "stakeholders"],
   "additionalProperties": false,
@@ -35,37 +35,54 @@
         { "$ref": "#/$defs/entryPool" },
         { "$ref": "#/$defs/entryDiveCenter" },
         { "$ref": "#/$defs/entryAgent" },
-        { "$ref": "#/$defs/entryCustomer" },
-        { "$ref": "#/$defs/entryPending" }
+        { "$ref": "#/$defs/entryCustomer" }
       ]
     },
-    "entryPending": {
-      "description": "Placeholder for a stakeholder whose audit stop has not locked yet. MUST have _pending field with rationale. DELETE when stop locks.",
+    "phoneE164": {
+      "type": "string",
+      "pattern": "^\\+[1-9]\\d{1,14}$",
+      "description": "E.164 format: leading +, country code, national number, no spaces/hyphens."
+    },
+    "isoCountryCode": {
+      "type": "string",
+      "pattern": "^[A-Z]{2}$",
+      "description": "ISO 3166-1 alpha-2 country code, uppercase."
+    },
+    "supportedLocale": {
+      "type": "string",
+      "enum": ["en", "zh-CN", "zh-TW", "th", "fr", "ko"],
+      "description": "UI locale; must be a supported translation."
+    },
+    "address": {
       "type": "object",
-      "required": ["role", "_pending"],
+      "required": ["city", "country"],
+      "additionalProperties": false,
       "properties": {
-        "role": { "type": "string" },
-        "note": { "type": "string" },
-        "_pending": { "type": "string" },
-        "slugRef": { "type": "string" }
-      },
-      "additionalProperties": true
+        "street": { "type": "string" },
+        "city": { "type": "string", "minLength": 1 },
+        "state": { "type": "string" },
+        "country": { "$ref": "#/$defs/isoCountryCode" },
+        "postalCode": { "type": "string" }
+      }
     },
     "usersBlock": {
-      "description": "Canonical per-user record. Mirrors `users` table but omits runtime-assigned tokenIdentifier/slug.",
+      "description": "Canonical per-user record. Mirrors `users` table but omits runtime-assigned tokenIdentifier. slug + clerkUserIdHint are authoritative for seed.",
       "type": "object",
-      "required": ["email", "firstName", "lastName", "appLanguage", "dateOfBirth"],
+      "required": ["email", "firstName", "lastName", "appLanguage", "dateOfBirth", "slug", "clerkUserIdHint"],
+      "additionalProperties": false,
       "properties": {
         "email": { "type": "string", "format": "email" },
         "name": { "type": "string" },
         "firstName": { "type": "string", "minLength": 1 },
         "lastName": { "type": "string", "minLength": 1 },
         "nickname": { "type": "string" },
-        "appLanguage": { "type": "string", "enum": ["en", "th", "zh-CN", "zh-TW", "ko", "ja"] },
+        "appLanguage": { "$ref": "#/$defs/supportedLocale" },
         "customerLanguages": { "type": "array", "items": { "type": "string" } },
-        "phone": { "type": "string" },
-        "dateOfBirth": { "type": "string", "description": "ISO date. Required for Customer; optional for operators." },
-        "defaultLocation": { "type": "string" }
+        "phone": { "$ref": "#/$defs/phoneE164" },
+        "dateOfBirth": { "type": "string", "description": "ISO date." },
+        "defaultLocation": { "type": "string" },
+        "slug": { "type": "string", "minLength": 1 },
+        "clerkUserIdHint": { "type": "string", "minLength": 1 }
       }
     },
     "accessControl": {
@@ -76,12 +93,12 @@
         "notAllowed": { "type": "array", "items": { "type": "string" } }
       }
     },
-    "location": {
+    "locationBlock": {
       "type": "object",
-      "required": ["placeName", "country", "lat", "lng"],
+      "required": ["address", "lat", "lng"],
       "properties": {
-        "placeName": { "type": "string", "minLength": 1 },
-        "country": { "type": "string", "minLength": 1 },
+        "address": { "$ref": "#/$defs/address" },
+        "placeId": { "type": "string" },
         "lat": { "type": "number", "minimum": -90, "maximum": 90 },
         "lng": { "type": "number", "minimum": -180, "maximum": 180 }
       }
@@ -123,15 +140,16 @@
     },
     "entryCompressor": {
       "type": "object",
-      "required": ["role", "compressors"],
+      "required": ["role", "compressors", "clerkOrgIdHint"],
       "properties": {
         "role": { "const": "Compressor" },
         "slugRef": { "type": "string" },
         "note": { "type": "string" },
+        "clerkOrgIdHint": { "type": "string", "minLength": 1 },
         "users": { "$ref": "#/$defs/usersBlock" },
         "compressors": {
           "allOf": [
-            { "$ref": "#/$defs/location" },
+            { "$ref": "#/$defs/locationBlock" },
             { "$ref": "#/$defs/accessControl" },
             {
               "type": "object",
@@ -139,12 +157,10 @@
               "properties": {
                 "name": { "type": "string" },
                 "email": { "type": "string", "format": "email" },
-                "phone": { "type": "string" },
+                "phone": { "$ref": "#/$defs/phoneE164" },
                 "gasMixes": { "type": "array", "items": { "type": "string", "enum": ["air", "nitrox"] }, "minItems": 1 },
-                "gasMixes_initial": { "type": "array", "items": { "type": "string" }, "maxItems": 0 },
-                "gasMixes_completed": { "type": "array", "items": { "type": "string", "enum": ["air", "nitrox"] }, "minItems": 1 },
-                "nitroxMin": { "type": "integer", "minimum": 22, "maximum": 40, "description": "Lower bound of nitrox O2% range. Required when gasMixes includes 'nitrox'." },
-                "nitroxMax": { "type": "integer", "minimum": 22, "maximum": 40, "description": "Upper bound of nitrox O2% range. Required when gasMixes includes 'nitrox'. Must be >= nitroxMin." },
+                "nitroxMin": { "type": "integer", "minimum": 22, "maximum": 40 },
+                "nitroxMax": { "type": "integer", "minimum": 22, "maximum": 40 },
                 "verified": { "type": "boolean" }
               }
             }
@@ -155,15 +171,16 @@
     },
     "entryEquipment": {
       "type": "object",
-      "required": ["role", "equipment"],
+      "required": ["role", "equipment", "clerkOrgIdHint"],
       "properties": {
         "role": { "const": "Equipment" },
         "slugRef": { "type": "string" },
         "note": { "type": "string" },
+        "clerkOrgIdHint": { "type": "string", "minLength": 1 },
         "users": { "$ref": "#/$defs/usersBlock" },
         "equipment": {
           "allOf": [
-            { "$ref": "#/$defs/location" },
+            { "$ref": "#/$defs/locationBlock" },
             { "$ref": "#/$defs/accessControl" },
             {
               "type": "object",
@@ -171,11 +188,10 @@
               "properties": {
                 "name": { "type": "string" },
                 "email": { "type": "string", "format": "email" },
-                "phone": { "type": "string" },
+                "phone": { "$ref": "#/$defs/phoneE164" },
                 "manufacturersByGearType": {
                   "type": "object",
                   "minProperties": 1,
-                  "description": "P0-7: tighten schema from optional → required non-empty. Min 3 gear types for happy path.",
                   "additionalProperties": { "type": "array", "items": { "type": "string" }, "minItems": 1 }
                 },
                 "verified": { "type": "boolean" }
@@ -183,23 +199,22 @@
             }
           ]
         },
-        "inventoryOverrides": { "type": "string" },
-        "inventoryOverrides_initial": { "type": "string" },
-        "inventoryOverrides_completed": { "type": "string" }
+        "inventoryOverrides": { "type": "string" }
       },
       "additionalProperties": false
     },
     "entryBoat": {
       "type": "object",
-      "required": ["role", "boats"],
+      "required": ["role", "boats", "clerkOrgIdHint"],
       "properties": {
         "role": { "const": "Boat" },
         "slugRef": { "type": "string" },
         "note": { "type": "string" },
+        "clerkOrgIdHint": { "type": "string", "minLength": 1 },
         "users": { "$ref": "#/$defs/usersBlock" },
         "boats": {
           "allOf": [
-            { "$ref": "#/$defs/location" },
+            { "$ref": "#/$defs/locationBlock" },
             { "$ref": "#/$defs/accessControl" },
             {
               "type": "object",
@@ -207,10 +222,8 @@
               "properties": {
                 "name": { "type": "string" },
                 "email": { "type": "string", "format": "email" },
-                "phone": { "type": "string" },
+                "phone": { "$ref": "#/$defs/phoneE164" },
                 "vessels": { "type": "array", "items": { "$ref": "#/$defs/vessel" }, "minItems": 1 },
-                "vessels_initial": { "type": "array", "maxItems": 0 },
-                "vessels_completed": { "type": "array", "items": { "$ref": "#/$defs/vessel" }, "minItems": 1 },
                 "hasCompressor": { "type": "boolean" },
                 "verified": { "type": "boolean" }
               }
@@ -222,16 +235,17 @@
     },
     "entryInstructor": {
       "type": "object",
-      "required": ["role", "instructors"],
+      "required": ["role", "instructors", "clerkOrgIdHint"],
       "properties": {
         "role": { "const": "Instructor" },
         "slugRef": { "type": "string" },
         "label": { "type": "string" },
         "note": { "type": "string" },
+        "clerkOrgIdHint": { "type": "string", "minLength": 1 },
         "users": { "$ref": "#/$defs/usersBlock" },
         "instructors": {
           "allOf": [
-            { "$ref": "#/$defs/location" },
+            { "$ref": "#/$defs/locationBlock" },
             { "$ref": "#/$defs/accessControl" },
             {
               "type": "object",
@@ -239,11 +253,9 @@
               "properties": {
                 "name": { "type": "string" },
                 "email": { "type": "string", "format": "email" },
-                "phone": { "type": "string" },
+                "phone": { "$ref": "#/$defs/phoneE164" },
                 "credential": { "$ref": "#/$defs/credential" },
                 "teachingLanguages": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
-                "teachingLanguages_initial": { "type": "array", "maxItems": 0 },
-                "teachingLanguages_completed": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
                 "verified": { "type": "boolean" }
               }
             }
@@ -254,15 +266,16 @@
     },
     "entryPool": {
       "type": "object",
-      "required": ["role", "venues"],
+      "required": ["role", "venues", "clerkOrgIdHint"],
       "properties": {
         "role": { "const": "Pool" },
         "slugRef": { "type": "string" },
         "note": { "type": "string" },
+        "clerkOrgIdHint": { "type": "string", "minLength": 1 },
         "users": { "$ref": "#/$defs/usersBlock" },
         "venues": {
           "allOf": [
-            { "$ref": "#/$defs/location" },
+            { "$ref": "#/$defs/locationBlock" },
             { "$ref": "#/$defs/accessControl" },
             {
               "type": "object",
@@ -270,13 +283,11 @@
               "properties": {
                 "name": { "type": "string" },
                 "email": { "type": "string", "format": "email" },
-                "phone": { "type": "string" },
+                "phone": { "$ref": "#/$defs/phoneE164" },
                 "venueCategory": { "const": "pool" },
                 "maxDepth": { "type": "number", "minimum": 0 },
                 "maxCapacity": { "type": "integer", "minimum": 1 },
-                "maxCapacity_initial": { "type": "integer", "const": 0 },
-                "maxCapacity_completed": { "type": "integer", "minimum": 1 },
-                "confinedCapable": { "type": "boolean", "description": "Should be true for pools (confined-water training venue)." },
+                "confinedCapable": { "type": "boolean" },
                 "hasCompressor": { "type": "boolean" },
                 "verified": { "type": "boolean" }
               }
@@ -288,24 +299,24 @@
     },
     "entryDiveCenter": {
       "type": "object",
-      "required": ["role", "diveCenters"],
+      "required": ["role", "diveCenters", "clerkOrgIdHint"],
       "properties": {
         "role": { "const": "DiveCenter" },
         "slugRef": { "type": "string" },
         "note": { "type": "string" },
-        "_pending": { "type": "string" },
+        "clerkOrgIdHint": { "type": "string", "minLength": 1 },
         "users": { "$ref": "#/$defs/usersBlock" },
         "diveCenters": {
           "allOf": [
-            { "$ref": "#/$defs/location" },
+            { "$ref": "#/$defs/locationBlock" },
             { "$ref": "#/$defs/accessControl" },
             {
               "type": "object",
-              "required": ["name", "email", "phone", "customerLanguages", "verified"],
+              "required": ["name", "email", "phone", "customerLanguages", "associations", "verified"],
               "properties": {
                 "name": { "type": "string" },
                 "email": { "type": "string", "format": "email" },
-                "phone": { "type": "string" },
+                "phone": { "$ref": "#/$defs/phoneE164" },
                 "associations": {
                   "type": "array",
                   "minItems": 1,
@@ -322,9 +333,7 @@
                     }
                   }
                 },
-                "associations_initial": { "type": "array", "maxItems": 0 },
-                "associations_completed": { "type": "array", "minItems": 1 },
-                "customerLanguages": { "type": "array", "items": { "type": "string" }, "minItems": 1, "description": "P0-2: tightens schema from optional → required min 1 and moves from users → diveCenters." },
+                "customerLanguages": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
                 "verified": { "type": "boolean" }
               }
             }
@@ -335,16 +344,16 @@
     },
     "entryAgent": {
       "type": "object",
-      "required": ["role", "agents"],
+      "required": ["role", "agents", "clerkOrgIdHint"],
       "properties": {
         "role": { "const": "Agent" },
         "slugRef": { "type": "string" },
         "note": { "type": "string" },
-        "_pending": { "type": "string" },
+        "clerkOrgIdHint": { "type": "string", "minLength": 1 },
         "users": { "$ref": "#/$defs/usersBlock" },
         "agents": {
           "allOf": [
-            { "$ref": "#/$defs/location" },
+            { "$ref": "#/$defs/locationBlock" },
             { "$ref": "#/$defs/accessControl" },
             {
               "type": "object",
@@ -352,7 +361,7 @@
               "properties": {
                 "name": { "type": "string" },
                 "email": { "type": "string", "format": "email" },
-                "phone": { "type": "string" },
+                "phone": { "$ref": "#/$defs/phoneE164" },
                 "associations": {
                   "type": "array",
                   "items": {
@@ -364,7 +373,7 @@
                     }
                   }
                 },
-                "customerLanguages": { "type": "array", "items": { "type": "string" }, "minItems": 1, "description": "P0-2: tightens schema from users → agents (required)." },
+                "customerLanguages": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
                 "verified": { "type": "boolean" }
               }
             }
@@ -373,7 +382,7 @@
         "stakeholderPreferences": {
           "type": "object",
           "properties": {
-            "preferredOperatorSlug": { "type": "string", "description": "slugRef to a dive_center_* entry. Drives agent referral mode. Canonical source (was agents.defaultReferral prior to P0-17)." }
+            "preferredOperatorSlug": { "type": "string" }
           }
         }
       },
@@ -381,12 +390,11 @@
     },
     "entryCustomer": {
       "type": "object",
-      "description": "Lighter portal template — no userRoles row, no isAllowed.",
+      "description": "Customer — token-auth portal. No Clerk user, no org. Simpler than stakeholder entries.",
       "required": ["role"],
       "properties": {
         "role": { "const": "Customer" },
         "note": { "type": "string" },
-        "_pending": { "type": "string" },
         "customer": {
           "type": "object",
           "required": ["firstName", "lastName", "email", "phone", "dateOfBirth", "certLevel", "medicalFlag", "languages"],
@@ -394,21 +402,19 @@
             "firstName": { "type": "string", "minLength": 1 },
             "lastName": { "type": "string", "minLength": 1 },
             "email": { "type": "string", "format": "email" },
-            "phone": { "type": "string" },
-            "dateOfBirth": { "type": "string", "description": "ISO date. Required — gates medical eligibility and liability waiver." },
-            "certLevel": { "type": "string", "description": "e.g., 'none' for Discover Diver, 'OW', 'AOW', 'Rescue'." },
-            "medicalFlag": { "type": "boolean", "description": "true if medical form flags any condition — triggers Scene 6 branch." },
+            "phone": { "$ref": "#/$defs/phoneE164" },
+            "dateOfBirth": { "type": "string" },
+            "certLevel": { "type": "string" },
+            "medicalFlag": { "type": "boolean" },
             "emergencyContact": {
               "type": "object",
               "required": ["name", "phone", "relationship"],
               "properties": {
                 "name": { "type": "string" },
-                "phone": { "type": "string" },
+                "phone": { "$ref": "#/$defs/phoneE164" },
                 "relationship": { "type": "string" }
               }
             },
-            "emergencyContact_initial": { "description": "Deliberate-incomplete option.", "type": "null" },
-            "emergencyContact_completed": { "$ref": "#/$defs/entryCustomer/properties/customer/properties/emergencyContact" },
             "languages": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
             "sizing": {
               "type": "object",
@@ -435,7 +441,7 @@
         "note": { "type": "string" },
         "venues": {
           "allOf": [
-            { "$ref": "#/$defs/location" },
+            { "$ref": "#/$defs/locationBlock" },
             { "$ref": "#/$defs/accessControl" },
             {
               "type": "object",
@@ -450,7 +456,7 @@
                 "hasCompressor": { "type": "boolean" },
                 "maxCapacity": { "type": "integer", "minimum": 1 },
                 "maxDepth": { "type": "number" },
-                "verified": { "const": true, "description": "Admin pre-approves." }
+                "verified": { "const": true }
               }
             }
           ]
