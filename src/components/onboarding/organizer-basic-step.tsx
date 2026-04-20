@@ -64,8 +64,8 @@ function BasicStepInner({ role, mutations, onSaved, onBack }: BasicStepInnerProp
   const createWithRoleExtras = async (payload: Record<string, unknown>) => {
     const base = {
       name: payload.name as string,
-      placeName: payload.placeName as string,
-      country: payload.country as string,
+      address: payload.address as { street?: string; city: string; state?: string; country: string; postalCode?: string },
+      placeId: payload.placeId as string | undefined,
       lat: payload.lat as number,
       lng: payload.lng as number,
       email: payload.email as string,

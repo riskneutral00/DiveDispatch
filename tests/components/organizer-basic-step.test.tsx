@@ -44,7 +44,7 @@ vi.mock('@/components/profiles/location-picker-lazy', () => ({
       aria-label={label ?? 'Location'}
       data-testid="location-picker"
       onClick={() =>
-        onChange({ placeName: 'Koh Tao', country: 'TH', lat: 10.1, lng: 99.8 })
+        onChange({ address: { city: 'Koh Tao', country: 'TH' }, lat: 10.1, lng: 99.8 })
       }
     >
       Pick Location
@@ -85,11 +85,10 @@ describe('OrganizerBasicStep', () => {
     mockExisting = {
       name: 'Ocean Divers',
       email: 'ocean@dive.com',
-      phone: '+66 81 234 5678',
+      phone: '+66812345678',
       lat: 7.88,
       lng: 98.39,
-      placeName: 'Phuket',
-      country: 'TH',
+      address: { city: 'Phuket', country: 'TH' },
     }
     mockMe = { email: 'me@test.com', businessName: 'My Biz' }
     render(<OrganizerBasicStep role="DiveCenter" onSaved={vi.fn()} />)
@@ -117,7 +116,7 @@ describe('OrganizerBasicStep', () => {
 
     const phoneInput = screen.getAllByRole('textbox').find((el) => (el as HTMLInputElement).name === 'phone' || el.getAttribute('autocomplete') === 'tel')
     if (phoneInput) {
-      await user.type(phoneInput, '8100000000')
+      await user.type(phoneInput, '2025550100')
     }
 
     await user.click(screen.getByRole('button', { name: /next/i }))
@@ -148,7 +147,7 @@ describe('OrganizerBasicStep', () => {
     await user.type(emailInput, 'fail@test.com')
     const phoneInput = screen.getAllByRole('textbox').find((el) => (el as HTMLInputElement).name === 'phone' || el.getAttribute('autocomplete') === 'tel')
     if (phoneInput) {
-      await user.type(phoneInput, '8100000000')
+      await user.type(phoneInput, '2025550100')
     }
 
     await user.click(screen.getByRole('button', { name: /next/i }))

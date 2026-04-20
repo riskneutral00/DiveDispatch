@@ -5,6 +5,8 @@ import { useState, useCallback, useEffect, useId, useRef, useReducer } from 'rea
 import { useTranslations } from 'next-intl'
 import { APIProvider, Map, useApiIsLoaded, useMap, type MapMouseEvent } from '@vis.gl/react-google-maps'
 import usePlacesAutocomplete from 'use-places-autocomplete'
+import countries from 'i18n-iso-countries'
+import enCountries from 'i18n-iso-countries/langs/en.json'
 import { MapPin, X, Locate } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils/cn'
@@ -12,8 +14,11 @@ import { Dialog } from '@/components/ui/dialog'
 import { RequiredAsterisk } from '@/components/ui/required-asterisk'
 import { autocompleteKeyboardReducer, INITIAL_STATE } from '@/components/ui/autocomplete-keyboard'
 
-import type { LocationValue } from '@/lib/schemas/location'
-export type { LocationValue }
+import type { AddressLocationValue } from '@/lib/schemas/location'
+export type LocationValue = AddressLocationValue
+export type { AddressLocationValue }
+
+countries.registerLocale(enCountries as unknown as Parameters<typeof countries.registerLocale>[0])
 
 interface LocationPickerProps {
   value: LocationValue | null
@@ -22,6 +27,60 @@ interface LocationPickerProps {
   label?: string
   required?: boolean
   className?: string
+}
+
+type NormalizedComponent = {
+  long: string
+  short: string
+  types: ReadonlyArray<string>
+}
+
+function normalizeGeocoder(c: google.maps.GeocoderAddressComponent): NormalizedComponent {
+  return { long: c.long_name, short: c.short_name, types: c.types }
+}
+
+function normalizePlace(c: google.maps.places.AddressComponent): NormalizedComponent {
+  return { long: c.longText ?? '', short: c.shortText ?? '', types: c.types }
+}
+
+function parseAddress(
+  comps: ReadonlyArray<NormalizedComponent>,
+  formattedAddress?: string,
+): AddressLocationValue['address'] {
+  const get = (type: string, useShort = false): string | undefined => {
+    const c = comps.find((c) => c.types.includes(type))
+    if (!c) return undefined
+    return useShort ? c.short : c.long
+  }
+  const city =
+    get('locality') ||
+    get('sublocality') ||
+    get('sublocality_level_1') ||
+    get('administrative_area_level_2') ||
+    ''
+  const country = get('country', true) || ''
+  const state = get('administrative_area_level_1')
+  const postalCode = get('postal_code')
+  const streetNum = get('street_number')
+  const route = get('route')
+  let street: string | undefined
+  if (streetNum && route) {
+    street = `${streetNum} ${route}`
+  } else if (route) {
+    street = route
+  } else if (formattedAddress) {
+    const firstComma = formattedAddress.split(',')[0]?.trim()
+    if (firstComma) street = firstComma
+  }
+  return { street, city, state, country, postalCode }
+}
+
+function displayLabel(value: AddressLocationValue): string {
+  const city = value.address.city
+  const iso = value.address.country
+  const countryName = iso ? countries.getName(iso, 'en') ?? iso : ''
+  if (city && countryName) return `${city}, ${countryName}`
+  return city || countryName || ''
 }
 
 function FlyEffect({ target, zoom = 20 }: { target: { lat: number; lng: number } | null; zoom?: number }) {
@@ -54,8 +113,12 @@ function LocationPickerModalInner({ value, onConfirm, onCancel }: ModalInnerProp
     value ? { lat: value.lat, lng: value.lng } : DEFAULT_CENTER,
   )
   const [displayAddress, setDisplayAddress] = useState(
-    value ? `${value.placeName}, ${value.country}` : '',
+    value ? displayLabel(value) : '',
   )
+  const [pendingAddress, setPendingAddress] = useState<AddressLocationValue['address'] | null>(
+    value ? value.address : null,
+  )
+  const [pendingPlaceId, setPendingPlaceId] = useState<string | undefined>(value?.placeId)
   const [flyTarget, setFlyTarget] = useState<{ lat: number; lng: number } | null>(
     value ? { lat: value.lat, lng: value.lng } : null,
   )
@@ -108,13 +171,19 @@ function LocationPickerModalInner({ value, onConfirm, onCancel }: ModalInnerProp
 
     try {
       const place = new google.maps.places.Place({ id: suggestion.place_id })
-      await place.fetchFields({ fields: ['location', 'formattedAddress'] })
+      await place.fetchFields({ fields: ['location', 'formattedAddress', 'addressComponents'] })
       if (!place.location) return
       setFlyZoom(20)
       setFlyTarget({ lat: place.location.lat(), lng: place.location.lng() })
-      setDisplayAddress(place.formattedAddress ?? suggestion.description)
+      const formatted = place.formattedAddress ?? suggestion.description
+      setDisplayAddress(formatted)
+      const comps = (place.addressComponents ?? []).map(normalizePlace)
+      setPendingAddress(parseAddress(comps, formatted))
+      setPendingPlaceId(suggestion.place_id)
     } catch {
       setDisplayAddress(suggestion.description)
+      setPendingAddress(null)
+      setPendingPlaceId(suggestion.place_id)
     }
   }
 
@@ -154,7 +223,9 @@ function LocationPickerModalInner({ value, onConfirm, onCancel }: ModalInnerProp
     setPoiSelected(true)
     try {
       const place = new google.maps.places.Place({ id: placeId })
-      await place.fetchFields({ fields: ['location', 'formattedAddress', 'displayName'] })
+      await place.fetchFields({
+        fields: ['location', 'formattedAddress', 'displayName', 'addressComponents'],
+      })
       if (!place.location) return
       const name = place.displayName ?? ''
       const addr = place.formattedAddress ?? ''
@@ -163,6 +234,9 @@ function LocationPickerModalInner({ value, onConfirm, onCancel }: ModalInnerProp
       setFlyZoom(20)
       setFlyTarget({ lat: place.location.lat(), lng: place.location.lng() })
       setDisplayAddress(display)
+      const comps = (place.addressComponents ?? []).map(normalizePlace)
+      setPendingAddress(parseAddress(comps, addr || undefined))
+      setPendingPlaceId(placeId)
     } catch {
     }
   }
@@ -192,6 +266,12 @@ function LocationPickerModalInner({ value, onConfirm, onCancel }: ModalInnerProp
           const country =
             best?.address_components?.find((ac) => ac.types.includes('country'))?.long_name ?? ''
 
+          if (best?.address_components) {
+            const comps = best.address_components.map(normalizeGeocoder)
+            setPendingAddress(parseAddress(comps, fallbackAddress))
+            setPendingPlaceId(best.place_id)
+          }
+
           try {
             const { places } = await google.maps.places.Place.searchNearby({
               locationRestriction: { center: { lat, lng }, radius: 50 },
@@ -220,11 +300,32 @@ function LocationPickerModalInner({ value, onConfirm, onCancel }: ModalInnerProp
   )
 
   function handleConfirm() {
-    const parts = displayAddress.split(', ')
-    const country = parts.length > 1 ? parts[parts.length - 1] : ''
-    const placeName =
-      parts.length > 1 ? parts.slice(0, -1).join(', ') : displayAddress
-    onConfirm({ placeName: placeName || displayAddress, country, lat: center.lat, lng: center.lng })
+    let address: AddressLocationValue['address']
+    if (pendingAddress && pendingAddress.city && pendingAddress.country) {
+      address = pendingAddress
+    } else {
+      const parts = displayAddress.split(', ')
+      const fallbackCity =
+        parts.length > 1 ? parts.slice(0, -1).join(', ') : displayAddress
+      const fallbackCountry = parts.length > 1 ? parts[parts.length - 1] : ''
+      const iso =
+        fallbackCountry.length === 2 && countries.isValid(fallbackCountry)
+          ? fallbackCountry.toUpperCase()
+          : countries.getAlpha2Code(fallbackCountry, 'en') || fallbackCountry
+      address = {
+        street: pendingAddress?.street,
+        city: pendingAddress?.city || fallbackCity || displayAddress,
+        state: pendingAddress?.state,
+        country: pendingAddress?.country || iso,
+        postalCode: pendingAddress?.postalCode,
+      }
+    }
+    onConfirm({
+      address,
+      placeId: pendingPlaceId,
+      lat: center.lat,
+      lng: center.lng,
+    })
   }
 
   return (
@@ -248,7 +349,7 @@ function LocationPickerModalInner({ value, onConfirm, onCancel }: ModalInnerProp
               }
               aria-autocomplete="list"
               value={query}
-              placeholder={value ? `${value.placeName}, ${value.country}` : t('searchAddress')}
+              placeholder={value ? displayLabel(value) : t('searchAddress')}
               autoComplete="off"
               onChange={(e) => {
                 setQuery(e.target.value)
@@ -407,6 +508,7 @@ function LocationPickerTrigger({ value, onOpen, onClear, error, label, required,
   const inputId = useId()
   const filled = !!value
   const floated = filled
+  const label2 = value ? displayLabel(value) : ''
   return (
     <div className={cn("relative", className?.includes('field-') || className?.includes('w-') ? '' : 'w-full', className)}>
       <div className="relative">
@@ -424,11 +526,11 @@ function LocationPickerTrigger({ value, onOpen, onClear, error, label, required,
           }}
           aria-label={
             value
-              ? `Location: ${value.placeName}, ${value.country}. Click to edit.`
+              ? `Location: ${label2}. Click to edit.`
               : 'Add location'
           }
         >
-          {value ? `${value.placeName}, ${value.country}` : (label ? '\u00A0' : t('addLocation'))}
+          {value ? label2 : (label ? '\u00A0' : t('addLocation'))}
         </button>
         {value && (
           <button /* design-ok: inline clear X inside field trigger */

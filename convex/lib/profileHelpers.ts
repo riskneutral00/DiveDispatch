@@ -18,6 +18,25 @@ function validateStructuredAddress(args: Record<string, unknown>): void {
   }
 }
 
+function deriveLegacyLocationFields(args: Record<string, unknown>): void {
+  const address = args.address as { city?: unknown; country?: unknown } | undefined
+  if (!address || typeof address !== 'object') return
+  const city = address.city
+  const country = address.country
+  const placeNameMissing =
+    args.placeName === undefined ||
+    (typeof args.placeName === 'string' && args.placeName.trim() === '')
+  const countryMissing =
+    args.country === undefined ||
+    (typeof args.country === 'string' && args.country.trim() === '')
+  if (placeNameMissing && typeof city === 'string' && city.length > 0) {
+    args.placeName = city
+  }
+  if (countryMissing && typeof country === 'string' && country.length > 0) {
+    args.country = country
+  }
+}
+
 export const ROLE_TABLE_MAP: Record<string, TableNames> = {
   Instructor: 'diveStaff',
   Boat: 'boats',
@@ -94,6 +113,7 @@ export async function profileUpdate(
   if (!profile) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
 
   validateStructuredAddress(args)
+  deriveLegacyLocationFields(args)
 
   const safeArgs: Record<string, unknown> = {}
   for (const [key, value] of Object.entries(args)) {
@@ -128,6 +148,7 @@ export async function profileCreate(
   if (existing) return existing._id
 
   validateStructuredAddress(args)
+  deriveLegacyLocationFields(args)
 
   const mergedArgs = { ...args }
   if (!mergedArgs.email || (typeof mergedArgs.email === 'string' && mergedArgs.email.trim() === '')) {

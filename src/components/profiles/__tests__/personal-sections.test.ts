@@ -29,8 +29,7 @@ import type {
 } from '../personal-profile-form'
 
 const VALID_LOCATION = {
-  placeName: 'Koh Tao',
-  country: 'Thailand',
+  address: { city: 'Koh Tao', country: 'TH' },
   lat: 10.1,
   lng: 99.8,
 }
@@ -39,7 +38,7 @@ describe('personalContactSchema', () => {
   const valid = {
     location: VALID_LOCATION,
     email: 'ariel@dive.com',
-    phone: '+66 81 234 5678',
+    phone: '+66812345678',
   }
 
   it('accepts a fully valid contact payload', () => {
@@ -75,34 +74,33 @@ describe('personalContactFromProfile', () => {
   it('extracts location, email, phone — omits name', () => {
     const profile = {
       name: 'Ariel Nemo',
-      placeName: 'Koh Tao',
-      country: 'Thailand',
+      address: { city: 'Koh Tao', country: 'TH' },
       lat: 10.1,
       lng: 99.8,
       email: 'ariel@dive.com',
-      phone: '+66 81 234 5678',
+      phone: '+66812345678',
     }
     const form = personalContactFromProfile(profile)
     expect(form).not.toHaveProperty('name')
     expect(form.email).toBe('ariel@dive.com')
-    expect(form.phone).toBe('+66 81 234 5678')
-    expect(form.location?.placeName).toBe('Koh Tao')
+    expect(form.phone).toBe('+66812345678')
+    expect(form.location?.address.city).toBe('Koh Tao')
   })
 })
 
 describe('personalContactToPayload', () => {
   it('produces expected shape without name', () => {
     const form: PersonalContactFormState = {
-      location: { placeName: 'Koh Tao', country: 'Thailand', lat: 10.1, lng: 99.8 },
+      location: { address: { city: 'Koh Tao', country: 'TH' }, lat: 10.1, lng: 99.8 },
       email: 'ariel@dive.com',
-      phone: '+66 81 234 5678',
+      phone: '+66812345678',
     }
     const payload = personalContactToPayload(form)
     expect(payload).not.toHaveProperty('name')
-    expect(payload.placeName).toBe('Koh Tao')
-    expect(payload.country).toBe('Thailand')
+    expect(payload.address).toEqual({ city: 'Koh Tao', country: 'TH' })
     expect(payload.email).toBe('ariel@dive.com')
-    expect(payload.phone).toBe('+66 81 234 5678')
+    expect(payload.phone).toBe('+66812345678')
+    expect(payload).not.toHaveProperty('placeName')
   })
 })
 
@@ -179,30 +177,28 @@ describe('contactFromProfile', () => {
   it('extracts name, location, email, and phone from profile', () => {
     const profile = {
       name: 'Ariel Nemo',
-      placeName: 'Koh Tao',
-      country: 'Thailand',
+      address: { city: 'Koh Tao', country: 'TH' },
       lat: 10.1,
       lng: 99.8,
       email: 'ariel@dive.com',
-      phone: '+66 81 234 5678',
+      phone: '+66812345678',
     }
     const form = contactFromProfile(profile)
     expect(form.name).toBe('Ariel Nemo')
     expect(form.email).toBe('ariel@dive.com')
-    expect(form.phone).toBe('+66 81 234 5678')
-    expect(form.location?.placeName).toBe('Koh Tao')
-    expect(form.location?.country).toBe('Thailand')
+    expect(form.phone).toBe('+66812345678')
+    expect(form.location?.address.city).toBe('Koh Tao')
+    expect(form.location?.address.country).toBe('TH')
   })
 
   it('does not include credentials or teachingLanguages', () => {
     const profile = {
       name: 'Test Instructor',
-      placeName: 'Bangkok',
-      country: 'Thailand',
+      address: { city: 'Bangkok', country: 'TH' },
       lat: 13.7,
       lng: 100.5,
       email: 'a@b.com',
-      phone: '+66 1',
+      phone: '+6611111111',
       credential: [{ agency: 'PADI', level: 'OWSI', agencyID: '123', specialtyRatings: [] }],
       teachingLanguages: ['en'],
     }
@@ -216,27 +212,27 @@ describe('contactToPayload', () => {
   it('produces expected shape with location fields flattened', () => {
     const form: ContactFormState = {
       name: 'Ariel Nemo',
-      location: { placeName: 'Koh Tao', country: 'Thailand', lat: 10.1, lng: 99.8 },
+      location: { address: { city: 'Koh Tao', country: 'TH' }, lat: 10.1, lng: 99.8 },
       email: 'ariel@dive.com',
-      phone: '+66 81 234 5678',
+      phone: '+66812345678',
     }
     const payload = contactToPayload(form)
     expect(payload.name).toBe('Ariel Nemo')
-    expect(payload.placeName).toBe('Koh Tao')
-    expect(payload.country).toBe('Thailand')
+    expect(payload.address).toEqual({ city: 'Koh Tao', country: 'TH' })
     expect(payload.lat).toBe(10.1)
     expect(payload.lng).toBe(99.8)
 
     expect(payload.email).toBe('ariel@dive.com')
-    expect(payload.phone).toBe('+66 81 234 5678')
+    expect(payload.phone).toBe('+66812345678')
+    expect(payload).not.toHaveProperty('placeName')
   })
 
   it('does not include credentials or teachingLanguages', () => {
     const form: ContactFormState = {
       name: 'Test',
-      location: { placeName: 'BKK', country: 'TH', lat: 13.7, lng: 100.5 },
+      location: { address: { city: 'BKK', country: 'TH' }, lat: 13.7, lng: 100.5 },
       email: 'a@b.com',
-      phone: '+66 1',
+      phone: '+6611111111',
     }
     const payload = contactToPayload(form)
     expect(payload).not.toHaveProperty('credential')

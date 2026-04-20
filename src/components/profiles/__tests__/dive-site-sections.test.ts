@@ -18,8 +18,7 @@ import type {
 } from '../dive-site-profile-form'
 
 const VALID_LOCATION = {
-  placeName: 'Shark Bay',
-  country: 'Malaysia',
+  address: { city: 'Shark Bay', country: 'MY' },
   lat: 5.97,
   lng: 116.07,
 }
@@ -115,8 +114,7 @@ describe('diveSiteDetailsFromProfile', () => {
   it('extracts name, location, diveSiteTypes from profile', () => {
     const profile = {
       name: 'Shark Bay Reef',
-      placeName: 'Shark Bay',
-      country: 'Malaysia',
+      address: { city: 'Shark Bay', country: 'MY' },
       lat: 5.97,
       lng: 116.07,
       diveSiteTypes: ['reef', 'shore'],
@@ -127,15 +125,14 @@ describe('diveSiteDetailsFromProfile', () => {
     const form = diveSiteDetailsFromProfile(profile)
     expect(form.name).toBe('Shark Bay Reef')
     expect(form.diveSiteTypes).toEqual(['reef', 'shore'])
-    expect(form.location?.placeName).toBe('Shark Bay')
-    expect(form.location?.country).toBe('Malaysia')
+    expect(form.location?.address.city).toBe('Shark Bay')
+    expect(form.location?.address.country).toBe('MY')
   })
 
   it('defaults diveSiteTypes to empty array when absent', () => {
     const profile = {
       name: 'Mystery Site',
-      placeName: 'Koh Tao',
-      country: 'Thailand',
+      address: { city: 'Koh Tao', country: 'TH' },
       lat: 10.1,
       lng: 99.8,
     }
@@ -146,8 +143,7 @@ describe('diveSiteDetailsFromProfile', () => {
   it('does not include capabilities fields', () => {
     const profile = {
       name: 'Test Site',
-      placeName: 'Sipadan',
-      country: 'Malaysia',
+      address: { city: 'Sipadan', country: 'MY' },
       lat: 4.11,
       lng: 118.63,
       diveSiteTypes: ['reef'],
@@ -166,23 +162,23 @@ describe('diveSiteDetailsToPayload', () => {
   it('produces expected shape with location fields flattened', () => {
     const form: DiveSiteDetailsFormState = {
       name: 'Shark Bay Reef',
-      location: { placeName: 'Shark Bay', country: 'Malaysia', lat: 5.97, lng: 116.07 },
+      location: { address: { city: 'Shark Bay', country: 'MY' }, lat: 5.97, lng: 116.07 },
       diveSiteTypes: ['reef'],
       access: { mode: 'open', isAllowed: [], notAllowed: [] },
     }
     const payload = diveSiteDetailsToPayload(form)
     expect(payload.name).toBe('Shark Bay Reef')
-    expect(payload.placeName).toBe('Shark Bay')
-    expect(payload.country).toBe('Malaysia')
+    expect(payload.address).toEqual({ city: 'Shark Bay', country: 'MY' })
     expect(payload.lat).toBe(5.97)
     expect(payload.lng).toBe(116.07)
     expect(payload.diveSiteTypes).toEqual(['reef'])
+    expect(payload).not.toHaveProperty('placeName')
   })
 
   it('does not include capabilities fields', () => {
     const form: DiveSiteDetailsFormState = {
       name: 'Test Site',
-      location: { placeName: 'BKK', country: 'TH', lat: 13.7, lng: 100.5 },
+      location: { address: { city: 'BKK', country: 'TH' }, lat: 13.7, lng: 100.5 },
       diveSiteTypes: ['shore'],
       access: { mode: 'open', isAllowed: [], notAllowed: [] },
     }
@@ -195,7 +191,7 @@ describe('diveSiteDetailsToPayload', () => {
   it('never emits legacy venueType', () => {
     const form: DiveSiteDetailsFormState = {
       name: 'Test Site',
-      location: { placeName: 'BKK', country: 'TH', lat: 13.7, lng: 100.5 },
+      location: { address: { city: 'BKK', country: 'TH' }, lat: 13.7, lng: 100.5 },
       diveSiteTypes: ['reef', 'shore'],
       access: { mode: 'open', isAllowed: [], notAllowed: [] },
     }
@@ -303,7 +299,7 @@ describe('buildDiveSiteCreatePayload', () => {
   it('preserves original details payload fields', () => {
     const detailsPayload = diveSiteDetailsToPayload({
       name: 'Shark Bay Reef',
-      location: { placeName: 'Shark Bay', country: 'Malaysia', lat: 5.97, lng: 116.07 },
+      location: { address: { city: 'Shark Bay', country: 'MY' }, lat: 5.97, lng: 116.07 },
       diveSiteTypes: ['reef'],
       access: { mode: 'open', isAllowed: [], notAllowed: [] },
     })

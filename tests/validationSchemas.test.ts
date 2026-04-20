@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
-  locationSchema,
+  addressLocationSchema,
   makeCustomerContactSchema,
   medicalAnswersSchema,
   makeWaiverSchema,
@@ -9,21 +9,28 @@ import {
   diverEntrySchema,
 } from '../src/lib/validation/schemas'
 
-describe('locationSchema', () => {
-  it('accepts valid location', () => {
-    const result = locationSchema.safeParse({
-      placeName: 'Koh Tao',
-      country: 'TH',
+describe('addressLocationSchema', () => {
+  it('accepts valid structured address', () => {
+    const result = addressLocationSchema.safeParse({
+      address: { city: 'Koh Tao', country: 'TH' },
       lat: 10.1,
       lng: 99.8,
     })
     expect(result.success).toBe(true)
   })
 
-  it('rejects missing placeName', () => {
-    const result = locationSchema.safeParse({
-      placeName: '',
-      country: 'TH',
+  it('rejects missing city', () => {
+    const result = addressLocationSchema.safeParse({
+      address: { city: '', country: 'TH' },
+      lat: 0,
+      lng: 0,
+    })
+    expect(result.success).toBe(false)
+  })
+
+  it('rejects missing country', () => {
+    const result = addressLocationSchema.safeParse({
+      address: { city: 'Koh Tao', country: '' },
       lat: 0,
       lng: 0,
     })

@@ -5,7 +5,7 @@ import {
   calcAgeAtDate,
 } from '@/lib/constants/activity-rules'
 
-export { locationSchema } from '@/lib/schemas/location'
+export { addressLocationSchema } from '@/lib/schemas/location'
 
 function requireEndAfterStart(
   data: { startDate?: string; endDate?: string },

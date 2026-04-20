@@ -18,8 +18,7 @@ import {
 import type { BoatFleetFormState } from '../boat-profile-form'
 
 const VALID_LOCATION = {
-  placeName: 'Phuket',
-  country: 'Thailand',
+  address: { city: 'Phuket', country: 'TH' },
   lat: 7.8804,
   lng: 98.3923,
 }
@@ -29,7 +28,7 @@ describe('contactSchema', () => {
     name: 'Phuket Boat Co.',
     location: VALID_LOCATION,
     email: 'info@phuketboat.com',
-    phone: '+66 81 234 5678',
+    phone: '+66812345678',
   }
 
   it('accepts a fully valid contact payload', () => {
@@ -100,31 +99,29 @@ describe('boatContactFromProfile', () => {
   it('extracts name, location, email, phone from profile', () => {
     const profile = {
       name: 'Phuket Boat Co.',
-      placeName: 'Phuket',
-      country: 'Thailand',
+      address: { city: 'Phuket', country: 'TH' },
       lat: 7.88,
       lng: 98.39,
       email: 'info@phuketboat.com',
-      phone: '+66 81 234 5678',
+      phone: '+66812345678',
       fleet: [],
     }
     const form = boatContactFromProfile(profile)
     expect(form.name).toBe('Phuket Boat Co.')
     expect(form.email).toBe('info@phuketboat.com')
-    expect(form.phone).toBe('+66 81 234 5678')
-    expect(form.location?.placeName).toBe('Phuket')
-    expect(form.location?.country).toBe('Thailand')
+    expect(form.phone).toBe('+66812345678')
+    expect(form.location?.address.city).toBe('Phuket')
+    expect(form.location?.address.country).toBe('TH')
   })
 
   it('does not include fleet field', () => {
     const profile = {
       name: 'Test',
-      placeName: 'Phuket',
-      country: 'TH',
+      address: { city: 'Phuket', country: 'TH' },
       lat: 7.88,
       lng: 98.39,
       email: 'a@b.com',
-      phone: '+66 1',
+      phone: '+6611111111',
       fleet: [{ boatName: 'Sea Breeze', maxPax: 10, boatType: 'day_boat', routes: [] }],
     }
     const form = boatContactFromProfile(profile)
@@ -136,27 +133,27 @@ describe('boatContactToPayload', () => {
   it('produces expected shape with location fields flattened', () => {
     const form: BoatContactFormState = {
       name: 'Phuket Boat Co.',
-      location: { placeName: 'Phuket', country: 'Thailand', lat: 7.88, lng: 98.39 },
+      location: { address: { city: 'Phuket', country: 'TH' }, lat: 7.88, lng: 98.39 },
       email: 'info@phuketboat.com',
-      phone: '+66 81 234 5678',
+      phone: '+66812345678',
     }
     const payload = boatContactToPayload(form)
     expect(payload.name).toBe('Phuket Boat Co.')
-    expect(payload.placeName).toBe('Phuket')
-    expect(payload.country).toBe('Thailand')
+    expect(payload.address).toEqual({ city: 'Phuket', country: 'TH' })
     expect(payload.lat).toBe(7.88)
     expect(payload.lng).toBe(98.39)
-    
+
     expect(payload.email).toBe('info@phuketboat.com')
-    expect(payload.phone).toBe('+66 81 234 5678')
+    expect(payload.phone).toBe('+66812345678')
+    expect(payload).not.toHaveProperty('placeName')
   })
 
   it('does not include fleet field', () => {
     const form: BoatContactFormState = {
       name: 'Test',
-      location: { placeName: 'Phuket', country: 'TH', lat: 7.88, lng: 98.39 },
+      location: { address: { city: 'Phuket', country: 'TH' }, lat: 7.88, lng: 98.39 },
       email: 'a@b.com',
-      phone: '+66 1',
+      phone: '+6611111111',
     }
     const payload = boatContactToPayload(form)
     expect(payload).not.toHaveProperty('fleet')

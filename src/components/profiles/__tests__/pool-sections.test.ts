@@ -18,8 +18,7 @@ import {
 import type { PoolCapabilitiesFormState } from '../pool-profile-form'
 
 const VALID_LOCATION = {
-  placeName: 'Blue Lagoon',
-  country: 'Thailand',
+  address: { city: 'Blue Lagoon', country: 'TH' },
   lat: 7.88,
   lng: 98.39,
 }
@@ -29,7 +28,7 @@ describe('contactSchema', () => {
     name: 'Blue Lagoon Training Pool',
     location: VALID_LOCATION,
     email: 'pool@bluelagoon.com',
-    phone: '+66 81 234 5678',
+    phone: '+66812345678',
   }
 
   it('accepts a fully valid contact payload', () => {
@@ -92,12 +91,11 @@ describe('poolContactFromProfile', () => {
   it('extracts name, location, email, phone from profile', () => {
     const profile = {
       name: 'Blue Lagoon Training Pool',
-      placeName: 'Blue Lagoon',
-      country: 'Thailand',
+      address: { city: 'Blue Lagoon', country: 'TH' },
       lat: 7.88,
       lng: 98.39,
       email: 'pool@bluelagoon.com',
-      phone: '+66 81 234 5678',
+      phone: '+66812345678',
       maxDepth: 5,
       maxCapacity: 15,
       confinedCapable: true,
@@ -105,20 +103,19 @@ describe('poolContactFromProfile', () => {
     const form = poolContactFromProfile(profile)
     expect(form.name).toBe('Blue Lagoon Training Pool')
     expect(form.email).toBe('pool@bluelagoon.com')
-    expect(form.phone).toBe('+66 81 234 5678')
-    expect(form.location?.placeName).toBe('Blue Lagoon')
-    expect(form.location?.country).toBe('Thailand')
+    expect(form.phone).toBe('+66812345678')
+    expect(form.location?.address.city).toBe('Blue Lagoon')
+    expect(form.location?.address.country).toBe('TH')
   })
 
   it('does not include capabilities fields', () => {
     const profile = {
       name: 'Test Pool',
-      placeName: 'Bangkok',
-      country: 'Thailand',
+      address: { city: 'Bangkok', country: 'TH' },
       lat: 13.7,
       lng: 100.5,
       email: 'a@b.com',
-      phone: '+66 1',
+      phone: '+6611111111',
       maxDepth: 5,
       maxCapacity: 10,
       confinedCapable: true,
@@ -134,27 +131,27 @@ describe('poolContactToPayload', () => {
   it('produces expected shape with location fields flattened', () => {
     const form: PoolContactFormState = {
       name: 'Blue Lagoon Training Pool',
-      location: { placeName: 'Blue Lagoon', country: 'Thailand', lat: 7.88, lng: 98.39 },
+      location: { address: { city: 'Blue Lagoon', country: 'TH' }, lat: 7.88, lng: 98.39 },
       email: 'pool@bluelagoon.com',
-      phone: '+66 81 234 5678',
+      phone: '+66812345678',
     }
     const payload = poolContactToPayload(form)
     expect(payload.name).toBe('Blue Lagoon Training Pool')
-    expect(payload.placeName).toBe('Blue Lagoon')
-    expect(payload.country).toBe('Thailand')
+    expect(payload.address).toEqual({ city: 'Blue Lagoon', country: 'TH' })
     expect(payload.lat).toBe(7.88)
     expect(payload.lng).toBe(98.39)
-    
+
     expect(payload.email).toBe('pool@bluelagoon.com')
-    expect(payload.phone).toBe('+66 81 234 5678')
+    expect(payload.phone).toBe('+66812345678')
+    expect(payload).not.toHaveProperty('placeName')
   })
 
   it('does not include capabilities fields', () => {
     const form: PoolContactFormState = {
       name: 'Test Pool',
-      location: { placeName: 'BKK', country: 'TH', lat: 13.7, lng: 100.5 },
+      location: { address: { city: 'BKK', country: 'TH' }, lat: 13.7, lng: 100.5 },
       email: 'a@b.com',
-      phone: '+66 1',
+      phone: '+6611111111',
     }
     const payload = poolContactToPayload(form)
     expect(payload).not.toHaveProperty('confinedCapable')
@@ -240,9 +237,9 @@ describe('buildPoolCreatePayload', () => {
   it('preserves original contact payload fields', () => {
     const contactPayload = poolContactToPayload({
       name: 'Blue Lagoon Training Pool',
-      location: { placeName: 'Blue Lagoon', country: 'Thailand', lat: 7.88, lng: 98.39 },
+      location: { address: { city: 'Blue Lagoon', country: 'TH' }, lat: 7.88, lng: 98.39 },
       email: 'pool@bluelagoon.com',
-      phone: '+66 81 234 5678',
+      phone: '+66812345678',
     })
     const result = buildPoolCreatePayload(contactPayload)
     expect(result.name).toBe('Blue Lagoon Training Pool')
