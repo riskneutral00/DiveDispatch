@@ -15,6 +15,19 @@ const accessControlFields = {
   notAllowed: v.optional(v.array(v.string())),
 }
 
+const addressStructured = v.object({
+  street: v.optional(v.string()),
+  city: v.string(),
+  state: v.optional(v.string()),
+  country: v.string(),
+  postalCode: v.optional(v.string()),
+})
+
+const structuredLocationFields = {
+  address: v.optional(addressStructured),
+  placeId: v.optional(v.string()),
+}
+
 export default defineSchema({
 
   users: defineTable({
@@ -65,6 +78,8 @@ export default defineSchema({
     email: v.optional(v.string()),
     address: v.optional(v.string()),
     country: v.optional(v.string()),
+    addressStructured: v.optional(addressStructured),
+    placeId: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -324,6 +339,7 @@ export default defineSchema({
     name: v.string(),
     placeName: v.string(),
     country: v.string(),
+    ...structuredLocationFields,
     lat: v.number(),
     lng: v.number(),
     email: v.string(),
@@ -348,6 +364,7 @@ export default defineSchema({
     name: v.string(),
     placeName: v.string(),
     country: v.string(),
+    ...structuredLocationFields,
     lat: v.number(),
     lng: v.number(),
     email: v.string(),
@@ -371,6 +388,7 @@ export default defineSchema({
     name: v.string(),
     placeName: v.string(),
     country: v.string(),
+    ...structuredLocationFields,
     lat: v.number(),
     lng: v.number(),
     email: v.string(),
@@ -404,6 +422,7 @@ export default defineSchema({
     name: v.string(),
     placeName: v.string(),
     country: v.string(),
+    ...structuredLocationFields,
     lat: v.number(),
     lng: v.number(),
     email: v.string(),
@@ -419,6 +438,7 @@ export default defineSchema({
     name: v.string(),
     placeName: v.string(),
     country: v.string(),
+    ...structuredLocationFields,
     lat: v.number(),
     lng: v.number(),
     email: v.optional(v.string()),
@@ -439,6 +459,7 @@ export default defineSchema({
     name: v.string(),
     placeName: v.string(),
     country: v.string(),
+    ...structuredLocationFields,
     lat: v.number(),
     lng: v.number(),
     email: v.string(),
@@ -522,6 +543,7 @@ export default defineSchema({
     name: v.string(),
     placeName: v.string(),
     country: v.string(),
+    ...structuredLocationFields,
     lat: v.number(),
     lng: v.number(),
     email: v.string(),
@@ -537,6 +559,7 @@ export default defineSchema({
     name: v.string(),
     placeName: v.string(),
     country: v.string(),
+    ...structuredLocationFields,
     lat: v.number(),
     lng: v.number(),
     email: v.string(),
@@ -583,6 +606,7 @@ export default defineSchema({
     name: v.string(),
     placeName: v.string(),
     country: v.string(),
+    ...structuredLocationFields,
     lat: v.number(),
     lng: v.number(),
     email: v.string(),
@@ -612,6 +636,7 @@ export default defineSchema({
     name: v.string(),
     placeName: v.string(),
     country: v.string(),
+    ...structuredLocationFields,
     lat: v.number(),
     lng: v.number(),
     email: v.string(),
