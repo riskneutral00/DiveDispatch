@@ -104,8 +104,7 @@ describe('getLowestProfileCompletion', () => {
       await ctx.db.insert('boats', {
         organizationId,
         name: 'Test Boat Biz',
-        placeName: 'Koh Tao',
-        country: 'Thailand',
+        address: { city: 'Koh Tao', country: 'TH' },
         lat: 10.09,
         lng: 99.84,
         email: 'boat@test.com',

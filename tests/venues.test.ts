@@ -42,8 +42,7 @@ async function seedPoolUser(ctx: SeedCtx, slug: string) {
 
 const VALID_DIVE_SITE_ARGS = {
   name: 'Shark Bay Reef',
-  placeName: 'Koh Tao',
-  country: 'Thailand',
+  address: { city: 'Koh Tao', country: 'TH' },
   lat: 10.09,
   lng: 99.84,
   venueCategory: 'diveSite' as const,
@@ -55,8 +54,7 @@ const VALID_DIVE_SITE_ARGS = {
 
 const VALID_POOL_ARGS = {
   name: 'Sairee Training Pool',
-  placeName: 'Koh Tao',
-  country: 'Thailand',
+  address: { city: 'Koh Tao', country: 'TH' },
   lat: 10.09,
   lng: 99.84,
   venueCategory: 'pool' as const,
@@ -388,8 +386,7 @@ describe('venues.update — access control round-trip', () => {
     await t.withIdentity(orgIdentityFor('pool-acl'))
       .mutation(api.venues.create, {
         name: 'ACL Pool',
-        placeName: 'Koh Tao',
-        country: 'Thailand',
+        address: { city: 'Koh Tao', country: 'TH' },
         lat: 10.09,
         lng: 99.84,
         venueCategory: 'pool' as const,

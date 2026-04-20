@@ -84,10 +84,11 @@ async function fetchProfile(
   const p = rawDoc ?? await queryProfileByUser(db, role, userId)
   if (!p) return null
 
+  const addr = (p.address as { city?: string; country?: string } | undefined) ?? {}
   const base = {
     name: p.name as string,
-    placeName: p.placeName as string,
-    country: p.country as string,
+    placeName: addr.city ?? '',
+    country: addr.country ?? '',
     verified: p.verified as boolean,
   }
 
@@ -266,8 +267,8 @@ export const listByRole = query({
         filtered.push({
           slug,
           name: venue.name,
-          placeName: venue.placeName,
-          country: venue.country,
+          placeName: venue.address.city,
+          country: venue.address.country,
           verified: venue.verified,
           role: args.role,
           venueCategory: category,

@@ -11,6 +11,6 @@ export const addressStructuredValidator = v.object({
 export type AddressStructured = Infer<typeof addressStructuredValidator>
 
 export const structuredLocationFields = {
-  address: v.optional(addressStructuredValidator),
+  address: addressStructuredValidator,
   placeId: v.optional(v.string()),
 }

@@ -152,10 +152,9 @@ describe('checkProfileCompleteness', () => {
 
       const result = await checkProfileCompleteness(ctx, { _id: userId }, 'DiveCenter')
 
-      // Role fields: name, placeName, country, associations, customerLanguages = 5 missing
+      // Role fields: name, address, associations, customerLanguages = 4 missing
       expect(result.incomplete).toContain('name')
-      expect(result.incomplete).toContain('placeName')
-      expect(result.incomplete).toContain('country')
+      expect(result.incomplete).toContain('address')
       expect(result.incomplete).toContain('associations')
       expect(result.incomplete).toContain('customerLanguages')
     })

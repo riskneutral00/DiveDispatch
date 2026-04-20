@@ -7,8 +7,8 @@ import {
 export type { StakeholderRole }
 
 const PHUKET_TH_ADDRESS = { city: 'Phuket', country: 'TH' } as const
-export const PHUKET = { placeName: 'Phuket', country: 'Thailand', address: PHUKET_TH_ADDRESS, lat: 7.8804, lng: 98.3923 } as const
-const CHALONG = { placeName: 'Phuket', country: 'Thailand', address: { city: 'Phuket', state: 'Phuket', country: 'TH' } as const, lat: 7.8386, lng: 98.3519 } as const
+export const PHUKET = { address: PHUKET_TH_ADDRESS, lat: 7.8804, lng: 98.3923 } as const
+const CHALONG = { address: { city: 'Phuket', state: 'Phuket', country: 'TH' } as const, lat: 7.8386, lng: 98.3519 } as const
 const VERIFIED = true
 
 const PADI_PREFS = { owDays: 3, aowDays: 2, oaDays: 4, selectedSpecialties: ['Deep', 'Drift', 'Wreck', 'Navigation'] }
@@ -42,9 +42,7 @@ export interface SeedUser {
 
 interface DiveCenterProfile {
   name: string
-  placeName: string
-  country: string
-  address?: SeedAddress
+  address: SeedAddress
   lat: number
   lng: number
   email: string
@@ -63,9 +61,7 @@ interface DiveCenterProfile {
 
 interface BoatProfile {
   name: string
-  placeName: string
-  country: string
-  address?: SeedAddress
+  address: SeedAddress
   lat: number
   lng: number
   email: string
@@ -85,9 +81,7 @@ interface BoatProfile {
 
 interface VenueProfile {
   name: string
-  placeName: string
-  country: string
-  address?: SeedAddress
+  address: SeedAddress
   lat: number
   lng: number
   email: string
@@ -113,9 +107,7 @@ export interface SeedInventoryLine {
 
 interface EquipmentProfile {
   name: string
-  placeName: string
-  country: string
-  address?: SeedAddress
+  address: SeedAddress
   lat: number
   lng: number
   email: string
@@ -129,9 +121,7 @@ interface EquipmentProfile {
 
 interface CompressorProfile {
   name: string
-  placeName: string
-  country: string
-  address?: SeedAddress
+  address: SeedAddress
   lat: number
   lng: number
   email: string
@@ -146,9 +136,7 @@ interface CompressorProfile {
 
 interface LiveaboardProfile {
   name: string
-  placeName: string
-  country: string
-  address?: SeedAddress
+  address: SeedAddress
   lat: number
   lng: number
   email: string
@@ -158,9 +146,7 @@ interface LiveaboardProfile {
 
 interface DiveResortProfile {
   name: string
-  placeName: string
-  country: string
-  address?: SeedAddress
+  address: SeedAddress
   lat: number
   lng: number
   email: string
@@ -170,9 +156,7 @@ interface DiveResortProfile {
 
 interface AgentProfile {
   name: string
-  placeName: string
-  country: string
-  address?: SeedAddress
+  address: SeedAddress
   lat: number
   lng: number
   email: string
@@ -186,9 +170,7 @@ interface AgentProfile {
 interface InstructorProfile {
   name: string
   role: 'Instructor'
-  placeName: string
-  country: string
-  address?: SeedAddress
+  address: SeedAddress
   lat: number
   lng: number
   email: string
@@ -833,8 +815,7 @@ export const JIYEON_AGENT: SeedStakeholder = {
   roles: [{ role: 'Agent' }],
   agent: {
     name: 'JY Dive Travel',
-    placeName: 'Seoul',
-    country: 'South Korea',
+    address: { city: 'Seoul', country: 'KR' },
     lat: 37.5665,
     lng: 126.9780,
     email: 'jiyeon@divedispatch.dev',
@@ -861,8 +842,7 @@ export const KENJI_AGENT: SeedStakeholder = {
   roles: [{ role: 'Agent' }],
   agent: {
     name: 'Watanabe Dive',
-    placeName: 'Tokyo',
-    country: 'Japan',
+    address: { city: 'Tokyo', country: 'JP' },
     lat: 35.6762,
     lng: 139.6503,
     email: 'kenji@divedispatch.dev',
@@ -889,8 +869,7 @@ export const EVA_AGENT: SeedStakeholder = {
   roles: [{ role: 'Agent' }],
   agent: {
     name: 'Klein Dive Europe',
-    placeName: 'Berlin',
-    country: 'Germany',
+    address: { city: 'Berlin', country: 'DE' },
     lat: 52.5200,
     lng: 13.4050,
     email: 'eva@divedispatch.dev',
@@ -1012,8 +991,6 @@ export const SCUBA_REVOLUTION: SeedStakeholder = {
   roles: [{ role: 'Equipment' }],
   equipment: {
     name: 'Scuba Revolution Phuket',
-    placeName: 'Phuket',
-    country: 'Thailand',
     address: PHUKET_TH_ADDRESS,
     lat: 7.8207,
     lng: 98.3425,
@@ -1045,8 +1022,6 @@ export const RESTORED_PRAWIT: SeedStakeholder = {
   roles: [{ role: 'Compressor' }],
   compressor: {
     name: 'Scuba Market Thailand',
-    placeName: 'Wat Kitti Sangkharam, 44 Thanon Kata, Tambon Karon, Amphoe Mueang Phuket, Chang Wat Phuket 83100',
-    country: 'Thailand',
     address: { street: '44 Thanon Kata, Tambon Karon', city: 'Phuket', state: 'Phuket', country: 'TH', postalCode: '83100' },
     lat: 7.8215228,
     lng: 98.3062015,
@@ -1075,8 +1050,6 @@ export const RESTORED_SOMBAT: SeedStakeholder = {
   roles: [{ role: 'Compressor' }],
   compressor: {
     name: 'Compressor Shop Chalong Pier',
-    placeName: 'Asian Divers, Wiset Rd, Tambon Karon, Amphoe Mueang Phuket, Chang Wat Phuket 83100',
-    country: 'Thailand',
     address: { street: 'Asian Divers, Wiset Rd, Tambon Karon', city: 'Phuket', state: 'Phuket', country: 'TH', postalCode: '83100' },
     lat: 7.8203607,
     lng: 98.3423974,

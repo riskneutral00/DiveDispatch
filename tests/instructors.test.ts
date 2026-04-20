@@ -11,8 +11,7 @@ async function seedUser(ctx: SeedCtx, slug: string, role: 'Instructor' | 'DiveCe
 }
 
 const VALID_INSTRUCTOR_ARGS = {
-  placeName: 'Koh Tao',
-  country: 'Thailand',
+  address: { city: 'Koh Tao', country: 'TH' },
   lat: 10.09,
   lng: 99.84,
   email: 'instr@test.com',

@@ -30,8 +30,7 @@ describe('ROLE_REQUIRED', () => {
     const fields = ROLE_REQUIRED['DiveCenter']
     expect(fields).toBeDefined()
     expect(fields).toContain('name')
-    expect(fields).toContain('placeName')
-    expect(fields).toContain('country')
+    expect(fields).toContain('address')
   })
 
   it('defines required fields for Instructor', () => {
@@ -50,17 +49,18 @@ describe('ROLE_REQUIRED', () => {
     expect(fields).toContain('diveSite')
   })
 
-  it('Agent requires name, placeName, country, associations, customerLanguages', () => {
+  it('Agent requires name, address, associations, customerLanguages', () => {
     const fields = ROLE_REQUIRED['Agent']
     expect(fields).toContain('name')
+    expect(fields).toContain('address')
     expect(fields).toContain('associations')
     expect(fields).toContain('customerLanguages')
   })
 
-  it('every role has name and placeName at minimum', () => {
-    for (const [role, fields] of Object.entries(ROLE_REQUIRED)) {
+  it('every role has name and address at minimum', () => {
+    for (const [, fields] of Object.entries(ROLE_REQUIRED)) {
       expect(fields).toContain('name')
-      expect(fields).toContain('placeName')
+      expect(fields).toContain('address')
     }
   })
 
@@ -82,13 +82,13 @@ describe('ROLE_REQUIRED', () => {
     }
   })
 
-  it('Equipment requires gearInventory; Pool requires only name and placeName', () => {
-    expect(ROLE_REQUIRED.Equipment).toEqual(['name', 'placeName', 'gearInventory'])
-    expect(ROLE_REQUIRED.Pool).toEqual(['name', 'placeName'])
+  it('Equipment requires gearInventory; Pool requires only name and address', () => {
+    expect(ROLE_REQUIRED.Equipment).toEqual(['name', 'address', 'gearInventory'])
+    expect(ROLE_REQUIRED.Pool).toEqual(['name', 'address'])
   })
 
   it('Compressor requires gasMixes (happy-path P0-18 gate)', () => {
-    expect(ROLE_REQUIRED.Compressor).toEqual(['name', 'placeName', 'gasMixes'])
+    expect(ROLE_REQUIRED.Compressor).toEqual(['name', 'address', 'gasMixes'])
   })
 
   it('Instructor requires teachingLanguages (happy-path P0-20 gate)', () => {
@@ -98,13 +98,12 @@ describe('ROLE_REQUIRED', () => {
   it('DiveSite has required fields defined', () => {
     const fields = ROLE_REQUIRED['DiveSite']
     expect(fields).toContain('name')
-    expect(fields).toContain('placeName')
-    expect(fields).toContain('country')
+    expect(fields).toContain('address')
     expect(fields).toContain('diveSiteTypes')
   })
 
   it('DiveSite required fields are exactly the spec list (maxCapacity is optional)', () => {
-    expect(ROLE_REQUIRED['DiveSite']).toEqual(['name', 'placeName', 'country', 'diveSiteTypes'])
+    expect(ROLE_REQUIRED['DiveSite']).toEqual(['name', 'address', 'diveSiteTypes'])
   })
 })
 

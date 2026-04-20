@@ -12,8 +12,7 @@ async function seedUser(ctx: SeedCtx, slug: string, role: NonNullable<NonNullabl
 
 const VALID_AGENT_ARGS = {
   name: 'Test Agent',
-  placeName: 'Koh Tao',
-  country: 'Thailand',
+  address: { city: 'Koh Tao', country: 'TH' },
   lat: 10.09,
   lng: 99.84,
   email: 'agent@test.com',
@@ -62,8 +61,8 @@ describe('agents.create', () => {
       expect(agent!.name).toBe('Test Agent')
       expect(agent!.organizationId).toBeDefined()
       expect(agent!.verified).toBe(false)
-      expect(agent!.placeName).toBe('Koh Tao')
-      expect(agent!.country).toBe('Thailand')
+      expect(agent!.address.city).toBe('Koh Tao')
+      expect(agent!.address.country).toBe('TH')
     })
   })
 
@@ -205,8 +204,7 @@ describe('agents.mine', () => {
 
     expect(result).not.toBeNull()
     expect(result!.name).toBe('Test Agent')
-    // Flat location fields
-    expect(result!.placeName).toBe('Koh Tao')
-    expect(result!.country).toBe('Thailand')
+    expect(result!.address.city).toBe('Koh Tao')
+    expect(result!.address.country).toBe('TH')
   })
 })

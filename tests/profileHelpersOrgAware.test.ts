@@ -18,8 +18,7 @@ async function seedUser(ctx: SeedCtx, slug: string, role: 'DiveCenter' | 'Boat' 
 
 const BASE_DC_ARGS = {
   name: 'Hug Ocean',
-  placeName: 'Koh Tao',
-  country: 'Thailand',
+  address: { city: 'Koh Tao', country: 'TH' },
   lat: 10.09,
   lng: 99.84,
   email: 'dc@test.com',

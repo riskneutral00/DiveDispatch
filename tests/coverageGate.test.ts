@@ -47,8 +47,7 @@ async function seedBoatUser(ctx: SeedCtx, slug: string, hasCompressor: boolean) 
   await ctx.db.insert('boats', {
     organizationId,
     name: `${slug} Boat`,
-    placeName: 'Koh Tao',
-    country: 'Thailand',
+    address: { city: 'Koh Tao', country: 'TH' },
     lat: 10.0957,
     lng: 99.8408,
     email: `${slug}@test.com`,

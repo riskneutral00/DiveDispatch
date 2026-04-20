@@ -3,6 +3,8 @@ import { internalMutation, mutation, query } from './_generated/server'
 import { checkIdempotency } from './lib/idempotency'
 import { requireOrgAdmin } from './lib/activeOrg'
 import { ErrorCode } from './lib/errorCodes'
+import { addressStructuredValidator } from './shared/addressValidator'
+import { assertCountryCode } from './lib/i18nValidators'
 
 export const upsertFromWebhook = internalMutation({
   args: {
@@ -91,17 +93,20 @@ export const updateBusinessMetadata = mutation({
   args: {
     phone: v.optional(v.string()),
     email: v.optional(v.string()),
-    address: v.optional(v.string()),
-    country: v.optional(v.string()),
+    address: v.optional(addressStructuredValidator),
+    placeId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const { org } = await requireOrgAdmin(ctx)
 
-    const patch: Record<string, string | number> = { updatedAt: Date.now() }
+    const patch: Record<string, unknown> = { updatedAt: Date.now() }
     if (args.phone !== undefined) patch.phone = args.phone
     if (args.email !== undefined) patch.email = args.email
-    if (args.address !== undefined) patch.address = args.address
-    if (args.country !== undefined) patch.country = args.country
+    if (args.address !== undefined) {
+      assertCountryCode(args.address.country, 'address.country')
+      patch.address = args.address
+    }
+    if (args.placeId !== undefined) patch.placeId = args.placeId
 
     if (Object.keys(patch).length === 1) {
       throw new ConvexError({ code: ErrorCode.VALIDATION, reason: 'no_fields_to_update' })

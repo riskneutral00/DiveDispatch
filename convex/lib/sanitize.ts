@@ -52,8 +52,6 @@ export const USER_FIELDS: FieldConfig = {
 
 export const PROFILE_FIELDS: FieldConfig = {
   name: NAME_MAX,
-  placeName: NAME_MAX,
-  country: SHORT_TEXT_MAX,
   email: EMAIL_MAX,
   phone: PHONE_MAX,
 }

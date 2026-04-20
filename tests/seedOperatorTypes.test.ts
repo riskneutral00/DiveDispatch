@@ -29,8 +29,8 @@ describe('Non-DiveCenter operator seed data', () => {
     it('has a liveaboard profile with required fields', () => {
       const profile = ANDAMAN_EXPLORER.liveaboard!
       expect(profile.name).toBe('Andaman Explorer')
-      expect(profile.placeName).toBe('Phuket')
-      expect(profile.country).toBe('Thailand')
+      expect(profile.address.city).toBe('Phuket')
+      expect(profile.address.country).toBe('TH')
       expect(profile.lat).toBe(7.8804)
       expect(profile.lng).toBe(98.3923)
       expect(profile.email).toBe('andaman-explorer@divedispatch.dev')
@@ -73,8 +73,8 @@ describe('Non-DiveCenter operator seed data', () => {
     it('has a diveResort profile with required fields', () => {
       const profile = CORAL_BAY_RESORT.diveResort!
       expect(profile.name).toBe('Coral Bay Resort')
-      expect(profile.placeName).toBe('Phuket')
-      expect(profile.country).toBe('Thailand')
+      expect(profile.address.city).toBe('Phuket')
+      expect(profile.address.country).toBe('TH')
       expect(profile.lat).toBe(7.8804)
       expect(profile.lng).toBe(98.3923)
       expect(profile.email).toBe('coral-bay-resort@divedispatch.dev')
@@ -117,8 +117,8 @@ describe('Non-DiveCenter operator seed data', () => {
     it('has an agent profile with required fields', () => {
       const profile = AMANDA.agent!
       expect(profile.name).toBe('Amanda')
-      expect(profile.placeName).toBe('Phuket')
-      expect(profile.country).toBe('Thailand')
+      expect(profile.address.city).toBe('Phuket')
+      expect(profile.address.country).toBe('TH')
       expect(profile.lat).toBe(7.8804)
       expect(profile.lng).toBe(98.3923)
       expect(profile.email).toBe('amanda@divedispatch.dev')

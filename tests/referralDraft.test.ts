@@ -40,8 +40,7 @@ async function seedCompleteOperator(ctx: Ctx, slug: string, role: StakeholderRol
     await ctx.db.insert('diveCenters', {
       organizationId,
       name: `${slug} DC`,
-      placeName: 'Koh Tao',
-      country: 'Thailand',
+      address: { city: 'Koh Tao', country: 'TH' },
       lat: 10.0957,
       lng: 99.8408,
       email: `${slug}@test.com`,
@@ -56,8 +55,7 @@ async function seedCompleteOperator(ctx: Ctx, slug: string, role: StakeholderRol
     await ctx.db.insert('agents', {
       organizationId,
       name: `${slug} Agency`,
-      placeName: 'Koh Tao',
-      country: 'Thailand',
+      address: { city: 'Koh Tao', country: 'TH' },
       lat: 10.0957,
       lng: 99.8408,
       email: `${slug}@test.com`,

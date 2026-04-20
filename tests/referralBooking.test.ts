@@ -10,8 +10,7 @@ async function seedReadyAgent(ctx: SeedCtx, slug: string) {
   await ctx.db.insert('agents', {
     organizationId,
     name: `${slug} Agency`,
-    placeName: 'Koh Tao',
-    country: 'Thailand',
+    address: { city: 'Koh Tao', country: 'TH' },
     lat: 10.0957,
     lng: 99.8408,
     email: `${slug}@test.com`,

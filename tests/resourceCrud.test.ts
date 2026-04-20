@@ -25,8 +25,7 @@ async function seedUserWithOrg(
 // ─── Resource configs ─────────────────────────────────────────────────────────
 
 const COMMON_LOCATION = {
-  placeName: 'Koh Tao',
-  country: 'Thailand',
+  address: { city: 'Koh Tao', country: 'TH' },
   lat: 10.09,
   lng: 99.84,
   email: 'test@test.com',
@@ -79,8 +78,7 @@ const RESOURCE_CONFIGS: Array<{
     apiModule: api.instructors as CrudApi,
     role: 'Instructor',
     createArgs: {
-      placeName: 'Koh Tao',
-      country: 'Thailand',
+      address: { city: 'Koh Tao', country: 'TH' },
       lat: 10.09,
       lng: 99.84,
       email: 'instr@test.com',

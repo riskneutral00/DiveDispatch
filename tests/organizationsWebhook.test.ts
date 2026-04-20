@@ -306,7 +306,7 @@ describe('organizations.updateBusinessMetadata (admin gate)', () => {
 
     await t.withIdentity(adminIdentity).mutation(
       api.organizations.updateBusinessMetadata,
-      { phone: '+66-80-123-4567', country: 'TH' },
+      { phone: '+66-80-123-4567', address: { city: 'Phuket', country: 'TH' } },
     )
 
     const org = await t.run(async (ctx) => {
@@ -316,7 +316,7 @@ describe('organizations.updateBusinessMetadata (admin gate)', () => {
         .unique()
     })
     expect(org?.phone).toBe('+66-80-123-4567')
-    expect(org?.country).toBe('TH')
+    expect(org?.address?.country).toBe('TH')
     expect(org?.name).toBe('Admin Co')
   })
 

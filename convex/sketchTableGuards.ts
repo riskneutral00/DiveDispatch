@@ -4,8 +4,14 @@ import type { Id } from './_generated/dataModel'
 type StakeholderProfileData = {
   organizationId: Id<'organizations'>
   name: string
-  placeName: string
-  country: string
+  address: {
+    street?: string
+    city: string
+    state?: string
+    country: string
+    postalCode?: string
+  }
+  placeId?: string
   lat: number
   lng: number
   email: string

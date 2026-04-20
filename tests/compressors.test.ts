@@ -15,8 +15,7 @@ async function seedCompressorProfile(ctx: SeedCtx, userId: Awaited<ReturnType<ty
   return ctx.db.insert('compressors', {
     organizationId,
     name: 'Test Compressor',
-    placeName: 'Koh Tao',
-    country: 'Thailand',
+    address: { city: 'Koh Tao', country: 'TH' },
     lat: 10.09,
     lng: 99.84,
     email: 'compressor@test.com',
@@ -27,8 +26,7 @@ async function seedCompressorProfile(ctx: SeedCtx, userId: Awaited<ReturnType<ty
 
 const VALID_ARGS = {
   name: 'Sairee Compressor',
-  placeName: 'Koh Tao',
-  country: 'Thailand',
+  address: { city: 'Koh Tao', country: 'TH' },
   lat: 10.09,
   lng: 99.84,
   email: 'comp@test.com',
@@ -120,7 +118,7 @@ describe('directory.listByRole — Compressor picker gate', () => {
       const organizationId = await getOrCreateTestOrg(ctx, u1, 'Undef')
       await ctx.db.insert('compressors', {
         organizationId,
-        name: 'Undef', placeName: 'Chalong', country: 'Thailand',
+        name: 'Undef', address: { city: 'Chalong', country: 'TH' },
         lat: 7.82, lng: 98.36, email: 'u@t.com', phone: '+66000',
         verified: true,
       })
@@ -139,7 +137,7 @@ describe('directory.listByRole — Compressor picker gate', () => {
       const organizationId = await getOrCreateTestOrg(ctx, u1, 'Empty')
       await ctx.db.insert('compressors', {
         organizationId,
-        name: 'Empty', placeName: 'Chalong', country: 'Thailand',
+        name: 'Empty', address: { city: 'Chalong', country: 'TH' },
         lat: 7.82, lng: 98.36, email: 'e@t.com', phone: '+66000',
         gasMixes: [],
         verified: true,
@@ -159,7 +157,7 @@ describe('directory.listByRole — Compressor picker gate', () => {
       const organizationId = await getOrCreateTestOrg(ctx, u1, 'Air Shop')
       await ctx.db.insert('compressors', {
         organizationId,
-        name: 'Air Shop', placeName: 'Chalong', country: 'Thailand',
+        name: 'Air Shop', address: { city: 'Chalong', country: 'TH' },
         lat: 7.82, lng: 98.36, email: 'a@t.com', phone: '+66000',
         gasMixes: ['air'],
         verified: true,

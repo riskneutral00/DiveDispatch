@@ -81,12 +81,9 @@ export async function checkProfileCompleteness(
       continue
     }
 
-    if (role === 'Agent' && field === 'placeName') {
-      if (!str(profile.placeName)) incomplete.push(field)
-      continue
-    }
-    if (role === 'Agent' && field === 'country') {
-      if (!str(profile.country)) incomplete.push(field)
+    if (field === 'address') {
+      const addr = profile.address as { city?: unknown; country?: unknown } | undefined
+      if (!addr || !str(addr.city) || !str(addr.country)) incomplete.push(field)
       continue
     }
 

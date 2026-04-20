@@ -25,14 +25,13 @@ async function seedInstructorUser(ctx: SeedCtx, slug: string) {
   return userId
 }
 
-async function seedInstructorProfile(ctx: SeedCtx, userId: Id<'users'>, name: string, placeName: string, country: string, verified = false) {
+async function seedInstructorProfile(ctx: SeedCtx, userId: Id<'users'>, name: string, city: string, country: string, verified = false) {
   const organizationId = await getOrCreateTestOrg(ctx, userId, name)
   return ctx.db.insert('diveStaff', {
     organizationId,
     role: 'Instructor',
     name,
-    placeName,
-    country,
+    address: { city, country },
     lat: 7.8804,
     lng: 98.3923,
     email: `${userId}@test.com`,
@@ -73,8 +72,8 @@ describe('listByRole basic listing', () => {
       await seedCallerUser(ctx, 'divecentre-phuket')
       const u1 = await seedInstructorUser(ctx, 'john-abc')
       const u2 = await seedInstructorUser(ctx, 'jane-def')
-      await seedInstructorProfile(ctx, u1, 'John Smith', 'Phuket', 'Thailand', true)
-      await seedInstructorProfile(ctx, u2, 'Jane Lee', 'Krabi', 'Thailand', false)
+      await seedInstructorProfile(ctx, u1, 'John Smith', 'Phuket', 'TH', true)
+      await seedInstructorProfile(ctx, u2, 'Jane Lee', 'Krabi', 'TH', false)
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'user|divecentre-phuket' })
@@ -111,7 +110,7 @@ describe('listByRole basic listing', () => {
       const u1 = await seedInstructorUser(ctx, 'john-abc')
       await seedInstructorUser(ctx, 'jane-def')
       // Only create profile for john-abc
-      await seedInstructorProfile(ctx, u1, 'John Smith', 'Phuket', 'Thailand', true)
+      await seedInstructorProfile(ctx, u1, 'John Smith', 'Phuket', 'TH', true)
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'user|caller-skip' })
@@ -124,7 +123,7 @@ describe('listByRole basic listing', () => {
     const t = makeT()
     await t.run(async (ctx) => {
       const u1 = await seedInstructorUser(ctx, 'john-abc')
-      await seedInstructorProfile(ctx, u1, 'John Smith', 'Phuket', 'Thailand', true)
+      await seedInstructorProfile(ctx, u1, 'John Smith', 'Phuket', 'TH', true)
     })
 
     await expectConvexError(
@@ -143,8 +142,8 @@ describe('listByRole location filter', () => {
       await seedCallerUser(ctx, 'caller-place')
       const u1 = await seedInstructorUser(ctx, 'john-abc')
       const u2 = await seedInstructorUser(ctx, 'jane-def')
-      await seedInstructorProfile(ctx, u1, 'John Smith', 'Phuket', 'Thailand', true)
-      await seedInstructorProfile(ctx, u2, 'Jane Lee', 'Krabi', 'Thailand', false)
+      await seedInstructorProfile(ctx, u1, 'John Smith', 'Phuket', 'TH', true)
+      await seedInstructorProfile(ctx, u2, 'Jane Lee', 'Krabi', 'TH', false)
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'user|caller-place' })
@@ -160,15 +159,15 @@ describe('listByRole location filter', () => {
       const u1 = await seedInstructorUser(ctx, 'john-abc')
       const u2 = await seedInstructorUser(ctx, 'jane-def')
       const u3 = await seedInstructorUser(ctx, 'bali-guide')
-      await seedInstructorProfile(ctx, u1, 'John Smith', 'Phuket', 'Thailand', true)
-      await seedInstructorProfile(ctx, u2, 'Jane Lee', 'Krabi', 'Thailand', false)
-      await seedInstructorProfile(ctx, u3, 'Bali Guide', 'Denpasar', 'Indonesia', true)
+      await seedInstructorProfile(ctx, u1, 'John Smith', 'Phuket', 'TH', true)
+      await seedInstructorProfile(ctx, u2, 'Jane Lee', 'Krabi', 'TH', false)
+      await seedInstructorProfile(ctx, u3, 'Bali Guide', 'Denpasar', 'ID', true)
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'user|caller-country' })
-      .query(api.directory.listByRole, { role: 'Instructor', country: 'Thailand' })
+      .query(api.directory.listByRole, { role: 'Instructor', country: 'TH' })
     expect(result).toHaveLength(2)
-    expect(result.every((r) => r.country === 'Thailand')).toBe(true)
+    expect(result.every((r) => r.country === 'TH')).toBe(true)
   })
 
   it('filters by both placeName and country', async () => {
@@ -178,13 +177,13 @@ describe('listByRole location filter', () => {
       const u1 = await seedInstructorUser(ctx, 'john-abc')
       const u2 = await seedInstructorUser(ctx, 'jane-def')
       const u3 = await seedInstructorUser(ctx, 'tom-ghi')
-      await seedInstructorProfile(ctx, u1, 'John Smith', 'Phuket', 'Thailand', true)
-      await seedInstructorProfile(ctx, u2, 'Jane Lee', 'Krabi', 'Thailand', false)
-      await seedInstructorProfile(ctx, u3, 'Tom Muller', 'Phuket', 'Thailand', true)
+      await seedInstructorProfile(ctx, u1, 'John Smith', 'Phuket', 'TH', true)
+      await seedInstructorProfile(ctx, u2, 'Jane Lee', 'Krabi', 'TH', false)
+      await seedInstructorProfile(ctx, u3, 'Tom Muller', 'Phuket', 'TH', true)
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'user|caller-both' })
-      .query(api.directory.listByRole, { role: 'Instructor', placeName: 'Krabi', country: 'Thailand' })
+      .query(api.directory.listByRole, { role: 'Instructor', placeName: 'Krabi', country: 'TH' })
     expect(result).toHaveLength(1)
     expect(result[0].slug).toBe('jane-def')
   })
@@ -194,7 +193,7 @@ describe('listByRole location filter', () => {
     await t.run(async (ctx) => {
       await seedCallerUser(ctx, 'caller-nomatch')
       const u1 = await seedInstructorUser(ctx, 'john-abc')
-      await seedInstructorProfile(ctx, u1, 'John Smith', 'Phuket', 'Thailand', true)
+      await seedInstructorProfile(ctx, u1, 'John Smith', 'Phuket', 'TH', true)
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'user|caller-nomatch' })
@@ -212,7 +211,7 @@ describe('listByRole language propagation', () => {
       const callerId = await seedCallerUser(ctx, 'caller-lang')
       const u1 = await seedInstructorUser(ctx, 'inst-lang')
       // Set teachingLanguages on instructor profile (SHOULD appear)
-      await seedInstructorProfile(ctx, u1, 'Nattaya', 'Koh Tao', 'Thailand', true)
+      await seedInstructorProfile(ctx, u1, 'Nattaya', 'Koh Tao', 'TH', true)
       const inst = await findProfileByUser(ctx, u1, 'diveStaff')
       await ctx.db.patch(inst!._id, { teachingLanguages: ['en-GB', 'th-TH'] })
     })
@@ -248,8 +247,7 @@ describe('listByRole language propagation', () => {
       await ctx.db.insert('diveCenters', {
         organizationId: dcOrgId,
         name: 'Test DC',
-        placeName: 'Koh Tao',
-        country: 'Thailand',
+        address: { city: 'Koh Tao', country: 'TH' },
         lat: 10.0957,
         lng: 99.8408,
         email: 'dc@test.com',
@@ -281,8 +279,7 @@ describe('listByRole credentials passthrough', () => {
         organizationId,
         role: 'Instructor',
         name: 'Multi Cred Instructor',
-        placeName: 'Phuket',
-        country: 'Thailand',
+        address: { city: 'Phuket', country: 'TH' },
         lat: 7.88,
         lng: 98.39,
         email: 'multi@test.com',
@@ -316,8 +313,7 @@ describe('listByRole credentials passthrough', () => {
         organizationId,
         role: 'Instructor',
         name: 'No Cred Instructor',
-        placeName: 'Krabi',
-        country: 'Thailand',
+        address: { city: 'Krabi', country: 'TH' },
         lat: 8.09,
         lng: 98.91,
         email: 'nocred@test.com',
@@ -352,8 +348,7 @@ describe('listByRole credentials passthrough', () => {
         organizationId,
         role: 'Instructor',
         name: 'Guard Path Instructor',
-        placeName: 'Phuket',
-        country: 'Thailand',
+        address: { city: 'Phuket', country: 'TH' },
         lat: 7.88,
         lng: 98.39,
         email: 'guard@test.com',

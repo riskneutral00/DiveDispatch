@@ -42,8 +42,6 @@ export async function seedDiveCenterProfile(
   return ctx.db.insert('diveCenters', {
     organizationId,
     name: overrides.name ?? 'Test DC',
-    placeName: overrides.placeName ?? address.city,
-    country: overrides.country ?? 'Thailand',
     address,
     lat: overrides.lat ?? 10.0957,
     lng: overrides.lng ?? 99.8408,
@@ -74,8 +72,6 @@ export async function seedAgent(
   return ctx.db.insert('agents', {
     organizationId,
     name: overrides.name ?? 'Test Agent',
-    placeName: address.city,
-    country: 'Thailand',
     address,
     lat: 10.09,
     lng: 99.84,
@@ -111,8 +107,6 @@ export async function seedVenue(
   const address = resolveAddress(overrides)
   return ctx.db.insert('venues', {
     name: overrides.name ?? 'Test Venue',
-    placeName: overrides.placeName ?? address.city,
-    country: overrides.country ?? 'Thailand',
     address,
     lat: overrides.lat ?? 10.0957,
     lng: overrides.lng ?? 99.8408,
@@ -151,8 +145,6 @@ export async function seedInstructorProfile(
     organizationId,
     role: 'Instructor',
     name: overrides.name ?? 'Test Instructor',
-    placeName: overrides.placeName ?? address.city,
-    country: overrides.country ?? 'Thailand',
     address,
     lat: 10.0957,
     lng: 99.8408,
@@ -188,8 +180,6 @@ export async function seedDiveMasterProfile(
     organizationId,
     role: 'Instructor',
     name: overrides.name ?? 'Test DiveMaster',
-    placeName: overrides.placeName ?? address.city,
-    country: overrides.country ?? 'Thailand',
     address,
     lat: 10.0957,
     lng: 99.8408,
@@ -224,8 +214,6 @@ export async function seedBoatProfile(
   return ctx.db.insert('boats', {
     organizationId,
     name: overrides.name ?? 'Test Boat',
-    placeName: overrides.placeName ?? address.city,
-    country: overrides.country ?? 'Thailand',
     address,
     lat: 10.0957,
     lng: 99.8408,
@@ -256,8 +244,6 @@ export async function seedEquipmentProfile(
   return ctx.db.insert('equipment', {
     organizationId,
     name: overrides.name ?? 'Test Equipment',
-    placeName: overrides.placeName ?? address.city,
-    country: overrides.country ?? 'Thailand',
     address,
     lat: 10.0957,
     lng: 99.8408,

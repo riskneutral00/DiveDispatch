@@ -24,10 +24,9 @@ describe('diveCenters.create (profile setup)', () => {
     const id = await t.withIdentity(orgIdentityFor('profile-dc-01'))
       .mutation(api.diveCenters.create, {
         name: "Matt & Miss Mermaid's DC",
-        placeName: 'Phuket',
+        address: { city: 'Phuket', country: 'TH' },
         lat: 7.8804,
         lng: 98.3923,
-        country: 'Thailand',
         email: 'matt@divedispatch.dev',
         phone: '+66812345678',
         associations: [{ agency: 'PADI', number: '12345' }],
@@ -35,8 +34,8 @@ describe('diveCenters.create (profile setup)', () => {
 
     const profile = await t.run(async (ctx) => ctx.db.get(id as Id<'diveCenters'>))
     expect(profile?.name).toBe("Matt & Miss Mermaid's DC")
-    expect(profile?.placeName).toBe('Phuket')
-    expect(profile?.country).toBe('Thailand')
+    expect(profile?.address.city).toBe('Phuket')
+    expect(profile?.address.country).toBe('TH')
     expect(profile?.email).toBe('matt@divedispatch.dev')
     expect(profile?.phone).toBe('+66812345678')
     expect(profile?.associations).toHaveLength(1)
@@ -49,10 +48,9 @@ describe('diveCenters.create (profile setup)', () => {
 
     const args = {
       name: 'Idempotent DC',
-      placeName: 'Koh Tao',
+      address: { city: 'Koh Tao', country: 'TH' },
       lat: 10.0957,
       lng: 99.8408,
-      country: 'Thailand',
       email: 'idem@dc.com',
       phone: '+66800000000',
       associations: [] as { agency: string; number: string }[],
@@ -84,10 +82,9 @@ describe('diveCenters.create (profile setup)', () => {
       t.withIdentity(orgIdentityFor('profile-inst-01'))
         .mutation(api.diveCenters.create, {
           name: 'Bad Actor',
-          placeName: 'Phuket',
-        lat: 7.8804,
-        lng: 98.3923,
-          country: 'Thailand',
+          address: { city: 'Phuket', country: 'TH' },
+          lat: 7.8804,
+          lng: 98.3923,
           email: 'bad@test.com',
           phone: '+66800000000',
           associations: [],

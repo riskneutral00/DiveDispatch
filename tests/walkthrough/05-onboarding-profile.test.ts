@@ -18,10 +18,9 @@ describe('05: onboarding profile step — save mutation', () => {
       .withIdentity(orgIdentityFor('dc-assoc'))
       .mutation(api.diveCenters.create, {
         name: 'Assoc Test DC',
-        placeName: 'Phuket',
+        address: { city: 'Phuket', country: 'TH' },
         lat: 7.8804,
         lng: 98.3923,
-        country: 'Thailand',
         email: 'assoc@test.com',
         phone: '+66891234567',
         associations: [{ agency: 'PADI', number: 'TH-00123' }],
@@ -44,10 +43,9 @@ describe('05: onboarding profile step — save mutation', () => {
       .withIdentity(orgIdentityFor('dc-langs'))
       .mutation(api.diveCenters.create, {
         name: 'Languages Test DC',
-        placeName: 'Koh Tao',
+        address: { city: 'Koh Tao', country: 'TH' },
         lat: 10.0957,
         lng: 99.8408,
-        country: 'Thailand',
         email: 'langs@test.com',
         phone: '+66891234568',
         associations: [],
@@ -68,10 +66,9 @@ describe('05: onboarding profile step — save mutation', () => {
       .withIdentity(orgIdentityFor('dc-days'))
       .mutation(api.diveCenters.create, {
         name: 'Days Test DC',
-        placeName: 'Phuket',
+        address: { city: 'Phuket', country: 'TH' },
         lat: 7.8804,
         lng: 98.3923,
-        country: 'Thailand',
         email: 'days@test.com',
         phone: '+66891234569',
         associations: [{ agency: 'PADI', number: 'TEST', owDays: 4, aowDays: 2 }],

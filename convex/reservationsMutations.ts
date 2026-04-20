@@ -41,8 +41,8 @@ async function getProfileCity(
 ): Promise<string | null> {
   const tableName = ROLE_TABLE_MAP[ownerType]
   if (!tableName) return null
-  const profile = await profileByUser(ctx, userId, tableName) as { placeName?: string } | null
-  return profile?.placeName ?? null
+  const profile = await profileByUser(ctx, userId, tableName) as { address?: { city?: string } } | null
+  return profile?.address?.city ?? null
 }
 
 async function batchGetUsers(

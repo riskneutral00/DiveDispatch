@@ -12,8 +12,7 @@ async function seedUser(ctx: SeedCtx, slug: string, role: 'Boat' | 'DiveCenter' 
 
 const VALID_BOAT_ARGS = {
   name: 'MV Seatran',
-  placeName: 'Koh Tao',
-  country: 'Thailand',
+  address: { city: 'Koh Tao', country: 'TH' },
   lat: 10.09,
   lng: 99.84,
   email: 'boat@test.com',

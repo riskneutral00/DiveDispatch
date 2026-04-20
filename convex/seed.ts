@@ -428,8 +428,7 @@ export const seedResourceInventory = internalMutation({
       })
       await ctx.db.insert('venues', { // batch-exempt
         name: site.name,
-        placeName: 'Phuket',
-        country: 'Thailand',
+        address: { city: 'Phuket', country: 'TH' },
         lat: 7.8206,
         lng: 98.3003,
         verified: true,
