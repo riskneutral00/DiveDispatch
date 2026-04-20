@@ -1,7 +1,7 @@
 /**
  * Resource CRUD — Integration Tests
  *
- * Parameterized tests covering create/update/mine/byUserId for all resource types:
+ * Parameterized tests covering create/update/mine for all resource types:
  * equipment, boats, venues, instructors, diveMasters, compressors, diveCenters.
  * (agents.test.ts already covers agents.)
  */
@@ -35,7 +35,7 @@ const COMMON_LOCATION = {
 
 // Each entry: { apiModule, role, createArgs, updateArgs, uniqueField }
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type CrudApi = { create: any; update: any; mine: any; byUserId: any }
+type CrudApi = { create: any; update: any; mine: any }
 
 const RESOURCE_CONFIGS: Array<{
   name: string
@@ -277,36 +277,5 @@ for (const config of RESOURCE_CONFIGS) {
       })
     })
 
-    // ── byUserId ──
-
-    describe(`${config.name}.byUserId`, () => {
-      it('returns profile by userId', async () => {
-        const t = makeT()
-        const slug = `${config.name}-byuid`
-        let userId!: Id<'users'>
-        await t.run(async (ctx) => {
-          userId = await seedUserWithOrg(ctx, slug, config.role)
-        })
-
-        await t.withIdentity(orgIdentityFor(slug))
-          .mutation(config.apiModule.create, config.createArgs)
-
-        const result = await t.query(config.apiModule.byUserId, { userId })
-        expect(result).not.toBeNull()
-        expect((result as Record<string, unknown>)[config.uniqueField]).toBe(config.createArgs[config.uniqueField])
-      })
-
-      it('returns null for non-existent userId', async () => {
-        const t = makeT()
-        // Seed a user so we have a valid-looking ID format, but don't create a profile
-        let userId!: Id<'users'>
-        await t.run(async (ctx) => {
-          userId = await seedUser(ctx, { slug: 'no-profile', tokenIdentifier: 'clerk|no-profile', role: config.role })
-        })
-
-        const result = await t.query(config.apiModule.byUserId, { userId })
-        expect(result).toBeNull()
-      })
-    })
   })
 }

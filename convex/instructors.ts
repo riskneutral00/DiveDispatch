@@ -1,1 +1,1 @@
-export { create, update, byUserId, mine } from './diveStaff'
+export { create, update, mine } from './diveStaff'

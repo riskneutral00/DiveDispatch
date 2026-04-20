@@ -12,7 +12,7 @@ import { getDatesInRange } from './shared/dateRange'
 import { notify } from './notifications'
 import { logBookingChange } from './lib/auditLog'
 import { ErrorCode } from './lib/errorCodes'
-import { ROLE_TABLE_MAP, profileByUserId } from './lib/profileHelpers'
+import { ROLE_TABLE_MAP, profileByUser } from './lib/profileHelpers'
 import { NOSHOW_REVERT_WINDOW_MS } from './lib/timeConstants'
 import { BOOKING_STATUS, RESERVATION_STATUS, NOTIFICATION_TYPE, VACATED_REASON, type ReservationStatus } from './shared/statuses'
 import { batchPatch } from './lib/batch'
@@ -41,7 +41,7 @@ async function getProfileCity(
 ): Promise<string | null> {
   const tableName = ROLE_TABLE_MAP[ownerType]
   if (!tableName) return null
-  const profile = await profileByUserId(ctx, userId, tableName) as { placeName?: string } | null
+  const profile = await profileByUser(ctx, userId, tableName) as { placeName?: string } | null
   return profile?.placeName ?? null
 }
 
@@ -95,7 +95,7 @@ async function batchGetTeachingLanguages(
     slugs.map((slug) => {
       const user = userMap.get(slug)
       return user
-        ? profileByUserId(ctx, user._id, 'diveStaff')
+        ? profileByUser(ctx, user._id, 'diveStaff')
         : Promise.resolve(null)
     }),
   )

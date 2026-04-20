@@ -2,7 +2,6 @@ import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import {
   profileMine,
-  profileByUserId,
   profileUpdate,
   profileCreate,
 } from './lib/profileHelpers'
@@ -59,12 +58,6 @@ export const update = mutation({
     const name = user ? deriveStaffName(user) : undefined
     return profileUpdate(ctx, { ...args, ...(name ? { name } : {}) }, 'diveStaff', 'diveStaff')
   },
-})
-
-export const byUserId = query({
-  args: { userId: v.id('users') },
-  handler: async (ctx, args) =>
-    profileByUserId(ctx, args.userId, 'diveStaff'),
 })
 
 export const mine = query({

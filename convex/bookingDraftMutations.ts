@@ -2,7 +2,7 @@ import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import { internal } from './_generated/api'
 import { authorize, authorizeWithRole, getAuthUser, getRequiredUserBySlug, HOLD_TTL_MS } from './lib/auth'
-import { profileByUserId, getProfileName } from './lib/profileHelpers'
+import { profileByUser, getProfileName } from './lib/profileHelpers'
 import { getAllUserRoles } from './lib/userRoleHelpers'
 import { requireRoleReadiness } from './userRoles'
 import { OPERATOR_ROLE_SET } from './lib/auth'
@@ -142,7 +142,7 @@ export const createDraftShell = mutation({
           .withIndex('by_slug', (q) => q.eq('slug', slug))
           .unique()
         if (!boatUser) return null
-        const boat = await profileByUserId(ctx, boatUser._id, 'boats')
+        const boat = await profileByUser(ctx, boatUser._id, 'boats')
         if (!boat) return null
         return { slug, hasCompressor: boat.hasCompressor } as const
       }),

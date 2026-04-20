@@ -1,7 +1,7 @@
 import { ConvexError } from 'convex/values'
 import type { QueryCtx, MutationCtx } from '../_generated/server'
 import type { Doc, Id, TableNames } from '../_generated/dataModel'
-import { authorize, getAuthUser } from './auth'
+import { authorize } from './auth'
 import { checkHasRole } from '../userRoles'
 import { ErrorCode } from './errorCodes'
 import { queryDynamicTable, insertDynamicTable, patchDynamic } from './typedDb'
@@ -25,52 +25,39 @@ export async function profileMine<T extends TableNames>(
   ctx: QueryCtx,
   tableName: T,
 ): Promise<Doc<T> | null> {
-  const user = await getAuthUser(ctx)
-  if (!user) return null
-
   const activeOrg = await tryGetActiveOrg(ctx)
-  if (activeOrg) {
-    const orgDoc = await queryDynamicTable(ctx.db, tableName)
-      .withIndex('by_organizationId', (q) => q.eq('organizationId', activeOrg._id))
-      .unique()
-    if (orgDoc) return orgDoc as Doc<T>
-  }
+  if (!activeOrg) return null
 
   const doc = await queryDynamicTable(ctx.db, tableName)
-    .withIndex('by_userId', (q) => q.eq('userId', user._id))
+    .withIndex('by_organizationId', (q) => q.eq('organizationId', activeOrg._id))
     .unique()
   return doc as Doc<T> | null
 }
 
-export async function profileByUserId<T extends TableNames>(
+export async function profileBySlug<T extends TableNames>(
+  ctx: QueryCtx,
+  slug: string,
+  tableName: T,
+): Promise<Doc<T> | null> {
+  const org = await ctx.db
+    .query('organizations')
+    .withIndex('by_slug', (q) => q.eq('slug', slug))
+    .unique()
+  if (!org) return null
+  const doc = await queryDynamicTable(ctx.db, tableName)
+    .withIndex('by_organizationId', (q) => q.eq('organizationId', org._id))
+    .unique()
+  return doc as Doc<T> | null
+}
+
+export async function profileByUser<T extends TableNames>(
   ctx: QueryCtx,
   userId: Id<'users'>,
   tableName: T,
 ): Promise<Doc<T> | null> {
-  const doc = await queryDynamicTable(ctx.db, tableName)
-    .withIndex('by_userId', (q) => q.eq('userId', userId))
-    .unique()
-  return doc as Doc<T> | null
-}
-
-export async function requireProfile<T extends TableNames>(
-  ctx: QueryCtx,
-  userId: Id<'users'>,
-  tableName: T,
-): Promise<Doc<T>> {
-  const profile = await profileByUserId(ctx, userId, tableName)
-  if (!profile) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
-  return profile
-}
-
-export async function profileBySlug(
-  ctx: QueryCtx,
-  slug: string,
-  tableName: TableNames,
-) {
-  const user = await ctx.db.query('users').withIndex('by_slug', (q) => q.eq('slug', slug)).unique()
+  const user = await ctx.db.get(userId)
   if (!user) return null
-  return profileByUserId(ctx, user._id, tableName)
+  return profileBySlug(ctx, user.slug, tableName)
 }
 
 const PROTECTED_FIELDS = new Set([
@@ -87,10 +74,11 @@ export async function profileUpdate(
   tableName: TableNames,
   role?: string,
 ) {
-  const { user } = await authorize(ctx, null, 'profile:manage', { type: 'profile' })
+  await authorize(ctx, null, 'profile:manage', { type: 'profile' })
+  const { org: activeOrg } = await getActiveOrg(ctx)
 
   const profile = await queryDynamicTable(ctx.db, tableName)
-    .withIndex('by_userId', (q) => q.eq('userId', user._id))
+    .withIndex('by_organizationId', (q) => q.eq('organizationId', activeOrg._id))
     .unique()
   if (!profile) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
 
@@ -119,8 +107,10 @@ export async function profileCreate(
     throw new ConvexError({ code: ErrorCode.FORBIDDEN })
   }
 
+  const { org: activeOrg } = await getActiveOrg(ctx)
+
   const existing = await queryDynamicTable(ctx.db, tableName)
-    .withIndex('by_userId', (q) => q.eq('userId', user._id))
+    .withIndex('by_organizationId', (q) => q.eq('organizationId', activeOrg._id))
     .unique()
   if (existing) return existing._id
 
@@ -131,8 +121,6 @@ export async function profileCreate(
   if (!mergedArgs.phone || (typeof mergedArgs.phone === 'string' && mergedArgs.phone.trim() === '')) {
     mergedArgs.phone = user.phone ?? ''
   }
-
-  const { org: activeOrg } = await getActiveOrg(ctx)
 
   return await insertDynamicTable(ctx.db, tableName, {
     ...mergedArgs,
@@ -149,6 +137,6 @@ export async function getProfileName(
 ): Promise<string> {
   const tableName = ROLE_TABLE_MAP[role]
   if (!tableName) return ''
-  const profile = await profileByUserId(ctx, userId, tableName) as unknown as { name?: string } | null
+  const profile = await profileByUser(ctx, userId, tableName) as unknown as { name?: string } | null
   return profile?.name ?? ''
 }

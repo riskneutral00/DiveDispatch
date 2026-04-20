@@ -2,7 +2,7 @@ import { ConvexError, v } from 'convex/values'
 import type { Id, Doc } from './_generated/dataModel'
 import { mutation, query } from './_generated/server'
 import { requireAuth, authorize } from './lib/auth'
-import { profileByUserId } from './lib/profileHelpers'
+import { profileByUser } from './lib/profileHelpers'
 import { getBookingIdsForResourceType } from './bookingResources'
 import { ErrorCode } from './lib/errorCodes'
 import { BAG_STATUS, type BagStatus } from './shared/statuses'
@@ -84,7 +84,7 @@ export const getDiverEquipmentData = query({
   handler: async (ctx, args): Promise<DiverEquipmentWidgetData | null> => {
     const { user } = await requireAuth(ctx)
 
-    const emProfile = await profileByUserId(ctx, user._id, 'equipment')
+    const emProfile = await profileByUser(ctx, user._id, 'equipment')
     if (!emProfile) return null
 
     const bookingIds = await getBookingIdsForResourceType(ctx, 'Equipment', user.slug as string)

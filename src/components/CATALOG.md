@@ -208,7 +208,7 @@ See `.claude/rules/dry-first.md` for the full list. Key entries:
 For completeness; Convex code imports these, not the frontend:
 
 - `authorize`, `authorizeWithRole`, `requireAuth` (internal) — `auth.ts`
-- `profileByUserId`, `requireProfile`, `ROLE_TABLE_MAP` — `profileHelpers.ts`
+- `profileByUser`, `profileBySlug`, `profileMine`, `ROLE_TABLE_MAP` — `profileHelpers.ts`
 - `getAllUserRoles` — `userRoleHelpers.ts`
 - `assertBookingTransition`, `assertReservationTransition`, `assertBagTransition` — `fsm.ts`
 - `assertSnapshotImmutability` — `snapshotFields.ts`

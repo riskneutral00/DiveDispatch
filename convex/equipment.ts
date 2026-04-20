@@ -2,7 +2,6 @@ import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import {
   profileMine,
-  profileByUserId,
   profileUpdate,
   profileCreate,
 } from './lib/profileHelpers'
@@ -25,12 +24,6 @@ export const update = mutation({
     ...ACCESS_CONTROL_FIELDS,
   },
   handler: async (ctx, args) => profileUpdate(ctx, args, 'equipment'),
-})
-
-export const byUserId = query({
-  args: { userId: v.id('users') },
-  handler: async (ctx, args) =>
-    profileByUserId(ctx, args.userId, 'equipment'),
 })
 
 export const mine = query({

@@ -8,6 +8,12 @@ import { checkProfileCompleteness } from '../../convex/lib/profileCompleteness'
 
 const EM_TOKEN = 'test|em-user'
 const EM_SLUG = TEST_SLUGS.em
+const EM_IDENTITY = {
+  tokenIdentifier: EM_TOKEN,
+  orgId: `test_${EM_SLUG}`,
+  orgRole: 'admin' as const,
+  orgSlug: EM_SLUG,
+}
 
 async function seedEM(t: ReturnType<typeof makeT>) {
   await t.run(async (ctx) => {
@@ -27,7 +33,7 @@ describe('equipmentInventory', () => {
       await seedEM(t)
 
       const inventoryId = await t
-        .withIdentity({ tokenIdentifier: EM_TOKEN })
+        .withIdentity(EM_IDENTITY)
         .mutation(api.equipmentInventory.addItem, {
           gearType: 'wetsuit',
           manufacturer: 'ScubaPro',
@@ -38,7 +44,7 @@ describe('equipmentInventory', () => {
       expect(inventoryId).toBeTruthy()
 
       const grouped = await t
-        .withIdentity({ tokenIdentifier: EM_TOKEN })
+        .withIdentity(EM_IDENTITY)
         .query(api.equipmentInventory.listMyInventory, {})
 
       expect(grouped.wetsuit).toHaveLength(1)
@@ -55,7 +61,7 @@ describe('equipmentInventory', () => {
       await seedEM(t)
 
       await expectConvexError(
-        t.withIdentity({ tokenIdentifier: EM_TOKEN })
+        t.withIdentity(EM_IDENTITY)
           .mutation(api.equipmentInventory.addItem, {
             gearType: 'mask',
             totalUnits: 0,
@@ -103,7 +109,7 @@ describe('equipmentInventory', () => {
       await seedEM(t)
 
       const inventoryId = await t
-        .withIdentity({ tokenIdentifier: EM_TOKEN })
+        .withIdentity(EM_IDENTITY)
         .mutation(api.equipmentInventory.addItem, {
           gearType: 'bcd',
           manufacturer: 'Mares',
@@ -112,14 +118,14 @@ describe('equipmentInventory', () => {
         })
 
       await t
-        .withIdentity({ tokenIdentifier: EM_TOKEN })
+        .withIdentity(EM_IDENTITY)
         .mutation(api.equipmentInventory.updateItem, {
           inventoryId,
           totalUnits: 10,
         })
 
       const grouped = await t
-        .withIdentity({ tokenIdentifier: EM_TOKEN })
+        .withIdentity(EM_IDENTITY)
         .query(api.equipmentInventory.listMyInventory, {})
 
       expect(grouped.bcd[0].totalUnits).toBe(10)
@@ -130,7 +136,7 @@ describe('equipmentInventory', () => {
       await seedEM(t)
 
       const inventoryId = await t
-        .withIdentity({ tokenIdentifier: EM_TOKEN })
+        .withIdentity(EM_IDENTITY)
         .mutation(api.equipmentInventory.addItem, {
           gearType: 'regulator',
           totalUnits: 10,
@@ -138,7 +144,7 @@ describe('equipmentInventory', () => {
 
       // Retrieve the inventoryUnitId, then seed a snapshot with reservedUnits
       const grouped = await t
-        .withIdentity({ tokenIdentifier: EM_TOKEN })
+        .withIdentity(EM_IDENTITY)
         .query(api.equipmentInventory.listMyInventory, {})
       const unitId = grouped.regulator[0].inventoryUnitId
 
@@ -151,7 +157,7 @@ describe('equipmentInventory', () => {
       })
 
       await expectConvexError(
-        t.withIdentity({ tokenIdentifier: EM_TOKEN })
+        t.withIdentity(EM_IDENTITY)
           .mutation(api.equipmentInventory.updateItem, {
             inventoryId,
             totalUnits: 5,
@@ -167,7 +173,7 @@ describe('equipmentInventory', () => {
       await seedEM(t)
 
       const inventoryId = await t
-        .withIdentity({ tokenIdentifier: EM_TOKEN })
+        .withIdentity(EM_IDENTITY)
         .mutation(api.equipmentInventory.addItem, {
           gearType: 'fins',
           size: 'EU 42',
@@ -175,11 +181,11 @@ describe('equipmentInventory', () => {
         })
 
       await t
-        .withIdentity({ tokenIdentifier: EM_TOKEN })
+        .withIdentity(EM_IDENTITY)
         .mutation(api.equipmentInventory.removeItem, { inventoryId })
 
       const grouped = await t
-        .withIdentity({ tokenIdentifier: EM_TOKEN })
+        .withIdentity(EM_IDENTITY)
         .query(api.equipmentInventory.listMyInventory, {})
 
       expect(grouped.fins ?? []).toHaveLength(0)
@@ -190,7 +196,7 @@ describe('equipmentInventory', () => {
       await seedEM(t)
 
       const inventoryId = await t
-        .withIdentity({ tokenIdentifier: EM_TOKEN })
+        .withIdentity(EM_IDENTITY)
         .mutation(api.equipmentInventory.addItem, {
           gearType: 'mask',
           totalUnits: 10,
@@ -198,7 +204,7 @@ describe('equipmentInventory', () => {
 
       // Seed an active reservation pointing to this unit
       const grouped = await t
-        .withIdentity({ tokenIdentifier: EM_TOKEN })
+        .withIdentity(EM_IDENTITY)
         .query(api.equipmentInventory.listMyInventory, {})
       const unitId = grouped.mask[0].inventoryUnitId
 
@@ -212,7 +218,7 @@ describe('equipmentInventory', () => {
       })
 
       await expectConvexError(
-        t.withIdentity({ tokenIdentifier: EM_TOKEN })
+        t.withIdentity(EM_IDENTITY)
           .mutation(api.equipmentInventory.removeItem, { inventoryId }),
         'CONFLICT',
       )
@@ -224,7 +230,7 @@ describe('equipmentInventory', () => {
       const t = makeT()
       await seedEM(t)
 
-      const auth = t.withIdentity({ tokenIdentifier: EM_TOKEN })
+      const auth = t.withIdentity(EM_IDENTITY)
       await auth.mutation(api.equipmentInventory.addItem, { gearType: 'wetsuit', manufacturer: 'ScubaPro', size: 'S', totalUnits: 3 })
       await auth.mutation(api.equipmentInventory.addItem, { gearType: 'wetsuit', manufacturer: 'ScubaPro', size: 'M', totalUnits: 4 })
       await auth.mutation(api.equipmentInventory.addItem, { gearType: 'mask', totalUnits: 10 })
@@ -241,7 +247,7 @@ describe('equipmentInventory', () => {
       await seedEM(t)
 
       const grouped = await t
-        .withIdentity({ tokenIdentifier: EM_TOKEN })
+        .withIdentity(EM_IDENTITY)
         .query(api.equipmentInventory.listMyInventory, {})
 
       expect(Object.keys(grouped)).toHaveLength(0)
@@ -252,7 +258,7 @@ describe('equipmentInventory', () => {
     it('addItem with manufacturer populates equipment.manufacturersByGearType', async () => {
       const t = makeT()
       await seedEM(t)
-      const auth = t.withIdentity({ tokenIdentifier: EM_TOKEN })
+      const auth = t.withIdentity(EM_IDENTITY)
 
       await auth.mutation(api.equipmentInventory.addItem, {
         gearType: 'wetsuit',
@@ -268,7 +274,7 @@ describe('equipmentInventory', () => {
     it('addItem without manufacturer leaves manufacturersByGearType empty for that gearType', async () => {
       const t = makeT()
       await seedEM(t)
-      const auth = t.withIdentity({ tokenIdentifier: EM_TOKEN })
+      const auth = t.withIdentity(EM_IDENTITY)
 
       await auth.mutation(api.equipmentInventory.addItem, {
         gearType: 'mask',
@@ -282,7 +288,7 @@ describe('equipmentInventory', () => {
     it('updateItem manufacturer swap removes old and adds new', async () => {
       const t = makeT()
       await seedEM(t)
-      const auth = t.withIdentity({ tokenIdentifier: EM_TOKEN })
+      const auth = t.withIdentity(EM_IDENTITY)
 
       const inventoryId = await auth.mutation(api.equipmentInventory.addItem, {
         gearType: 'bcd',
@@ -306,7 +312,7 @@ describe('equipmentInventory', () => {
     it('removeItem clears gearType entry when last manufacturer item removed', async () => {
       const t = makeT()
       await seedEM(t)
-      const auth = t.withIdentity({ tokenIdentifier: EM_TOKEN })
+      const auth = t.withIdentity(EM_IDENTITY)
 
       const inventoryId = await auth.mutation(api.equipmentInventory.addItem, {
         gearType: 'fins',
@@ -327,7 +333,7 @@ describe('equipmentInventory', () => {
     it('removeItem of one item keeps other manufacturers for same gearType', async () => {
       const t = makeT()
       await seedEM(t)
-      const auth = t.withIdentity({ tokenIdentifier: EM_TOKEN })
+      const auth = t.withIdentity(EM_IDENTITY)
 
       await auth.mutation(api.equipmentInventory.addItem, {
         gearType: 'regulator',
@@ -362,7 +368,7 @@ describe('equipmentInventory', () => {
     it('keeps wetsuit incomplete when the only row lacks a size', async () => {
       const t = makeT()
       await seedEM(t)
-      const auth = t.withIdentity({ tokenIdentifier: EM_TOKEN })
+      const auth = t.withIdentity(EM_IDENTITY)
 
       await auth.mutation(api.equipmentInventory.addItem, {
         gearType: 'wetsuit',
@@ -379,7 +385,7 @@ describe('equipmentInventory', () => {
     it('returns empty when each gear type has at least one complete row', async () => {
       const t = makeT()
       await seedEM(t)
-      const auth = t.withIdentity({ tokenIdentifier: EM_TOKEN })
+      const auth = t.withIdentity(EM_IDENTITY)
 
       await auth.mutation(api.equipmentInventory.addItem, {
         gearType: 'wetsuit', manufacturer: 'ScubaPro', size: 'M', totalUnits: 5,

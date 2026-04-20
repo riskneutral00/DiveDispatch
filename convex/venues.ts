@@ -1,7 +1,8 @@
 import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import { authorize } from './lib/auth'
-import { profileByUserId, profileMine } from './lib/profileHelpers'
+import { getActiveOrg } from './lib/activeOrg'
+import { profileByUser, profileMine } from './lib/profileHelpers'
 import { checkHasRole } from './userRoles'
 import { ErrorCode } from './lib/errorCodes'
 import { BASE_PROFILE_CREATE_FIELDS, BASE_PROFILE_UPDATE_FIELDS, ACCESS_CONTROL_FIELDS, BUSINESS_NAME_CREATE_FIELD, BUSINESS_NAME_UPDATE_FIELD } from './lib/validators'
@@ -86,9 +87,11 @@ export const create = mutation({
       throw new ConvexError({ code: ErrorCode.FORBIDDEN })
     }
 
+    const { org: activeOrg } = await getActiveOrg(ctx)
+
     const existing = await ctx.db
       .query('venues')
-      .withIndex('by_userId', (q) => q.eq('userId', user._id))
+      .withIndex('by_organizationId', (q) => q.eq('organizationId', activeOrg._id))
       .unique()
     if (existing) return existing._id
 
@@ -105,6 +108,7 @@ export const create = mutation({
       diveSiteTypes: resolved.diveSiteTypes,
       confinedCapable: resolved.confinedCapable,
       userId: user._id,
+      organizationId: activeOrg._id,
       verified: false,
     })
 
@@ -139,7 +143,7 @@ export const update = mutation({
   handler: async (ctx, args) => {
     const { user } = await authorize(ctx, null, 'resource:manage', { type: 'resource' })
 
-    const profile = await profileByUserId(ctx, user._id, 'venues')
+    const profile = await profileByUser(ctx, user._id, 'venues')
     if (!profile) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
 
     const { venueCategory, diveSiteTypes, confinedCapable, ...rest } = args
@@ -186,13 +190,6 @@ export const update = mutation({
         await ctx.db.patch(unit._id, { totalUnits })
       }
     }
-  },
-})
-
-export const byUserId = query({
-  args: { userId: v.id('users') },
-  handler: async (ctx, args) => {
-    return await profileByUserId(ctx, args.userId, 'venues')
   },
 })
 

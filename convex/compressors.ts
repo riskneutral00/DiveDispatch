@@ -2,7 +2,6 @@ import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import {
   profileMine,
-  profileByUserId,
   profileUpdate,
   profileCreate,
 } from './lib/profileHelpers'
@@ -50,12 +49,6 @@ export const update = mutation({
     validateNitroxRange(args)
     return profileUpdate(ctx, args, 'compressors', 'Compressor')
   },
-})
-
-export const byUserId = query({
-  args: { userId: v.id('users') },
-  handler: async (ctx, args) =>
-    profileByUserId(ctx, args.userId, 'compressors'),
 })
 
 export const mine = query({
