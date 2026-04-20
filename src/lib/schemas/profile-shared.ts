@@ -1,5 +1,6 @@
 import { z } from 'zod'
-import { locationSchema } from './location'
+import { locationSchema, addressLocationSchema } from './location'
+import { e164Schema } from './i18n'
 import { AOW_REQUIRED_SPECIALTY_COUNT } from '@/lib/constants/agencies'
 import { BOAT_TYPES } from '@/lib/constants/boat-types'
 import { GAS_MIXES } from '@/lib/constants/gas-mixes'
@@ -9,13 +10,20 @@ import {
   teachingLanguagesFieldSchema,
 } from '@/lib/profile-form/languages'
 
-export { locationSchema, type LocationValue } from './location'
+export { locationSchema, type LocationValue, addressLocationSchema, type AddressLocationValue } from './location'
 
 export const contactSchema = z.object({
   name: z.string().min(1, 'Business name is required'),
   location: locationSchema.nullable().refine((v) => v !== null, { message: 'Location is required' }),
   email: z.string().email('Invalid email address'),
   phone: z.string().min(1, 'Contact phone is required'),
+})
+
+export const contactWithAddressSchema = z.object({
+  name: z.string().min(1, 'Business name is required'),
+  location: addressLocationSchema.nullable().refine((v) => v !== null, { message: 'Location is required' }),
+  email: z.string().email('Invalid email address'),
+  phone: e164Schema,
 })
 
 export const associationSchema = z.object({
@@ -74,6 +82,8 @@ export const agentAssociationsSchema = z.object({
 })
 
 export const personalContactSchema = contactSchema.omit({ name: true })
+
+export const personalContactWithAddressSchema = contactWithAddressSchema.omit({ name: true })
 
 export const personalLanguagesSchema = z.object({
   teachingLanguages: teachingLanguagesFieldSchema,
@@ -144,6 +154,12 @@ export const poolCapabilitiesSchema = z.object({
 export const diveSiteDetailsSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   location: locationSchema.nullable().refine((v) => v !== null, { message: 'Location is required' }),
+  diveSiteTypes: z.array(z.enum(DIVE_SITE_TYPES)).min(1, 'Select at least one site type'),
+})
+
+export const diveSiteDetailsWithAddressSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  location: addressLocationSchema.nullable().refine((v) => v !== null, { message: 'Location is required' }),
   diveSiteTypes: z.array(z.enum(DIVE_SITE_TYPES)).min(1, 'Select at least one site type'),
 })
 

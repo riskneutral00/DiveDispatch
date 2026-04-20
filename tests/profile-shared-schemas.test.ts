@@ -1,14 +1,17 @@
 import { describe, it, expect } from 'vitest'
 import {
   contactSchema,
+  contactWithAddressSchema,
   diveCenterLanguagesSchema,
   diveCenterAffiliationsSchema,
   agentContactSchema,
   agentLanguagesSchema,
   agentAssociationsSchema,
   personalContactSchema,
+  personalContactWithAddressSchema,
   personalLanguagesSchema,
   instructorCredentialsSchema,
+  diveSiteDetailsWithAddressSchema,
 } from '../src/lib/schemas/profile-shared'
 
 // ---------------------------------------------------------------------------
@@ -290,5 +293,63 @@ describe('instructorCredentialsSchema', () => {
       credential: [{ ...validCred, agencyID: '' }],
     })
     expect(result.success).toBe(false)
+  })
+})
+
+describe('contactWithAddressSchema — structured address variant', () => {
+  const validAddressLocation = {
+    address: { city: 'Phuket', country: 'TH' },
+    lat: 7.8804,
+    lng: 98.3923,
+  }
+  const valid = {
+    name: 'Ocean Divers',
+    location: validAddressLocation,
+    email: 'info@ocean.com',
+    phone: '+6676393001',
+  }
+
+  it('accepts valid structured contact', () => {
+    expect(contactWithAddressSchema.safeParse(valid).success).toBe(true)
+  })
+
+  it('rejects address missing country', () => {
+    const result = contactWithAddressSchema.safeParse({
+      ...valid,
+      location: { address: { city: 'Phuket' }, lat: 7.88, lng: 98.39 },
+    })
+    expect(result.success).toBe(false)
+  })
+
+  it('rejects dashed phone (not E.164)', () => {
+    expect(contactWithAddressSchema.safeParse({ ...valid, phone: '+66-76-393-001' }).success).toBe(false)
+  })
+
+  it('rejects empty phone', () => {
+    expect(contactWithAddressSchema.safeParse({ ...valid, phone: '' }).success).toBe(false)
+  })
+
+  it('rejects invalid country code', () => {
+    const result = contactWithAddressSchema.safeParse({
+      ...valid,
+      location: { address: { city: 'Phuket', country: 'Thailand' }, lat: 7.88, lng: 98.39 },
+    })
+    expect(result.success).toBe(false)
+  })
+
+  it('accepts personalContactWithAddressSchema (no name)', () => {
+    const { name: _n, ...personal } = valid
+    void _n
+    expect(personalContactWithAddressSchema.safeParse(personal).success).toBe(true)
+  })
+
+  it('accepts diveSiteDetailsWithAddressSchema', () => {
+    expect(
+      diveSiteDetailsWithAddressSchema.safeParse({
+        name: 'Similan Island #9',
+        location: validAddressLocation,
+        diveSiteTypes: ['reef'],
+      }).success,
+    ).toBe(true)
   })
 })
