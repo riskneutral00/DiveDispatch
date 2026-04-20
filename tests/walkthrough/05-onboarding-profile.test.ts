@@ -1,7 +1,13 @@
 import { describe, it, expect } from 'vitest'
 import { api } from '../../convex/_generated/api'
-import { makeT } from '../helpers/convex-helpers'
-import { seedUser } from '../fixtures'
+import { makeT, orgIdentityFor } from '../helpers/convex-helpers'
+import { seedUser as _seedUser, getOrCreateTestOrg, type SeedCtx } from '../fixtures'
+
+async function seedUser(ctx: SeedCtx, args: Parameters<typeof _seedUser>[1]) {
+  const userId = await _seedUser(ctx, args)
+  await getOrCreateTestOrg(ctx, userId, args?.slug ?? 'test-slug')
+  return userId
+}
 
 describe('05: onboarding profile step — save mutation', () => {
   it('save mutation persists associations array', async () => {
@@ -9,7 +15,7 @@ describe('05: onboarding profile step — save mutation', () => {
     await t.run(async (ctx) => seedUser(ctx, { slug: 'dc-assoc', tokenIdentifier: 'clerk|dc-assoc' }))
 
     await t
-      .withIdentity({ tokenIdentifier: 'clerk|dc-assoc' })
+      .withIdentity(orgIdentityFor('dc-assoc'))
       .mutation(api.diveCenters.create, {
         name: 'Assoc Test DC',
         placeName: 'Phuket',
@@ -22,7 +28,7 @@ describe('05: onboarding profile step — save mutation', () => {
       })
 
     const profile = await t
-      .withIdentity({ tokenIdentifier: 'clerk|dc-assoc' })
+      .withIdentity(orgIdentityFor('dc-assoc'))
       .query(api.diveCenters.mine, {})
 
     expect(profile).not.toBeNull()
@@ -35,7 +41,7 @@ describe('05: onboarding profile step — save mutation', () => {
     await t.run(async (ctx) => seedUser(ctx, { slug: 'dc-langs', tokenIdentifier: 'clerk|dc-langs' }))
 
     await t
-      .withIdentity({ tokenIdentifier: 'clerk|dc-langs' })
+      .withIdentity(orgIdentityFor('dc-langs'))
       .mutation(api.diveCenters.create, {
         name: 'Languages Test DC',
         placeName: 'Koh Tao',
@@ -48,7 +54,7 @@ describe('05: onboarding profile step — save mutation', () => {
       })
 
     const profile = await t
-      .withIdentity({ tokenIdentifier: 'clerk|dc-langs' })
+      .withIdentity(orgIdentityFor('dc-langs'))
       .query(api.diveCenters.mine, {})
 
     expect(profile).not.toBeNull()
@@ -59,7 +65,7 @@ describe('05: onboarding profile step — save mutation', () => {
     await t.run(async (ctx) => seedUser(ctx, { slug: 'dc-days', tokenIdentifier: 'clerk|dc-days' }))
 
     await t
-      .withIdentity({ tokenIdentifier: 'clerk|dc-days' })
+      .withIdentity(orgIdentityFor('dc-days'))
       .mutation(api.diveCenters.create, {
         name: 'Days Test DC',
         placeName: 'Phuket',
@@ -72,7 +78,7 @@ describe('05: onboarding profile step — save mutation', () => {
       })
 
     const profile = await t
-      .withIdentity({ tokenIdentifier: 'clerk|dc-days' })
+      .withIdentity(orgIdentityFor('dc-days'))
       .query(api.diveCenters.mine, {})
 
     expect(profile).not.toBeNull()

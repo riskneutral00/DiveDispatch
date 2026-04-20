@@ -5,7 +5,7 @@ import { authorize, getAuthUser } from './auth'
 import { checkHasRole } from '../userRoles'
 import { ErrorCode } from './errorCodes'
 import { queryDynamicTable, insertDynamicTable, patchDynamic } from './typedDb'
-import { tryGetActiveOrg } from './activeOrg'
+import { getActiveOrg, tryGetActiveOrg } from './activeOrg'
 
 export const ROLE_TABLE_MAP: Record<string, TableNames> = {
   Instructor: 'diveStaff',
@@ -132,12 +132,12 @@ export async function profileCreate(
     mergedArgs.phone = user.phone ?? ''
   }
 
-  const activeOrg = await tryGetActiveOrg(ctx)
+  const { org: activeOrg } = await getActiveOrg(ctx)
 
   return await insertDynamicTable(ctx.db, tableName, {
     ...mergedArgs,
     userId: user._id,
-    ...(activeOrg && { organizationId: activeOrg._id }),
+    organizationId: activeOrg._id,
     ...extraDefaults,
   })
 }

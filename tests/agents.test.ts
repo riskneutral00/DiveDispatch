@@ -1,13 +1,13 @@
 import { describe, it, expect } from 'vitest'
 import { api } from '../convex/_generated/api'
 import type { Doc, Id } from '../convex/_generated/dataModel'
-import { seedUser as _seedUser, seedAgent, type SeedCtx } from './fixtures'
-import { makeT } from './helpers/convex-helpers'
-
-// ─── Seed helpers ─────────────────────────────────────────────────────────────
+import { seedUser as _seedUser, seedAgent, getOrCreateTestOrg, type SeedCtx } from './fixtures'
+import { makeT, orgIdentityFor } from './helpers/convex-helpers'
 
 async function seedUser(ctx: SeedCtx, slug: string, role: NonNullable<NonNullable<Parameters<typeof _seedUser>[1]>['role']> = 'Agent') {
-  return _seedUser(ctx, { tokenIdentifier: `clerk|${slug}`, slug, email: `${slug}@test.com`, name: `${slug} Display`, firstName: slug, lastName: 'Test', role })
+  const userId = await _seedUser(ctx, { tokenIdentifier: `clerk|${slug}`, slug, email: `${slug}@test.com`, name: `${slug} Display`, firstName: slug, lastName: 'Test', role })
+  await getOrCreateTestOrg(ctx, userId, slug)
+  return userId
 }
 
 const VALID_AGENT_ARGS = {
@@ -39,7 +39,7 @@ describe('agents.create', () => {
     })
 
     await expect(
-      t.withIdentity({ tokenIdentifier: 'clerk|dc-user' })
+      t.withIdentity(orgIdentityFor('dc-user'))
         .mutation(api.agents.create, VALID_AGENT_ARGS),
     ).rejects.toThrow(/FORBIDDEN/)
   })
@@ -51,7 +51,7 @@ describe('agents.create', () => {
       userId = await seedUser(ctx, 'new-agent', 'Agent')
     })
 
-    const agentId = await t.withIdentity({ tokenIdentifier: 'clerk|new-agent' })
+    const agentId = await t.withIdentity(orgIdentityFor('new-agent'))
       .mutation(api.agents.create, VALID_AGENT_ARGS)
 
     expect(typeof agentId).toBe('string')
@@ -73,10 +73,10 @@ describe('agents.create', () => {
       await seedUser(ctx, 'dup-agent', 'Agent')
     })
 
-    const id1 = await t.withIdentity({ tokenIdentifier: 'clerk|dup-agent' })
+    const id1 = await t.withIdentity(orgIdentityFor('dup-agent'))
       .mutation(api.agents.create, VALID_AGENT_ARGS)
 
-    const id2 = await t.withIdentity({ tokenIdentifier: 'clerk|dup-agent' })
+    const id2 = await t.withIdentity(orgIdentityFor('dup-agent'))
       .mutation(api.agents.create, {
         ...VALID_AGENT_ARGS,
         name: 'Different Name',
@@ -104,7 +104,7 @@ describe('agents.update', () => {
     })
 
     await expect(
-      t.withIdentity({ tokenIdentifier: 'clerk|no-profile' })
+      t.withIdentity(orgIdentityFor('no-profile'))
         .mutation(api.agents.update, { name: 'New Name' }),
     ).rejects.toThrow(/NOT_FOUND/)
   })
@@ -117,7 +117,7 @@ describe('agents.update', () => {
       agentId = await seedAgent(ctx, userId)
     })
 
-    await t.withIdentity({ tokenIdentifier: 'clerk|upd-agent' })
+    await t.withIdentity(orgIdentityFor('upd-agent'))
       .mutation(api.agents.update, {
         name: 'Updated Agent',
       })
@@ -137,7 +137,7 @@ describe('agents.update', () => {
       agentId = await seedAgent(ctx, userId)
     })
 
-    await t.withIdentity({ tokenIdentifier: 'clerk|wl-agent' })
+    await t.withIdentity(orgIdentityFor('wl-agent'))
       .mutation(api.agents.update, {
         isAllowed: ['dc-one', 'dc-two'],
         notAllowed: [],
@@ -158,7 +158,7 @@ describe('agents.update', () => {
       agentId = await seedAgent(ctx, userId)
     })
 
-    await t.withIdentity({ tokenIdentifier: 'clerk|bl-agent' })
+    await t.withIdentity(orgIdentityFor('bl-agent'))
       .mutation(api.agents.update, {
         isAllowed: [],
         notAllowed: ['bad-dc'],
@@ -188,7 +188,7 @@ describe('agents.mine', () => {
       await seedUser(ctx, 'no-agent-profile', 'Agent')
     })
 
-    const result = await t.withIdentity({ tokenIdentifier: 'clerk|no-agent-profile' })
+    const result = await t.withIdentity(orgIdentityFor('no-agent-profile'))
       .query(api.agents.mine, {})
     expect(result).toBeNull()
   })
@@ -200,7 +200,7 @@ describe('agents.mine', () => {
       await seedAgent(ctx, userId)
     })
 
-    const result = await t.withIdentity({ tokenIdentifier: 'clerk|my-agent' })
+    const result = await t.withIdentity(orgIdentityFor('my-agent'))
       .query(api.agents.mine, {})
 
     expect(result).not.toBeNull()

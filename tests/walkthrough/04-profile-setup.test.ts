@@ -5,12 +5,14 @@
 import { describe, it, expect } from 'vitest'
 import { api } from '../../convex/_generated/api'
 import type { Id } from '../../convex/_generated/dataModel'
-import { seedUser as _seedUser, type SeedCtx } from '../fixtures'
-import { makeT } from '../helpers/convex-helpers'
+import { seedUser as _seedUser, getOrCreateTestOrg, type SeedCtx } from '../fixtures'
+import { makeT, orgIdentityFor } from '../helpers/convex-helpers'
 
 
 async function seedUser(ctx: SeedCtx, slug: string) {
-  return _seedUser(ctx, { tokenIdentifier: `clerk|${slug}`, slug, email: `${slug}@test.com`, name: `${slug} Display`, firstName: slug, lastName: 'Test' })
+  const userId = await _seedUser(ctx, { tokenIdentifier: `clerk|${slug}`, slug, email: `${slug}@test.com`, name: `${slug} Display`, firstName: slug, lastName: 'Test' })
+  await getOrCreateTestOrg(ctx, userId, slug)
+  return userId
 }
 
 
@@ -19,7 +21,7 @@ describe('diveCenters.create (profile setup)', () => {
     const t = makeT()
     await t.run(async (ctx) => seedUser(ctx, 'profile-dc-01'))
 
-    const id = await t.withIdentity({ tokenIdentifier: 'clerk|profile-dc-01' })
+    const id = await t.withIdentity(orgIdentityFor('profile-dc-01'))
       .mutation(api.diveCenters.create, {
         name: "Matt & Miss Mermaid's DC",
         placeName: 'Phuket',
@@ -56,9 +58,9 @@ describe('diveCenters.create (profile setup)', () => {
       associations: [] as { agency: string; number: string }[],
     }
 
-    const id1 = await t.withIdentity({ tokenIdentifier: 'clerk|profile-dc-02' })
+    const id1 = await t.withIdentity(orgIdentityFor('profile-dc-02'))
       .mutation(api.diveCenters.create, args)
-    const id2 = await t.withIdentity({ tokenIdentifier: 'clerk|profile-dc-02' })
+    const id2 = await t.withIdentity(orgIdentityFor('profile-dc-02'))
       .mutation(api.diveCenters.create, { ...args, name: 'Different Name' })
 
     expect(id1).toBe(id2)
@@ -79,7 +81,7 @@ describe('diveCenters.create (profile setup)', () => {
     )
 
     await expect(
-      t.withIdentity({ tokenIdentifier: 'clerk|profile-inst-01' })
+      t.withIdentity(orgIdentityFor('profile-inst-01'))
         .mutation(api.diveCenters.create, {
           name: 'Bad Actor',
           placeName: 'Phuket',

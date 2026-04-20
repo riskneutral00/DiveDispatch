@@ -2,10 +2,12 @@ import { describe, it, expect } from 'vitest'
 import { api } from '../convex/_generated/api'
 import type { Doc, Id } from '../convex/_generated/dataModel'
 import { seedUser as _seedUser, getOrCreateTestOrg, type SeedCtx } from './fixtures'
-import { makeT } from './helpers/convex-helpers'
+import { makeT, orgIdentityFor } from './helpers/convex-helpers'
 
 async function seedUser(ctx: SeedCtx, slug: string, role: 'Compressor' | 'DiveCenter' = 'Compressor') {
-  return _seedUser(ctx, { tokenIdentifier: `clerk|${slug}`, slug, email: `${slug}@test.com`, name: slug, firstName: slug, lastName: 'Test', role })
+  const userId = await _seedUser(ctx, { tokenIdentifier: `clerk|${slug}`, slug, email: `${slug}@test.com`, name: slug, firstName: slug, lastName: 'Test', role })
+  await getOrCreateTestOrg(ctx, userId, slug)
+  return userId
 }
 
 async function seedCompressorProfile(ctx: SeedCtx, userId: Awaited<ReturnType<typeof seedUser>>) {
@@ -44,7 +46,7 @@ describe('compressors.create', () => {
     const t = makeT()
     await t.run(async (ctx) => { await seedUser(ctx, 'dc-user', 'DiveCenter') })
     await expect(
-      t.withIdentity({ tokenIdentifier: 'clerk|dc-user' }).mutation(api.compressors.create, VALID_ARGS),
+      t.withIdentity(orgIdentityFor('dc-user')).mutation(api.compressors.create, VALID_ARGS),
     ).rejects.toThrow(/FORBIDDEN/)
   })
 
@@ -53,7 +55,7 @@ describe('compressors.create', () => {
     let userId: Awaited<ReturnType<typeof seedUser>> | undefined
     await t.run(async (ctx) => { userId = await seedUser(ctx, 'comp-owner') })
 
-    const compId = await t.withIdentity({ tokenIdentifier: 'clerk|comp-owner' })
+    const compId = await t.withIdentity(orgIdentityFor('comp-owner'))
       .mutation(api.compressors.create, VALID_ARGS)
 
     expect(typeof compId).toBe('string')
@@ -69,7 +71,7 @@ describe('compressors.create', () => {
   it('returns existing ID on duplicate create', async () => {
     const t = makeT()
     await t.run(async (ctx) => { await seedUser(ctx, 'dup-comp') })
-    const identity = { tokenIdentifier: 'clerk|dup-comp' }
+    const identity = orgIdentityFor('dup-comp')
 
     const id1 = await t.withIdentity(identity).mutation(api.compressors.create, VALID_ARGS)
     const id2 = await t.withIdentity(identity).mutation(api.compressors.create, { ...VALID_ARGS, name: 'Other' })
@@ -87,7 +89,7 @@ describe('compressors.update', () => {
     const t = makeT()
     await t.run(async (ctx) => { await seedUser(ctx, 'no-comp') })
     await expect(
-      t.withIdentity({ tokenIdentifier: 'clerk|no-comp' }).mutation(api.compressors.update, { name: 'New' }),
+      t.withIdentity(orgIdentityFor('no-comp')).mutation(api.compressors.update, { name: 'New' }),
     ).rejects.toThrow(/NOT_FOUND/)
   })
 
@@ -99,7 +101,7 @@ describe('compressors.update', () => {
       compId = await seedCompressorProfile(ctx, userId)
     })
 
-    await t.withIdentity({ tokenIdentifier: 'clerk|upd-comp' })
+    await t.withIdentity(orgIdentityFor('upd-comp'))
       .mutation(api.compressors.update, { name: 'Updated Compressor' })
 
     await t.run(async (ctx) => {
@@ -126,7 +128,7 @@ describe('directory.listByRole — Compressor picker gate', () => {
       })
     })
 
-    const result = await t.withIdentity({ tokenIdentifier: 'clerk|caller-comp' })
+    const result = await t.withIdentity(orgIdentityFor('caller-comp'))
       .query(api.directory.listByRole, { role: 'Compressor' })
     expect(result).toHaveLength(0)
   })
@@ -147,7 +149,7 @@ describe('directory.listByRole — Compressor picker gate', () => {
       })
     })
 
-    const result = await t.withIdentity({ tokenIdentifier: 'clerk|caller-comp2' })
+    const result = await t.withIdentity(orgIdentityFor('caller-comp2'))
       .query(api.directory.listByRole, { role: 'Compressor' })
     expect(result).toHaveLength(0)
   })
@@ -168,7 +170,7 @@ describe('directory.listByRole — Compressor picker gate', () => {
       })
     })
 
-    const result = await t.withIdentity({ tokenIdentifier: 'clerk|caller-comp3' })
+    const result = await t.withIdentity(orgIdentityFor('caller-comp3'))
       .query(api.directory.listByRole, { role: 'Compressor' })
     expect(result).toHaveLength(1)
     expect(result[0].slug).toBe('comp-ok')
@@ -185,7 +187,7 @@ describe('compressors.mine', () => {
     const t = makeT()
     await t.run(async (ctx) => { await seedUser(ctx, 'no-comp-profile') })
     expect(
-      await t.withIdentity({ tokenIdentifier: 'clerk|no-comp-profile' }).query(api.compressors.mine, {}),
+      await t.withIdentity(orgIdentityFor('no-comp-profile')).query(api.compressors.mine, {}),
     ).toBeNull()
   })
 
@@ -196,7 +198,7 @@ describe('compressors.mine', () => {
       await seedCompressorProfile(ctx, userId)
     })
 
-    const result = await t.withIdentity({ tokenIdentifier: 'clerk|my-comp' }).query(api.compressors.mine, {})
+    const result = await t.withIdentity(orgIdentityFor('my-comp')).query(api.compressors.mine, {})
     expect(result).not.toBeNull()
     expect(result!.name).toBe('Test Compressor')
   })
@@ -207,7 +209,7 @@ describe('compressors nitrox range validation', () => {
     const t = makeT()
     await t.run(async (ctx) => { await seedUser(ctx, 'nitrox-ok') })
 
-    const compId = await t.withIdentity({ tokenIdentifier: 'clerk|nitrox-ok' })
+    const compId = await t.withIdentity(orgIdentityFor('nitrox-ok'))
       .mutation(api.compressors.create, {
         ...VALID_ARGS,
         gasMixes: ['air', 'nitrox'],
@@ -227,7 +229,7 @@ describe('compressors nitrox range validation', () => {
     await t.run(async (ctx) => { await seedUser(ctx, 'nitrox-low') })
 
     await expect(
-      t.withIdentity({ tokenIdentifier: 'clerk|nitrox-low' })
+      t.withIdentity(orgIdentityFor('nitrox-low'))
         .mutation(api.compressors.create, { ...VALID_ARGS, nitroxMin: 15 }),
     ).rejects.toThrow(/VALIDATION/)
   })
@@ -237,7 +239,7 @@ describe('compressors nitrox range validation', () => {
     await t.run(async (ctx) => { await seedUser(ctx, 'nitrox-high') })
 
     await expect(
-      t.withIdentity({ tokenIdentifier: 'clerk|nitrox-high' })
+      t.withIdentity(orgIdentityFor('nitrox-high'))
         .mutation(api.compressors.create, { ...VALID_ARGS, nitroxMax: 50 }),
     ).rejects.toThrow(/VALIDATION/)
   })
@@ -247,7 +249,7 @@ describe('compressors nitrox range validation', () => {
     await t.run(async (ctx) => { await seedUser(ctx, 'nitrox-inv') })
 
     await expect(
-      t.withIdentity({ tokenIdentifier: 'clerk|nitrox-inv' })
+      t.withIdentity(orgIdentityFor('nitrox-inv'))
         .mutation(api.compressors.create, { ...VALID_ARGS, nitroxMin: 36, nitroxMax: 28 }),
     ).rejects.toThrow(/VALIDATION/)
   })
@@ -260,7 +262,7 @@ describe('compressors nitrox range validation', () => {
     })
 
     await expect(
-      t.withIdentity({ tokenIdentifier: 'clerk|nitrox-upd' })
+      t.withIdentity(orgIdentityFor('nitrox-upd'))
         .mutation(api.compressors.update, { nitroxMin: 50 }),
     ).rejects.toThrow(/VALIDATION/)
   })

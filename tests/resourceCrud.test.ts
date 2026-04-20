@@ -9,8 +9,18 @@
 import { describe, it, expect } from 'vitest'
 import { api } from '../convex/_generated/api'
 import type { Doc, Id } from '../convex/_generated/dataModel'
-import { seedUser } from './fixtures'
-import { makeT } from './helpers/convex-helpers'
+import { seedUser, getOrCreateTestOrg, type SeedCtx } from './fixtures'
+import { makeT, orgIdentityFor } from './helpers/convex-helpers'
+
+async function seedUserWithOrg(
+  ctx: SeedCtx,
+  slug: string,
+  role: Doc<'userRoles'>['role'],
+): Promise<Id<'users'>> {
+  const userId = await seedUser(ctx, { slug, tokenIdentifier: `clerk|${slug}`, role })
+  await getOrCreateTestOrg(ctx, userId, slug)
+  return userId
+}
 
 // ─── Resource configs ─────────────────────────────────────────────────────────
 
@@ -134,10 +144,10 @@ for (const config of RESOURCE_CONFIGS) {
         const t = makeT()
         const slug = `${config.name}-user`
         await t.run(async (ctx) => {
-          await seedUser(ctx, { slug, tokenIdentifier: `clerk|${slug}`, role: config.role })
+          await seedUserWithOrg(ctx, slug, config.role)
         })
 
-        const id = await t.withIdentity({ tokenIdentifier: `clerk|${slug}` })
+        const id = await t.withIdentity(orgIdentityFor(slug))
           .mutation(config.apiModule.create, config.createArgs)
 
         expect(typeof id).toBe('string')
@@ -154,12 +164,12 @@ for (const config of RESOURCE_CONFIGS) {
         const t = makeT()
         const slug = `${config.name}-dup`
         await t.run(async (ctx) => {
-          await seedUser(ctx, { slug, tokenIdentifier: `clerk|${slug}`, role: config.role })
+          await seedUserWithOrg(ctx, slug, config.role)
         })
 
-        const id1 = await t.withIdentity({ tokenIdentifier: `clerk|${slug}` })
+        const id1 = await t.withIdentity(orgIdentityFor(slug))
           .mutation(config.apiModule.create, config.createArgs)
-        const id2 = await t.withIdentity({ tokenIdentifier: `clerk|${slug}` })
+        const id2 = await t.withIdentity(orgIdentityFor(slug))
           .mutation(config.apiModule.create, { ...config.createArgs, [config.uniqueField]: 'different-marker-value' })
 
         expect(id1).toBe(id2)
@@ -180,11 +190,11 @@ for (const config of RESOURCE_CONFIGS) {
         const t = makeT()
         const slug = `${config.name}-noprof`
         await t.run(async (ctx) => {
-          await seedUser(ctx, { slug, tokenIdentifier: `clerk|${slug}`, role: config.role })
+          await seedUserWithOrg(ctx, slug, config.role)
         })
 
         await expect(
-          t.withIdentity({ tokenIdentifier: `clerk|${slug}` })
+          t.withIdentity(orgIdentityFor(slug))
             .mutation(config.apiModule.update, config.updateArgs),
         ).rejects.toThrow(/NOT_FOUND/)
       })
@@ -193,15 +203,15 @@ for (const config of RESOURCE_CONFIGS) {
         const t = makeT()
         const slug = `${config.name}-upd`
         await t.run(async (ctx) => {
-          await seedUser(ctx, { slug, tokenIdentifier: `clerk|${slug}`, role: config.role })
+          await seedUserWithOrg(ctx, slug, config.role)
         })
 
         // Create first
-        const id = await t.withIdentity({ tokenIdentifier: `clerk|${slug}` })
+        const id = await t.withIdentity(orgIdentityFor(slug))
           .mutation(config.apiModule.create, config.createArgs)
 
         // Update
-        await t.withIdentity({ tokenIdentifier: `clerk|${slug}` })
+        await t.withIdentity(orgIdentityFor(slug))
           .mutation(config.apiModule.update, config.updateArgs)
 
         await t.run(async (ctx) => {
@@ -216,14 +226,14 @@ for (const config of RESOURCE_CONFIGS) {
         const t = makeT()
         const slug = `${config.name}-prot`
         await t.run(async (ctx) => {
-          await seedUser(ctx, { slug, tokenIdentifier: `clerk|${slug}`, role: config.role })
+          await seedUserWithOrg(ctx, slug, config.role)
         })
 
-        await t.withIdentity({ tokenIdentifier: `clerk|${slug}` })
+        await t.withIdentity(orgIdentityFor(slug))
           .mutation(config.apiModule.create, config.createArgs)
 
         await expect(
-          t.withIdentity({ tokenIdentifier: `clerk|${slug}` })
+          t.withIdentity(orgIdentityFor(slug))
             .mutation(config.apiModule.update, { ...config.updateArgs, verified: true }),
         ).rejects.toThrow(/verified/)
       })
@@ -242,10 +252,10 @@ for (const config of RESOURCE_CONFIGS) {
         const t = makeT()
         const slug = `${config.name}-nomine`
         await t.run(async (ctx) => {
-          await seedUser(ctx, { slug, tokenIdentifier: `clerk|${slug}`, role: config.role })
+          await seedUserWithOrg(ctx, slug, config.role)
         })
 
-        const result = await t.withIdentity({ tokenIdentifier: `clerk|${slug}` })
+        const result = await t.withIdentity(orgIdentityFor(slug))
           .query(config.apiModule.mine, {})
         expect(result).toBeNull()
       })
@@ -254,13 +264,13 @@ for (const config of RESOURCE_CONFIGS) {
         const t = makeT()
         const slug = `${config.name}-mine`
         await t.run(async (ctx) => {
-          await seedUser(ctx, { slug, tokenIdentifier: `clerk|${slug}`, role: config.role })
+          await seedUserWithOrg(ctx, slug, config.role)
         })
 
-        await t.withIdentity({ tokenIdentifier: `clerk|${slug}` })
+        await t.withIdentity(orgIdentityFor(slug))
           .mutation(config.apiModule.create, config.createArgs)
 
-        const result = await t.withIdentity({ tokenIdentifier: `clerk|${slug}` })
+        const result = await t.withIdentity(orgIdentityFor(slug))
           .query(config.apiModule.mine, {})
         expect(result).not.toBeNull()
         expect((result as Record<string, unknown>)[config.uniqueField]).toBe(config.createArgs[config.uniqueField])
@@ -275,10 +285,10 @@ for (const config of RESOURCE_CONFIGS) {
         const slug = `${config.name}-byuid`
         let userId!: Id<'users'>
         await t.run(async (ctx) => {
-          userId = await seedUser(ctx, { slug, tokenIdentifier: `clerk|${slug}`, role: config.role })
+          userId = await seedUserWithOrg(ctx, slug, config.role)
         })
 
-        await t.withIdentity({ tokenIdentifier: `clerk|${slug}` })
+        await t.withIdentity(orgIdentityFor(slug))
           .mutation(config.apiModule.create, config.createArgs)
 
         const result = await t.query(config.apiModule.byUserId, { userId })

@@ -1,11 +1,13 @@
 import { describe, it, expect } from 'vitest'
 import { api } from '../convex/_generated/api'
 import type { Doc, Id } from '../convex/_generated/dataModel'
-import { seedUser as _seedUser, seedBoatProfile, type SeedCtx } from './fixtures'
-import { makeT } from './helpers/convex-helpers'
+import { seedUser as _seedUser, seedBoatProfile, getOrCreateTestOrg, type SeedCtx } from './fixtures'
+import { makeT, orgIdentityFor } from './helpers/convex-helpers'
 
 async function seedUser(ctx: SeedCtx, slug: string, role: 'Boat' | 'DiveCenter' = 'Boat') {
-  return _seedUser(ctx, { tokenIdentifier: `clerk|${slug}`, slug, email: `${slug}@test.com`, name: slug, firstName: slug, lastName: 'Test', role })
+  const userId = await _seedUser(ctx, { tokenIdentifier: `clerk|${slug}`, slug, email: `${slug}@test.com`, name: slug, firstName: slug, lastName: 'Test', role })
+  await getOrCreateTestOrg(ctx, userId, slug)
+  return userId
 }
 
 const VALID_BOAT_ARGS = {
@@ -29,7 +31,7 @@ describe('boats.create', () => {
     const t = makeT()
     await t.run(async (ctx) => { await seedUser(ctx, 'dc-user', 'DiveCenter') })
     await expect(
-      t.withIdentity({ tokenIdentifier: 'clerk|dc-user' }).mutation(api.boats.create, VALID_BOAT_ARGS),
+      t.withIdentity(orgIdentityFor('dc-user')).mutation(api.boats.create, VALID_BOAT_ARGS),
     ).rejects.toThrow(/FORBIDDEN/)
   })
 
@@ -38,7 +40,7 @@ describe('boats.create', () => {
     let userId: Awaited<ReturnType<typeof seedUser>> | undefined
     await t.run(async (ctx) => { userId = await seedUser(ctx, 'boat-owner') })
 
-    const boatId = await t.withIdentity({ tokenIdentifier: 'clerk|boat-owner' })
+    const boatId = await t.withIdentity(orgIdentityFor('boat-owner'))
       .mutation(api.boats.create, VALID_BOAT_ARGS)
 
     expect(typeof boatId).toBe('string')
@@ -57,7 +59,7 @@ describe('boats.create', () => {
     const t = makeT()
     await t.run(async (ctx) => { await seedUser(ctx, 'speedboat-owner') })
 
-    const boatId = await t.withIdentity({ tokenIdentifier: 'clerk|speedboat-owner' })
+    const boatId = await t.withIdentity(orgIdentityFor('speedboat-owner'))
       .mutation(api.boats.create, {
         ...VALID_BOAT_ARGS,
         fleet: [{ boatName: 'Speedster', maxPax: 8, boatType: 'speedboat' as const }],
@@ -73,7 +75,7 @@ describe('boats.create', () => {
     const t = makeT()
     await t.run(async (ctx) => { await seedUser(ctx, 'liveaboard-owner') })
 
-    const boatId = await t.withIdentity({ tokenIdentifier: 'clerk|liveaboard-owner' })
+    const boatId = await t.withIdentity(orgIdentityFor('liveaboard-owner'))
       .mutation(api.boats.create, {
         ...VALID_BOAT_ARGS,
         fleet: [{ boatName: 'MV Explorer', maxPax: 30, boatType: 'liveaboard' as const }],
@@ -88,7 +90,7 @@ describe('boats.create', () => {
   it('returns existing ID on duplicate create', async () => {
     const t = makeT()
     await t.run(async (ctx) => { await seedUser(ctx, 'dup-boat') })
-    const identity = { tokenIdentifier: 'clerk|dup-boat' }
+    const identity = orgIdentityFor('dup-boat')
 
     const id1 = await t.withIdentity(identity).mutation(api.boats.create, VALID_BOAT_ARGS)
     const id2 = await t.withIdentity(identity).mutation(api.boats.create, { ...VALID_BOAT_ARGS, name: 'Different' })
@@ -106,7 +108,7 @@ describe('boats.update', () => {
     const t = makeT()
     await t.run(async (ctx) => { await seedUser(ctx, 'no-profile') })
     await expect(
-      t.withIdentity({ tokenIdentifier: 'clerk|no-profile' }).mutation(api.boats.update, { name: 'New' }),
+      t.withIdentity(orgIdentityFor('no-profile')).mutation(api.boats.update, { name: 'New' }),
     ).rejects.toThrow(/NOT_FOUND/)
   })
 
@@ -119,7 +121,7 @@ describe('boats.update', () => {
     })
 
     // Update fleet to include a day_boat → hasCompressor should become true
-    await t.withIdentity({ tokenIdentifier: 'clerk|fleet-change-boat' })
+    await t.withIdentity(orgIdentityFor('fleet-change-boat'))
       .mutation(api.boats.update, {
         fleet: [{ boatName: 'Day Runner', maxPax: 12, boatType: 'day_boat' as const }],
       })
@@ -143,7 +145,7 @@ describe('boats.update', () => {
     })
 
     // Explicitly set hasCompressor=true even without day_boat/liveaboard fleet
-    await t.withIdentity({ tokenIdentifier: 'clerk|explicit-comp-boat' })
+    await t.withIdentity(orgIdentityFor('explicit-comp-boat'))
       .mutation(api.boats.update, { hasCompressor: true })
 
     await t.run(async (ctx) => {
@@ -160,7 +162,7 @@ describe('boats.update', () => {
       boatId = await seedBoatProfile(ctx, userId)
     })
 
-    await t.withIdentity({ tokenIdentifier: 'clerk|upd-boat' })
+    await t.withIdentity(orgIdentityFor('upd-boat'))
       .mutation(api.boats.update, { name: 'Updated Boat' })
 
     await t.run(async (ctx) => {
@@ -181,7 +183,7 @@ describe('boats.mine', () => {
     const t = makeT()
     await t.run(async (ctx) => { await seedUser(ctx, 'no-boat') })
     expect(
-      await t.withIdentity({ tokenIdentifier: 'clerk|no-boat' }).query(api.boats.mine, {}),
+      await t.withIdentity(orgIdentityFor('no-boat')).query(api.boats.mine, {}),
     ).toBeNull()
   })
 
@@ -192,7 +194,7 @@ describe('boats.mine', () => {
       await seedBoatProfile(ctx, userId)
     })
 
-    const result = await t.withIdentity({ tokenIdentifier: 'clerk|my-boat' }).query(api.boats.mine, {})
+    const result = await t.withIdentity(orgIdentityFor('my-boat')).query(api.boats.mine, {})
     expect(result).not.toBeNull()
     expect(result!.name).toBe('Test Boat')
   })

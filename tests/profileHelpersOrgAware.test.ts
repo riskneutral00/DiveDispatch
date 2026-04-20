@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { api, internal } from '../convex/_generated/api'
 import type { Doc, Id } from '../convex/_generated/dataModel'
 import { seedUser as _seedUser, type SeedCtx } from './fixtures'
-import { makeT } from './helpers/convex-helpers'
+import { makeT, expectConvexError } from './helpers/convex-helpers'
 
 async function seedUser(ctx: SeedCtx, slug: string, role: 'DiveCenter' | 'Boat' = 'DiveCenter') {
   return _seedUser(ctx, {
@@ -40,17 +40,17 @@ async function seedOrg(
   })
 }
 
-describe('profileCreate — org-aware dual-write', () => {
-  it('omits organizationId when caller has no org claim', async () => {
+describe('profileCreate — Rule 11 strict org requirement', () => {
+  it('throws FORBIDDEN no_active_org when caller has no org claim', async () => {
     const t = makeT()
     await t.run(async (ctx) => { await seedUser(ctx, 'no-org-dc') })
 
-    const dcId = await t.withIdentity({ tokenIdentifier: 'clerk|no-org-dc' })
-      .mutation(api.diveCenters.create, BASE_DC_ARGS)
-
-    const dc = await t.run(async (ctx) => ctx.db.get(dcId as Id<'diveCenters'>))
-    expect(dc?.organizationId).toBeUndefined()
-    expect(dc?.userId).toBeDefined()
+    await expectConvexError(
+      t.withIdentity({ tokenIdentifier: 'clerk|no-org-dc' })
+        .mutation(api.diveCenters.create, BASE_DC_ARGS),
+      'FORBIDDEN',
+      'no_active_org',
+    )
   })
 
   it('sets organizationId when caller has active synced org', async () => {
@@ -70,34 +70,24 @@ describe('profileCreate — org-aware dual-write', () => {
     expect(dc?.userId).toBeDefined()
   })
 
-  it('omits organizationId when org claim is present but org is unsynced', async () => {
+  it('throws NOT_FOUND org_not_synced when org claim present but org row missing', async () => {
     const t = makeT()
     await t.run(async (ctx) => { await seedUser(ctx, 'unsynced-dc') })
 
-    const dcId = await t.withIdentity({
-      tokenIdentifier: 'clerk|unsynced-dc',
-      orgId: 'org_unknown_xxx',
-      orgRole: 'admin',
-      orgSlug: 'unknown',
-    }).mutation(api.diveCenters.create, BASE_DC_ARGS)
-
-    const dc = await t.run(async (ctx) => ctx.db.get(dcId as Id<'diveCenters'>))
-    expect(dc?.organizationId).toBeUndefined()
+    await expectConvexError(
+      t.withIdentity({
+        tokenIdentifier: 'clerk|unsynced-dc',
+        orgId: 'org_unknown_xxx',
+        orgRole: 'admin',
+        orgSlug: 'unknown',
+      }).mutation(api.diveCenters.create, BASE_DC_ARGS),
+      'NOT_FOUND',
+      'org_not_synced',
+    )
   })
 })
 
-describe('profileMine — org-scope preferred, user fallback', () => {
-  it('returns user-scoped record when caller has no org claim', async () => {
-    const t = makeT()
-    await t.run(async (ctx) => { await seedUser(ctx, 'solo-dc') })
-    await t.withIdentity({ tokenIdentifier: 'clerk|solo-dc' })
-      .mutation(api.diveCenters.create, BASE_DC_ARGS)
-
-    const mine = await t.withIdentity({ tokenIdentifier: 'clerk|solo-dc' })
-      .query(api.diveCenters.mine, {})
-    expect(mine?.name).toBe('Hug Ocean')
-  })
-
+describe('profileMine — org-scope query', () => {
   it('returns org-scoped record when caller has active org with record', async () => {
     const t = makeT()
     await t.run(async (ctx) => { await seedUser(ctx, 'org-mine') })
@@ -116,27 +106,7 @@ describe('profileMine — org-scope preferred, user fallback', () => {
     expect(mine?.name).toBe('Hug Ocean')
   })
 
-  it('falls back to user-scoped record when active org has no record', async () => {
-    const t = makeT()
-    await t.run(async (ctx) => { await seedUser(ctx, 'fallback-dc') })
-    // Create user-scoped record WITHOUT org
-    await t.withIdentity({ tokenIdentifier: 'clerk|fallback-dc' })
-      .mutation(api.diveCenters.create, BASE_DC_ARGS)
-    // Sync a new org AFTER the fact; that org has no diveCenter yet.
-    await seedOrg(t, 'org_fallback', 'fallback-corp')
-
-    const mine = await t.withIdentity({
-      tokenIdentifier: 'clerk|fallback-dc',
-      orgId: 'org_fallback',
-      orgRole: 'member',
-      orgSlug: 'fallback-corp',
-    }).query(api.diveCenters.mine, {})
-
-    expect(mine?.name).toBe('Hug Ocean')
-    expect(mine?.organizationId).toBeUndefined()
-  })
-
-  it('returns null when no record exists at either scope', async () => {
+  it('returns null when no record exists for active org', async () => {
     const t = makeT()
     await t.run(async (ctx) => { await seedUser(ctx, 'nothing-dc') })
     await seedOrg(t, 'org_nothing', 'nothing-corp')

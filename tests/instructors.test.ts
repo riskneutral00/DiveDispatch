@@ -1,11 +1,13 @@
 import { describe, it, expect } from 'vitest'
 import { api } from '../convex/_generated/api'
 import type { Doc, Id } from '../convex/_generated/dataModel'
-import { seedUser as _seedUser, seedInstructorProfile, type SeedCtx } from './fixtures'
-import { makeT } from './helpers/convex-helpers'
+import { seedUser as _seedUser, seedInstructorProfile, getOrCreateTestOrg, type SeedCtx } from './fixtures'
+import { makeT, orgIdentityFor } from './helpers/convex-helpers'
 
 async function seedUser(ctx: SeedCtx, slug: string, role: 'Instructor' | 'DiveCenter' = 'Instructor') {
-  return _seedUser(ctx, { tokenIdentifier: `clerk|${slug}`, slug, email: `${slug}@test.com`, name: slug, firstName: slug, lastName: 'Test', role })
+  const userId = await _seedUser(ctx, { tokenIdentifier: `clerk|${slug}`, slug, email: `${slug}@test.com`, name: slug, firstName: slug, lastName: 'Test', role })
+  await getOrCreateTestOrg(ctx, userId, slug)
+  return userId
 }
 
 const VALID_INSTRUCTOR_ARGS = {
@@ -29,7 +31,7 @@ describe('instructors.create', () => {
     const t = makeT()
     await t.run(async (ctx) => { await seedUser(ctx, 'dc-user', 'DiveCenter') })
     await expect(
-      t.withIdentity({ tokenIdentifier: 'clerk|dc-user' }).mutation(api.instructors.create, VALID_INSTRUCTOR_ARGS),
+      t.withIdentity(orgIdentityFor('dc-user')).mutation(api.instructors.create, VALID_INSTRUCTOR_ARGS),
     ).rejects.toThrow(/FORBIDDEN/)
   })
 
@@ -38,7 +40,7 @@ describe('instructors.create', () => {
     let userId: Awaited<ReturnType<typeof seedUser>> | undefined
     await t.run(async (ctx) => { userId = await seedUser(ctx, 'new-instr') })
 
-    const instrId = await t.withIdentity({ tokenIdentifier: 'clerk|new-instr' })
+    const instrId = await t.withIdentity(orgIdentityFor('new-instr'))
       .mutation(api.instructors.create, VALID_INSTRUCTOR_ARGS)
 
     expect(typeof instrId).toBe('string')
@@ -56,7 +58,7 @@ describe('instructors.create', () => {
   it('returns existing ID on duplicate create', async () => {
     const t = makeT()
     await t.run(async (ctx) => { await seedUser(ctx, 'dup-instr') })
-    const identity = { tokenIdentifier: 'clerk|dup-instr' }
+    const identity = orgIdentityFor('dup-instr')
 
     const id1 = await t.withIdentity(identity).mutation(api.instructors.create, VALID_INSTRUCTOR_ARGS)
     const id2 = await t.withIdentity(identity).mutation(api.instructors.create, { ...VALID_INSTRUCTOR_ARGS, phone: '+66999999999' })
@@ -74,7 +76,7 @@ describe('instructors.update', () => {
     const t = makeT()
     await t.run(async (ctx) => { await seedUser(ctx, 'no-instr') })
     await expect(
-      t.withIdentity({ tokenIdentifier: 'clerk|no-instr' }).mutation(api.instructors.update, { phone: '+660000000000' }),
+      t.withIdentity(orgIdentityFor('no-instr')).mutation(api.instructors.update, { phone: '+660000000000' }),
     ).rejects.toThrow(/NOT_FOUND/)
   })
 
@@ -86,7 +88,7 @@ describe('instructors.update', () => {
       instrId = await seedInstructorProfile(ctx, userId)
     })
 
-    await t.withIdentity({ tokenIdentifier: 'clerk|upd-instr' })
+    await t.withIdentity(orgIdentityFor('upd-instr'))
       .mutation(api.instructors.update, { phone: '+660000000000' })
 
     await t.run(async (ctx) => {
@@ -104,7 +106,7 @@ describe('instructors.update', () => {
       instrId = await seedInstructorProfile(ctx, userId)
     })
 
-    await t.withIdentity({ tokenIdentifier: 'clerk|sync-instr' })
+    await t.withIdentity(orgIdentityFor('sync-instr'))
       .mutation(api.users.updateProfile, { firstName: 'Renamed' })
 
     await t.run(async (ctx) => {
@@ -123,7 +125,7 @@ describe('directory.listByRole — Instructor picker gate', () => {
       await seedInstructorProfile(ctx, u1, { teachingLanguages: [] })
     })
 
-    const result = await t.withIdentity({ tokenIdentifier: 'clerk|caller-instr' })
+    const result = await t.withIdentity(orgIdentityFor('caller-instr'))
       .query(api.directory.listByRole, { role: 'Instructor' })
     expect(result).toHaveLength(0)
   })
@@ -136,7 +138,7 @@ describe('directory.listByRole — Instructor picker gate', () => {
       await seedInstructorProfile(ctx, u1, { teachingLanguages: ['zh-TW'] })
     })
 
-    const result = await t.withIdentity({ tokenIdentifier: 'clerk|caller-instr2' })
+    const result = await t.withIdentity(orgIdentityFor('caller-instr2'))
       .query(api.directory.listByRole, { role: 'Instructor' })
     expect(result).toHaveLength(1)
     expect(result[0].slug).toBe('instr-ok')
@@ -149,7 +151,7 @@ describe('instructors.create — teachingLanguages empty-array gate (P0-20)', ()
     await t.run(async (ctx) => { await seedUser(ctx, 'empty-lang') })
 
     await expect(
-      t.withIdentity({ tokenIdentifier: 'clerk|empty-lang' })
+      t.withIdentity(orgIdentityFor('empty-lang'))
         .mutation(api.instructors.create, { ...VALID_INSTRUCTOR_ARGS, teachingLanguages: [] }),
     ).rejects.toThrow(/TEACHING_LANGUAGES_REQUIRED/)
   })
@@ -162,7 +164,7 @@ describe('instructors.create — teachingLanguages empty-array gate (P0-20)', ()
     })
 
     await expect(
-      t.withIdentity({ tokenIdentifier: 'clerk|regress-lang' })
+      t.withIdentity(orgIdentityFor('regress-lang'))
         .mutation(api.instructors.update, { teachingLanguages: [] }),
     ).rejects.toThrow(/TEACHING_LANGUAGES_REQUIRED/)
   })
@@ -178,7 +180,7 @@ describe('instructors.mine', () => {
     const t = makeT()
     await t.run(async (ctx) => { await seedUser(ctx, 'no-instr-profile') })
     expect(
-      await t.withIdentity({ tokenIdentifier: 'clerk|no-instr-profile' }).query(api.instructors.mine, {}),
+      await t.withIdentity(orgIdentityFor('no-instr-profile')).query(api.instructors.mine, {}),
     ).toBeNull()
   })
 
@@ -189,7 +191,7 @@ describe('instructors.mine', () => {
       await seedInstructorProfile(ctx, userId)
     })
 
-    const result = await t.withIdentity({ tokenIdentifier: 'clerk|my-instr' }).query(api.instructors.mine, {})
+    const result = await t.withIdentity(orgIdentityFor('my-instr')).query(api.instructors.mine, {})
     expect(result).not.toBeNull()
     expect(result!.name).toBe('Test Instructor')
   })

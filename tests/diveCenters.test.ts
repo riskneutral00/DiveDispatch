@@ -1,11 +1,13 @@
 import { describe, it, expect } from 'vitest'
 import { api } from '../convex/_generated/api'
 import type { Doc, Id } from '../convex/_generated/dataModel'
-import { seedUser as _seedUser, seedDiveCenterProfile, type SeedCtx } from './fixtures'
-import { makeT } from './helpers/convex-helpers'
+import { seedUser as _seedUser, seedDiveCenterProfile, getOrCreateTestOrg, type SeedCtx } from './fixtures'
+import { makeT, orgIdentityFor } from './helpers/convex-helpers'
 
 async function seedUser(ctx: SeedCtx, slug: string, role: 'DiveCenter' | 'Boat' = 'DiveCenter') {
-  return _seedUser(ctx, { tokenIdentifier: `clerk|${slug}`, slug, email: `${slug}@test.com`, name: slug, firstName: slug, lastName: 'Test', role })
+  const userId = await _seedUser(ctx, { tokenIdentifier: `clerk|${slug}`, slug, email: `${slug}@test.com`, name: slug, firstName: slug, lastName: 'Test', role })
+  await getOrCreateTestOrg(ctx, userId, slug)
+  return userId
 }
 
 const VALID_DC_ARGS = {
@@ -29,7 +31,7 @@ describe('diveCenters.create', () => {
     const t = makeT()
     await t.run(async (ctx) => { await seedUser(ctx, 'boat-user', 'Boat') })
     await expect(
-      t.withIdentity({ tokenIdentifier: 'clerk|boat-user' }).mutation(api.diveCenters.create, VALID_DC_ARGS),
+      t.withIdentity(orgIdentityFor('boat-user')).mutation(api.diveCenters.create, VALID_DC_ARGS),
     ).rejects.toThrow(/FORBIDDEN/)
   })
 
@@ -38,7 +40,7 @@ describe('diveCenters.create', () => {
     let userId: Awaited<ReturnType<typeof seedUser>> | undefined
     await t.run(async (ctx) => { userId = await seedUser(ctx, 'dc-owner') })
 
-    const dcId = await t.withIdentity({ tokenIdentifier: 'clerk|dc-owner' })
+    const dcId = await t.withIdentity(orgIdentityFor('dc-owner'))
       .mutation(api.diveCenters.create, VALID_DC_ARGS)
 
     expect(typeof dcId).toBe('string')
@@ -56,7 +58,7 @@ describe('diveCenters.create', () => {
   it('returns existing ID on duplicate create', async () => {
     const t = makeT()
     await t.run(async (ctx) => { await seedUser(ctx, 'dup-dc') })
-    const identity = { tokenIdentifier: 'clerk|dup-dc' }
+    const identity = orgIdentityFor('dup-dc')
 
     const id1 = await t.withIdentity(identity).mutation(api.diveCenters.create, VALID_DC_ARGS)
     const id2 = await t.withIdentity(identity).mutation(api.diveCenters.create, { ...VALID_DC_ARGS, name: 'Other' })
@@ -74,7 +76,7 @@ describe('diveCenters.update', () => {
     const t = makeT()
     await t.run(async (ctx) => { await seedUser(ctx, 'no-dc') })
     await expect(
-      t.withIdentity({ tokenIdentifier: 'clerk|no-dc' }).mutation(api.diveCenters.update, { name: 'New' }),
+      t.withIdentity(orgIdentityFor('no-dc')).mutation(api.diveCenters.update, { name: 'New' }),
     ).rejects.toThrow(/NOT_FOUND/)
   })
 
@@ -86,7 +88,7 @@ describe('diveCenters.update', () => {
       dcId = await seedDiveCenterProfile(ctx, userId)
     })
 
-    await t.withIdentity({ tokenIdentifier: 'clerk|upd-dc' })
+    await t.withIdentity(orgIdentityFor('upd-dc'))
       .mutation(api.diveCenters.update, { name: 'Updated DC' })
 
     await t.run(async (ctx) => {
@@ -107,7 +109,7 @@ describe('diveCenters.mine', () => {
     const t = makeT()
     await t.run(async (ctx) => { await seedUser(ctx, 'no-dc-profile') })
     expect(
-      await t.withIdentity({ tokenIdentifier: 'clerk|no-dc-profile' }).query(api.diveCenters.mine, {}),
+      await t.withIdentity(orgIdentityFor('no-dc-profile')).query(api.diveCenters.mine, {}),
     ).toBeNull()
   })
 
@@ -118,7 +120,7 @@ describe('diveCenters.mine', () => {
       await seedDiveCenterProfile(ctx, userId)
     })
 
-    const result = await t.withIdentity({ tokenIdentifier: 'clerk|my-dc' }).query(api.diveCenters.mine, {})
+    const result = await t.withIdentity(orgIdentityFor('my-dc')).query(api.diveCenters.mine, {})
     expect(result).not.toBeNull()
     expect(result!.name).toBe('Test DC')
   })

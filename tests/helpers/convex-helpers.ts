@@ -2,25 +2,40 @@ import { convexTest } from 'convex-test'
 import { expect } from 'vitest'
 import schema from '../../convex/schema'
 
-/**
- * Create a fresh convex-test instance.
- * Single source of truth — replaces per-file `makeT()` and `const modules` patterns.
- */
 export function makeT() {
   return convexTest(schema, import.meta.glob('../../convex/**/*.ts'))
 }
 
-/**
- * Assert that a Convex mutation/query rejects with a ConvexError carrying the given code.
- * Handles both string-serialized and object `data` payloads.
- */
+export type OrgIdentity = {
+  tokenIdentifier: string
+  orgId: string
+  orgRole: 'admin' | 'member'
+  orgSlug: string
+}
+
+export function orgIdentityFor(
+  slug: string,
+  orgRole: 'admin' | 'member' = 'admin',
+): OrgIdentity {
+  return {
+    tokenIdentifier: `clerk|${slug}`,
+    orgId: `test_${slug}`,
+    orgRole,
+    orgSlug: slug,
+  }
+}
+
 export async function expectConvexError(
   promise: Promise<unknown>,
   code: string,
+  reason?: string,
 ) {
   await expect(promise).rejects.toSatisfy((err: unknown) => {
     const e = err as { data: unknown }
     const data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data
-    return (data as Record<string, unknown>)?.code === code
+    const d = data as Record<string, unknown>
+    if (d?.code !== code) return false
+    if (reason !== undefined && d?.reason !== reason) return false
+    return true
   })
 }
