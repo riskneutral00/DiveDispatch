@@ -241,9 +241,4 @@ export const RESTORED_WEICHEN: SeedStakeholder = {
   },
 }
 
-export const ALL_INSTRUCTORS: SeedStakeholder[] = [
-  RESTORED_RYAN,
-  RESTORED_ARISA,
-  RESTORED_LIMING,
-  RESTORED_WEICHEN,
-]
+export const ALL_INSTRUCTORS: SeedStakeholder[] = []

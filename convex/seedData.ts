@@ -1113,22 +1113,9 @@ export const PARKED_STAKEHOLDERS: SeedStakeholder[] = [
   SCUBA_REVOLUTION,
   ANDAMAN_EXPLORER,
   CORAL_BAY_RESORT,
-]
-
-function equipmentOnly(parked: SeedStakeholder): SeedStakeholder {
-  if (!parked.equipment) throw new Error(`equipmentOnly: ${parked.user.slug} has no equipment block`)
-  return {
-    user: parked.user,
-    roles: [{ role: 'Equipment' }],
-    equipment: { ...parked.equipment, isAllowed: [], notAllowed: [] },
-  }
-}
-
-export const ALL_STAKEHOLDERS: SeedStakeholder[] = [
   RESTORED_PRAWIT,
   RESTORED_SOMBAT,
   RESTORED_ALEX,
-  WATER_PRO,
-  SHARK_BITES,
-  ...PARKED_STAKEHOLDERS.filter((p) => p.equipment && !p.pool && !p.boat).map(equipmentOnly),
 ]
+
+export const ALL_STAKEHOLDERS: SeedStakeholder[] = []
