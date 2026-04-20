@@ -9,23 +9,11 @@ import { venueCategoryValidator, diveSiteTypeValidator } from './shared/venueTyp
 import { capacityModelValidator as capacityModel, genderValidator as gender, shoeSizeUnitValidator as shoeSizeUnit, acceptanceModeValidator as acceptanceMode } from './shared/schemaEnums'
 import { stakeholderTypeValidator as stakeholderType, gearTypeValidator as gearType, finSizeSystemValidator, rentalChecklistValidator } from './lib/validators'
 import { bookingStatusValidator as bookingStatus, reservationStatusValidator as reservationStatus, bagStatusValidator, notificationTypeValidator as notificationType, vacatedReasonValidator } from './shared/statuses'
+import { addressStructuredValidator as addressStructured, structuredLocationFields } from './shared/addressValidator'
 
 const accessControlFields = {
   isAllowed: v.optional(v.array(v.string())),
   notAllowed: v.optional(v.array(v.string())),
-}
-
-const addressStructured = v.object({
-  street: v.optional(v.string()),
-  city: v.string(),
-  state: v.optional(v.string()),
-  country: v.string(),
-  postalCode: v.optional(v.string()),
-})
-
-const structuredLocationFields = {
-  address: v.optional(addressStructured),
-  placeId: v.optional(v.string()),
 }
 
 export default defineSchema({

@@ -1,5 +1,6 @@
 import { ConvexError, v } from 'convex/values'
 import { RESOURCE_OWNER_TYPES, type ResourceOwnerType } from '../shared/resourceOwnerTypes'
+import { addressStructuredValidator } from '../shared/addressValidator'
 import { ErrorCode } from './errorCodes'
 
 export const stakeholderTypeValidator = v.union(
@@ -64,8 +65,10 @@ export const rentalChecklistValidator = v.object({
 })
 
 export const BASE_PROFILE_CREATE_FIELDS = {
-  placeName: v.string(),
-  country: v.string(),
+  placeName: v.optional(v.string()),
+  country: v.optional(v.string()),
+  address: v.optional(addressStructuredValidator),
+  placeId: v.optional(v.string()),
   lat: v.number(),
   lng: v.number(),
   email: v.string(),
@@ -75,6 +78,8 @@ export const BASE_PROFILE_CREATE_FIELDS = {
 export const BASE_PROFILE_UPDATE_FIELDS = {
   placeName: v.optional(v.string()),
   country: v.optional(v.string()),
+  address: v.optional(addressStructuredValidator),
+  placeId: v.optional(v.string()),
   lat: v.optional(v.number()),
   lng: v.optional(v.number()),
   email: v.optional(v.string()),
