@@ -14,6 +14,7 @@ vi.mock('next/navigation', () => ({
 const mockConvexAuth = vi.fn<() => { isLoading: boolean; isAuthenticated: boolean }>()
 let mockUserMe: unknown = undefined
 let mockUserRoles: unknown = undefined
+let mockOrgRow: unknown = { _id: 'org_test', clerkOrgId: 'clerk_org_test', slug: 'test-org', name: 'Test Org', createdAt: 0, updatedAt: 0 }
 let queryCallIndex = 0
 const mockMutate = vi.fn()
 
@@ -22,10 +23,13 @@ vi.mock('convex/react', async (importOriginal) => {
   return {
     ...actual,
     useConvexAuth: () => mockConvexAuth(),
-    useQuery: () => {
+    useQuery: (_query: unknown, args?: unknown) => {
+      if (args === 'skip') return undefined
+      if (args && typeof args === 'object' && args !== null && 'slug' in (args as object)) {
+        return mockOrgRow
+      }
       const idx = queryCallIndex++
-      if (idx === 0) return mockUserMe
-      return mockUserRoles
+      return idx % 2 === 0 ? mockUserMe : mockUserRoles
     },
     useMutation: () => mockMutate,
   }
@@ -35,6 +39,11 @@ vi.mock('convex/react', async (importOriginal) => {
 vi.mock('@clerk/nextjs', () => ({
   SignUp: () => <div data-testid="clerk-signup">Clerk Sign Up</div>,
   useClerk: () => ({ signOut: vi.fn() }),
+  useOrganizationList: () => ({
+    isLoaded: true,
+    createOrganization: vi.fn().mockResolvedValue({ id: 'org_test' }),
+    setActive: vi.fn().mockResolvedValue(undefined),
+  }),
 }))
 
 // Stub heavy children

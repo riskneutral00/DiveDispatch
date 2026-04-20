@@ -1,13 +1,13 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { SignUp } from '@clerk/nextjs'
+import { SignUp, useOrganizationList } from '@clerk/nextjs'
 import { useConvexAuth, useMutation, useQuery } from 'convex/react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { api } from '@/lib/convex-generated'
 import { ROLE_BY_CLERK_ROLE, type ClerkRole, type RoleConfig } from '@/lib/constants/roles'
-import { deriveDefaultRole } from '@/lib/utils/role'
+import { deriveDefaultRole, deriveRoleClass } from '@/lib/utils/role'
 import { InlineError } from '@/components/ui/inline-error'
 import { Spinner } from '@/components/ui/spinner'
 import { StepIndicator } from '@/components/ui/step-indicator'
@@ -27,6 +27,7 @@ const SIGNUP_STEPS = [
 ] as const
 
 type PostAuthStage = 'role' | 'profile'
+type OrgPhase = 'idle' | 'creating' | 'syncing' | 'done'
 
 const LOCALE_COOKIE = 'dd-locale'
 const LANG_PREF_STORAGE = 'dd-signup-lang-pref'
@@ -51,6 +52,11 @@ export default function SignUpPage() {
   const userRoles = useQuery(api.userRoles.myRoles)
   const createUser = useMutation(api.users.createUser)
   const router = useRouter()
+  const { createOrganization, setActive, isLoaded: orgListLoaded } = useOrganizationList()
+  const orgRow = useQuery(
+    api.organizations.getBySlug,
+    user?.slug ? { slug: user.slug } : 'skip',
+  )
 
   const [appLanguage, setAppLanguageState] = useState<string>(DEFAULT_LOCALE)
   const [selectedRoles, setSelectedRoles] = useState<RoleConfig[]>([])
@@ -63,6 +69,7 @@ export default function SignUpPage() {
   const [tcAccepted, setTcAccepted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [orgPhase, setOrgPhase] = useState<OrgPhase>('idle')
 
   useEffect(() => {
     /* eslint-disable-next-line react-hooks/set-state-in-effect -- comments-ok reads localStorage on mount; SSR-safe (default locale used during hydration) */
@@ -70,16 +77,50 @@ export default function SignUpPage() {
   }, [])
 
   useEffect(() => {
-    if (user && userRoles && userRoles.length > 0) {
-      const defaultRole = deriveDefaultRole(userRoles.map((r) => r.role))
-      const roleConfig = defaultRole ? ROLE_BY_CLERK_ROLE[defaultRole as ClerkRole] : undefined
-      if (roleConfig) {
-        router.replace(`/${user.slug}/${roleConfig.key}/dashboard`)
-      } else {
-        router.replace('/dashboard')
-      }
+    if (orgPhase !== 'idle') return
+    if (!user || !userRoles || userRoles.length === 0) return
+    if (!orgListLoaded || !createOrganization || !setActive) return
+    if (orgRow === undefined) return
+    if (orgRow !== null) {
+      setOrgPhase('done')
+      return
     }
-  }, [user, userRoles, router])
+
+    const roleClass = deriveRoleClass(userRoles.map((r) => r.role) as ClerkRole[])
+    if (roleClass !== 'freelance') return
+
+    const userSlug = user.slug
+    const fullName = `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || userSlug
+    setOrgPhase('creating')
+    ;(async () => {
+      try {
+        const org = await createOrganization({ name: fullName, slug: userSlug })
+        await setActive({ organization: org.id })
+        setOrgPhase('syncing')
+      } catch (err) {
+        setError(parseConvexErrorI18n(err, tErr))
+        setOrgPhase('idle')
+        setSubmitting(false)
+      }
+    })()
+  }, [orgPhase, user, userRoles, orgListLoaded, createOrganization, setActive, orgRow, tErr])
+
+  useEffect(() => {
+    if (orgPhase !== 'syncing') return
+    if (orgRow) setOrgPhase('done')
+  }, [orgPhase, orgRow])
+
+  useEffect(() => {
+    if (orgPhase !== 'done') return
+    if (!user || !userRoles || userRoles.length === 0) return
+    const defaultRole = deriveDefaultRole(userRoles.map((r) => r.role))
+    const roleConfig = defaultRole ? ROLE_BY_CLERK_ROLE[defaultRole as ClerkRole] : undefined
+    if (roleConfig) {
+      router.replace(`/${user.slug}/${roleConfig.key}/dashboard`)
+    } else {
+      router.replace('/dashboard')
+    }
+  }, [orgPhase, user, userRoles, router])
 
   function changeAppLanguage(code: string) {
     const cookieLocale = normalizeLocale(code)
