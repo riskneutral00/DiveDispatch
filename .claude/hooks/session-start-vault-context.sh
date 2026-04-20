@@ -10,6 +10,47 @@ set -u
 VAULT="${VAULT:-$HOME/Desktop/RiskNeutral/Vaults/DiveDispatch}"
 REPO="${REPO:-$HOME/Desktop/RiskNeutral/DiveDispatch}"
 
+# Buffer stdin payload (session_id + source + transcript_path live here)
+PAYLOAD=""
+if [ ! -t 0 ]; then
+  PAYLOAD=$(cat 2>/dev/null || true)
+fi
+
+# Session-state snapshot for scoped /gate + /vault.
+# Runs even when vault is missing — scoping is repo-level, not vault-level.
+SID="${CLAUDE_SESSION_ID:-}"
+if [ -z "$SID" ] && [ -n "$PAYLOAD" ]; then
+  if command -v jq >/dev/null 2>&1; then
+    SID=$(printf '%s' "$PAYLOAD" | jq -r '.session_id // empty' 2>/dev/null || true)
+  else
+    SID=$(printf '%s' "$PAYLOAD" \
+      | grep -o '"session_id"[[:space:]]*:[[:space:]]*"[^"]*"' \
+      | head -1 \
+      | sed 's/.*"\([^"]*\)"[[:space:]]*$/\1/' 2>/dev/null || true)
+  fi
+fi
+[ -z "$SID" ] && SID="fallback-$(date +%s)-$$"
+
+STATE_ROOT=".claude/session-state"
+STATE_DIR="$STATE_ROOT/$SID"
+mkdir -p "$STATE_DIR" 2>/dev/null || true
+
+# Pointer for tracker hook when env var is absent
+printf '%s\n' "$SID" > "$STATE_ROOT/current-id" 2>/dev/null || true
+
+# Baseline for tracker diffing — any future change lands in touched.txt
+git status --porcelain > "$STATE_DIR/porcelain-prev.txt" 2>/dev/null || true
+
+# Informational: HEAD SHA + already-dirty file list at session start
+git rev-parse HEAD > "$STATE_DIR/head-sha" 2>/dev/null || echo "unknown" > "$STATE_DIR/head-sha"
+git status --porcelain 2>/dev/null | awk 'NF {print $NF}' | sort -u > "$STATE_DIR/pre-dirty.txt" || : > "$STATE_DIR/pre-dirty.txt"
+
+# Empty touched list — tracker will append as this session edits files
+: > "$STATE_DIR/touched.txt"
+
+# Prune session-state directories older than 7 days
+find "$STATE_ROOT" -maxdepth 1 -mindepth 1 -type d -mtime +7 -exec rm -rf {} + 2>/dev/null || true
+
 # Bail silently if vault is missing — degrade gracefully
 [ -d "$VAULT" ] || exit 0
 

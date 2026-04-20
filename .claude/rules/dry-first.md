@@ -16,8 +16,7 @@ Before defining a new constant, type, schema, or utility function, grep `src/lib
 - **Button sizes:** `src/lib/constants/button-sizes.ts` (`BUTTON_SIZE_MAP`, `ICON_BUTTON_SIZE`, `MENU_BUTTON_SIZE_MAP`, `TOUCH_TARGET_CLASS`)
 - **Number parsing:** `src/lib/utils/numbers.ts` (`parseNumber`)
 - **Date formatters:** `src/lib/utils/date.ts` (`formatDateRange`, `formatDateRangeLocalized`, `formatDateRangeCompact`, `formatDateShort`, `toISODateString`, `addDays`, `diffDays`)
-- **Slug helpers (Wave 8):** `src/lib/utils/slug.ts` (`kebabBusinessName`, `appendCollisionHash`)
-- **Role-class driver (Wave 8):** `src/lib/utils/role.ts` (`deriveRoleClass` — returns `customer | freelance | business` from selected roles; drives signup branching)
+- **Role default:** `src/lib/utils/role.ts` (`deriveDefaultRole` — picks a default role from a user's assigned roles; used by signup post-auth redirect and dashboard role selection)
 
 ### Frontend — Zod schemas
 - **Address shape:** `src/lib/schemas/location.ts` (`addressLocationSchema`, `AddressLocationValue`)
@@ -34,11 +33,13 @@ Before defining a new constant, type, schema, or utility function, grep `src/lib
 
 ### Convex — profile + role resolution
 - **Role-to-table map:** `convex/lib/profileHelpers.ts` (`ROLE_TABLE_MAP`, `profileMine`, `profileBySlug`, `profileByUser`, `profileUpdate`, `profileCreate`, `getProfileName`)
-- **Per-user role collection:** `convex/lib/userRoleHelpers.ts` (`getAllUserRoles` — replaces inline `.withIndex('by_userId').collect()` on `userRoles`)
+- **Per-user role collection:** `convex/lib/userRoleHelpers.ts` (`getAllUserRoles` — replaces inline `.withIndex('by_userId').collect()` on `userRoles`; `insertUserRole` — every userRoles insert site uses this to populate `organizationId` at insert time)
 
 ### Convex — auth gateway
 - **Primary entry points:** `convex/lib/auth.ts` — `authorize()` is the single entry point per `Architecture/auth-model.md` Rule 1. `authorizeWithRole()` is the composite when a mutation needs `authorize` + `requireActiveRole` + optional readiness. `getRequiredUserBySlug()` replaces slug-lookup + NOT_FOUND throw. `assertOrgOwnership()` asserts a resource's `organizationId` matches the active org. Internal helpers `requireAuth`, `assertOwnership`, `requireOwnerOrResourceAccess` are consumed by `authorize()` — do NOT call them directly in mutations.
-- **Active-org resolution:** `convex/lib/activeOrg.ts` (`getActiveOrg` — throws if no JWT org claim, `requireOrgAdmin` — composite active-org + admin-role assertion, `tryGetActiveOrg` — non-throwing variant). See `Architecture/auth-model.md` Rules 8, 9, 11 and entity `[[organization]]`.
+- **Active-org resolution:** `convex/lib/activeOrg.ts` (`getActiveOrg` — two-path resolution (JWT claim or personal-org fallback) per Rule 11, `requireOrgAdmin` — composite active-org + admin-role assertion, `tryGetActiveOrg` — non-throwing variant, `isPersonalOrg` — `clerkOrgId === undefined` predicate guarding the fallback branch, `readOrgClaims` — extract `{orgId, orgRole, orgSlug}` from the JWT identity). See `Architecture/auth-model.md` Rules 8, 9, 11, 13 and entities `[[organization]]` + `[[clerk-convex-org-sync]]`.
+- **tokenIdentifier rebind:** `convex/lib/tokenIdentifier.ts` (`parseTokenIdentifier`, `isAllowedRebind`, `isLikelyClerkIssuer`) — `upsertFromWebhook` email-rebind path gates on issuer lineage per Rule 13.
+- **Org cascade on delete:** `convex/lib/orgCascade.ts` (`cascadeOrgDelete` — nulls `users.organizationId` + `userRoles.organizationId`, deletes child profile rows and grandchildren). Called by `organizations.deleteFromWebhook` before the org row is removed.
 
 ### Convex — validation (mutation boundary, defense-in-depth)
 - **i18n validators:** `convex/lib/i18nValidators.ts` (`assertCountryCode`, `assertPhoneE164`, `assertSupportedLocale`, `assertLanguageCodes`, `normalizeAppLanguage`, `normalizeAppLanguageOrThrow`). Every org-scoped mutation accepting address/phone/locale must call these at the boundary — Zod at the form is not sufficient.

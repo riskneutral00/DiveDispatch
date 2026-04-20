@@ -1,6 +1,6 @@
 ---
 name: vault
-description: "End-of-session closer. Commits code, captures observations to Vaults, updates TODO, manages memory, syncs NotebookLM. Execute immediately, no prompts."
+description: "End-of-session closer. Scoped to this session's touched files by default; pass --all to vault the entire working tree. Commits code, captures observations to Vaults, updates TODO, manages memory, syncs NotebookLM. Execute immediately, no prompts."
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Agent, Skill, mcp__openspace__execute_task
 user-invocable: true
 ---
@@ -8,6 +8,36 @@ user-invocable: true
 # /vault — Session Close
 
 Run this before ending a session. No questions, no prompts — just execute all jobs (5 core + team shutdown).
+
+---
+
+## Scope Resolution (runs before everything)
+
+Matt's workflow overlaps multiple concurrent sessions. Default is **scoped** — `/vault` only commits files this session touched. Pass `--all` to commit the entire working tree (the legacy behavior).
+
+```bash
+SCOPE_MODE="scoped"
+case " $* " in *" --all "*) SCOPE_MODE="all" ;; esac
+
+SID="${CLAUDE_SESSION_ID:-}"
+[ -z "$SID" ] && [ -f .claude/session-state/current-id ] && SID=$(cat .claude/session-state/current-id)
+TOUCHED=".claude/session-state/$SID/touched.txt"
+
+if [ "$SCOPE_MODE" = "scoped" ] && { [ -z "$SID" ] || [ ! -s "$TOUCHED" ]; }; then
+  echo "Session state missing or empty — falling back to --all."
+  SCOPE_MODE="all"
+fi
+
+if [ "$SCOPE_MODE" = "scoped" ]; then
+  SENTINEL=".patrol-ran-$SID"
+  SCOPE_FILTER="grep -Ff $TOUCHED"
+else
+  SENTINEL=".patrol-ran"
+  SCOPE_FILTER="cat"
+fi
+```
+
+**Untouched dirty files are left alone.** They remain in the working tree for whichever session owns them. Job 0 triage, Job 4 commit, and sentinel cleanup all respect `$SCOPE_FILTER`. `/gate` invocations (pre-flight and resume) propagate `--all` when that mode is active.
 
 ---
 
@@ -42,16 +72,21 @@ Every `/vault` close runs these in order. No skipping. The Karpathy sub-commands
 
 ### Pre-flight: Quality Gate (auto-gates if needed)
 
-Before anything else, check if `/gate` has been run and is still current:
+Before anything else, check if `/gate` has been run and is still current. Compute `DIFF_HASH` with the same scope as /gate would:
 
 ```bash
-DIFF_HASH=$( (git diff; git diff --cached; git ls-files --others --exclude-standard) | shasum -a 256 | awk '{print $1}' )
-GATE=$(cat .patrol-ran 2>/dev/null)
+if [ "$SCOPE_MODE" = "scoped" ]; then
+  SCOPED_PATHS=$(xargs -a "$TOUCHED" 2>/dev/null || true)
+  DIFF_HASH=$( (git diff -- $SCOPED_PATHS; git diff --cached -- $SCOPED_PATHS; git ls-files --others --exclude-standard | $SCOPE_FILTER) | shasum -a 256 | awk '{print $1}' )
+else
+  DIFF_HASH=$( (git diff; git diff --cached; git ls-files --others --exclude-standard) | shasum -a 256 | awk '{print $1}' )
+fi
+GATE=$(cat "$SENTINEL" 2>/dev/null)
 ```
 
-1. If `.patrol-ran` exists AND `verdict` is `BLOCKED` → stop: `Build/test failure OR open gate tickets detected. Fix before vaulting.`
-2. If `.patrol-ran` exists AND `diffHash` matches `$DIFF_HASH` AND verdict is `CLEAN` or `CLEAN_UNREVIEWED` → proceed to open-gate-ticket check (step 4). Continue to Job 0 only if that passes.
-3. Otherwise (missing OR stale — `diffHash` doesn't match) → invoke `/gate` via the Skill tool. `/gate`'s "Resume Contract" section guarantees it will write `.patrol-ran` and return control to /vault Job 0 within the same turn after emitting `Gate complete (verdict: ...). Resuming /vault Job 0.`
+1. If `$SENTINEL` exists AND `verdict` is `BLOCKED` → stop: `Build/test failure OR open gate tickets detected. Fix before vaulting.`
+2. If `$SENTINEL` exists AND `diffHash` matches `$DIFF_HASH` AND `scopeMode` matches `$SCOPE_MODE` AND verdict is `CLEAN` or `CLEAN_UNREVIEWED` → proceed to open-gate-ticket check (step 4). Continue to Job 0 only if that passes.
+3. Otherwise (missing OR stale — `diffHash` doesn't match OR `scopeMode` mismatch) → invoke `/gate` via the Skill tool, propagating the current scope flag (`/gate` when scoped, `/gate --all` when `$SCOPE_MODE=all`). `/gate`'s "Resume Contract" section guarantees it will write the sentinel and return control to /vault Job 0 within the same turn after emitting `Gate complete (verdict: ...). Resuming /vault Job 0.`
    - When you see that resume line, proceed to open-gate-ticket check (step 4).
    - If `/gate` reports BLOCKED, stop without entering Job 0.
 4. **Open-gate-ticket check** — before Job 0, scan for gate-sourced tickets still open:
@@ -69,9 +104,11 @@ GATE=$(cat .patrol-ran 2>/dev/null)
 
 **Critical:** `Skill()` is conversational substitution, not a function call. After /gate's instructions execute and write the sentinel, /vault's instructions remain visible in conversation context — you (the LLM) are responsible for continuing through Jobs 0-7 in the same turn. Do not treat the `Skill(gate)` call as a stopping point.
 
-After Job 4 (commit) succeeds, clean up sentinels and write session timestamp:
+After Job 4 (commit) succeeds, clean up sentinels and write session timestamp. In scoped mode, remove only this session's sentinel; in `--all` mode, also remove the plain sentinel:
 ```bash
-rm -f .patrol-ran .patrol-observations.md
+rm -f "$SENTINEL"
+[ "$SCOPE_MODE" = "all" ] && rm -f .patrol-ran
+rm -f .patrol-observations.md
 date -u +%Y-%m-%dT%H:%M:%SZ > .last-session-ts
 ```
 
@@ -79,12 +116,14 @@ date -u +%Y-%m-%dT%H:%M:%SZ > .last-session-ts
 
 ### Job 0: Untracked File Triage
 
-Run before all other jobs. Goal: ensure no ghost files, stale duplicates, or garbage get committed. If there are no untracked files (`??` in `git status --porcelain`), skip this job entirely.
+Run before all other jobs. Goal: ensure no ghost files, stale duplicates, or garbage get committed. If there are no untracked files (`??` in `git status --porcelain`) — or, in scoped mode, no untracked files that this session touched — skip this job entirely.
 
-**Round 0** — single Bash call:
+**Round 0** — single Bash call (apply `$SCOPE_FILTER` to untracked list):
 ```bash
-git status --porcelain | grep '^??' | cut -c4- && echo '---RECENT-DELS---' && git log --diff-filter=D --name-only --pretty=format: -20 | sort -u
+git status --porcelain | grep '^??' | cut -c4- | $SCOPE_FILTER && echo '---RECENT-DELS---' && git log --diff-filter=D --name-only --pretty=format: -20 | sort -u
 ```
+
+In scoped mode, untouched untracked files are left alone — not triaged, not deleted, not staged. They belong to another session.
 
 **Classify each untracked path** (first match wins):
 
@@ -284,13 +323,13 @@ Matt works across multiple terminals on different tickets. **Never lump unrelate
 ```bash
 git status && git diff --stat && git diff --cached --stat && git log --oneline -5
 ```
-If no changes, skip.
+If no changes, skip. In scoped mode, "no changes" means no files in `git status --porcelain` that intersect with `$TOUCHED` — untouched dirty files don't trigger this job.
 
 Then classify → chain commits in a single Bash call.
 
 #### Phase A: Classify into domain buckets
 
-Read `git status --porcelain` output. Assign each file to exactly one bucket. **First match wins.**
+Read `git status --porcelain` output. In scoped mode, pipe the path column through `$SCOPE_FILTER` first — files this session didn't touch are dropped before classification. Assign each remaining file to exactly one bucket. **First match wins.**
 
 | Pri | Bucket | Path patterns | Default prefix |
 |-----|--------|--------------|----------------|

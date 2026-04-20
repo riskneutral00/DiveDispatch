@@ -168,6 +168,17 @@
         ]
       },
       {
+        "matcher": "Edit|Write|NotebookEdit|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/session-touched-tracker.sh",
+            "timeout": 5,
+            "statusMessage": "Tracking session file changes\u2026"
+          }
+        ]
+      },
+      {
         "matcher": "Edit|Write",
         "hooks": [
           {

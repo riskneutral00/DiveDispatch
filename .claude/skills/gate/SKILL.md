@@ -1,15 +1,48 @@
 ---
 name: gate
-description: "Pre-commit quality gate. Dispatches review skills + invariant sweep, aggregates findings, invokes /escalate once (tickets open in_progress), fixes ALL CRITICAL/HIGH same-session via three routes (AUTO/OPUS-BLIND/INTERVIEW, max 2 cycles). Gate-sourced tickets close same session — no deferral. Emits .patrol-ran sentinel."
+description: "Pre-commit quality gate. Scoped to this session's touched files by default; pass --all to gate the entire working tree. Dispatches review skills + invariant sweep, aggregates findings, invokes /escalate once (tickets open in_progress), fixes ALL CRITICAL/HIGH same-session via three routes (AUTO/OPUS-BLIND/INTERVIEW, max 2 cycles). Gate-sourced tickets close same session — no deferral. Emits .patrol-ran sentinel."
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Skill, Agent, AskUserQuestion
 user-invocable: true
 ---
 
 # /gate — Pre-Commit Quality Gate
 
-You are a senior architect reviewing uncommitted changes before they reach `git commit`. Classify what changed, dispatch the right review skills, check invariant-adjacent code, and deliver a GO/NO-GO verdict. Write `.patrol-ran` so `/vault` can read the result.
+You are a senior architect reviewing uncommitted changes before they reach `git commit`. Classify what changed, dispatch the right review skills, check invariant-adjacent code, and deliver a GO/NO-GO verdict. Write the sentinel (`.patrol-ran-<session-id>` scoped, `.patrol-ran` full-tree) so `/vault` can read the result.
 
 **Execute immediately. No preamble, no methodology explanation.**
+
+---
+
+## Scope Resolution (runs before Phase 0)
+
+Matt's workflow opens multiple concurrent sessions. Default behavior is **scoped** — `/gate` only reviews files this session touched. Pass `--all` to restore whole-tree behavior.
+
+```bash
+SCOPE_MODE="scoped"
+case " $* " in *" --all "*) SCOPE_MODE="all" ;; esac
+
+SID="${CLAUDE_SESSION_ID:-}"
+[ -z "$SID" ] && [ -f .claude/session-state/current-id ] && SID=$(cat .claude/session-state/current-id)
+TOUCHED=".claude/session-state/$SID/touched.txt"
+
+# Auto-fall-through to --all when session state is missing or empty
+if [ "$SCOPE_MODE" = "scoped" ] && { [ -z "$SID" ] || [ ! -s "$TOUCHED" ]; }; then
+  echo "Session state missing or empty — falling back to --all."
+  SCOPE_MODE="all"
+fi
+
+if [ "$SCOPE_MODE" = "scoped" ]; then
+  SENTINEL=".patrol-ran-$SID"
+  SCOPE_FILTER="grep -Ff $TOUCHED"
+else
+  SENTINEL=".patrol-ran"
+  SCOPE_FILTER="cat"
+fi
+```
+
+Every subsequent `git diff --name-only` / `git diff --cached --name-only` / `git ls-files --others --exclude-standard` call in this skill is piped through `$SCOPE_FILTER`. Every `git diff` / `git diff --cached` (full diff) is restricted to scoped paths via `--` path args computed from `$TOUCHED` (or unrestricted in `--all` mode).
+
+The sentinel filename for this run is `$SENTINEL`.
 
 ---
 
@@ -17,17 +50,22 @@ You are a senior architect reviewing uncommitted changes before they reach `git 
 
 ### Step 0a — Compute diff hash
 
-Compute a single hash of the full working-tree state (unstaged + staged + untracked file names):
+Compute a single hash of the session-scoped working-tree state (unstaged + staged + untracked file names):
 
 ```bash
-DIFF_HASH=$( (git diff; git diff --cached; git ls-files --others --exclude-standard) | shasum -a 256 | awk '{print $1}' )
+if [ "$SCOPE_MODE" = "scoped" ]; then
+  SCOPED_PATHS=$(xargs -a "$TOUCHED" 2>/dev/null || true)
+  DIFF_HASH=$( (git diff -- $SCOPED_PATHS; git diff --cached -- $SCOPED_PATHS; git ls-files --others --exclude-standard | $SCOPE_FILTER) | shasum -a 256 | awk '{print $1}' )
+else
+  DIFF_HASH=$( (git diff; git diff --cached; git ls-files --others --exclude-standard) | shasum -a 256 | awk '{print $1}' )
+fi
 ```
 
 Store `DIFF_HASH` for the entire gate run — it's reused in the sentinel write.
 
 ### Step 0b — Full short-circuit
 
-Read `.patrol-ran` if it exists. If **all three** conditions are true:
+Read `$SENTINEL` if it exists (`.patrol-ran-<id>` in scoped mode, `.patrol-ran` in `--all` mode). If **all three** conditions are true:
 1. File exists
 2. `diffHash` field matches `$DIFF_HASH`
 3. `verdict` is not `BLOCKED`
@@ -62,9 +100,9 @@ if [ -f .vitest-last-pass ] && [ $(( $(date +%s) - $(cat .vitest-last-pass) )) -
 
 ## Phase 1: Diff Classification
 
-1. Run `git diff --name-only` + `git diff --cached --name-only` → deduplicated changed file list.
-2. Run `git status --short` → check for untracked files. Include in classification.
-3. If no changes at all, output `Nothing to gate.` and write CLEAN sentinel. Stop.
+1. Run `(git diff --name-only; git diff --cached --name-only) | $SCOPE_FILTER | sort -u` → deduplicated changed file list. In `--all` mode `$SCOPE_FILTER` is `cat`; in scoped mode it's `grep -Ff $TOUCHED`.
+2. Run `git status --short | $SCOPE_FILTER` → check for untracked files. Include in classification.
+3. If no changes at all (empty list after filtering), output `Nothing to gate.` (scoped mode appends `— no session-touched files.`) and write CLEAN sentinel. Stop.
 4. Classify each file into buckets:
 
 | Bucket | File patterns |
@@ -91,13 +129,28 @@ A file can land in multiple buckets.
 
 6. Deduplicate the skill list.
 
-7. Compute per-bucket diff hashes for incremental caching:
+7. Compute per-bucket diff hashes for incremental caching. In scoped mode, restrict each bucket's `git diff` to paths that appear in both the bucket pattern AND `$TOUCHED`:
 
 ```bash
-SCHEMA_HASH=$( (git diff -- convex/schema.ts; git diff --cached -- convex/schema.ts) | shasum -a 256 | awk '{print $1}' )
-BACKEND_HASH=$( (git diff -- 'convex/**/*.ts' ':!convex/schema.ts' ':!convex/_generated/**'; git diff --cached -- 'convex/**/*.ts' ':!convex/schema.ts' ':!convex/_generated/**') | shasum -a 256 | awk '{print $1}' )
-FRONTEND_HASH=$( (git diff -- 'src/app/**' 'src/components/**' 'src/lib/**' 'design-system/**'; git diff --cached -- 'src/app/**' 'src/components/**' 'src/lib/**' 'design-system/**') | shasum -a 256 | awk '{print $1}' )
-TESTS_HASH=$( (git diff -- 'tests/**' 'e2e/**'; git diff --cached -- 'tests/**' 'e2e/**') | shasum -a 256 | awk '{print $1}' )
+if [ "$SCOPE_MODE" = "scoped" ]; then
+  # Intersect touched list with each bucket's glob
+  scoped_paths() { grep -E "$1" "$TOUCHED" 2>/dev/null | tr '\n' ' '; }
+  S_SCHEMA=$(scoped_paths '^convex/schema\.ts$')
+  S_BACKEND=$(scoped_paths '^convex/.*\.ts$' | tr ' ' '\n' | grep -v '^convex/schema\.ts$' | grep -v '^convex/_generated/' | tr '\n' ' ')
+  S_FRONTEND=$(scoped_paths '^(src/(app|components|lib)/|design-system/)')
+  S_TESTS=$(scoped_paths '^(tests|e2e)/')
+
+  hash_bucket() { (git diff -- $1; git diff --cached -- $1) 2>/dev/null | shasum -a 256 | awk '{print $1}'; }
+  SCHEMA_HASH=$(hash_bucket "$S_SCHEMA")
+  BACKEND_HASH=$(hash_bucket "$S_BACKEND")
+  FRONTEND_HASH=$(hash_bucket "$S_FRONTEND")
+  TESTS_HASH=$(hash_bucket "$S_TESTS")
+else
+  SCHEMA_HASH=$( (git diff -- convex/schema.ts; git diff --cached -- convex/schema.ts) | shasum -a 256 | awk '{print $1}' )
+  BACKEND_HASH=$( (git diff -- 'convex/**/*.ts' ':!convex/schema.ts' ':!convex/_generated/**'; git diff --cached -- 'convex/**/*.ts' ':!convex/schema.ts' ':!convex/_generated/**') | shasum -a 256 | awk '{print $1}' )
+  FRONTEND_HASH=$( (git diff -- 'src/app/**' 'src/components/**' 'src/lib/**' 'design-system/**'; git diff --cached -- 'src/app/**' 'src/components/**' 'src/lib/**' 'design-system/**') | shasum -a 256 | awk '{print $1}' )
+  TESTS_HASH=$( (git diff -- 'tests/**' 'e2e/**'; git diff --cached -- 'tests/**' 'e2e/**') | shasum -a 256 | awk '{print $1}' )
+fi
 ```
 
 8. Read `.patrol-ran`'s `bucketHashes` and `skillResults` (if file exists). For each bucket that has files in it:
@@ -434,7 +487,7 @@ After printing the verdict, count any gate-sourced tickets still open in `.ticke
 OPEN_GATE_TICKETS=$(grep -l 'source: gate' .tickets/DD-*.md 2>/dev/null | xargs grep -l 'status: in_progress\|status: ready' 2>/dev/null | wc -l | tr -d ' ')
 ```
 
-Then write `.patrol-ran` with cache data for incremental reuse:
+Then write the sentinel (`$SENTINEL` — resolved to `.patrol-ran-<id>` in scoped mode, `.patrol-ran` in `--all` mode) with cache data for incremental reuse:
 
 ```bash
 VERDICT="CLEAN"
@@ -451,10 +504,17 @@ FILE_HASH=$(git log --oneline -1 --format=%h 2>/dev/null || echo "unknown")
 
 Any gate-sourced ticket still `in_progress` OR escalated to `human_required: true, status: ready` blocks `/vault`. Dismissed tickets (moved to `.tickets/done/`) do not count.
 
-**If Phase 7 ran**, recompute `DIFF_HASH` and bucket hashes — the fix agents changed files:
+**If Phase 7 ran**, recompute `DIFF_HASH` and bucket hashes — the fix agents changed files. Use the same scope mode as Phase 0:
 
 ```bash
-DIFF_HASH=$( (git diff; git diff --cached; git ls-files --others --exclude-standard) | shasum -a 256 | awk '{print $1}' )
+if [ "$SCOPE_MODE" = "scoped" ]; then
+  # Phase 7 fixes may have touched new files; refresh touched.txt via tracker before hashing
+  bash .claude/hooks/session-touched-tracker.sh 2>/dev/null || true
+  SCOPED_PATHS=$(xargs -a "$TOUCHED" 2>/dev/null || true)
+  DIFF_HASH=$( (git diff -- $SCOPED_PATHS; git diff --cached -- $SCOPED_PATHS; git ls-files --others --exclude-standard | $SCOPE_FILTER) | shasum -a 256 | awk '{print $1}' )
+else
+  DIFF_HASH=$( (git diff; git diff --cached; git ls-files --others --exclude-standard) | shasum -a 256 | awk '{print $1}' )
+fi
 ```
 
 Write the sentinel as JSON with these fields:
@@ -482,7 +542,10 @@ Write the sentinel as JSON with these fields:
   },
   "skillResults": {
     "{skill-name}": {"critical": N, "high": N, "medium": N, "low": N}
-  }
+  },
+  "scopeMode": "{scoped|all}",
+  "sessionId": "{SID — empty string when scopeMode=all}",
+  "touchedFileCount": {N — count of files in touched.txt at gate time; 0 when scopeMode=all}
 }
 ```
 

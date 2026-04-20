@@ -42,6 +42,7 @@ const USER_STRIP_KEYS = new Set([
   'defaultLocation',
   'tcAcceptedAt',
   'tcVersion',
+  'organizationId',
 ])
 
 const PROFILE_STRIP_KEYS = new Set(['_id', '_creationTime', 'organizationId'])

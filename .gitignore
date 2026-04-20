@@ -14,6 +14,7 @@
 .last-session-ts
 .gate-ran
 .patrol-ran
+.patrol-ran-*
 .patrol-observations.md
 .vitest-last-pass
 .last-summary-ts
@@ -82,6 +83,7 @@ next-env.d.ts
 
 # claude code
 .claude/session.md
+.claude/session-state/
 .claude/logs/
 .claude/scheduled_tasks.lock
 .playwright-mcp/

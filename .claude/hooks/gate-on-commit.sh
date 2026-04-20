@@ -27,14 +27,30 @@ if [ "${DD_SKIP_GATE:-}" = "1" ]; then
 fi
 
 # Diff-hash cache: if /gate already ran on this exact diff and verdict != BLOCKED, skip.
-DIFF_HASH=$( (git diff; git diff --cached; git ls-files --others --exclude-standard) 2>/dev/null | shasum -a 256 | awk '{print $1}' )
-if [ -f .patrol-ran ]; then
-  CACHED_HASH=$(jq -r '.diffHash // ""' .patrol-ran 2>/dev/null)
-  VERDICT=$(jq -r '.verdict // ""' .patrol-ran 2>/dev/null)
-  if [ "$CACHED_HASH" = "$DIFF_HASH" ] && [ "$VERDICT" != "BLOCKED" ]; then
+# Check session-scoped sentinel first, then plain sentinel.
+FULL_HASH=$( (git diff; git diff --cached; git ls-files --others --exclude-standard) 2>/dev/null | shasum -a 256 | awk '{print $1}' )
+SID=""
+[ -f .claude/session-state/current-id ] && SID=$(cat .claude/session-state/current-id 2>/dev/null)
+TOUCHED=".claude/session-state/$SID/touched.txt"
+SCOPED_HASH=""
+if [ -n "$SID" ] && [ -s "$TOUCHED" ]; then
+  SCOPED_PATHS=$(xargs -a "$TOUCHED" 2>/dev/null || true)
+  SCOPED_HASH=$( (git diff -- $SCOPED_PATHS; git diff --cached -- $SCOPED_PATHS; git ls-files --others --exclude-standard | grep -Ff "$TOUCHED") 2>/dev/null | shasum -a 256 | awk '{print $1}' )
+fi
+
+for sentinel_try in ".patrol-ran-$SID:$SCOPED_HASH" ".patrol-ran:$FULL_HASH"; do
+  path="${sentinel_try%%:*}"
+  hash="${sentinel_try##*:}"
+  [ -z "$path" ] || [ -z "$hash" ] && continue
+  [ -f "$path" ] || continue
+  CACHED_HASH=$(jq -r '.diffHash // ""' "$path" 2>/dev/null)
+  VERDICT=$(jq -r '.verdict // ""' "$path" 2>/dev/null)
+  if [ "$CACHED_HASH" = "$hash" ] && [ "$VERDICT" != "BLOCKED" ]; then
     exit 0
   fi
-fi
+done
+
+DIFF_HASH="$FULL_HASH"
 
 # Fast-path: no substantive changes staged, skip /gate entirely.
 STAGED=$(git diff --cached --name-only 2>/dev/null)
@@ -56,11 +72,15 @@ echo "=== $(date -u +%Y-%m-%dT%H:%M:%SZ) diff=$DIFF_HASH ===" >> "$LOG"
 
 "$CLAUDE_BIN" -p --allow-dangerously-skip-permissions "/gate" >> "$LOG" 2>&1
 
-# Read the verdict /gate wrote to .patrol-ran
-if [ -f .patrol-ran ]; then
-  VERDICT=$(jq -r '.verdict // ""' .patrol-ran 2>/dev/null)
-  CRITICAL=$(jq -r '.critical // 0' .patrol-ran 2>/dev/null)
-  HIGH=$(jq -r '.high // 0' .patrol-ran 2>/dev/null)
+# Read the verdict /gate wrote — prefer session-scoped sentinel, fall back to plain.
+SENTINEL_READ=""
+[ -n "$SID" ] && [ -f ".patrol-ran-$SID" ] && SENTINEL_READ=".patrol-ran-$SID"
+[ -z "$SENTINEL_READ" ] && [ -f .patrol-ran ] && SENTINEL_READ=".patrol-ran"
+
+if [ -n "$SENTINEL_READ" ]; then
+  VERDICT=$(jq -r '.verdict // ""' "$SENTINEL_READ" 2>/dev/null)
+  CRITICAL=$(jq -r '.critical // 0' "$SENTINEL_READ" 2>/dev/null)
+  HIGH=$(jq -r '.high // 0' "$SENTINEL_READ" 2>/dev/null)
   if [ "$VERDICT" = "BLOCKED" ]; then
     MSG="/gate NO-GO — $CRITICAL CRITICAL, $HIGH HIGH findings. See .claude/logs/gate-on-commit.log. Set DD_SKIP_GATE=1 to bypass (emergencies only)."
     if [ "${DD_STRICT_GATE:-1}" = "1" ]; then
