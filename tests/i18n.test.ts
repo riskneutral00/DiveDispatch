@@ -18,7 +18,11 @@ import {
   assertCountryCode,
   assertPhoneE164,
   assertSupportedLocale,
+  assertLanguageCodes,
+  normalizeAppLanguage,
+  normalizeAppLanguageOrThrow,
 } from '../convex/lib/i18nValidators'
+import { normalizeAppLanguage as feNormalizeAppLanguage } from '../src/lib/constants/i18n'
 import {
   e164Schema,
   countryCodeSchema,
@@ -275,5 +279,71 @@ describe('src Zod schemas — i18n', () => {
     expect(
       addressSchema.safeParse({ city: 'Phuket', country: 'ZZ' }).success,
     ).toBe(false)
+  })
+})
+
+describe('convex normalizeAppLanguage — dialect trim + Chinese script', () => {
+  it.each([
+    ['en', 'en'],
+    ['en-GB', 'en'],
+    ['en-US', 'en'],
+    ['zh-CN', 'zh-CN'],
+    ['zh-TW', 'zh-TW'],
+    ['zh-Hans', 'zh-CN'],
+    ['zh-Hans-HK', 'zh-CN'],
+    ['zh-Hant', 'zh-TW'],
+    ['zh-Hant-HK', 'zh-TW'],
+    ['th-TH', 'th'],
+    ['fr-CA', 'fr'],
+    ['ko-KR', 'ko'],
+  ])('normalizes %s -> %s', (input, expected) => {
+    expect(normalizeAppLanguage(input)).toBe(expected)
+  })
+
+  it.each([['de'], ['ja'], ['es'], [''], ['xx-YY']])(
+    'falls back to en for unrecognized %p',
+    (input) => {
+      expect(normalizeAppLanguage(input)).toBe('en')
+    },
+  )
+
+  it('mirrors FE behavior', () => {
+    expect(feNormalizeAppLanguage('zh-Hans-HK')).toBe('zh-CN')
+    expect(feNormalizeAppLanguage('en-GB')).toBe('en')
+    expect(feNormalizeAppLanguage(null)).toBe('en')
+    expect(feNormalizeAppLanguage(undefined)).toBe('en')
+  })
+})
+
+describe('convex normalizeAppLanguageOrThrow — strict variant', () => {
+  it('returns supported locale for valid input', () => {
+    expect(normalizeAppLanguageOrThrow('zh-Hant-HK')).toBe('zh-TW')
+    expect(normalizeAppLanguageOrThrow('en-GB')).toBe('en')
+  })
+
+  it('throws VALIDATION for empty input', () => {
+    expect(() => normalizeAppLanguageOrThrow('')).toThrow()
+  })
+
+  it('throws VALIDATION for unrecognized base', () => {
+    expect(() => normalizeAppLanguageOrThrow('de-DE')).toThrow()
+    expect(() => normalizeAppLanguageOrThrow('ja')).toThrow()
+  })
+})
+
+describe('convex assertLanguageCodes — shape guard', () => {
+  it('accepts well-formed codes', () => {
+    expect(() => assertLanguageCodes(['en', 'zh-CN', 'th'], 'langs')).not.toThrow()
+    expect(() => assertLanguageCodes([], 'langs')).not.toThrow()
+  })
+
+  it('rejects empty string', () => {
+    expect(() => assertLanguageCodes(['en', ''], 'langs')).toThrow()
+  })
+
+  it('rejects malformed codes', () => {
+    expect(() => assertLanguageCodes(['EN'], 'langs')).toThrow()
+    expect(() => assertLanguageCodes(['english'], 'langs')).toThrow()
+    expect(() => assertLanguageCodes(['zh_CN'], 'langs')).toThrow()
   })
 })

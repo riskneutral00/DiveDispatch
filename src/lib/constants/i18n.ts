@@ -48,6 +48,15 @@ export function normalizeChineseScript(code: string): string {
   return code
 }
 
+export function normalizeAppLanguage(code: string | undefined | null): SupportedLocale {
+  if (!code) return 'en'
+  const scripted = normalizeChineseScript(code)
+  if (LOCALE_CODES.has(scripted)) return scripted as SupportedLocale
+  const base = scripted.split('-')[0]
+  if (LOCALE_CODES.has(base)) return base as SupportedLocale
+  return 'en'
+}
+
 const LOCALE_PRIMARY_COUNTRY: Record<string, CountryCode> = {
   en: 'US',
   zh: 'CN',

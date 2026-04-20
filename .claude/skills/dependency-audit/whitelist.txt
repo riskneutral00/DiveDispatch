@@ -53,6 +53,8 @@ mrz
 @types/react
 @types/react-dom
 @vitest/coverage-v8
+ajv-cli
+ajv-formats
 axe-core
 chromatic
 convex-test
