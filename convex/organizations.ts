@@ -82,6 +82,17 @@ export const getBySlug = query({
   },
 })
 
+export const isSlugAvailable = query({
+  args: { slug: v.string() },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query('organizations')
+      .withIndex('by_slug', (q) => q.eq('slug', args.slug))
+      .unique()
+    return existing === null
+  },
+})
+
 export const getById = query({
   args: { id: v.id('organizations') },
   handler: async (ctx, args) => {

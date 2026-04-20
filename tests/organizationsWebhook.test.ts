@@ -2,6 +2,24 @@ import { describe, it, expect } from 'vitest'
 import { api, internal } from '../convex/_generated/api'
 import { makeT, expectConvexError } from './helpers/convex-helpers'
 
+describe('organizations.isSlugAvailable', () => {
+  it('returns true when no org has the slug', async () => {
+    const t = makeT()
+    expect(await t.query(api.organizations.isSlugAvailable, { slug: 'never-used' })).toBe(true)
+  })
+
+  it('returns false when an org with the slug exists', async () => {
+    const t = makeT()
+    await t.mutation(internal.organizations.upsertFromWebhook, {
+      clerkOrgId: `org_${crypto.randomUUID()}`,
+      name: 'Hug Ocean',
+      slug: 'hug-ocean',
+      svixId: `msg_${crypto.randomUUID()}`,
+    })
+    expect(await t.query(api.organizations.isSlugAvailable, { slug: 'hug-ocean' })).toBe(false)
+  })
+})
+
 function makeSvixId(): string {
   return `msg_${crypto.randomUUID()}`
 }
