@@ -138,8 +138,8 @@ export const compressorGasMixesSchema = z
   )
 
 export const poolCapabilitiesSchema = z.object({
-  maxDepth: z.number().positive('Must be greater than 0'),
-  maxCapacity: z.number().int('Must be a whole number').positive('Must be at least 1'),
+  maxDepth: z.number().min(1, 'Must be at least 1 m').max(6, 'Pool max depth is 6 m').multipleOf(0.5, 'Must be in 0.5 m increments'),
+  maxCapacity: z.number().int('Must be a whole number').min(1, 'Must be at least 1').max(25, 'Pool max capacity is 25'),
 })
 
 export const diveSiteDetailsSchema = z.object({

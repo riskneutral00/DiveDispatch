@@ -23,7 +23,6 @@ interface ManageRolesProps {
   roles: RoleEntry[];
   roleCompletions: RoleCompletionEntry[];
   onAddRole: () => void;
-  onNavigateToOnboarding: (role: ClerkRole) => void;
   onDeleteRole: (roleId: Id<"userRoles">) => Promise<void>;
   bookingCounts: Record<string, number>;
 }
@@ -32,7 +31,6 @@ export function ManageRoles({
   roles,
   roleCompletions,
   onAddRole,
-  onNavigateToOnboarding,
   onDeleteRole,
   bookingCounts,
 }: ManageRolesProps) {
@@ -103,14 +101,6 @@ export function ManageRoles({
                 >
                   {percentage}%
                 </Badge>
-                {percentage < 100 && (
-                  <Button
-                    variant="secondary"
-                    onClick={() => onNavigateToOnboarding(entry.role)}
-                  >
-                    Set up
-                  </Button>
-                )}
                 {canDelete && (
                   <Button
                     variant="destructive-ghost"

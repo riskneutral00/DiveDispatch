@@ -50,7 +50,6 @@ describe('ManageRoles', () => {
     roles: [makeRole('DiveCenter')],
     roleCompletions: [{ role: 'DiveCenter', percentage: 100 }] as MockRoleCompletion[],
     onAddRole: vi.fn(),
-    onNavigateToOnboarding: vi.fn(),
     onDeleteRole: vi.fn().mockResolvedValue(undefined),
     bookingCounts: {},
   }
@@ -206,44 +205,6 @@ describe('ManageRoles', () => {
     await user.click(screen.getByRole('button', { name: /delete dive center role/i }))
     await user.click(screen.getByRole('button', { name: /delete permanently/i }))
     expect(onDeleteRole).toHaveBeenCalledWith('role_DC')
-  })
-
-  // ─── Set up button tracks refreshed percentage ────────────────────────────
-
-  it('shows "Set up" when percentage < 100 (ignores stale profileComplete=true)', () => {
-    render(
-      <ManageRoles
-        {...defaultProps}
-        roleCompletions={[{ role: 'Instructor', percentage: 60 }]}
-      />,
-    )
-    expect(screen.getByRole('button', { name: /set up/i })).toBeInTheDocument()
-  })
-
-  it('hides "Set up" when percentage === 100', () => {
-    render(
-      <ManageRoles
-        {...defaultProps}
-        roles={[makeRole('Instructor')]}
-        roleCompletions={[{ role: 'Instructor', percentage: 100 }]}
-      />,
-    )
-    expect(screen.queryByRole('button', { name: /set up/i })).not.toBeInTheDocument()
-  })
-
-  it('calls onNavigateToOnboarding with the correct role when "Set up" is clicked', async () => {
-    const user = userEvent.setup()
-    const onNavigateToOnboarding = vi.fn()
-    render(
-      <ManageRoles
-        {...defaultProps}
-        roles={[makeRole('Boat')]}
-        roleCompletions={[{ role: 'Boat', percentage: 33 }]}
-        onNavigateToOnboarding={onNavigateToOnboarding}
-      />,
-    )
-    await user.click(screen.getByRole('button', { name: /set up/i }))
-    expect(onNavigateToOnboarding).toHaveBeenCalledWith('Boat')
   })
 
   // ─── Loading and error states ─────────────────────────────────────────────

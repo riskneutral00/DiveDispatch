@@ -78,4 +78,47 @@ describe("field primitives", () => {
 
     expect(screen.getAllByText("*")).toHaveLength(3);
   });
+
+  it("required fields render label in floated state when empty and unfocused", async () => {
+    render(
+      <>
+        <Input label="Max Capacity" required />
+        <Textarea label="Notes" required />
+        <SimpleSelect
+          label="Role"
+          required
+          value=""
+          onChange={() => {}}
+          options={[{ value: "captain", label: "Captain" }]}
+        />
+      </>,
+    );
+
+    const inputLabel = screen.getByText(/^Max Capacity$/).closest("label");
+    const textareaLabel = screen.getByText(/^Notes$/).closest("label");
+    const selectLabel = screen.getByText(/^Role$/).closest("label");
+
+    await waitFor(() => {
+      expect(inputLabel?.className).toContain("label-float-in");
+      expect(textareaLabel?.className).toContain("label-float-in");
+      expect(selectLabel?.className).toContain("label-float-in");
+    });
+  });
+
+  it("optional fields render label in lowered state when empty and unfocused", async () => {
+    render(
+      <>
+        <Input label="Nickname" />
+        <Textarea label="Bio" />
+      </>,
+    );
+
+    const inputLabel = screen.getByText(/^Nickname$/).closest("label");
+    const textareaLabel = screen.getByText(/^Bio$/).closest("label");
+
+    await waitFor(() => {
+      expect(inputLabel?.className).not.toContain("label-float-in");
+      expect(textareaLabel?.className).not.toContain("label-float-in");
+    });
+  });
 });

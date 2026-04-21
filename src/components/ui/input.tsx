@@ -34,7 +34,7 @@ export function Input({
   const isDateLike = type === "date" || type === "datetime-local" || type === "time";
   const [focused, setFocused] = useState(false)
   const hasRealPlaceholder = !!externalPlaceholder && externalPlaceholder.trim() !== ""
-  const { floated: baseFloated } = useFloatingLabel({ value: props.value, focused })
+  const { floated: baseFloated } = useFloatingLabel({ value: props.value, focused, required: props.required })
   const floated = baseFloated || hasRealPlaceholder
 
   return (

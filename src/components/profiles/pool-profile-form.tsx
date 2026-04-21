@@ -68,8 +68,8 @@ export function PoolCapabilitiesSection(props: PoolSectionProps) {
       toPayload={poolCapabilitiesToPayload}
       venueType="pool"
       wrapCreatePayload={buildPoolCreatePayload}
-      depthPlaceholder="5"
-      capacityPlaceholder="15"
+      depthPlaceholder="2.5"
+      capacityPlaceholder="5"
     />
   )
 }

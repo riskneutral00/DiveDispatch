@@ -207,7 +207,7 @@ export function Select({
   const [open, setOpen] = useState(false);
   const [focusedIdx, setFocusedIdx] = useState(-1);
   const containerRef = useRef<HTMLDivElement>(null);
-  const { floated } = useFloatingLabel({ value, focused: open });
+  const { floated } = useFloatingLabel({ value, focused: open, required });
   const listRef = useRef<HTMLUListElement>(null);
   const id = useId();
 

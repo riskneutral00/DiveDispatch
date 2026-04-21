@@ -42,7 +42,7 @@ export function PhoneField({
   const generatedId = useId()
   const id = externalId ?? generatedId
   const [focused, setFocused] = useState(false)
-  const { floated: baseFloated } = useFloatingLabel({ value, focused })
+  const { floated: baseFloated } = useFloatingLabel({ value, focused, required })
   const floated = baseFloated || focused
 
   const resolvedDefaultCountry = defaultCountry || detectDefaultCountry()

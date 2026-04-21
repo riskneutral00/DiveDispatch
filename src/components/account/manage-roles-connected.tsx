@@ -122,7 +122,6 @@ export function ManageRolesConnected({ onNavigateToRole }: ManageRolesConnectedP
           setError(null)
           setModalOpen(true)
         }}
-        onNavigateToOnboarding={(role) => setOnboardingRole(role)}
         onDeleteRole={handleDeleteRole}
         bookingCounts={bookingCounts}
       />

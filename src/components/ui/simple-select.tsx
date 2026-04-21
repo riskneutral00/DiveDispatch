@@ -51,7 +51,7 @@ export function SimpleSelect({
   const showLeadingPlaceholder =
     value === "" && !hasExplicitEmptyOption;
 
-  const { floated: baseFloated } = useFloatingLabel({ value, focused });
+  const { floated: baseFloated } = useFloatingLabel({ value, focused, required });
   const floated = baseFloated || hasExplicitEmptyOption;
 
   return (

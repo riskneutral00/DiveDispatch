@@ -60,6 +60,8 @@ export function VenueCapabilitiesSection<T extends VenueCapabilitiesFormState>({
       update,
     })
 
+  const isPool = venueType === 'pool'
+
   return (
     <ProfileFormShell
       loading={loading}
@@ -96,10 +98,11 @@ export function VenueCapabilitiesSection<T extends VenueCapabilitiesFormState>({
             value={form.maxDepth || undefined}
             onChange={(v) => setField('maxDepth', v ?? 0)}
             min={1}
-            max={60}
+            max={isPool ? 6 : 60}
             step={0.5}
             decimals={1}
             suffix="m"
+            required={isPool}
             placeholder={depthPlaceholder}
             error={errors.maxDepth}
             className="field-number"
@@ -109,8 +112,8 @@ export function VenueCapabilitiesSection<T extends VenueCapabilitiesFormState>({
             value={form.maxCapacity || undefined}
             onChange={(v) => setField('maxCapacity', v ?? 0)}
             min={1}
-            max={100}
-            required={venueType === 'pool'}
+            max={isPool ? 25 : 100}
+            required={isPool}
             placeholder={capacityPlaceholder}
             error={errors.maxCapacity}
             className="field-number"

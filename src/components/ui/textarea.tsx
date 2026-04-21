@@ -25,7 +25,7 @@ export function Textarea({
   const generatedId = useId();
   const id = externalId ?? generatedId;
   const [focused, setFocused] = useState(false);
-  const { floated } = useFloatingLabel({ value: props.value as string | undefined, focused });
+  const { floated } = useFloatingLabel({ value: props.value as string | undefined, focused, required });
 
   return (
     <div className={cn("relative", className?.includes('field-') || className?.includes('w-') ? '' : 'w-full', className)}>
