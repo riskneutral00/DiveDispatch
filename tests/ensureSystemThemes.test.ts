@@ -84,3 +84,49 @@ describe('themes.ensureSystemThemes', () => {
     expect(row?.isActive).toBe(true)
   })
 })
+
+describe('seed.seedDefaultTheme', () => {
+  it('populates the theme catalog on empty DB', async () => {
+    const t = makeT()
+    await t.mutation(internal.seed.seedDefaultTheme, {})
+
+    const rows = await t.run(async (ctx: SeedCtx) => ctx.db.query('themes').collect())
+    expect(rows.length).toBe(SEED_THEME_SPECS.length)
+    const slugs = rows.map((r) => r.slug)
+    for (const spec of SEED_THEME_SPECS) {
+      expect(slugs).toContain(spec.slug)
+    }
+  })
+
+  it('is idempotent on re-run', async () => {
+    const t = makeT()
+    await t.mutation(internal.seed.seedDefaultTheme, {})
+    await t.mutation(internal.seed.seedDefaultTheme, {})
+
+    const rows = await t.run(async (ctx: SeedCtx) => ctx.db.query('themes').collect())
+    expect(rows.length).toBe(SEED_THEME_SPECS.length)
+  })
+
+  it('deletes retired theme rows on re-run', async () => {
+    const t = makeT()
+
+    await t.run(async (ctx: SeedCtx) => {
+      await ctx.db.insert('themes', {
+        slug: RETIRED_THEME_SLUGS[0],
+        name: 'Legacy Retired Theme',
+        config: JSON.stringify({}),
+        isActive: true,
+        appearance: 'dark',
+        createdAt: Date.now(),
+      })
+    })
+
+    await t.mutation(internal.seed.seedDefaultTheme, {})
+
+    const rows = await t.run(async (ctx: SeedCtx) => ctx.db.query('themes').collect())
+    const slugs = rows.map((r) => r.slug)
+    for (const retired of RETIRED_THEME_SLUGS) {
+      expect(slugs).not.toContain(retired)
+    }
+  })
+})

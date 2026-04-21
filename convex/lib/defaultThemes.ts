@@ -276,5 +276,3 @@ export function themeConfigForSeedSpec(spec: SeedThemeRowSpec) {
 }
 
 export const DEFAULT_THEMES = SEED_THEME_SPECS.map(themeConfigForSeedSpec)
-
-export const DEFAULT_SELECTED_THEME_SLUG = "skin-light-0" as const

@@ -9,11 +9,6 @@ import type { OperatorType } from './shared/operatorTypes'
 import { queryDynamicTable, deleteDynamic } from './lib/typedDb'
 import { ALL_STAKEHOLDERS, SeedStakeholder, StakeholderRole, UNOWNED_DIVE_SITES, type SeedInventoryLine } from './seedData'
 import { insertLiveaboard, insertDiveResort } from './sketchTableGuards'
-import {
-  DEFAULT_SELECTED_THEME_SLUG,
-  RETIRED_THEME_SLUGS,
-  SEED_THEME_SPECS,
-} from './lib/defaultThemes'
 import { ensureSystemThemesInline } from './lib/ensureSystemThemes'
 import { stakeholderPreferenceIdsToDelete } from './lib/stakeholderPreferencesDedupe'
 import { insertUserRole } from './lib/userRoleHelpers'
@@ -644,41 +639,6 @@ export const seedDefaultTheme = internalMutation({
   args: {},
   handler: async (ctx) => {
     await ensureSystemThemesInline(ctx, { force: true })
-
-    const defaultTheme = await ctx.db
-      .query('themes')
-      .withIndex('by_slug', (q) => q.eq('slug', DEFAULT_SELECTED_THEME_SLUG))
-      .unique()
-    if (!defaultTheme) {
-      throw new Error(`seedDefaultTheme: missing default slug ${DEFAULT_SELECTED_THEME_SLUG}`)
-    }
-
-    const orderedIds = await Promise.all(
-      SEED_THEME_SPECS.map(async (spec) => {
-        const t = await ctx.db
-          .query('themes')
-          .withIndex('by_slug', (q) => q.eq('slug', spec.slug))
-          .unique()
-        if (!t) throw new Error(`seedDefaultTheme: missing ${spec.slug}`)
-        return t._id
-      }),
-    )
-
-    const retired = new Set<string>([...RETIRED_THEME_SLUGS])
-
-    const allUsers = await ctx.db.query('users').take(5000)
-    for (const user of allUsers) {
-      let selected = user.selectedThemeId
-      const selectedDoc = selected ? await ctx.db.get(selected) : null // batch-exempt: dev-only seed
-      if (!selectedDoc || retired.has(selectedDoc.slug)) {
-        selected = defaultTheme._id
-      }
-
-      await ctx.db.patch(user._id, { // batch-exempt: dev-only seed
-        savedThemeIds: orderedIds,
-        selectedThemeId: selected,
-      })
-    }
   },
 })
 
