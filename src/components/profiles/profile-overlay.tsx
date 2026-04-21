@@ -106,7 +106,7 @@ export function ProfileOverlay({ open, onClose, initialTab = 'profile', initialS
       <div className="flex flex-col h-full">
 
         <div
-          className="flex gap-1 px-4 py-2 md:px-6 flex-shrink-0 border-b border-glass-border overflow-x-auto md:justify-center [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="flex gap-1 px-4 py-2 md:px-6 flex-shrink-0 border-b border-glass-border overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           role="tablist"
         >
           {visibleStaticTabs.map((tab) => (
