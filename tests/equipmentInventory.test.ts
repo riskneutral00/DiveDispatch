@@ -1220,3 +1220,143 @@ describe('equipmentInventory.renameMaskManufacturerGroup', () => {
     )
   })
 })
+
+describe('equipmentInventory — orphan inventoryUnitId tolerance', () => {
+  let t: ReturnType<typeof makeT>
+  beforeEach(() => { t = makeT() })
+
+  it('bulkSetByManufacturer self-heals an orphan equipmentInventory row on update', async () => {
+    await t.withIdentity({ tokenIdentifier: EM_TOKEN }).run(async (ctx) => {
+      await seedUser(ctx, { tokenIdentifier: EM_TOKEN, slug: EM_SLUG, role: 'Equipment', email: 'em@test.com' })
+    })
+
+    const liveId = await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
+      api.equipmentInventory.addItem,
+      { gearType: 'bcd', manufacturer: 'Aqualung', size: 'M', totalUnits: 5 },
+    )
+
+    const orphanInvId = await t.run(async (ctx) => {
+      const liveItem = await ctx.db.get(liveId)
+      const orphanUnitId = await ctx.db.insert('inventoryUnits', {
+        resourceType: 'Equipment',
+        resourceId: EM_SLUG,
+        displayName: 'bcd - Aqualung (L)',
+        capacityModel: 'Pooled',
+        totalUnits: 3,
+        ownerId: EM_SLUG,
+        ownerType: 'Equipment',
+      })
+      const invId = await ctx.db.insert('equipmentInventory', {
+        inventoryUnitId: orphanUnitId,
+        equipmentManagerId: EM_SLUG,
+        gearType: 'bcd',
+        manufacturer: 'Aqualung',
+        size: 'L',
+      })
+      await ctx.db.delete(orphanUnitId)
+      void liveItem
+      return invId
+    })
+
+    await expect(
+      t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
+        api.equipmentInventory.bulkSetByManufacturer,
+        {
+          gearType: 'bcd',
+          manufacturer: 'Aqualung',
+          cells: { M: 7, L: 4 },
+        },
+      ),
+    ).resolves.not.toThrow()
+
+    await t.run(async (ctx) => {
+      const orphanAfter = await ctx.db.get(orphanInvId)
+      expect(orphanAfter).toBeNull()
+
+      const liveAfter = await ctx.db.get(liveId)
+      expect(liveAfter).not.toBeNull()
+      const liveUnit = await ctx.db.get(liveAfter!.inventoryUnitId)
+      expect(liveUnit!.totalUnits).toBe(7)
+    })
+  })
+
+  it('removeItem tolerates a missing paired inventoryUnits row', async () => {
+    await t.withIdentity({ tokenIdentifier: EM_TOKEN }).run(async (ctx) => {
+      await seedUser(ctx, { tokenIdentifier: EM_TOKEN, slug: EM_SLUG, role: 'Equipment', email: 'em@test.com' })
+    })
+
+    const inventoryId = await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
+      api.equipmentInventory.addItem,
+      { gearType: 'fins', sizeSystem: 'eu', manufacturer: 'Cressi', size: '42', totalUnits: 2 },
+    )
+
+    await t.run(async (ctx) => {
+      const item = await ctx.db.get(inventoryId)
+      await ctx.db.delete(item!.inventoryUnitId)
+    })
+
+    await expect(
+      t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
+        api.equipmentInventory.removeItem,
+        { inventoryId },
+      ),
+    ).resolves.not.toThrow()
+
+    await t.run(async (ctx) => {
+      const itemAfter = await ctx.db.get(inventoryId)
+      expect(itemAfter).toBeNull()
+    })
+  })
+
+  it('bulkSetMasksByManufacturer self-heals an orphan mask row on update', async () => {
+    await t.withIdentity({ tokenIdentifier: EM_TOKEN }).run(async (ctx) => {
+      await seedUser(ctx, { tokenIdentifier: EM_TOKEN, slug: EM_SLUG, role: 'Equipment', email: 'em@test.com' })
+    })
+
+    const liveId = await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
+      api.equipmentInventory.addItem,
+      { gearType: 'mask', manufacturer: 'ScubaPro', isPrescription: false, totalUnits: 6 },
+    )
+
+    const orphanInvId = await t.run(async (ctx) => {
+      const orphanUnitId = await ctx.db.insert('inventoryUnits', {
+        resourceType: 'Equipment',
+        resourceId: EM_SLUG,
+        displayName: 'mask - ScubaPro (Rx -2.0)',
+        capacityModel: 'Pooled',
+        totalUnits: 2,
+        ownerId: EM_SLUG,
+        ownerType: 'Equipment',
+      })
+      const invId = await ctx.db.insert('equipmentInventory', {
+        inventoryUnitId: orphanUnitId,
+        equipmentManagerId: EM_SLUG,
+        gearType: 'mask',
+        manufacturer: 'ScubaPro',
+        isPrescription: true,
+        diopter: -2.0,
+      })
+      await ctx.db.delete(orphanUnitId)
+      return invId
+    })
+
+    await expect(
+      t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
+        api.equipmentInventory.bulkSetMasksByManufacturer,
+        {
+          manufacturer: 'ScubaPro',
+          cells: { plano: 8, '-2.0': 3 },
+        },
+      ),
+    ).resolves.not.toThrow()
+
+    await t.run(async (ctx) => {
+      const orphanAfter = await ctx.db.get(orphanInvId)
+      expect(orphanAfter).toBeNull()
+
+      const liveAfter = await ctx.db.get(liveId)
+      const planoUnit = await ctx.db.get(liveAfter!.inventoryUnitId)
+      expect(planoUnit!.totalUnits).toBe(8)
+    })
+  })
+})

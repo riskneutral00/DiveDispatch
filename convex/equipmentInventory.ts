@@ -6,6 +6,7 @@ import { gearTypeValidator, finSizeSystemValidator } from './lib/validators'
 import { ErrorCode } from './lib/errorCodes'
 import { isActiveReservation } from './bookings/_shared'
 import { syncManufacturersByGearType } from './lib/equipmentManufacturersSync'
+import { safeDeleteIfExists, safePatchIfExists } from './lib/safeDbOps'
 import { PLANO_KEY, diopterFromCellKey } from './shared/diopters'
 
 export const addItem = mutation({
@@ -121,7 +122,7 @@ export const updateItem = mutation({
       unitPatch.displayName = `${item.gearType}${effectiveManufacturer ? ` - ${effectiveManufacturer}` : ''}${effectiveSize ? ` (${effectiveSize})` : ''}`
     }
     if (Object.keys(unitPatch).length > 0) {
-      await ctx.db.patch(item.inventoryUnitId, unitPatch)
+      await safePatchIfExists(ctx, item.inventoryUnitId, unitPatch)
     }
 
     if (totalUnits !== undefined) {
@@ -165,7 +166,7 @@ export const removeItem = mutation({
       })
     }
 
-    await ctx.db.delete(item.inventoryUnitId)
+    await safeDeleteIfExists(ctx, item.inventoryUnitId)
     await ctx.db.delete(args.inventoryId)
 
     await syncManufacturersByGearType(ctx, item.equipmentManagerId)
@@ -289,6 +290,11 @@ export const bulkSetByManufacturer = mutation({
     }
 
     for (const { row, newCount } of updates) {
+      const unit = await ctx.db.get(row.inventoryUnitId) // batch-exempt: bounded by matrix cells per manufacturer
+      if (!unit) {
+        await ctx.db.delete(row._id) // batch-exempt: orphan self-heal
+        continue
+      }
       await ctx.db.patch(row.inventoryUnitId, { totalUnits: newCount }) // batch-exempt: bounded by matrix cells per manufacturer
       const snaps = await ctx.db // batch-exempt: bounded by matrix cells per manufacturer
         .query('availabilitySnapshots')
@@ -303,7 +309,7 @@ export const bulkSetByManufacturer = mutation({
     }
 
     for (const row of deletes) {
-      await ctx.db.delete(row.inventoryUnitId) // batch-exempt: bounded by matrix cells per manufacturer
+      await safeDeleteIfExists(ctx, row.inventoryUnitId) // batch-exempt: bounded by matrix cells per manufacturer
       await ctx.db.delete(row._id) // batch-exempt: bounded by matrix cells per manufacturer
     }
 
@@ -500,6 +506,11 @@ export const bulkSetMasksByManufacturer = mutation({
     }
 
     for (const { row, newCount } of updates) {
+      const unit = await ctx.db.get(row.inventoryUnitId) // batch-exempt: bounded by diopter cells per manufacturer
+      if (!unit) {
+        await ctx.db.delete(row._id) // batch-exempt: orphan self-heal
+        continue
+      }
       await ctx.db.patch(row.inventoryUnitId, { totalUnits: newCount }) // batch-exempt: bounded by diopter cells per manufacturer
       const snaps = await ctx.db // batch-exempt: bounded by diopter cells per manufacturer
         .query('availabilitySnapshots')
@@ -514,7 +525,7 @@ export const bulkSetMasksByManufacturer = mutation({
     }
 
     for (const row of deletes) {
-      await ctx.db.delete(row.inventoryUnitId) // batch-exempt: bounded by diopter cells per manufacturer
+      await safeDeleteIfExists(ctx, row.inventoryUnitId) // batch-exempt: bounded by diopter cells per manufacturer
       await ctx.db.delete(row._id) // batch-exempt: bounded by diopter cells per manufacturer
     }
 
