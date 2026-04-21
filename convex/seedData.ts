@@ -1098,6 +1098,7 @@ export const RESTORED_ALEX: SeedStakeholder = {
 }
 
 export const PARKED_STAKEHOLDERS: SeedStakeholder[] = [
+  SEA_FUN_OWNER,
   HUG_OCEAN,
   NEPTUNE,
   PHUKET_DC,
@@ -1125,4 +1126,4 @@ export const PARKED_STAKEHOLDERS: SeedStakeholder[] = [
   RESTORED_ALEX,
 ]
 
-export const ALL_STAKEHOLDERS: SeedStakeholder[] = [SEA_FUN_OWNER]
+export const ALL_STAKEHOLDERS: SeedStakeholder[] = []
