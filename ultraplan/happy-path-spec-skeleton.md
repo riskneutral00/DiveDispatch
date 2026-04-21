@@ -281,7 +281,7 @@ Every entry in the ledger conforms to one of four shapes. Required fields below;
 | Resource stakeholder (Stops 1–6) | `id`, `role`, `user` or `slugRef`, role-specific schema fields, `isAllowed`/`notAllowed` if role-applicable, `<field>_initial` + `<field>_completed` pair if carrying the deliberate-incomplete gap | **S + U** (field presence in DB after onboarding + UI creation flow completes) | Auto-accept lives user-level on `stakeholderPreferences.acceptanceMode` (seed default: Instructor → `PrePayRequired`, others → `Auto`) — no per-resource flag. |
 | Customer (Stop 8) | `id`, portal fixture fields (firstName, lastName, email, phone, DOB, certLevel, medical y/n, emergencyContact, languages), one `<field>_initial` + `<field>_completed` pair | **S + M + U** (portal token valid, mutation accepts partial progress, UI submits) | No userRoles row, no isAllowed. Lighter template. |
 | Operator stakeholder (Stops 7, 9) | `id`, `role`, `user` or `slugRef`, organizer schema fields, `isAllowed`/`notAllowed`, `customerLanguages`, deliberate-incomplete pair | **S + U** (organizer profile persists, UI flows complete) | Agent additionally carries `defaultReferral` or equivalent. |
-| admin_venues (sibling of `stakeholders`) | `id`, `venues` fields, `inventoryUnits.ownerId: '__unowned__'`, `ownerType: 'DiveSite'`, `verified: true` | **S** (row present, ownerId sentinel correct) | No `userId`. Exempt from deliberate-incomplete rule. No UI flow — admin-seeded. |
+| admin_venues (sibling of `stakeholders`) | `id`, `venues` fields, `inventoryUnits.ownerId: '__unowned__'`, `ownerType: 'Venue'`, `verified: true` | **S** (row present, ownerId sentinel correct) | No `userId`. Exempt from deliberate-incomplete rule. No UI flow — admin-seeded. |
 
 **Multi-role users:** when a user owns rows in multiple stops (HUG_OCEAN, NICOLE_DC, NEPTUNE, PHUKET_DC, SCUBA_REVOLUTION), define the `user` block once in the stop where the user first appears. Subsequent stops reference via `slugRef` — do not duplicate.
 
@@ -305,7 +305,7 @@ The full JSON ledger has moved to [`ultraplan/canonical.json`](./canonical.json)
 
 This skeleton section (§7.12) retains only the governance: entry schema (§7.12.0 above), deliberate-incomplete table (above), multi-role user rule, admin-add convention (below). All stakeholder values live in `canonical.json`.
 
-**Admin-add convention:** `admin_venues` is a sibling of `stakeholders` — entries have no user, no onboarding stop, no `userId` on `venues`, and use sentinel `ownerId: '__unowned__'` + `ownerType: 'DiveSite'` on `inventoryUnits`. Admin pre-seeds these before Stop 1 begins. Happy-path booking forms reference them as selectable dive-site options.
+**Admin-add convention:** `admin_venues` is a sibling of `stakeholders` — entries have no user, no onboarding stop, no `userId` on `venues`, and use sentinel `ownerId: '__unowned__'` + `ownerType: 'Venue'` on `inventoryUnits`. Admin pre-seeds these before Stop 1 begins. Happy-path booking forms reference them as selectable dive-site options.
 
 **Resume:** `canonical.json` is the single source for prefilled onboarding; align UI steps and DB assertions (in `assertions.yaml`) to these values (adjust emails / slugs when wiring to real Clerk/Convex ids).
 
@@ -993,7 +993,7 @@ These rules fire from mistakes already made this audit. Do not relearn.
 
 9. **Multi-role users share one `users` row, N role profiles.** `HUG_OCEAN` user `Somchai Prasert` (slug n7rq5j) owns `diveCenters`, `boats`, `venues` (pool), `equipment` rows simultaneously. Canonical JSON for each stop references the same user via `slugRef` — not a separate user block per stop. Don't duplicate user data across stops; reference the shared row.
 
-10. **Admin-added venues live outside `stakeholders`.** Some venues exist as booking-form location references without any owning stakeholder — admin pre-seeds them. Pattern: `venues.userId` omitted, `inventoryUnits.ownerId: '__unowned__'`, `ownerType: 'DiveSite'`. Canonical home is the `admin_venues` sibling of `stakeholders` in §7.12. Kata Beach is the seed reference (see `convex/seedData.ts`, `convex/seed.ts`). Admin venues have no onboarding stop, are exempt from the deliberate-incomplete rule, and ship `verified: true` (admin pre-approves).
+10. **Admin-added venues live outside `stakeholders`.** Some venues exist as booking-form location references without any owning stakeholder — admin pre-seeds them. Pattern: `venues.userId` omitted, `inventoryUnits.ownerId: '__unowned__'`, `ownerType: 'Venue'`. Canonical home is the `admin_venues` sibling of `stakeholders` in §7.12. Kata Beach is the seed reference (see `convex/seedData.ts`, `convex/seed.ts`). Admin venues have no onboarding stop, are exempt from the deliberate-incomplete rule, and ship `verified: true` (admin pre-approves).
 
 ### Progress snapshot
 

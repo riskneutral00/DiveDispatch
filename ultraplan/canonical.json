@@ -559,7 +559,7 @@
       "clerkOrgIdHint": "org_seed_instructor-4"
     },
     "pool_1": {
-      "role": "Pool",
+      "role": "Venue",
       "slugRef": "n7rq5j",
       "venues": {
         "name": "Hug Ocean",
@@ -567,7 +567,7 @@
         "lng": 98.3923,
         "email": "hug-ocean+clerk_test@divedispatch.dev",
         "phone": "+6676381102",
-        "venueCategory": "pool",
+        "subtype": "pool",
         "hasCompressor": false,
         "maxDepth": 3,
         "maxCapacity": 15,
@@ -583,7 +583,7 @@
       "clerkOrgIdHint": "org_seed_pool-1"
     },
     "pool_2": {
-      "role": "Pool",
+      "role": "Venue",
       "slugRef": "z8mv4c",
       "note": "Neptune's pool \u2014 private to Neptune-driven bookings via isAllowed. Shared user with Neptune DC + Equipment (first appearance of Neptune; Stops 7/9 reference via slugRef).",
       "users": {
@@ -603,7 +603,7 @@
         "lng": 98.3923,
         "email": "neptune+clerk_test@divedispatch.dev",
         "phone": "+6676383002",
-        "venueCategory": "pool",
+        "subtype": "pool",
         "hasCompressor": false,
         "maxDepth": 2.5,
         "maxCapacity": 6,
@@ -621,7 +621,7 @@
       "clerkOrgIdHint": "org_seed_pool-2"
     },
     "pool_3": {
-      "role": "Pool",
+      "role": "Venue",
       "slugRef": "b3wt9f",
       "note": "Deliberate-incomplete per rule: starts with maxCapacity_initial: 0 \u2014 zero bookable seats \u2192 picker excludes. Walkthrough exercises capacity-add to 25.",
       "users": {
@@ -641,7 +641,7 @@
         "lng": 98.3923,
         "email": "water-pro+clerk_test@divedispatch.dev",
         "phone": "+6676394001",
-        "venueCategory": "pool",
+        "subtype": "pool",
         "hasCompressor": false,
         "maxDepth": 2.5,
         "confinedCapable": true,
@@ -657,7 +657,7 @@
       "clerkOrgIdHint": "org_seed_pool-3"
     },
     "pool_4": {
-      "role": "Pool",
+      "role": "Venue",
       "slugRef": "g2hn6x",
       "users": {
         "email": "shark-bites+clerk_test@divedispatch.dev",
@@ -676,7 +676,7 @@
         "lng": 98.3923,
         "email": "shark-bites+clerk_test@divedispatch.dev",
         "phone": "+6676394002",
-        "venueCategory": "pool",
+        "subtype": "pool",
         "hasCompressor": false,
         "maxDepth": 2.5,
         "maxCapacity": 8,
@@ -916,7 +916,7 @@
         "name": "Kata Beach",
         "lat": 7.8206,
         "lng": 98.3003,
-        "venueCategory": "diveSite",
+        "subtype": "other",
         "diveSiteTypes": [
           "shore"
         ],
@@ -932,13 +932,13 @@
         }
       },
       "inventoryUnits": {
-        "resourceType": "DiveSite",
+        "resourceType": "Venue",
         "resourceId": "kata-beach",
         "displayName": "Kata Beach",
         "capacityModel": "Pooled",
         "totalUnits": 50,
         "ownerId": "__unowned__",
-        "ownerType": "DiveSite"
+        "ownerType": "Venue"
       }
     }
   }

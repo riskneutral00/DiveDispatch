@@ -268,7 +268,7 @@
       "type": "object",
       "required": ["role", "venues", "clerkOrgIdHint"],
       "properties": {
-        "role": { "const": "Pool" },
+        "role": { "const": "Venue" },
         "slugRef": { "type": "string" },
         "note": { "type": "string" },
         "clerkOrgIdHint": { "type": "string", "minLength": 1 },
@@ -279,12 +279,12 @@
             { "$ref": "#/$defs/accessControl" },
             {
               "type": "object",
-              "required": ["name", "venueCategory", "hasCompressor", "verified"],
+              "required": ["name", "subtype", "hasCompressor", "verified"],
               "properties": {
                 "name": { "type": "string" },
                 "email": { "type": "string", "format": "email" },
                 "phone": { "$ref": "#/$defs/phoneE164" },
-                "venueCategory": { "const": "pool" },
+                "subtype": { "type": "string", "enum": ["pool", "shore", "reef", "lake", "river", "quarry", "other"] },
                 "maxDepth": { "type": "number", "minimum": 0 },
                 "maxCapacity": { "type": "integer", "minimum": 1 },
                 "confinedCapable": { "type": "boolean" },
@@ -445,13 +445,12 @@
             { "$ref": "#/$defs/accessControl" },
             {
               "type": "object",
-              "required": ["name", "venueCategory", "hasCompressor", "verified"],
+              "required": ["name", "subtype", "hasCompressor", "verified"],
               "properties": {
                 "name": { "type": "string" },
                 "email": { "type": "string" },
                 "phone": { "type": "string" },
-                "venueCategory": { "type": "string", "enum": ["pool", "diveSite", "diveCenter"] },
-                "diveSiteTypes": { "type": "array", "items": { "type": "string", "enum": ["shore", "boat"] } },
+                "subtype": { "type": "string", "enum": ["pool", "shore", "reef", "lake", "river", "quarry", "other"] },
                 "confinedCapable": { "type": "boolean" },
                 "hasCompressor": { "type": "boolean" },
                 "maxCapacity": { "type": "integer", "minimum": 1 },
@@ -465,13 +464,13 @@
           "type": "object",
           "required": ["resourceType", "resourceId", "displayName", "capacityModel", "totalUnits", "ownerId", "ownerType"],
           "properties": {
-            "resourceType": { "type": "string", "enum": ["DiveSite", "Pool", "Boat"] },
+            "resourceType": { "type": "string", "enum": ["Venue", "Boat"] },
             "resourceId": { "type": "string" },
             "displayName": { "type": "string" },
             "capacityModel": { "type": "string", "enum": ["Pooled", "Exclusive"] },
             "totalUnits": { "type": "integer", "minimum": 1 },
             "ownerId": { "const": "__unowned__" },
-            "ownerType": { "const": "DiveSite" }
+            "ownerType": { "const": "Venue" }
           }
         }
       },
