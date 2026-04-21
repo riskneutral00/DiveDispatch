@@ -12,11 +12,10 @@ describe('ResourceOwnerType single source of truth', () => {
     expect([...RESOURCE_OWNER_TYPES]).toEqual([
       'Boat',
       'Equipment',
-      'Pool',
+      'Venue',
       'Compressor',
       'Instructor',
       'Liveaboard',
-      'DiveSite',
     ])
   })
 

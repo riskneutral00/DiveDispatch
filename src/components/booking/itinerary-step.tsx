@@ -207,17 +207,17 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
 
   const instructorsRaw = useQuery(api.directory.listByRole, { role: 'Instructor' })
   const boatsRaw = useQuery(api.directory.listByRole, { role: 'Boat' })
-  const poolsRaw = useQuery(api.directory.listByRole, { role: 'Pool' })
+  const venuesRaw = useQuery(api.directory.listByRole, { role: 'Venue' })
   const shoreOptionsRaw = useQuery(api.availability.listDiveSites)
   const instructors = useMemo(() => instructorsRaw ?? [], [instructorsRaw])
   const boats = useMemo(() => boatsRaw ?? [], [boatsRaw])
-  const pools = useMemo(() => poolsRaw ?? [], [poolsRaw])
+  const poolVenues = useMemo(() => venuesRaw?.filter((r) => r.subtype === 'pool') ?? [], [venuesRaw])
   const shoreOptions = useMemo(() => shoreOptionsRaw ?? [], [shoreOptionsRaw])
   const instructorOptions = instructors.map((r) => ({ id: r.slug, label: r.name, languages: r.languages, isPreferred: r.isPreferred }))
   const diveMasterOptions = instructorOptions
   const customerLanguageCodes = customers.flatMap(c => (c.flags ?? []).map(f => f.code))
   const boatOptions = boats.map((r) => ({ id: r.slug, label: r.name }))
-  const poolOptions = pools.map((r) => ({ id: r.slug, label: r.name }))
+  const poolVenueOptions = poolVenues.map((r) => ({ id: r.slug, label: r.name }))
 
   const credentialsBySlug = useMemo(() => {
     const map = new Map<string, Credential[]>()
@@ -273,7 +273,7 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
 
   const instructorInventoryRaw = useQuery(api.availability.listInventoryByType, { type: 'Instructor' })
   const boatInventoryRaw = useQuery(api.availability.listInventoryByType, { type: 'Boat' })
-  const poolInventoryRaw = useQuery(api.availability.listInventoryByType, { type: 'Pool' })
+  const poolInventoryRaw = useQuery(api.availability.listInventoryByType, { type: 'Venue' })
   const instructorInventory = useMemo(() => instructorInventoryRaw ?? [], [instructorInventoryRaw])
   const boatInventory = useMemo(() => boatInventoryRaw ?? [], [boatInventoryRaw])
   const poolInventory = useMemo(() => poolInventoryRaw ?? [], [poolInventoryRaw])
@@ -679,7 +679,7 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
               instructorOptions={filterByAvailability(instructorOptions, day.date, capacityData, inventoryMap)}
               diveMasterOptions={filterByAvailability(diveMasterOptions, day.date, capacityData, inventoryMap)}
               boatOptions={enrichOptionsWithCapacity(filterByAvailability(boatOptions, day.date, capacityData, inventoryMap), day.date, capacityData, inventoryMap)}
-              poolOptions={filterByAvailability(poolOptions, day.date, capacityData, inventoryMap)}
+              poolOptions={filterByAvailability(poolVenueOptions, day.date, capacityData, inventoryMap)}
               shoreOptions={shoreOptions}
               totalDays={days.length}
               courseCodes={allCourseCodes}

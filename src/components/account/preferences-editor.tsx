@@ -23,7 +23,8 @@ import {
 import { SectionDivider } from '@/components/ui/section-divider'
 import {
   PreferredInstructorList,
-  PreferredVenueBoatList,
+  PreferredVenueList,
+  PreferredBoatList,
   PreferredEquipmentList,
   PreferredCompressorList,
 } from '@/components/profiles/preferred-list'
@@ -70,7 +71,8 @@ type PrefsFormData = z.infer<typeof prefsSchema>
 
 export type ResourceSubTab =
   | 'instructors'
-  | 'venues-boats'
+  | 'venues'
+  | 'boats'
   | 'equipment'
   | 'compressors'
   | 'operator'
@@ -92,7 +94,8 @@ const defaultFormData = (): PrefsFormData => ({
 export function buildResourceSubTabs(clerkRole: string | undefined): { id: ResourceSubTab; label: string }[] {
   const base: { id: ResourceSubTab; label: string }[] = [
     { id: 'instructors', label: 'Instructors' },
-    { id: 'venues-boats', label: 'Venues & Boats' },
+    { id: 'venues', label: 'Venues' },
+    { id: 'boats', label: 'Boats' },
     { id: 'equipment', label: 'Equipment' },
     { id: 'compressors', label: 'Compressors' },
   ]
@@ -102,9 +105,10 @@ export function buildResourceSubTabs(clerkRole: string | undefined): { id: Resou
   return base
 }
 
-const SECTION_FIELDS: Record<ResourceSubTab, keyof PrefsFormData | (keyof PrefsFormData)[]> = {
+const SECTION_FIELDS: Record<ResourceSubTab, keyof PrefsFormData> = {
   instructors: 'preferredInstructorSlugs',
-  'venues-boats': ['preferredVenueSlugs', 'preferredBoatSlugs'],
+  venues: 'preferredVenueSlugs',
+  boats: 'preferredBoatSlugs',
   equipment: 'preferredEquipmentSlugs',
   compressors: 'preferredCompressorSlugs',
   operator: 'preferredOperatorSlug',
@@ -294,9 +298,6 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp,
   const isSectionDirty = useCallback((section: ResourceSubTab): boolean => {
     if (!resourceBaseline) return false
     const field = SECTION_FIELDS[section]
-    if (Array.isArray(field)) {
-      return field.some((f) => JSON.stringify(form[f]) !== JSON.stringify(resourceBaseline[f]))
-    }
     return JSON.stringify(form[field]) !== JSON.stringify(resourceBaseline[field])
   }, [form, resourceBaseline])
 
@@ -440,23 +441,41 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp,
                 </Card>
               )}
 
-              {resourceSubTab === 'venues-boats' && (
+              {resourceSubTab === 'venues' && (
                 <Card padding="sm">
-                  <PreferredVenueBoatList
-                    venueSlugs={form.preferredVenueSlugs ?? []}
-                    boatSlugs={form.preferredBoatSlugs ?? []}
-                    onVenueChange={(slugs) => setField('preferredVenueSlugs', slugs)}
-                    onBoatChange={(slugs) => setField('preferredBoatSlugs', slugs)}
-                    required={(form.preferredVenueSlugs ?? []).length + (form.preferredBoatSlugs ?? []).length === 0}
+                  <PreferredVenueList
+                    slugs={form.preferredVenueSlugs ?? []}
+                    onChange={(slugs) => setField('preferredVenueSlugs', slugs)}
+                    required
                   />
                   <BottomActionBar className="pt-4">
                     <SaveButton
-                      isDirty={isSectionDirty('venues-boats')}
+                      isDirty={isSectionDirty('venues')}
                       saving={resourceSaving}
-                      saved={savedSection === 'venues-boats'}
+                      saved={savedSection === 'venues'}
                       isUpdate
                       size="sm"
-                      onClick={() => void handleSaveResourceSection('venues-boats')}
+                      onClick={() => void handleSaveResourceSection('venues')}
+                    />
+                  </BottomActionBar>
+                </Card>
+              )}
+
+              {resourceSubTab === 'boats' && (
+                <Card padding="sm">
+                  <PreferredBoatList
+                    slugs={form.preferredBoatSlugs ?? []}
+                    onChange={(slugs) => setField('preferredBoatSlugs', slugs)}
+                    required
+                  />
+                  <BottomActionBar className="pt-4">
+                    <SaveButton
+                      isDirty={isSectionDirty('boats')}
+                      saving={resourceSaving}
+                      saved={savedSection === 'boats'}
+                      isUpdate
+                      size="sm"
+                      onClick={() => void handleSaveResourceSection('boats')}
                     />
                   </BottomActionBar>
                 </Card>

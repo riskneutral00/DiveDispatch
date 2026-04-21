@@ -62,8 +62,8 @@ describe('firstIncompleteTab', () => {
   })
 
   it('falls through to role tab without section for unknown role fields', () => {
-    expect(firstIncompleteTab('pool', ['some-unknown-field'])).toEqual({
-      tab: 'role:pool',
+    expect(firstIncompleteTab('venue', ['some-unknown-field'])).toEqual({
+      tab: 'role:venue',
     })
   })
 
@@ -88,9 +88,9 @@ describe('firstIncompleteTab', () => {
     })
   })
 
-  it('routes DiveSite diveSiteTypes to capabilities tab', () => {
-    expect(firstIncompleteTab('dive-site', ['diveSiteTypes'])).toEqual({
-      tab: 'role:dive-site',
+  it('routes Venue subtype to capabilities tab', () => {
+    expect(firstIncompleteTab('venue', ['subtype'])).toEqual({
+      tab: 'role:venue',
       section: 'capabilities',
     })
   })

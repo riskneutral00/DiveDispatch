@@ -18,8 +18,8 @@ beforeEach(() => {
 // ─── Mock data ───────────────────────────────────────────────────────────────
 
 const VENUES: DirectoryEntry[] = [
-  { slug: 'pool-a', name: 'Crystal Pool', placeName: 'Phuket', country: 'TH', verified: true, role: 'Pool', venueCategory: 'pool', maxDepth: 5, maxCapacity: 20, hasCompressor: false },
-  { slug: 'reef-b', name: 'Shark Point', placeName: 'Koh Tao', country: 'TH', verified: true, role: 'DiveSite', venueCategory: 'diveSite', diveSiteTypes: ['reef'], hasCompressor: true, confinedCapable: false },
+  { slug: 'pool-a', name: 'Crystal Pool', placeName: 'Phuket', country: 'TH', verified: true, role: 'Venue', subtype: 'pool', maxDepth: 5, maxCapacity: 20, hasCompressor: false },
+  { slug: 'reef-b', name: 'Shark Point', placeName: 'Koh Tao', country: 'TH', verified: true, role: 'Venue', subtype: 'reef', hasCompressor: true, confinedCapable: false },
 ]
 
 const BOATS: DirectoryEntry[] = [
@@ -40,8 +40,7 @@ const COMPRESSORS: DirectoryEntry[] = [
 // ─── Convex mock — return role-specific entries ─────────────────────────────
 
 const ROLE_DATA: Record<string, DirectoryEntry[]> = {
-  Pool: VENUES.filter((v) => v.role === 'Pool'),
-  DiveSite: VENUES.filter((v) => v.role === 'DiveSite'),
+  Venue: VENUES,
   Boat: BOATS,
   Equipment: EQUIPMENT,
   Compressor: COMPRESSORS,
@@ -63,49 +62,57 @@ vi.mock('convex/react', async (importOriginal) => {
 // ─── Imports after mocks ────────────────────────────────────────────────────
 
 import {
-  PreferredVenueBoatList,
+  PreferredVenueList,
+  PreferredBoatList,
   PreferredEquipmentList,
   PreferredCompressorList,
 } from '../../src/components/profiles/preferred-list'
 
-// ─── Venue & Boat tests ────────────────────────────────────────────────────
+// ─── Venue tests ───────────────────────────────────────────────────────────
 
-describe('PreferredVenueBoatList', () => {
+describe('PreferredVenueList', () => {
   it('shows Add button when empty', () => {
-    render(<PreferredVenueBoatList venueSlugs={[]} boatSlugs={[]} onVenueChange={() => {}} onBoatChange={() => {}} />)
-    expect(screen.getByRole('button', { name: /add venue or boat/i })).toBeInTheDocument()
+    render(<PreferredVenueList slugs={[]} onChange={() => {}} />)
+    expect(screen.getByRole('button', { name: /add venue/i })).toBeInTheDocument()
   })
 
-  it('renders ranked items with badges', () => {
-    render(<PreferredVenueBoatList venueSlugs={['pool-a']} boatSlugs={['mv-seatran']} onVenueChange={() => {}} onBoatChange={() => {}} />)
+  it('renders ranked venues with badges', () => {
+    render(<PreferredVenueList slugs={['pool-a']} onChange={() => {}} />)
     expect(screen.getByText('Crystal Pool')).toBeInTheDocument()
-    expect(screen.getByText('MV Seatran')).toBeInTheDocument()
   })
 
-  it('shows all entries in overlay by default', () => {
-    render(<PreferredVenueBoatList venueSlugs={[]} boatSlugs={[]} onVenueChange={() => {}} onBoatChange={() => {}} />)
-    fireEvent.click(screen.getByRole('button', { name: /add venue or boat/i }))
+  it('shows only venues in overlay (no boats)', () => {
+    render(<PreferredVenueList slugs={[]} onChange={() => {}} />)
+    fireEvent.click(screen.getByRole('button', { name: /add venue/i }))
     expect(screen.getByRole('dialog')).toBeInTheDocument()
-    // All venues and boats visible without needing filter interaction
     expect(screen.getByText('Crystal Pool')).toBeInTheDocument()
     expect(screen.getByText('Shark Point')).toBeInTheDocument()
+    expect(screen.queryByText('MV Seatran')).not.toBeInTheDocument()
+    expect(screen.queryByText('Long Tail Express')).not.toBeInTheDocument()
+  })
+})
+
+// ─── Boat tests ────────────────────────────────────────────────────────────
+
+describe('PreferredBoatList', () => {
+  it('shows Add button when empty', () => {
+    render(<PreferredBoatList slugs={[]} onChange={() => {}} />)
+    expect(screen.getByRole('button', { name: /add boat/i })).toBeInTheDocument()
+  })
+
+  it('renders ranked boats with badges', () => {
+    render(<PreferredBoatList slugs={['mv-seatran']} onChange={() => {}} />)
+    expect(screen.getByText('MV Seatran')).toBeInTheDocument()
+  })
+
+  it('shows only boats in overlay (no venues)', () => {
+    render(<PreferredBoatList slugs={[]} onChange={() => {}} />)
+    fireEvent.click(screen.getByRole('button', { name: /add boat/i }))
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
     expect(screen.getByText('MV Seatran')).toBeInTheDocument()
     expect(screen.getByText('Long Tail Express')).toBeInTheDocument()
-  })
-
-  it('has Venue and Boat filter chips', () => {
-    render(<PreferredVenueBoatList venueSlugs={[]} boatSlugs={[]} onVenueChange={() => {}} onBoatChange={() => {}} />)
-    fireEvent.click(screen.getByRole('button', { name: /add venue or boat/i }))
-    expect(screen.getByText('Venue')).toBeInTheDocument()
-    expect(screen.getByText('Boat')).toBeInTheDocument()
-  })
-
-  it('filters by Boat chip', () => {
-    render(<PreferredVenueBoatList venueSlugs={[]} boatSlugs={[]} onVenueChange={() => {}} onBoatChange={() => {}} />)
-    fireEvent.click(screen.getByRole('button', { name: /add venue or boat/i }))
-    fireEvent.click(screen.getByText('Boat'))
-    expect(screen.getByText('MV Seatran')).toBeInTheDocument()
     expect(screen.queryByText('Crystal Pool')).not.toBeInTheDocument()
+    expect(screen.queryByText('Shark Point')).not.toBeInTheDocument()
   })
 })
 

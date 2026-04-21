@@ -137,11 +137,6 @@ export const compressorGasMixesSchema = z
     { message: 'Nitrox range required (min ≤ max, 22–40%)', path: ['nitroxMin'] },
   )
 
-export const poolCapabilitiesSchema = z.object({
-  maxDepth: z.number().min(1, 'Must be at least 1 m').max(6, 'Pool max depth is 6 m').multipleOf(0.5, 'Must be in 0.5 m increments'),
-  maxCapacity: z.number().int('Must be a whole number').min(1, 'Must be at least 1').max(25, 'Pool max capacity is 25'),
-})
-
 export const diveSiteDetailsSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   location: addressLocationSchema.nullable().refine((v) => v !== null, { message: 'Location is required' }),
@@ -153,3 +148,30 @@ export const diveSiteCapabilitiesSchema = z.object({
   maxDepth: z.number().min(0).optional(),
   maxCapacity: z.number().int('Must be a whole number').positive('Must be at least 1').optional(),
 })
+
+export const venueCapabilitiesSchema = z
+  .object({
+    subtype: z.enum(['pool', 'shore', 'reef', 'lake', 'river', 'quarry', 'other']),
+    confinedCapable: z.boolean().optional(),
+    maxDepth: z.number().min(1, 'Must be at least 1 m').optional(),
+    maxCapacity: z.number().int('Must be a whole number').min(1, 'Must be at least 1').optional(),
+  })
+  .superRefine((v, ctx) => {
+    if (v.subtype !== 'pool') return
+
+    if (v.maxDepth === undefined) {
+      ctx.addIssue({ code: 'custom', path: ['maxDepth'], message: 'Required for pool' })
+    } else {
+      if (v.maxDepth > 60) {
+        ctx.addIssue({ code: 'custom', path: ['maxDepth'], message: 'Pool max depth is 60 m' })
+      }
+      if ((v.maxDepth * 2) % 1 !== 0) {
+        ctx.addIssue({ code: 'custom', path: ['maxDepth'], message: 'Must be in 0.5 m increments' })
+      }
+    }
+    if (v.maxCapacity === undefined) {
+      ctx.addIssue({ code: 'custom', path: ['maxCapacity'], message: 'Required for pool' })
+    } else if (v.maxCapacity > 50) {
+      ctx.addIssue({ code: 'custom', path: ['maxCapacity'], message: 'Pool max capacity is 50' })
+    }
+  })

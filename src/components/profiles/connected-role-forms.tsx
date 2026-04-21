@@ -11,8 +11,7 @@ import { InstructorProfileForm } from '@/components/profiles/personal-profile-fo
 import { BoatProfileForm } from '@/components/profiles/boat-profile-form'
 import { CompressorProfileForm } from '@/components/profiles/compressor-profile-form'
 import { EquipmentProfileForm } from '@/components/profiles/equipment-profile-form'
-import { PoolProfileForm } from '@/components/profiles/pool-profile-form'
-import { DiveSiteProfileForm } from '@/components/profiles/dive-site-profile-form'
+import { VenueProfileForm } from '@/components/profiles/venue-profile-form'
 
 import type { RoleKey } from '@/lib/constants/roles'
 
@@ -35,8 +34,7 @@ const ROLE_FORM_CONFIGS: Partial<Record<RoleKey, RoleFormConfig>> = {
   boat:          { apiModule: api.boats,        Component: BoatProfileForm },
   compressor:    { apiModule: api.compressors,  Component: CompressorProfileForm },
   equipment:     { apiModule: api.equipment,    Component: EquipmentProfileForm },
-  pool:          { apiModule: api.venues,       Component: PoolProfileForm },
-  'dive-site':   { apiModule: api.venues,       Component: DiveSiteProfileForm },
+  venue:         { apiModule: api.venues,       Component: VenueProfileForm },
   agent:         { apiModule: api.agents,       Component: AgentProfileForm },
 }
 

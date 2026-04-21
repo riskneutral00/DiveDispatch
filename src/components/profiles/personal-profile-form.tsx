@@ -1,5 +1,7 @@
 'use client'
 
+import { useQuery } from 'convex/react'
+import { api } from '@/lib/convex-generated'
 import { type LocationValue } from '@/components/profiles/location-picker-lazy'
 import { ProfileAgencyInfo } from '@/components/profiles/profile-agency-info'
 import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
@@ -128,6 +130,15 @@ export function PersonalContactSection({
   update,
   onClose,
 }: PersonalContactSectionProps) {
+  const inheritance = useQuery(api.users.inheritedContactDefaults, { excludeRole: 'Instructor' })
+
+  const inheritedDefaults: PersonalMergedContactFormState = inheritance
+    ? {
+        ...INITIAL_PERSONAL_MERGED_CONTACT,
+        ...personalContactFromProfile(inheritance as unknown as Record<string, unknown>),
+      }
+    : INITIAL_PERSONAL_MERGED_CONTACT
+
   const createOverride = (payload: Record<string, unknown>) =>
     create({ ...payload, credential: [] })
 
@@ -145,12 +156,16 @@ export function PersonalContactSection({
     handleSubmit,
     resetToBaseline,
   } = useProfileForm({
-    profile,
+    profile: inheritance === undefined ? undefined : profile,
     me,
     schema: personalContactMergedSchema,
-    defaults: INITIAL_PERSONAL_MERGED_CONTACT,
+    defaults: inheritedDefaults,
     fromProfile: mergedPersonalFromProfile,
-    fromMe: defaultFromMe,
+    fromMe: (u, defaults) => ({
+      ...defaultFromMe(u, defaults),
+      email: defaults.email || ((u.email as string) ?? ''),
+      location: defaults.location ?? null,
+    }),
     toPayload: mergedPersonalToPayload,
     create: createOverride,
     update,

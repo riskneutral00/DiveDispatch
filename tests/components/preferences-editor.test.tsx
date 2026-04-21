@@ -13,7 +13,8 @@ vi.mock('next/navigation', () => ({
 // Stub preferred list components to avoid transitive Convex calls
 vi.mock('@/components/profiles/preferred-list', () => ({
   PreferredInstructorList: () => <div data-testid="preferred-instructor-list" />,
-  PreferredVenueBoatList: () => <div data-testid="preferred-venue-boat-list" />,
+  PreferredVenueList: () => <div data-testid="preferred-venue-list" />,
+  PreferredBoatList: () => <div data-testid="preferred-boat-list" />,
   PreferredEquipmentList: () => <div data-testid="preferred-equipment-list" />,
   PreferredCompressorList: () => <div data-testid="preferred-compressor-list" />,
 }))
@@ -132,7 +133,8 @@ describe('PreferencesEditor — resources section', () => {
     render(<PreferencesEditor section="resources" roleSlug="dive-center" />)
 
     expect(screen.getAllByText('Instructors').length).toBeGreaterThanOrEqual(1)
-    expect(screen.getAllByText('Venues & Boats').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('Venues').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('Boats').length).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByText('Equipment').length).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByText('Compressors').length).toBeGreaterThanOrEqual(1)
   })

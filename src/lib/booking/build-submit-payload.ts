@@ -196,12 +196,12 @@ export function buildSubmitPayload(state: WizardState): SubmitPayload {
       }
     }
     if (d.venueType === 'pool' && d.poolInventoryUnitId) {
-      if (!resources.some(r => r.resourceType === 'Pool' && r.resourceId === d.poolInventoryUnitId)) {
-        resources.push({ resourceType: 'Pool', resourceId: d.poolInventoryUnitId })
+      if (!resources.some(r => r.resourceType === 'Venue' && r.resourceId === d.poolInventoryUnitId)) {
+        resources.push({ resourceType: 'Venue', resourceId: d.poolInventoryUnitId })
       }
     } else if (d.venueType === 'pool' && d.externalPoolName?.trim()) {
-      if (!resources.some(r => r.resourceType === 'Pool' && r.externalName === d.externalPoolName)) {
-        resources.push({ resourceType: 'Pool', externalName: d.externalPoolName })
+      if (!resources.some(r => r.resourceType === 'Venue' && r.externalName === d.externalPoolName)) {
+        resources.push({ resourceType: 'Venue', externalName: d.externalPoolName })
       }
     }
   }

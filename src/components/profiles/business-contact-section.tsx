@@ -1,5 +1,7 @@
 'use client'
 
+import { useQuery } from 'convex/react'
+import { api } from '@/lib/convex-generated'
 import { type LocationValue } from '@/components/profiles/location-picker-lazy'
 import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
@@ -18,6 +20,7 @@ import {
   type BaseProfileSectionProps,
 } from '@/lib/profile-form'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
+import type { ClerkRole } from '@/lib/constants/roles'
 import type { ZodType } from 'zod'
 
 type BusinessContactWithAccess = ContactFormState & { access: AccessControlState } // dry-ok
@@ -32,6 +35,7 @@ interface BusinessContactSectionProps extends BaseProfileSectionProps {
   schema: ZodType
   fromMe?: (user: Record<string, unknown>, defaults: ContactFormState) => ContactFormState
   createOverride?: (payload: Record<string, unknown>) => Promise<unknown>
+  inheritFromOtherRoles?: ClerkRole
 }
 
 export function BusinessContactSection({
@@ -45,18 +49,40 @@ export function BusinessContactSection({
   schema,
   fromMe: fromMeOverride,
   createOverride,
+  inheritFromOtherRoles,
 }: BusinessContactSectionProps) {
+  const inheritance = useQuery(
+    api.users.inheritedContactDefaults,
+    inheritFromOtherRoles ? { excludeRole: inheritFromOtherRoles } : 'skip',
+  )
+
+  const inheritedDefaults: BusinessContactWithAccess = inheritance
+    ? {
+        ...INITIAL_BUSINESS_CONTACT,
+        ...contactFromProfile(inheritance as unknown as Record<string, unknown>),
+      }
+    : INITIAL_BUSINESS_CONTACT
+
+  const waitingForInheritance = inheritFromOtherRoles !== undefined && inheritance === undefined
+
   const { form, setField, errors, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit, resetToBaseline } =
     useProfileForm({
-      profile: existing,
+      profile: waitingForInheritance ? undefined : existing,
       me,
       schema,
-      defaults: INITIAL_BUSINESS_CONTACT,
+      defaults: inheritedDefaults,
       fromProfile: (p) => ({ ...contactFromProfile(p), access: accessFromProfile(p) }),
-      fromMe: (u, defaults) => ({
-        ...(fromMeOverride ?? defaultFromMe)(u, defaults),
-        access: defaults.access,
-      }),
+      fromMe: (u, defaults) => {
+        const base = (fromMeOverride ?? defaultFromMe)(u, defaults)
+        return {
+          ...base,
+          name: defaults.name || base.name,
+          location: defaults.location ?? base.location,
+          email: defaults.email || base.email,
+          phone: defaults.phone || base.phone,
+          access: defaults.access,
+        }
+      },
       toPayload: (f) => ({ ...contactToPayload(f), ...accessToPayload(f.access) }),
       create: createOverride ?? create,
       update,

@@ -14,7 +14,6 @@ export const ORGANIZER_WIZARD_CONFIG: Partial<Record<ClerkRole, OrganizerSubStep
   Liveaboard: ['basic'],
   DiveResort: ['basic'],
   DiveHostel: ['basic'],
-  DiveSite: ['basic'],
 }
 
 const ORGANIZER_ROLE_FLAGS: Partial<Record<ClerkRole, OrganizerRoleFlags>> = {
@@ -23,7 +22,6 @@ const ORGANIZER_ROLE_FLAGS: Partial<Record<ClerkRole, OrganizerRoleFlags>> = {
   Liveaboard: { supportsCoursePreferences: true, locationModel: 'single', displayLabel: 'liveaboard' },
   DiveResort: { supportsCoursePreferences: true, locationModel: 'single', displayLabel: 'dive resort' },
   DiveHostel: { supportsCoursePreferences: false, locationModel: 'single', displayLabel: 'dive hostel' },
-  DiveSite: { supportsCoursePreferences: false, locationModel: 'single', displayLabel: 'dive site' },
 }
 
 export const ORGANIZER_WIZARD_ROLES = Object.keys(ORGANIZER_WIZARD_CONFIG) as ClerkRole[]

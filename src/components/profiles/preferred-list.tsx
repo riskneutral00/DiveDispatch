@@ -526,15 +526,10 @@ export function PreferredInstructorList(props: ListProps) {
 
 
 function VenueBadge({ entry }: { entry: DirectoryEntry }) {
-  const subtype = entry.diveSiteTypes?.[0]
-  const label =
-    entry.venueCategory === 'pool'
-      ? 'Pool'
-      : subtype
-        ? subtype.charAt(0).toUpperCase() + subtype.slice(1)
-        : entry.venueCategory === 'diveSite'
-          ? 'Dive Site'
-          : null
+  const subtype = entry.subtype
+  const label = subtype
+    ? subtype.charAt(0).toUpperCase() + subtype.slice(1)
+    : null
   return (
     <div className="flex flex-wrap items-center gap-1">
       {label && <Badge variant="muted" size="sm">{label}</Badge>}
@@ -557,95 +552,80 @@ function BoatBadge({ entry }: { entry: DirectoryEntry }) {
   )
 }
 
-function VenueOrBoatBadge({ entry }: { entry: DirectoryEntry }) {
-  return entry.role === 'Boat' ? <BoatBadge entry={entry} /> : <VenueBadge entry={entry} />
-}
+export function PreferredVenueList(props: ListProps) {
+  const { slugs, onChange } = props
+  const entries = useQuery(api.directory.listByRole, { role: 'Venue' as StakeholderRole })
 
-type VenueBoatFilter = 'all' | 'venue' | 'boat'
-
-export function PreferredVenueBoatList({ venueSlugs, boatSlugs, onVenueChange, onBoatChange, required }: {
-  venueSlugs: string[]
-  boatSlugs: string[]
-  onVenueChange: (slugs: string[]) => void
-  onBoatChange: (slugs: string[]) => void
-  required?: boolean
-}) {
-  const pools = useQuery(api.directory.listByRole, { role: 'Pool' as StakeholderRole })
-  const diveSites = useQuery(api.directory.listByRole, { role: 'DiveSite' as StakeholderRole })
-  const boats = useQuery(api.directory.listByRole, { role: 'Boat' as StakeholderRole })
-
-  const [typeFilter, setTypeFilter] = useState<VenueBoatFilter>('all')
   const [search, setSearch] = useState('')
 
-  const VENUE_PFX = 'v:'
-  const BOAT_PFX = 'b:'
-
-  const allSlugs = useMemo(() => [
-    ...venueSlugs.map(s => `${VENUE_PFX}${s}`),
-    ...boatSlugs.map(s => `${BOAT_PFX}${s}`),
-  ], [venueSlugs, boatSlugs])
-
-  const allEntries = useMemo(() => {
-    if (pools === undefined || diveSites === undefined || boats === undefined) return undefined
-    return [
-      ...(pools ?? []).map(e => ({ ...e, slug: `${VENUE_PFX}${e.slug}` })),
-      ...(diveSites ?? []).map(e => ({ ...e, slug: `${VENUE_PFX}${e.slug}` })),
-      ...(boats ?? []).map(e => ({ ...e, slug: `${BOAT_PFX}${e.slug}` })),
-    ]
-  }, [pools, diveSites, boats])
-
   const filteredEntries = useMemo(() => {
-    if (!allEntries) return []
-    let result = allEntries.filter((e) => !allSlugs.includes(e.slug))
-    if (typeFilter === 'venue') result = result.filter((e) => e.role !== 'Boat')
-    if (typeFilter === 'boat') result = result.filter((e) => e.role === 'Boat')
+    if (!entries) return []
+    let result = entries.filter((e) => !slugs.includes(e.slug))
     const trimmed = search.trim().toLowerCase()
     if (trimmed) result = result.filter((e) => e.name.toLowerCase().includes(trimmed) || e.placeName.toLowerCase().includes(trimmed))
     return result
-  }, [allEntries, allSlugs, typeFilter, search])
-
-  const handleChange = useCallback((slugs: string[]) => {
-    const nextVenues: string[] = []
-    const nextBoats: string[] = []
-    for (const s of slugs) {
-      if (s.startsWith(BOAT_PFX)) nextBoats.push(s.slice(BOAT_PFX.length))
-      else nextVenues.push(s.slice(VENUE_PFX.length))
-    }
-    onVenueChange(nextVenues)
-    onBoatChange(nextBoats)
-  }, [onVenueChange, onBoatChange])
-
-  const filterBar = (
-    <div className="flex flex-wrap gap-1.5">
-      <Chip label="All" active={typeFilter === 'all'} onClick={() => setTypeFilter('all')} />
-      <Chip label="Venue" active={typeFilter === 'venue'} onClick={() => setTypeFilter(typeFilter === 'venue' ? 'all' : 'venue')} />
-      <Chip label="Boat" active={typeFilter === 'boat'} onClick={() => setTypeFilter(typeFilter === 'boat' ? 'all' : 'boat')} />
-    </div>
-  )
+  }, [entries, slugs, search])
 
   return (
     <SortableOverlayList
-      slugs={allSlugs}
-      onChange={handleChange}
-      entries={allEntries}
-      addButtonLabel="Add Venue or Boat"
-      dialogTitle="Add Venue or Boat"
-      searchLabel="Search venues or boats"
+      slugs={slugs}
+      onChange={onChange}
+      entries={entries}
+      addButtonLabel="Add Venue"
+      dialogTitle="Add Venue"
+      searchLabel="Search venues"
       searchPlaceholder="Search by name or city..."
-      noResultsText="No venues or boats match these filters."
+      noResultsText="No venues match these filters."
       removeAriaLabel="Remove"
       previousPageAriaLabel="Previous page"
       nextPageAriaLabel="Next page"
-      maxItems={MAX_PREFERRED_VENUES + MAX_PREFERRED_BOATS}
-      required={required}
-      renderBadge={(e) => <VenueOrBoatBadge entry={e} />}
-      renderCandidate={(e) => defaultCandidateRender(e, <VenueOrBoatBadge entry={e} />)}
-      filterBar={filterBar}
+      maxItems={MAX_PREFERRED_VENUES}
+      required={props.required}
+      renderBadge={(e) => <VenueBadge entry={e} />}
+      renderCandidate={(e) => defaultCandidateRender(e, <VenueBadge entry={e} />)}
       filteredEntries={filteredEntries}
       search={search}
       onSearchChange={setSearch}
-      onResetFilters={() => setTypeFilter('all')}
-      dndGroup="venues-boats"
+      dndGroup="venues"
+    />
+  )
+}
+
+export function PreferredBoatList(props: ListProps) {
+  const { slugs, onChange } = props
+  const entries = useQuery(api.directory.listByRole, { role: 'Boat' as StakeholderRole })
+
+  const [search, setSearch] = useState('')
+
+  const filteredEntries = useMemo(() => {
+    if (!entries) return []
+    let result = entries.filter((e) => !slugs.includes(e.slug))
+    const trimmed = search.trim().toLowerCase()
+    if (trimmed) result = result.filter((e) => e.name.toLowerCase().includes(trimmed) || e.placeName.toLowerCase().includes(trimmed))
+    return result
+  }, [entries, slugs, search])
+
+  return (
+    <SortableOverlayList
+      slugs={slugs}
+      onChange={onChange}
+      entries={entries}
+      addButtonLabel="Add Boat"
+      dialogTitle="Add Boat"
+      searchLabel="Search boats"
+      searchPlaceholder="Search by name or city..."
+      noResultsText="No boats match these filters."
+      removeAriaLabel="Remove"
+      previousPageAriaLabel="Previous page"
+      nextPageAriaLabel="Next page"
+      maxItems={MAX_PREFERRED_BOATS}
+      required={props.required}
+      renderBadge={(e) => <BoatBadge entry={e} />}
+      renderCandidate={(e) => defaultCandidateRender(e, <BoatBadge entry={e} />)}
+      filteredEntries={filteredEntries}
+      search={search}
+      onSearchChange={setSearch}
+      dndGroup="boats"
     />
   )
 }

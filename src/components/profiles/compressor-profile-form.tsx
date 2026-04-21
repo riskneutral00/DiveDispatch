@@ -35,6 +35,7 @@ export function CompressorContactSection(props: CompressorSectionProps) {
       {...props}
       nameLabel="Business Name"
       schema={contactSchema}
+      inheritFromOtherRoles="Compressor"
     />
   )
 }

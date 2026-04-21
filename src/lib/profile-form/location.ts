@@ -52,7 +52,7 @@ export function locationFromProfileDoc(p: ProfileLocationDoc): ProfileLocationVa
       country: addr?.country ?? isoFromLegacy ?? p.country ?? '',
       postalCode: addr?.postalCode,
     },
-    placeId: p.placeId,
+    placeId: (p.placeId as string | null | undefined) ?? undefined,
     lat: p.lat,
     lng: p.lng,
   }

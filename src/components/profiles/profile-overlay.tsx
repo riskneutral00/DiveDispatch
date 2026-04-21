@@ -39,9 +39,14 @@ export function ProfileOverlay({ open, onClose, initialTab = 'profile', initialS
   const [roleProfileSection, setRoleProfileSection] = useState<string>(initialSection ?? '')
   const userRoles = useQuery(api.userRoles.myRoles)
 
-  const roleConfigs = (userRoles ?? [])
-    .map((r) => ROLE_BY_CLERK_ROLE[r.role as ClerkRole])
-    .filter(Boolean)
+  const roleConfigs = Array.from(
+    new Map(
+      (userRoles ?? [])
+        .map((r) => ROLE_BY_CLERK_ROLE[r.role as ClerkRole])
+        .filter(Boolean)
+        .map((config) => [config.key, config]),
+    ).values(),
+  )
 
   const visibleStaticTabs = STATIC_TAB_IDS
 

@@ -9,7 +9,6 @@ import {
   InstructorIcon,
   BoatIcon,
   EquipmentIcon,
-  PoolIcon,
   CompressorIcon,
   type RoleIconProps,
 } from '@/lib/icons/role-icons'
@@ -20,12 +19,11 @@ export type RoleKey =
   | 'liveaboard'
   | 'dive-resort'
   | 'dive-hostel'
-  | 'dive-site'
   | 'instructor'
   | 'boat'
   | 'equipment'
-  | 'pool'
   | 'compressor'
+  | 'venue'
 
 export type ClerkRole =
   | 'DiveCenter'
@@ -33,12 +31,11 @@ export type ClerkRole =
   | 'Liveaboard'
   | 'DiveResort'
   | 'DiveHostel'
-  | 'DiveSite'
   | 'Instructor'
   | 'Boat'
   | 'Equipment'
-  | 'Pool'
   | 'Compressor'
+  | 'Venue'
 
 export interface ProfileTab {
   id: string
@@ -83,7 +80,7 @@ export const ROLES: RoleConfig[] = [
     profileTabs: [
       { id: 'contact', label: 'Contact', fields: ['name', 'address', 'customerLanguages'] },
       { id: 'associations', label: 'Affiliations', fields: ['associations'] },
-      { id: 'resources', label: 'Preferences', fields: ['preferredInstructor', 'preferredEquipment', 'preferredVenueOrBoat', 'preferredCompressor'] },
+      { id: 'resources', label: 'Preferences', fields: ['preferredInstructor', 'preferredEquipment', 'preferredVenue', 'preferredBoat', 'preferredCompressor'] },
       { id: 'booking', label: 'Booking', fields: ['acceptanceMode'] },
     ],
   },
@@ -104,7 +101,7 @@ export const ROLES: RoleConfig[] = [
     profileTabs: [
       { id: 'contact', label: 'Contact', fields: ['name', 'address', 'customerLanguages'] },
       { id: 'associations', label: 'Affiliations', fields: ['associations'] },
-      { id: 'resources', label: 'Preferences', fields: ['preferredInstructor', 'preferredEquipment', 'preferredVenueOrBoat', 'preferredCompressor'] },
+      { id: 'resources', label: 'Preferences', fields: ['preferredInstructor', 'preferredEquipment', 'preferredVenue', 'preferredBoat', 'preferredCompressor'] },
       { id: 'booking', label: 'Booking', fields: ['acceptanceMode'] },
     ],
   },
@@ -124,7 +121,7 @@ export const ROLES: RoleConfig[] = [
     description: 'Run multi-day dive expeditions with onboard accommodation and guided services.',
     profileTabs: [
       { id: 'contact', label: 'Contact' },
-      { id: 'resources', label: 'Preferences', fields: ['preferredInstructor', 'preferredEquipment', 'preferredVenueOrBoat', 'preferredCompressor'] },
+      { id: 'resources', label: 'Preferences', fields: ['preferredInstructor', 'preferredEquipment', 'preferredVenue', 'preferredBoat', 'preferredCompressor'] },
       { id: 'booking', label: 'Booking', fields: ['acceptanceMode'] },
     ],
   },
@@ -144,7 +141,7 @@ export const ROLES: RoleConfig[] = [
     description: 'Offer dive packages, courses, and guided dives from a resort base.',
     profileTabs: [
       { id: 'contact', label: 'Contact' },
-      { id: 'resources', label: 'Preferences', fields: ['preferredInstructor', 'preferredEquipment', 'preferredVenueOrBoat', 'preferredCompressor'] },
+      { id: 'resources', label: 'Preferences', fields: ['preferredInstructor', 'preferredEquipment', 'preferredVenue', 'preferredBoat', 'preferredCompressor'] },
       { id: 'booking', label: 'Booking', fields: ['acceptanceMode'] },
     ],
   },
@@ -164,32 +161,10 @@ export const ROLES: RoleConfig[] = [
     description: 'Provide budget-friendly accommodation and dive services to traveling divers.',
     profileTabs: [
       { id: 'contact', label: 'Contact' },
-      { id: 'resources', label: 'Preferences', fields: ['preferredInstructor', 'preferredEquipment', 'preferredVenueOrBoat', 'preferredCompressor'] },
+      { id: 'resources', label: 'Preferences', fields: ['preferredInstructor', 'preferredEquipment', 'preferredVenue', 'preferredBoat', 'preferredCompressor'] },
       { id: 'booking', label: 'Booking', fields: ['acceptanceMode'] },
     ],
   },
-  {
-    key: 'dive-site',
-    clerkRole: 'DiveSite',
-    label: 'Dive Site',
-    pluralLabel: 'Dive Sites',
-    route: '/dive-site',
-    browseRoute: '/resources/dive-sites',
-    icon: DiveSiteIcon,
-    isOrganizer: false,
-    isResource: true,
-    displayGroup: 'operator',
-    roleClass: 'freelance',
-    tableName: 'venues',
-    description: 'Manage access and dive conditions for a specific underwater site.',
-    profileTabs: [
-      { id: 'details', label: 'Details', fields: ['name', 'address'] },
-      { id: 'capabilities', label: 'Capabilities', fields: ['diveSiteTypes'] },
-      { id: 'resources', label: 'Preferences', fields: ['preferredInstructor', 'preferredEquipment', 'preferredVenueOrBoat', 'preferredCompressor'] },
-      { id: 'booking', label: 'Booking', fields: ['acceptanceMode'] },
-    ],
-  },
-
   {
     key: 'instructor',
     clerkRole: 'Instructor',
@@ -251,26 +226,6 @@ export const ROLES: RoleConfig[] = [
     ],
   },
   {
-    key: 'pool',
-    clerkRole: 'Pool',
-    label: 'Pool',
-    pluralLabel: 'Pools',
-    route: '/pool',
-    browseRoute: '/resources/pools',
-    icon: PoolIcon,
-    isOrganizer: false,
-    isResource: true,
-    displayGroup: 'resource',
-    roleClass: 'freelance',
-    tableName: 'venues',
-    description: 'Provide confined-water training space for beginner and refresher courses.',
-    profileTabs: [
-      { id: 'contact', label: 'Contact', fields: ['name', 'address'] },
-      { id: 'capabilities', label: 'Capabilities' },
-      { id: 'booking', label: 'Booking' },
-    ],
-  },
-  {
     key: 'compressor',
     clerkRole: 'Compressor',
     label: 'Compressor',
@@ -288,6 +243,26 @@ export const ROLES: RoleConfig[] = [
       { id: 'contact', label: 'Contact', fields: ['name', 'address'] },
       { id: 'gas-mixes', label: 'Gas Mixes', fields: ['gasMixes'] },
       { id: 'booking', label: 'Booking' },
+    ],
+  },
+  {
+    key: 'venue',
+    clerkRole: 'Venue',
+    label: 'Venue',
+    pluralLabel: 'Venues',
+    route: '/venue',
+    browseRoute: '/resources/venues',
+    icon: DiveSiteIcon,
+    isOrganizer: false,
+    isResource: true,
+    displayGroup: 'resource',
+    roleClass: 'freelance',
+    tableName: 'venues',
+    description: 'Provide a place where diving happens — pool, shore, reef, lake, river, quarry, or other.',
+    profileTabs: [
+      { id: 'contact', label: 'Contact', fields: ['name', 'address'] },
+      { id: 'capabilities', label: 'Capabilities', fields: ['subtype', 'maxDepth', 'maxCapacity', 'confinedCapable'] },
+      { id: 'booking', label: 'Booking', fields: ['acceptanceMode'] },
     ],
   },
 ]

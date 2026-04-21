@@ -38,8 +38,7 @@ function applyTemplateResourceHints(
       case 'Instructor':
         if (!next.instructorSlug) next = { ...next, instructorSlug: slug }
         break
-      case 'Pool':
-      case 'DiveSite':
+      case 'Venue':
         if (!next.venueSlug) next = { ...next, venueSlug: slug }
         break
       case 'Boat':

@@ -8,6 +8,7 @@ let mutationCallIndex = 0
 let queryCallIndex = 0
 let mockExisting: unknown = undefined
 let mockMe: unknown = undefined
+let mockInheritance: unknown = null
 
 const mockMutate = vi.fn()
 
@@ -17,8 +18,9 @@ vi.mock('convex/react', async (importOriginal) => {
     ...actual,
     useQuery: () => {
       const idx = queryCallIndex++
-      if (idx % 2 === 0) return mockExisting
-      return mockMe
+      if (idx % 3 === 0) return mockExisting
+      if (idx % 3 === 1) return mockMe
+      return mockInheritance
     },
     useMutation: () => {
       mutationCallIndex++
@@ -60,6 +62,7 @@ beforeEach(() => {
   mutationCallIndex = 0
   mockExisting = undefined
   mockMe = undefined
+  mockInheritance = null
   mockMutate.mockResolvedValue(undefined)
 })
 
@@ -127,6 +130,64 @@ describe('OrganizerBasicStep', () => {
       )
       expect(onSaved).toHaveBeenCalled()
     })
+  })
+
+  it('pre-fills fields from inherited contact when no existing profile', async () => {
+    mockExisting = null
+    mockMe = { email: 'me@test.com' }
+    mockInheritance = {
+      name: 'Sea Fun Divers',
+      email: 'hello@seafun.example',
+      phone: '+66999888777',
+      address: { city: 'Phuket', country: 'TH' },
+      placeId: null,
+      lat: 7.88,
+      lng: 98.39,
+    }
+
+    render(<OrganizerBasicStep role="Liveaboard" onSaved={vi.fn()} />)
+
+    await waitFor(() => {
+      expect(screen.getByDisplayValue('Sea Fun Divers')).toBeInTheDocument()
+    })
+    expect(screen.getByDisplayValue('hello@seafun.example')).toBeInTheDocument()
+  })
+
+  it('existing profile takes precedence over inheritance', async () => {
+    mockExisting = {
+      name: 'Real Liveaboard Name',
+      email: 'real@liveaboard.example',
+      phone: '+66111222333',
+      lat: 10,
+      lng: 99,
+      address: { city: 'Koh Tao', country: 'TH' },
+    }
+    mockMe = { email: 'me@test.com' }
+    mockInheritance = {
+      name: 'Inherited DC Name',
+      email: 'dc@example.com',
+      phone: '+66000000000',
+      address: { city: 'Phuket', country: 'TH' },
+      placeId: null,
+      lat: 7.88,
+      lng: 98.39,
+    }
+
+    render(<OrganizerBasicStep role="Liveaboard" onSaved={vi.fn()} />)
+
+    await waitFor(() => {
+      expect(screen.getByDisplayValue('Real Liveaboard Name')).toBeInTheDocument()
+    })
+    expect(screen.queryByDisplayValue('Inherited DC Name')).toBeNull()
+  })
+
+  it('shows loading card while inheritance query is pending', () => {
+    mockExisting = null
+    mockMe = { email: 'me@test.com' }
+    mockInheritance = undefined
+
+    render(<OrganizerBasicStep role="Liveaboard" onSaved={vi.fn()} />)
+    expect(screen.queryByText('Basic Information')).toBeNull()
   })
 
   it('does not call onSaved when mutation throws', async () => {

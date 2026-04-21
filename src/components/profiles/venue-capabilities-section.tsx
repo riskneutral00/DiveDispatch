@@ -1,126 +1,209 @@
 'use client'
 
-import { Checkbox } from '@/components/ui/checkbox'
-import { NumberPicker } from '@/components/ui/number-picker'
-import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
+import { useState } from 'react'
+import { useMutation, useQuery } from 'convex/react'
+import type { Id } from '@/lib/convex-generated'
+import { api } from '@/lib/convex-generated'
+import { EntityCardList } from '@/components/ui/entity-card-list'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { LoadingCard } from '@/components/ui/loading-card'
+import type { BaseProfileSectionProps } from '@/lib/profile-form'
+import type { VenueSubtype } from '@/lib/constants/venue-subtypes'
 import {
-  buildParentContactDefaults,
-  type BaseProfileSectionProps,
-} from '@/lib/profile-form'
-import { useProfileForm } from '@/lib/hooks/use-profile-form'
-import type { ZodType } from 'zod'
+  VenueEditDialog,
+  EMPTY_VENUE_EDIT,
+  type VenueEditValue,
+} from './venue-edit-dialog'
 
 export type VenueCapabilitiesFormState = {
+  subtype: VenueSubtype
   confinedCapable?: boolean
   maxDepth: number
   maxCapacity: number
 }
 
-interface VenueCapabilitiesSectionProps<T extends VenueCapabilitiesFormState = VenueCapabilitiesFormState> extends BaseProfileSectionProps {
-  schema: ZodType
-  defaults: T
-  fromProfile: (p: Record<string, unknown>) => T
-  toPayload: (f: T) => Record<string, unknown>
-  venueType: 'pool' | 'diveSite'
-  wrapCreatePayload?: (payload: Record<string, unknown>) => Record<string, unknown>
-  capabilitiesLabel?: string
-  depthPlaceholder?: string
-  capacityPlaceholder?: string
+export const INITIAL_VENUE_CAPABILITIES_FORM: VenueCapabilitiesFormState = {
+  subtype: 'pool',
+  confinedCapable: false,
+  maxDepth: 0,
+  maxCapacity: 0,
 }
 
-export function VenueCapabilitiesSection<T extends VenueCapabilitiesFormState>({
-  profile: existing,
-  me,
-  create,
-  update,
-  onClose,
-  schema,
-  defaults,
-  fromProfile,
-  toPayload,
-  venueType,
-  wrapCreatePayload,
-  capabilitiesLabel = 'Venue Capabilities',
-  depthPlaceholder = '5',
-  capacityPlaceholder = '15',
-}: VenueCapabilitiesSectionProps<T>) {
-  const createOverride = (payload: Record<string, unknown>) => {
-    const merged = { ...buildParentContactDefaults(me), ...payload }
-    return create(wrapCreatePayload ? wrapCreatePayload(merged) : merged)
+export function venueCapabilitiesFromProfile(p: Record<string, unknown>): VenueCapabilitiesFormState {
+  const subtype = (p.subtype as VenueSubtype | undefined) ?? 'pool'
+  return {
+    subtype,
+    confinedCapable: (p.confinedCapable as boolean) ?? false,
+    maxDepth: (p.maxDepth as number) ?? 0,
+    maxCapacity: (p.maxCapacity as number) ?? 0,
+  }
+}
+
+export function venueCapabilitiesToPayload(f: VenueCapabilitiesFormState): Record<string, unknown> {
+  return {
+    subtype: f.subtype,
+    ...(f.maxDepth > 0 ? { maxDepth: f.maxDepth } : {}),
+    ...(f.maxCapacity > 0 ? { maxCapacity: f.maxCapacity } : {}),
+    ...(f.confinedCapable !== undefined ? { confinedCapable: f.confinedCapable } : {}),
+  }
+}
+
+const SUBTYPE_LABELS: Record<VenueSubtype, string> = {
+  pool: 'Pool',
+  shore: 'Shore',
+  reef: 'Reef',
+  lake: 'Lake',
+  river: 'River',
+  quarry: 'Quarry',
+  other: 'Other',
+}
+
+type VenueCapabilitiesSectionProps = BaseProfileSectionProps
+
+export function VenueCapabilitiesSection(_props: VenueCapabilitiesSectionProps) {
+  const venues = useQuery(api.venues.mine)
+  const createVenue = useMutation(api.venues.create)
+  const updateVenue = useMutation(api.venues.update)
+  const removeVenue = useMutation(api.venues.remove)
+
+  const [dialogState, setDialogState] = useState<
+    | { open: false }
+    | { open: true; mode: 'create' }
+    | { open: true; mode: 'edit'; venueId: Id<'venues'>; initial: VenueEditValue }
+  >({ open: false })
+
+  if (venues === undefined) {
+    return <LoadingCard />
   }
 
-  const { form, setField, errors, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit, resetToBaseline } =
-    useProfileForm({
-      profile: existing,
-      schema,
-      defaults,
-      fromProfile,
-      toPayload,
-      create: createOverride,
-      update,
+  const handleCreate = async (value: VenueEditValue) => {
+    if (!value.location) return
+    await createVenue({
+      name: value.name,
+      address: value.location.address,
+      placeId: value.location.placeId,
+      lat: value.location.lat,
+      lng: value.location.lng,
+      email: '',
+      phone: '',
+      subtype: value.subtype,
+      hasCompressor: value.hasCompressor,
+      confinedCapable: value.confinedCapable,
+      maxDepth: value.maxDepth > 0 ? value.maxDepth : undefined,
+      maxCapacity: value.maxCapacity > 0 ? value.maxCapacity : undefined,
+      isAllowed: value.isAllowed,
+      notAllowed: value.notAllowed,
     })
+  }
 
-  const isPool = venueType === 'pool'
+  const handleEdit = async (venueId: Id<'venues'>, value: VenueEditValue) => {
+    if (!value.location) return
+    await updateVenue({
+      venueId,
+      name: value.name,
+      address: value.location.address,
+      placeId: value.location.placeId,
+      lat: value.location.lat,
+      lng: value.location.lng,
+      subtype: value.subtype,
+      hasCompressor: value.hasCompressor,
+      confinedCapable: value.confinedCapable,
+      maxDepth: value.maxDepth > 0 ? value.maxDepth : undefined,
+      maxCapacity: value.maxCapacity > 0 ? value.maxCapacity : undefined,
+      isAllowed: value.isAllowed,
+      notAllowed: value.notAllowed,
+    })
+  }
+
+  const handleRemove = async (venueId: Id<'venues'>) => {
+    await removeVenue({ venueId })
+  }
+
+  const openEditFor = (venue: (typeof venues)[number]) => {
+    setDialogState({
+      open: true,
+      mode: 'edit',
+      venueId: venue._id,
+      initial: {
+        name: venue.name,
+        subtype: venue.subtype as VenueSubtype,
+        location: {
+          address: venue.address,
+          placeId: venue.placeId,
+          lat: venue.lat,
+          lng: venue.lng,
+        },
+        maxDepth: venue.maxDepth ?? 0,
+        maxCapacity: venue.maxCapacity ?? 0,
+        confinedCapable: venue.confinedCapable ?? false,
+        hasCompressor: venue.hasCompressor,
+        isAllowed: venue.isAllowed ?? [],
+        notAllowed: venue.notAllowed ?? [],
+      },
+    })
+  }
 
   return (
-    <ProfileFormShell
-      loading={loading}
-      onSubmit={handleSubmit}
-      onCancel={() => { resetToBaseline(); onClose?.() }}
-      footerErrorMessage={footerErrorMessage}
-      saving={saving}
-      saved={saved}
-      isDirty={isDirty}
-      isUpdate={isUpdate}
-      disableSaveWhenInvalid
-      isValid={isValid}
-      className="space-y-6"
-    >
-      <div className="space-y-4">
-        {venueType === 'diveSite' && (
+    <>
+      <EntityCardList
+        label="Venues"
+        items={venues}
+        addLabel="Add venue"
+        emptyMessage="No venues yet. Add your first venue to start accepting bookings."
+        onAdd={() => setDialogState({ open: true, mode: 'create' })}
+        onRemove={(venue) => void handleRemove(venue._id)}
+        itemKey={(venue) => venue._id}
+        removeAriaLabel={(venue) => `Remove ${venue.name}`}
+        renderCard={(venue) => (
           <div className="flex flex-col gap-2">
-            <span className="text-body font-medium text-secondary">
-              {capabilitiesLabel}
-            </span>
-            <div className="flex flex-wrap gap-3">
-              <Checkbox
-                label="Confined Water Capable"
-                checked={form.confinedCapable ?? false}
-                onChange={(v) => setField('confinedCapable', v)}
-              />
+            <div className="flex items-center gap-2">
+              <span className="font-medium text-primary truncate">{venue.name}</span>
+              <Badge variant="muted">{SUBTYPE_LABELS[venue.subtype as VenueSubtype]}</Badge>
             </div>
+            <div className="text-body-sm text-secondary">
+              {venue.maxDepth ? `${venue.maxDepth} m` : '—'}
+              {' · '}
+              {venue.maxCapacity ? `${venue.maxCapacity} cap` : '—'}
+              {venue.confinedCapable ? ' · Confined' : ''}
+              {venue.hasCompressor ? ' · Compressor' : ''}
+            </div>
+            {venue.address?.city && (
+              <div className="text-body-sm text-secondary truncate">
+                {venue.address.city}
+                {venue.address.country ? `, ${venue.address.country}` : ''}
+              </div>
+            )}
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              onClick={() => openEditFor(venue)}
+              className="self-start"
+            >
+              Edit
+            </Button>
           </div>
         )}
+      />
 
-        <div className="flex flex-wrap gap-3">
-          <NumberPicker
-            label="Max Depth"
-            value={form.maxDepth || undefined}
-            onChange={(v) => setField('maxDepth', v ?? 0)}
-            min={1}
-            max={isPool ? 6 : 60}
-            step={0.5}
-            decimals={1}
-            suffix="m"
-            required={isPool}
-            placeholder={depthPlaceholder}
-            error={errors.maxDepth}
-            className="field-number"
-          />
-          <NumberPicker
-            label="Max Capacity"
-            value={form.maxCapacity || undefined}
-            onChange={(v) => setField('maxCapacity', v ?? 0)}
-            min={1}
-            max={isPool ? 25 : 100}
-            required={isPool}
-            placeholder={capacityPlaceholder}
-            error={errors.maxCapacity}
-            className="field-number"
-          />
-        </div>
-
-      </div>
-    </ProfileFormShell>
+      <VenueEditDialog
+        open={dialogState.open}
+        onClose={() => setDialogState({ open: false })}
+        mode={dialogState.open && dialogState.mode === 'edit' ? 'edit' : 'create'}
+        initialValue={
+          dialogState.open && dialogState.mode === 'edit'
+            ? dialogState.initial
+            : EMPTY_VENUE_EDIT
+        }
+        onSubmit={async (value) => {
+          if (dialogState.open && dialogState.mode === 'edit') {
+            await handleEdit(dialogState.venueId, value)
+          } else {
+            await handleCreate(value)
+          }
+        }}
+      />
+    </>
   )
 }

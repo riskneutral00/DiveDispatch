@@ -51,7 +51,7 @@ describe('HierarchySubBar', () => {
     mockRoles = [
       R('DiveCenter', 100, 'a'),
       R('Boat', 200, 'b'),
-      R('Pool', 300, 'c'),
+      R('Venue', 300, 'c'),
       R('Equipment', 400, 'd'),
     ]
 
@@ -61,14 +61,14 @@ describe('HierarchySubBar', () => {
     expect(screen.getByTestId('role-hierarchy-divider')).toBeInTheDocument()
     expect(screen.getByLabelText('Dive Center')).toBeInTheDocument()
     expect(screen.getByLabelText('Boat')).toBeInTheDocument()
-    expect(screen.getByLabelText('Pool')).toBeInTheDocument()
+    expect(screen.getByLabelText('Venue')).toBeInTheDocument()
     expect(screen.getByLabelText('Equipment')).toBeInTheDocument()
 
     const links = screen.getAllByRole('link')
     expect(links.map((l) => l.getAttribute('aria-label'))).toEqual([
       'Dive Center',
       'Boat',
-      'Pool',
+      'Venue',
       'Equipment',
     ])
   })

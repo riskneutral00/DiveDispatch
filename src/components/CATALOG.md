@@ -68,6 +68,8 @@ Governance: `.claude/rules/existing-components-first.md` + `.claude/rules/dry-fi
 | `BottomActionBar` | `@/components/ui/bottom-action-bar` | Fixed mobile bottom action bar (primary Save on mobile). |
 | `SectionDivider` | `@/components/ui/section-divider` | Horizontal divider between sections. |
 | `ItemCard` | `@/components/ui/item-card` | Removable card in a list (credentials, routes, fleet entries). Never hand-roll trash buttons. Optional `onSave` + `canSave` + `saving` + `saved` props render a Save icon-button next to the trash icon (used by draft-row-with-Save patterns like the Equipment Gear tab). |
+| `EntityCardList` | `@/components/ui/entity-card-list` | Responsive card grid editor for a list of embedded entities. Handles FormSectionHeader + Add button, empty state, add/remove wiring, minItems/maxItems enforcement. Consumer supplies `renderCard(item, update, index)` for card interior and `emptyItem()` factory for new entries. Uses `ItemCard` internally. Grid: `grid-cols-1 md:grid-cols-2 xl:grid-cols-3`. Use for any owner-edited array-of-entities pattern (venues, boat fleet, credentials, etc.); do NOT use for directory-pick lists — those use `SortableOverlayList`. |
+| `AddEntityButton` | `@/components/ui/add-entity-button` | Canonical "add row" button — secondary, small, with Plus icon. Used inside `EntityCardList`'s header action slot; also composable standalone. |
 | `ListRow` | `@/components/ui/list-row` | Reusable row with compact variant. |
 
 ## Cards & content headers
@@ -143,12 +145,14 @@ Role-agnostic building blocks for stakeholder profile forms (`PatternLibrary/one
 | `ProfileStartBanner` | `@/components/profiles/profile-start-banner` | "Start your X profile" destructive-tone banner when role-table row is missing (kind: 'not_started'). |
 | `BusinessContactSection` | `@/components/profiles/business-contact-section` | Contact fields for business roles (name, location, email, phone). |
 | `AccessControlSection` | `@/components/profiles/access-control-section` | allow/not-allow controls. Exports `accessFromProfile`, `accessToPayload`, `INITIAL_ACCESS_CONTROL`. |
-| `VenueCapabilitiesSection` | `@/components/profiles/venue-capabilities-section` | Generic venue capabilities — pool + dive-site delegate to this. |
+| `VenueCapabilitiesSection` | `@/components/profiles/venue-capabilities-section` | Multi-venue list editor. Uses `EntityCardList` + `VenueEditDialog` for Add/Edit. Each card shows read-only summary of one venue row with an Edit button. |
+| `VenueContactSection` | `@/components/profiles/venue-contact-section` | Venue Contact sub-tab. Reads/writes the operator's `organizations` row (business name, email, phone, address) — NOT venue rows. Multi-venue operators have a single business identity; individual venues are edited in Capabilities. |
+| `VenueEditDialog` | `@/components/profiles/venue-edit-dialog` | Shared Create/Edit dialog for individual venue rows. Collects name, subtype, location, depth, capacity, confined, hasCompressor, access-control slug lists. Consumed by `VenueCapabilitiesSection`. |
 | `LocationPicker` | `@/components/profiles/location-picker` | Map-backed place picker. Use `location-picker-lazy` for dynamic import. |
 | `LanguagePicker` | `@/components/profiles/language-picker` | Multi-language selection with flag pills. |
 | `SpecialtyField` | `@/components/profiles/specialty-field` | Specialty picker for instructors/dive-masters. |
 | `LanguageFlags` | `@/components/profiles/language-flags` | Flag-only display. Exports `languageFlagText`. |
-| `PreferredInstructorList` / `PreferredVenueBoatList` / `PreferredEquipmentList` / `PreferredCompressorList` | `@/components/profiles/preferred-list` | Role-specific "preferred" editor lists. |
+| `PreferredInstructorList` / `PreferredVenueList` / `PreferredBoatList` / `PreferredEquipmentList` / `PreferredCompressorList` | `@/components/profiles/preferred-list` | Role-specific "preferred" editor lists. |
 | `RoleProfileForm` | `@/components/profiles/connected-role-forms` | Dynamic dispatcher for role → profile form. Use `hasConnectedForm(roleKey)` to check availability. |
 | `InstructorCardContent` | `@/components/profiles/instructor-card` | Compact instructor card body. |
 

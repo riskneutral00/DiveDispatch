@@ -55,6 +55,7 @@ export function BoatContactSection(props: BoatSectionProps) {
       {...props}
       nameLabel="Business Name"
       schema={contactSchema}
+      inheritFromOtherRoles="Boat"
     />
   )
 }

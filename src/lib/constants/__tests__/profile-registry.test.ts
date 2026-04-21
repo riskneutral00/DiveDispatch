@@ -31,8 +31,7 @@ describe('Every role has booking tab', () => {
     'boat',
     'compressor',
     'equipment',
-    'pool',
-    'dive-site',
+    'venue',
     'liveaboard',
     'dive-resort',
     'dive-hostel',
@@ -73,7 +72,7 @@ describe('Non-operator roles do not have resources tab', () => {
     'boat',
     'compressor',
     'equipment',
-    'pool',
+    'venue',
   ]
 
   for (const role of nonOperatorRoles) {
@@ -111,8 +110,7 @@ describe('Non-equipment roles do not have gear tab', () => {
     'instructor',
     'boat',
     'compressor',
-    'pool',
-    'dive-site',
+    'venue',
   ]
 
   for (const role of nonEquipmentRoles) {

@@ -28,8 +28,8 @@ describe('Binary role classification', () => {
     }
   })
 
-  it('total role count is 11', () => {
-    expect(ROLES).toHaveLength(11)
+  it('total role count is 10', () => {
+    expect(ROLES).toHaveLength(10)
   })
 })
 
@@ -40,8 +40,8 @@ describe('Specific role assignments', () => {
     expect(r.isResource).toBe(false)
   })
 
-  it('DiveSite is resource, not organizer', () => {
-    const r = ROLE_BY_KEY['dive-site']
+  it('Venue is resource, not organizer', () => {
+    const r = ROLE_BY_KEY['venue']
     expect(r.isOrganizer).toBe(false)
     expect(r.isResource).toBe(true)
   })
@@ -55,12 +55,12 @@ describe('Specific role assignments', () => {
     }
   })
 
-  it('Instructor, Boat, Equipment, Pool, Compressor are all resources', () => {
+  it('Instructor, Boat, Equipment, Venue, Compressor are all resources', () => {
     const resourceKeys: RoleKey[] = [
       'instructor',
       'boat',
       'equipment',
-      'pool',
+      'venue',
       'compressor',
     ]
     for (const key of resourceKeys) {
@@ -80,35 +80,30 @@ describe('Derived lists', () => {
     )
   })
 
-  it('RESOURCE_ROLES has exactly 6 members', () => {
-    expect(RESOURCE_ROLES).toHaveLength(6)
+  it('RESOURCE_ROLES has exactly 5 members', () => {
+    expect(RESOURCE_ROLES).toHaveLength(5)
     const keys = RESOURCE_ROLES.map((r) => r.key).sort()
     expect(keys).toEqual(
-      ['boat', 'compressor', 'dive-site', 'equipment', 'instructor', 'pool'].sort(),
+      ['boat', 'compressor', 'equipment', 'instructor', 'venue'].sort(),
     )
   })
 })
 
 describe('Display grouping', () => {
-  it('DISPLAY_OPERATOR_ROLES has 6 members (5 organizers + DiveSite)', () => {
-    expect(DISPLAY_OPERATOR_ROLES).toHaveLength(6)
-    const keys = DISPLAY_OPERATOR_ROLES.map((r) => r.key)
-    expect(keys).toContain('dive-site')
+  it('DISPLAY_OPERATOR_ROLES has 5 members (all organizers)', () => {
+    expect(DISPLAY_OPERATOR_ROLES).toHaveLength(5)
+    const keys = DISPLAY_OPERATOR_ROLES.map((r) => r.key).sort()
+    expect(keys).toEqual(['agent', 'dive-center', 'dive-hostel', 'dive-resort', 'liveaboard'])
   })
 
-  it('DISPLAY_RESOURCE_ROLES has 5 members (excludes DiveSite)', () => {
+  it('DISPLAY_RESOURCE_ROLES has 5 members', () => {
     expect(DISPLAY_RESOURCE_ROLES).toHaveLength(5)
-    const keys = DISPLAY_RESOURCE_ROLES.map((r) => r.key)
-    expect(keys).not.toContain('dive-site')
+    const keys = DISPLAY_RESOURCE_ROLES.map((r) => r.key).sort()
+    expect(keys).toEqual(['boat', 'compressor', 'equipment', 'instructor', 'venue'])
   })
 
-  it('DiveSite has displayGroup "operator" (UI override)', () => {
-    expect(ROLE_BY_KEY['dive-site'].displayGroup).toBe('operator')
-  })
-
-  it('every non-DiveSite role: displayGroup matches isOrganizer flag', () => {
+  it('every role: displayGroup matches isOrganizer flag', () => {
     for (const role of ROLES) {
-      if (role.key === 'dive-site') continue
       const expected = role.isOrganizer ? 'operator' : 'resource'
       expect(
         role.displayGroup,
@@ -117,12 +112,12 @@ describe('Display grouping', () => {
     }
   })
 
-  it('union of display groups covers all 11 roles with no gaps', () => {
+  it('union of display groups covers all 10 roles with no gaps', () => {
     const displayKeys = new Set([
       ...DISPLAY_OPERATOR_ROLES.map((r) => r.key),
       ...DISPLAY_RESOURCE_ROLES.map((r) => r.key),
     ])
-    expect(displayKeys.size).toBe(11)
+    expect(displayKeys.size).toBe(10)
     expect(displayKeys.size).toBe(ROLES.length)
     for (const role of ROLES) {
       expect(displayKeys.has(role.key), `${role.key} missing from display groups`).toBe(true)
@@ -156,10 +151,10 @@ describe('Booking creation eligibility (isOrganizer gates QuickBookRail + create
     )
   })
 
-  it('exactly these 6 roles cannot create bookings', () => {
+  it('exactly these 5 roles cannot create bookings', () => {
     const keys = RESOURCE_ROLES.map((r) => r.key).sort()
     expect(keys).toEqual(
-      ['boat', 'compressor', 'dive-site', 'equipment', 'instructor', 'pool'],
+      ['boat', 'compressor', 'equipment', 'instructor', 'venue'],
     )
   })
 })
