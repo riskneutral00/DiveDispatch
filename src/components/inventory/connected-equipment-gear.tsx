@@ -54,6 +54,8 @@ interface DraftRow {
 interface PendingMatrix {
   localId: string
   gearType: MatrixGearType
+  optimisticManufacturer?: string
+  optimisticSizeSystem?: FinSizeSystem
 }
 
 interface PendingRemoveGroup {
@@ -154,6 +156,20 @@ export function ConnectedEquipmentGear() {
     }
   }, [grouped, activeGearType])
 
+  useEffect(() => {
+    setPendingMatrices((prev) => {
+      const stillPending = prev.filter((p) => {
+        if (!p.optimisticManufacturer) return true
+        const matched = matrixGroups.some((g) =>
+          g.manufacturer === p.optimisticManufacturer &&
+          (p.gearType !== 'fins' || g.sizeSystem === p.optimisticSizeSystem),
+        )
+        return !matched
+      })
+      return stillPending.length === prev.length ? prev : stillPending
+    })
+  }, [matrixGroups])
+
   const handleAddDraft = useCallback(() => {
     setDrafts((prev) => [
       ...prev,
@@ -241,7 +257,13 @@ export function ConnectedEquipmentGear() {
       }
 
       if (pendingLocalId) {
-        setPendingMatrices((prev) => prev.filter((p) => p.localId !== pendingLocalId))
+        setPendingMatrices((prev) =>
+          prev.map((p) =>
+            p.localId === pendingLocalId
+              ? { ...p, optimisticManufacturer: manufacturer, optimisticSizeSystem: sizeSystem }
+              : p,
+          ),
+        )
       }
     },
     [activeGearType, renameGroupMutation, bulkSetMutation, renameMaskGroupMutation, bulkSetMasksMutation],
@@ -410,7 +432,19 @@ function MatrixView({
   const tBooking = useTranslations('booking')
 
   const canonicalManufacturers = useMemo<readonly string[]>(() => Array.from(MANUFACTURERS), [])
-  const totalBlocks = groups.length + pendingMatrices.length
+
+  const visiblePending = useMemo(
+    () => pendingMatrices.filter((p) => {
+      if (!p.optimisticManufacturer) return true
+      return !groups.some((g) =>
+        g.manufacturer === p.optimisticManufacturer &&
+        (p.gearType !== 'fins' || g.sizeSystem === p.optimisticSizeSystem),
+      )
+    }),
+    [pendingMatrices, groups],
+  )
+
+  const totalBlocks = groups.length + visiblePending.length
   const canRemove = totalBlocks > 1
 
   const availableFor = useCallback(
@@ -458,7 +492,7 @@ function MatrixView({
           />
         )
       })}
-      {pendingMatrices.map((pending) => (
+      {visiblePending.map((pending) => (
         <ManufacturerMatrixSection
           key={pending.localId}
           gearType={gearType}

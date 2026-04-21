@@ -139,4 +139,29 @@ describe('ConnectedEquipmentGear', () => {
     const callArg = mockBulkSet.mock.calls[0]![0]
     expect(callArg.cells).toEqual({})
   })
+
+  it('pending matrix section stays visible after first save while the group is refetching', async () => {
+    mockBulkSet.mockResolvedValueOnce(undefined)
+    groupedReturn = {}
+
+    render(<ConnectedEquipmentGear />)
+
+    const manufacturerSelect = await screen.findByLabelText(/Manufacturer/i)
+    fireEvent.change(manufacturerSelect, { target: { value: 'ScubaPro' } })
+
+    const [fillAllSelect] = await screen.findAllByLabelText(/Fill all with/i)
+    fireEvent.change(fillAllSelect!, { target: { value: '4' } })
+    fireEvent.click(screen.getByRole('button', { name: /Apply/i }))
+
+    const saveBtn = await screen.findByRole('button', { name: /^Save$/i })
+    fireEvent.click(saveBtn)
+
+    await vi.waitFor(() => {
+      expect(mockBulkSet).toHaveBeenCalled()
+    })
+
+    expect(screen.getAllByLabelText(/Manufacturer/i).length).toBeGreaterThan(0)
+    const firstSelect = screen.getAllByLabelText(/Manufacturer/i)[0] as HTMLSelectElement
+    expect(firstSelect.value).toBe('ScubaPro')
+  })
 })
