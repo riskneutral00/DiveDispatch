@@ -24,6 +24,7 @@ import { readOrgClaims } from './lib/activeOrg'
 import { parseTokenIdentifier, isAllowedRebind } from './lib/tokenIdentifier'
 import { insertUserRole } from './lib/userRoleHelpers'
 import { setUserOrganization } from './lib/userOrg'
+import { ensureSystemThemesInline } from './lib/ensureSystemThemes'
 
 function publicUser(user: Doc<'users'>) {
   const { tokenIdentifier: _ti, email: _e, ...rest } = user
@@ -80,6 +81,8 @@ export const createUser = mutation({
     if (!identity) throw new ConvexError({ code: ErrorCode.UNAUTHENTICATED })
 
     await checkRateLimit(ctx, 'createUser', identity.tokenIdentifier)
+
+    await ensureSystemThemesInline(ctx)
 
     if (!isAdult(args.dateOfBirth)) {
       throw new ConvexError({
@@ -393,6 +396,8 @@ export const upsertFromWebhook = internalMutation({
         if (existing) return existing._id
       }
     }
+
+    await ensureSystemThemesInline(ctx)
 
     const existing = await ctx.db
       .query('users')

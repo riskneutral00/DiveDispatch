@@ -4,6 +4,7 @@ import { sanitizeFields, THEME_FIELDS } from './lib/sanitize'
 import { authorize } from './lib/auth'
 import { ErrorCode } from './lib/errorCodes'
 import { compareThemeSortOrder } from './lib/themeOrdering'
+import { ensureSystemThemesInline } from './lib/ensureSystemThemes'
 
 export const listActive = query({
   args: {},
@@ -175,6 +176,13 @@ export const upsert = mutation({
       isActive: args.isActive,
       createdAt: Date.now(),
     })
+  },
+})
+
+export const ensureSystemThemes = internalMutation({
+  args: { force: v.optional(v.boolean()) },
+  handler: async (ctx, { force }) => {
+    return await ensureSystemThemesInline(ctx, { force })
   },
 })
 

@@ -13,8 +13,8 @@ import {
   DEFAULT_SELECTED_THEME_SLUG,
   RETIRED_THEME_SLUGS,
   SEED_THEME_SPECS,
-  themeConfigForSeedSpec,
 } from './lib/defaultThemes'
+import { ensureSystemThemesInline } from './lib/ensureSystemThemes'
 import { stakeholderPreferenceIdsToDelete } from './lib/stakeholderPreferencesDedupe'
 import { insertUserRole } from './lib/userRoleHelpers'
 import { setUserOrganization } from './lib/userOrg'
@@ -642,40 +642,7 @@ export const patchTokenIdentifiers = internalMutation({
 export const seedDefaultTheme = internalMutation({
   args: {},
   handler: async (ctx) => {
-    for (const spec of SEED_THEME_SPECS) {
-      const config = themeConfigForSeedSpec(spec)
-      const existing = await ctx.db
-        .query('themes')
-        .withIndex('by_slug', (q) => q.eq('slug', spec.slug))
-        .unique()
-      const row = {
-        name: spec.name,
-        slug: spec.slug,
-        config: JSON.stringify(config),
-        isActive: true,
-        appearance: spec.appearance,
-        tier: 'free' as const,
-        sortOrder: spec.sortOrder,
-      }
-      if (existing) {
-        await ctx.db.patch(existing._id, row) // batch-exempt: dev-only seed
-      } else {
-        await ctx.db.insert('themes', { // batch-exempt: dev-only seed
-          ...row,
-          createdAt: Date.now(),
-        })
-      }
-    }
-
-    for (const slug of RETIRED_THEME_SLUGS) {
-      const legacy = await ctx.db
-        .query('themes')
-        .withIndex('by_slug', (q) => q.eq('slug', slug))
-        .unique()
-      if (legacy) {
-        await ctx.db.delete(legacy._id) // batch-exempt: dev-only seed
-      }
-    }
+    await ensureSystemThemesInline(ctx, { force: true })
 
     const defaultTheme = await ctx.db
       .query('themes')
