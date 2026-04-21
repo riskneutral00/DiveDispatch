@@ -17,9 +17,11 @@ async function seedInstructorUser(ctx: SeedCtx, slug: string) {
     dateOfBirth: '1990-01-01',
     appLanguage: 'en',
   })
+  const organizationId = await getOrCreateTestOrg(ctx, userId)
   await ctx.db.insert('userRoles', {
     userId,
     role: 'Instructor',
+    organizationId,
     createdAt: Date.now(),
   })
   return userId
@@ -69,9 +71,11 @@ async function seedCallerUser(ctx: SeedCtx, slug: string) {
     dateOfBirth: '1990-01-01',
     appLanguage: 'en',
   })
+  const organizationId = await getOrCreateTestOrg(ctx, userId)
   await ctx.db.insert('userRoles', {
     userId,
     role: 'DiveCenter',
+    organizationId,
     createdAt: Date.now(),
   })
   return userId
@@ -252,12 +256,13 @@ describe('listByRole language propagation', () => {
         dateOfBirth: '1990-01-01',
         appLanguage: 'en',
       })
+      const dcOrgId = await getOrCreateTestOrg(ctx, dcUserId, 'Test DC')
       await ctx.db.insert('userRoles', {
         userId: dcUserId,
         role: 'DiveCenter',
+        organizationId: dcOrgId,
         createdAt: Date.now(),
       })
-      const dcOrgId = await getOrCreateTestOrg(ctx, dcUserId, 'Test DC')
       await ctx.db.insert('diveCenters', {
         organizationId: dcOrgId,
         name: 'Test DC',

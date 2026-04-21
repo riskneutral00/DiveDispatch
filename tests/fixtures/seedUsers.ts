@@ -78,9 +78,11 @@ export async function seedUser(
     appLanguage: 'en',
   })
   if (!overrides.skipUserRoles) {
+    const orgId = await getOrCreateTestOrg(ctx, userId)
     await ctx.db.insert('userRoles', {
       userId,
       role,
+      organizationId: orgId,
       createdAt: Date.now(),
     })
   }

@@ -40,9 +40,11 @@ describe('requireActiveRole validation', () => {
     const t = makeT()
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx)
+      const user = await ctx.db.get(userId)
       await ctx.db.insert('userRoles', {
         userId,
         role: 'Instructor',
+        organizationId: user!.organizationId!,
         createdAt: Date.now(),
       })
     })

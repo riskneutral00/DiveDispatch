@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { api } from '../convex/_generated/api'
-import { seedUser, seedDiveCenterProfile, seedStakeholderPreferences, findProfileByUser} from './fixtures'
+import { seedUser, seedDiveCenterProfile, seedStakeholderPreferences, findProfileByUser, getOrCreateTestOrg } from './fixtures'
 import { makeT } from './helpers/convex-helpers'
 import { createUserDefaults } from './helpers/createUser'
 
@@ -87,11 +87,13 @@ describe('getOnboardingStatus', () => {
     const t = makeT()
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx, { slug: 'mixed-weakest', tokenIdentifier: 'clerk|mixed-weakest', role: 'DiveCenter' })
+      const organizationId = await getOrCreateTestOrg(ctx, userId)
       await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
       await seedDiveCenterProfile(ctx, userId)
       await ctx.db.insert('userRoles', {
         userId,
         role: 'Instructor',
+        organizationId,
         createdAt: Date.now(),
       })
     })

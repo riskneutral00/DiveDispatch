@@ -5,7 +5,7 @@
 
 import { describe, it, expect } from 'vitest'
 import { api } from '../convex/_generated/api'
-import { seedUser, TEST_TOKENS, TEST_SLUGS, findProfileByUser} from './fixtures'
+import { seedUser, TEST_TOKENS, TEST_SLUGS, findProfileByUser, getOrCreateTestOrg } from './fixtures'
 import { seedBooking, seedSession, seedReservation } from './fixtures/seedBookings'
 import { seedBookingResource } from './fixtures/seedBookings'
 import { seedInventoryUnit, seedSnapshot } from './fixtures/seedInventory'
@@ -22,9 +22,11 @@ describe('userRoles.bookingCountForRole', () => {
 
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx, { skipUserRoles: true })
+      const organizationId = await getOrCreateTestOrg(ctx, userId)
       roleId = await ctx.db.insert('userRoles', {
         userId,
         role: 'Instructor',
+        organizationId,
         createdAt: Date.now(),
       })
     })
@@ -42,9 +44,11 @@ describe('userRoles.bookingCountForRole', () => {
 
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx, { skipUserRoles: true })
+      const organizationId = await getOrCreateTestOrg(ctx, userId)
       roleId = await ctx.db.insert('userRoles', {
         userId,
         role: 'Instructor',
+        organizationId,
         createdAt: Date.now(),
       })
 
@@ -80,9 +84,11 @@ describe('userRoles.bookingCountForRole', () => {
 
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx, { skipUserRoles: true })
+      const organizationId = await getOrCreateTestOrg(ctx, userId)
       roleId = await ctx.db.insert('userRoles', {
         userId,
         role: 'Instructor',
+        organizationId,
         createdAt: Date.now(),
       })
 
@@ -125,9 +131,11 @@ describe('userRoles.deleteRole', () => {
 
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx, { skipUserRoles: true })
+      const organizationId = await getOrCreateTestOrg(ctx, userId)
       roleId = await ctx.db.insert('userRoles', {
         userId,
         role: 'DiveCenter',
+        organizationId,
         createdAt: Date.now(),
       })
     })
@@ -144,15 +152,18 @@ describe('userRoles.deleteRole', () => {
 
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx, { skipUserRoles: true })
+      const organizationId = await getOrCreateTestOrg(ctx, userId)
       roleId = await ctx.db.insert('userRoles', {
         userId,
         role: 'Instructor',
+        organizationId,
         createdAt: Date.now(),
       })
       // Second role so LAST_ROLE guard passes
       await ctx.db.insert('userRoles', {
         userId,
         role: 'DiveCenter',
+        organizationId,
         createdAt: Date.now(),
       })
 
@@ -192,16 +203,19 @@ describe('userRoles.deleteRole', () => {
 
     await t.run(async (ctx) => {
       userId = await seedUser(ctx, { skipUserRoles: true })
+      const organizationId = await getOrCreateTestOrg(ctx, userId)
 
       // Two roles so LAST_ROLE guard passes
       roleId = await ctx.db.insert('userRoles', {
         userId,
         role: 'Instructor',
+        organizationId,
         createdAt: Date.now(),
       })
       await ctx.db.insert('userRoles', {
         userId,
         role: 'DiveCenter',
+        organizationId,
         createdAt: Date.now(),
       })
 
@@ -262,14 +276,17 @@ describe('userRoles.deleteRole', () => {
 
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx, { skipUserRoles: true })
+      const organizationId = await getOrCreateTestOrg(ctx, userId)
       roleId = await ctx.db.insert('userRoles', {
         userId,
         role: 'Instructor',
+        organizationId,
         createdAt: Date.now(),
       })
       await ctx.db.insert('userRoles', {
         userId,
         role: 'DiveCenter',
+        organizationId,
         createdAt: Date.now(),
       })
 
@@ -309,9 +326,11 @@ describe('userRoles.deleteRole', () => {
 
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx, { skipUserRoles: true })
+      const organizationId = await getOrCreateTestOrg(ctx, userId)
       roleId = await ctx.db.insert('userRoles', {
         userId,
         role: 'DiveCenter',
+        organizationId,
         createdAt: Date.now(),
       })
     })
@@ -332,15 +351,18 @@ describe('userRoles.deleteRole', () => {
         slug: 'other-owner',
         skipUserRoles: true,
       })
+      const otherOrgId = await getOrCreateTestOrg(ctx, otherUserId)
       roleId = await ctx.db.insert('userRoles', {
         userId: otherUserId,
         role: 'DiveCenter',
+        organizationId: otherOrgId,
         createdAt: Date.now(),
       })
       // Also give them a second role so LAST_ROLE doesn't trigger
       await ctx.db.insert('userRoles', {
         userId: otherUserId,
         role: 'Boat',
+        organizationId: otherOrgId,
         createdAt: Date.now(),
       })
 

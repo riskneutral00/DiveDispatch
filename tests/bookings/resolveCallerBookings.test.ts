@@ -26,14 +26,25 @@ describe('resolveCallerBookings ownerType isolation', () => {
         appLanguage: 'en',
       })
 
+      const orgId = await ctx.db.insert('organizations', {
+        clerkOrgId: `test_${slug}`,
+        name: `${slug} Corp`,
+        slug,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      })
+      await ctx.db.patch(userId, { organizationId: orgId })
+
       await ctx.db.insert('userRoles', {
         userId,
         role: 'DiveCenter',
+        organizationId: orgId,
         createdAt: Date.now(),
       })
       await ctx.db.insert('userRoles', {
         userId,
         role: 'Agent',
+        organizationId: orgId,
         createdAt: Date.now(),
       })
 

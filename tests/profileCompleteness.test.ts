@@ -12,6 +12,7 @@ import {
   seedAgent,
   seedBoatProfile,
   seedStakeholderPreferences,
+  getOrCreateTestOrg,
 } from './fixtures'
 import { makeT } from './helpers/convex-helpers'
 
@@ -134,6 +135,7 @@ describe('checkProfileCompleteness', () => {
   it('Agent with profile but empty agents.customerLanguages marks customerLanguages incomplete', async () => {
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx, { role: 'Agent' })
+      const organizationId = await getOrCreateTestOrg(ctx, userId)
       await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
       await seedAgent(ctx, userId, { customerLanguages: [] })
 
@@ -163,6 +165,7 @@ describe('checkProfileCompleteness', () => {
   it('DiveCenter missing operator prefs and coverage fields stays below 100%', async () => {
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx, { role: 'DiveCenter', slug: 'dc-operator-gaps', tokenIdentifier: 'clerk|dc-operator-gaps' })
+      const organizationId = await getOrCreateTestOrg(ctx, userId)
       await ctx.db.patch(userId, { phone: '+66000000004', appLanguage: 'en' })
       await seedDiveCenterProfile(ctx, userId)
 
@@ -256,6 +259,7 @@ describe('checkAllRolesCompleteness', () => {
   it('single role at 100% returns allComplete: true', async () => {
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx, { role: 'Equipment' })
+      const organizationId = await getOrCreateTestOrg(ctx, userId)
       await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
       await seedEquipmentProfile(ctx, userId)
       await seedCompleteGearInventory(ctx, TEST_SLUGS.diveCenter)
@@ -271,6 +275,7 @@ describe('checkAllRolesCompleteness', () => {
   it('multi-role with one incomplete returns allComplete: false', async () => {
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx, { role: 'Equipment' })
+      const organizationId = await getOrCreateTestOrg(ctx, userId)
       await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
       await seedEquipmentProfile(ctx, userId)
       await seedCompleteGearInventory(ctx, TEST_SLUGS.diveCenter)
@@ -278,6 +283,7 @@ describe('checkAllRolesCompleteness', () => {
       await ctx.db.insert('userRoles', {
         userId,
         role: 'Instructor',
+        organizationId,
         createdAt: Date.now(),
       })
 
@@ -299,6 +305,7 @@ describe('getProfileCompletionForRole query', () => {
   it('returns completeness for specified role', async () => {
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx, { role: 'Equipment' })
+      const organizationId = await getOrCreateTestOrg(ctx, userId)
       await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
       await seedEquipmentProfile(ctx, userId)
       await seedCompleteGearInventory(ctx, TEST_SLUGS.diveCenter)
@@ -330,6 +337,7 @@ describe('checkProfileCompleteness kind discriminator', () => {
   it('returns kind: not_started when role-table row missing', async () => {
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx, { role: 'Compressor' })
+      const organizationId = await getOrCreateTestOrg(ctx, userId)
       await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
       const result = await checkProfileCompleteness(ctx, { _id: userId }, 'Compressor')
       expect(result.kind).toBe('not_started')
@@ -339,9 +347,8 @@ describe('checkProfileCompleteness kind discriminator', () => {
   it('returns kind: partial when row exists but fields incomplete', async () => {
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx, { role: 'Compressor' })
-      await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
-      const { getOrCreateTestOrg } = await import('./fixtures')
       const orgId = await getOrCreateTestOrg(ctx, userId, 'slug')
+      await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
       await ctx.db.insert('compressors', {
         organizationId: orgId,
         name: 'Partial',
@@ -358,9 +365,8 @@ describe('checkProfileCompleteness kind discriminator', () => {
   it('returns kind: complete when all required fields set', async () => {
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx, { role: 'Compressor' })
-      await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
-      const { getOrCreateTestOrg } = await import('./fixtures')
       const orgId = await getOrCreateTestOrg(ctx, userId, 'slug')
+      await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
       await ctx.db.insert('compressors', {
         organizationId: orgId,
         name: 'Full',

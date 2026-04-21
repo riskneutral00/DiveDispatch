@@ -188,10 +188,12 @@ describe('booking gate: per-active-role completeness', () => {
     const t = makeT()
     await t.run(async (ctx) => {
       const userId = await seedFullDCWithCoverage(ctx, 'dc-per-role')
+      const user = await ctx.db.get(userId)
       // Add incomplete Boat role (no profile)
       await ctx.db.insert('userRoles', {
         userId,
         role: 'Boat',
+        organizationId: user!.organizationId!,
         createdAt: Date.now(),
       })
     })
@@ -211,9 +213,11 @@ describe('booking gate: per-active-role completeness', () => {
     const t = makeT()
     await t.run(async (ctx) => {
       const userId = await seedFullDCWithCoverage(ctx, 'agent-per-role-fail')
+      const user = await ctx.db.get(userId)
       await ctx.db.insert('userRoles', {
         userId,
         role: 'Agent',
+        organizationId: user!.organizationId!,
         createdAt: Date.now(),
       })
     })

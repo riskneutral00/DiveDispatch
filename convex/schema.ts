@@ -503,7 +503,7 @@ export default defineSchema({
     role: stakeholderType,
     createdAt: v.number(),
     profileComplete: v.optional(v.boolean()),
-    organizationId: v.optional(v.id('organizations')),
+    organizationId: v.id('organizations'),
   })
     .index('by_userId', ['userId'])
     .index('by_userId_role', ['userId', 'role'])

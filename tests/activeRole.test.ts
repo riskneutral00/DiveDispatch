@@ -19,7 +19,7 @@ import {
   seedStakeholderPreferences,
   seedInstructorProfile,
   seedVenue,
-  type SeedCtx, findProfileByUser } from './fixtures'
+  type SeedCtx, findProfileByUser, getOrCreateTestOrg } from './fixtures'
 import { makeT, expectConvexError } from './helpers/convex-helpers'
 
 // ─── Composite helper ────────────────────────────────────────────────────────
@@ -99,9 +99,11 @@ describe('createDraftShell — activeRole validation', () => {
     const t = makeT()
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx, { slug: 'dc-rej-2', tokenIdentifier: 'clerk|dc-rej-2' })
+      const organizationId = await getOrCreateTestOrg(ctx, userId)
       await ctx.db.insert('userRoles', {
         userId,
         role: 'Instructor',
+        organizationId,
         createdAt: Date.now(),
       })
     })
@@ -152,10 +154,12 @@ describe('createDraftShell — activeRole ownership stamping', () => {
     const t = makeT()
     await t.run(async (ctx) => {
       const userId = await seedFullDc(ctx, 'dc-own-2')
+      const user = await ctx.db.get(userId)
       // Add Agent role + profile
       await ctx.db.insert('userRoles', {
         userId,
         role: 'Agent',
+        organizationId: user!.organizationId!,
         createdAt: Date.now(),
       })
       await seedAgent(ctx, userId)

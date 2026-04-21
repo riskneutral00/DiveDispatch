@@ -36,20 +36,24 @@ describe('userRoles.myRoles', () => {
     let userId: any
     await t.run(async (ctx) => {
       userId = await seedUser(ctx, { skipUserRoles: true })
+      const organizationId = await getOrCreateTestOrg(ctx, userId)
       const t0 = Date.now()
       await ctx.db.insert('userRoles', {
         userId,
         role: 'DiveCenter',
+        organizationId,
         createdAt: t0,
       })
       await ctx.db.insert('userRoles', {
         userId,
         role: 'Boat',
+        organizationId,
         createdAt: t0 + 1000,
       })
       await ctx.db.insert('userRoles', {
         userId,
         role: 'Equipment',
+        organizationId,
         createdAt: t0 + 2000,
       })
     })
@@ -65,20 +69,24 @@ describe('userRoles.myRoles', () => {
     const t = makeT()
     await t.run(async (ctx) => {
       const dcUserId = await seedUser(ctx, { skipUserRoles: true })
+      const dcOrgId = await getOrCreateTestOrg(ctx, dcUserId)
       const instrUserId = await seedUser(ctx, {
         tokenIdentifier: TEST_TOKENS.instructor,
         slug: TEST_SLUGS.instructor,
         role: 'Instructor',
       })
+      const instrUser = await ctx.db.get(instrUserId)
       const now = Date.now()
       await ctx.db.insert('userRoles', {
         userId: dcUserId,
         role: 'DiveCenter',
+        organizationId: dcOrgId,
         createdAt: now,
       })
       await ctx.db.insert('userRoles', {
         userId: instrUserId,
         role: 'Instructor',
+        organizationId: instrUser!.organizationId!,
         createdAt: now,
       })
     })
@@ -99,9 +107,11 @@ describe('userRoles.hasRole', () => {
     let userId: any
     await t.run(async (ctx) => {
       userId = await seedUser(ctx, { skipUserRoles: true })
+      const organizationId = await getOrCreateTestOrg(ctx, userId)
       await ctx.db.insert('userRoles', {
         userId,
         role: 'DiveCenter',
+        organizationId,
         createdAt: Date.now(),
       })
     })
@@ -116,9 +126,11 @@ describe('userRoles.hasRole', () => {
     const t = makeT()
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx, { skipUserRoles: true })
+      const organizationId = await getOrCreateTestOrg(ctx, userId)
       await ctx.db.insert('userRoles', {
         userId,
         role: 'DiveCenter',
+        organizationId,
         createdAt: Date.now(),
       })
     })
@@ -161,9 +173,11 @@ describe('userRoles.addRole', () => {
     const t = makeT()
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx, { skipUserRoles: true })
+      const organizationId = await getOrCreateTestOrg(ctx, userId)
       await ctx.db.insert('userRoles', {
         userId,
         role: 'DiveCenter',
+        organizationId,
         createdAt: Date.now(),
       })
     })
@@ -188,9 +202,11 @@ describe('userRoles.hasAnyOperatorRole', () => {
     const t = makeT()
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx, { skipUserRoles: true })
+      const organizationId = await getOrCreateTestOrg(ctx, userId)
       await ctx.db.insert('userRoles', {
         userId,
         role: 'DiveCenter',
+        organizationId,
         createdAt: Date.now(),
       })
     })
@@ -205,9 +221,11 @@ describe('userRoles.hasAnyOperatorRole', () => {
     const t = makeT()
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx, { skipUserRoles: true })
+      const organizationId = await getOrCreateTestOrg(ctx, userId)
       await ctx.db.insert('userRoles', {
         userId,
         role: 'Instructor',
+        organizationId,
         createdAt: Date.now(),
       })
     })
@@ -226,15 +244,18 @@ describe('userRoles.primaryRole', () => {
     const t = makeT()
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx, { skipUserRoles: true })
+      const organizationId = await getOrCreateTestOrg(ctx, userId)
       const now = Date.now()
       await ctx.db.insert('userRoles', {
         userId,
         role: 'Boat',
+        organizationId,
         createdAt: now,
       })
       await ctx.db.insert('userRoles', {
         userId,
         role: 'DiveCenter',
+        organizationId,
         createdAt: now,
       })
     })

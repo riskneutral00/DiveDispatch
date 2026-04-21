@@ -25,7 +25,9 @@ async function addRole(
   userId: Id<'users'>,
   role: Doc<'userRoles'>['role'],
 ) {
-  await ctx.db.insert('userRoles', { userId, role, createdAt: Date.now() })
+  const user = await ctx.db.get(userId)
+  if (!user?.organizationId) throw new Error('addRole helper: user has no organizationId')
+  await ctx.db.insert('userRoles', { userId, role, organizationId: user.organizationId, createdAt: Date.now() })
 }
 
 async function seedOrg(

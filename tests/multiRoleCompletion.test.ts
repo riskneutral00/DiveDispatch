@@ -72,11 +72,13 @@ describe('getLowestProfileCompletion', () => {
     const t = makeT()
     await t.run(async (ctx) => {
       const userId = await seedCompleteEquipment(ctx, 'eq-multi')
+      const user = await ctx.db.get(userId)
 
       // Add Boat role -- no boat profile exists
       await ctx.db.insert('userRoles', {
         userId,
         role: 'Boat',
+        organizationId: user!.organizationId!,
         createdAt: Date.now(),
       })
     })
@@ -92,15 +94,15 @@ describe('getLowestProfileCompletion', () => {
     const t = makeT()
     await t.run(async (ctx) => {
       const userId = await seedCompleteEquipment(ctx, 'eq-all-done')
+      const organizationId = await getOrCreateTestOrg(ctx, userId, 'Test Boat Biz')
 
       // Add Boat role with complete profile
       await ctx.db.insert('userRoles', {
         userId,
         role: 'Boat',
+        organizationId,
         createdAt: Date.now(),
       })
-
-      const organizationId = await getOrCreateTestOrg(ctx, userId, 'Test Boat Biz')
       await ctx.db.insert('boats', {
         organizationId,
         name: 'Test Boat Biz',
@@ -145,10 +147,12 @@ describe('getAllRolesCompleteness', () => {
     const t = makeT()
     await t.run(async (ctx) => {
       const userId = await seedCompleteEquipment(ctx, 'eq-all-mixed')
+      const user = await ctx.db.get(userId)
 
       await ctx.db.insert('userRoles', {
         userId,
         role: 'Boat',
+        organizationId: user!.organizationId!,
         createdAt: Date.now(),
       })
     })

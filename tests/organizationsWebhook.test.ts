@@ -376,8 +376,7 @@ describe('organizations.deleteFromWebhook', () => {
 
     expect(results.user?.organizationId).toBeUndefined()
     expect(results.user?.email).toBe('cascade@test.com')
-    expect(results.userRole?.organizationId).toBeUndefined()
-    expect(results.userRole?.role).toBe('DiveCenter')
+    expect(results.userRole).toBeNull()
     expect(results.diveCenter).toBeNull()
     expect(results.liveaboard).toBeNull()
     expect(results.cabin).toBeNull()

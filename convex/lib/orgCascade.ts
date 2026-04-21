@@ -17,7 +17,7 @@ const ROLE_TABLES = [
 
 export type CascadeCounts = {
   usersUnbound: number
-  userRolesUnbound: number
+  userRolesDeleted: number
   profilesDeleted: number
   grandchildrenDeleted: number
 }
@@ -28,7 +28,7 @@ export async function cascadeOrgDelete(
 ): Promise<CascadeCounts> {
   const counts: CascadeCounts = {
     usersUnbound: 0,
-    userRolesUnbound: 0,
+    userRolesDeleted: 0,
     profilesDeleted: 0,
     grandchildrenDeleted: 0,
   }
@@ -47,11 +47,8 @@ export async function cascadeOrgDelete(
     .query('userRoles')
     .withIndex('by_organizationId', (q) => q.eq('organizationId', orgId))
     .collect() // bounded: one org has O(members * roles) rows, practically <2000
-  await batchPatch(
-    ctx,
-    userRoles.map((r) => [r._id, { organizationId: undefined }] as const),
-  )
-  counts.userRolesUnbound = userRoles.length
+  await batchDelete(ctx, userRoles)
+  counts.userRolesDeleted = userRoles.length
 
   const liveaboardIds: Id<'liveaboards'>[] = []
   const diveResortIds: Id<'diveResorts'>[] = []
