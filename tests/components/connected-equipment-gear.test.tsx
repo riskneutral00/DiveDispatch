@@ -50,6 +50,8 @@ function makeInventoryRow(overrides: Partial<{
   manufacturer: string
   size: string
   totalUnits: number
+  isPrescription: boolean
+  diopter: number
 }> = {}) {
   return {
     _id: 'inv-1',
@@ -80,8 +82,8 @@ describe('ConnectedEquipmentGear', () => {
     expect(screen.getByRole('tab', { name: /Regulator/i })).toBeInTheDocument()
   })
 
-  it('calls addItem mutation when saving a new mask draft with required fields', async () => {
-    mockAddItem.mockResolvedValueOnce('inv-new')
+  it('calls bulkSetMasksByManufacturer when saving a new mask manufacturer group', async () => {
+    mockBulkSet.mockResolvedValueOnce(undefined)
     groupedReturn = {}
 
     render(<ConnectedEquipmentGear />)
@@ -91,24 +93,30 @@ describe('ConnectedEquipmentGear', () => {
     const manufacturerSelect = await screen.findByLabelText(/Manufacturer/i)
     fireEvent.change(manufacturerSelect, { target: { value: 'ScubaPro' } })
 
-    const saveBtn = await screen.findByLabelText(/^Save$/i)
+    const [fillAllSelect] = await screen.findAllByLabelText(/Fill all with/i)
+    fireEvent.change(fillAllSelect!, { target: { value: '2' } })
+    fireEvent.click(screen.getByRole('button', { name: /Apply/i }))
+
+    const saveBtn = await screen.findByRole('button', { name: /^Save$/i })
     fireEvent.click(saveBtn)
 
     await vi.waitFor(() => {
-      expect(mockAddItem).toHaveBeenCalled()
+      expect(mockBulkSet).toHaveBeenCalled()
     })
-    const callArg = mockAddItem.mock.calls[0]![0]
-    expect(callArg.gearType).toBe('mask')
+    const callArg = mockBulkSet.mock.calls[0]![0]
     expect(callArg.manufacturer).toBe('ScubaPro')
-    expect(callArg.totalUnits).toBeGreaterThanOrEqual(1)
+    expect(callArg.gearType).toBeUndefined()
+    expect(callArg.cells).toBeDefined()
+    const nonZeroCells = Object.entries(callArg.cells as Record<string, number>).filter(([, v]) => v > 0)
+    expect(nonZeroCells.length).toBeGreaterThan(0)
   })
 
-  it('calls removeItem mutation after confirming removal of an existing mask item', async () => {
-    mockRemoveItem.mockResolvedValueOnce(undefined)
+  it('calls bulkSetMasksByManufacturer with empty cells when removing a mask manufacturer group', async () => {
+    mockBulkSet.mockResolvedValueOnce(undefined)
     groupedReturn = {
       mask: [
-        makeInventoryRow({ _id: 'inv-1', inventoryUnitId: 'unit-1', manufacturer: 'Scubapro' }),
-        makeInventoryRow({ _id: 'inv-2', inventoryUnitId: 'unit-2', manufacturer: 'Aqualung' }),
+        makeInventoryRow({ _id: 'inv-1', inventoryUnitId: 'unit-1', manufacturer: 'Scubapro', isPrescription: false }),
+        makeInventoryRow({ _id: 'inv-2', inventoryUnitId: 'unit-2', manufacturer: 'Aqualung', isPrescription: true, diopter: -3.0 }),
       ],
     }
 
@@ -116,15 +124,19 @@ describe('ConnectedEquipmentGear', () => {
 
     fireEvent.click(screen.getByRole('tab', { name: /Mask/i }))
 
-    const trashButtons = await screen.findAllByLabelText(/^Remove$/i)
-    fireEvent.click(trashButtons[0]!)
+    const removeButtons = await screen.findAllByLabelText(/Remove/i)
+    fireEvent.click(removeButtons[0]!)
+
+    await screen.findByRole('dialog', { hidden: true })
 
     const allRemoveButtons = await screen.findAllByRole('button', { name: /^Remove$/i, hidden: true })
     const confirmBtn = allRemoveButtons[allRemoveButtons.length - 1]!
     fireEvent.click(confirmBtn)
 
     await vi.waitFor(() => {
-      expect(mockRemoveItem).toHaveBeenCalledWith({ inventoryId: 'inv-1' })
+      expect(mockBulkSet).toHaveBeenCalled()
     })
+    const callArg = mockBulkSet.mock.calls[0]![0]
+    expect(callArg.cells).toEqual({})
   })
 })

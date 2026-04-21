@@ -15,6 +15,7 @@ import {
   type MatrixGearType,
   type FinSizeSystem,
 } from '@/lib/constants/gear-sizing'
+import { DIOPTER_VALUES, PLANO_KEY, diopterCellKey } from '@/lib/constants/diopters'
 
 export interface InventoryCellRow {
   _id: string
@@ -57,7 +58,12 @@ export function ManufacturerMatrixSection({
   const [manufacturer, setManufacturer] = useState(initialManufacturer ?? '')
   const [sizeSystem, setSizeSystem] = useState<FinSizeSystem>(initialSizeSystem ?? 'eu')
 
+  const isMask = gearType === 'mask'
+
   const columns = useMemo<readonly string[]>(() => {
+    if (isMask) {
+      return manufacturer ? DIOPTER_VALUES.map(diopterCellKey) : []
+    }
     if (gearType === 'fins') {
       return manufacturer ? finSizesFor(sizeSystem) : []
     }
@@ -66,15 +72,18 @@ export function ManufacturerMatrixSection({
       (e) => e.manufacturer === manufacturer && e.gearType === gearType,
     )
     return Array.from(new Set(entries.map((e) => e.size)))
-  }, [gearType, manufacturer, sizeSystem])
+  }, [gearType, isMask, manufacturer, sizeSystem])
 
   const initial = useMemo<Record<string, number>>(() => {
     const out: Record<string, number> = {}
-    for (const size of columns) {
-      out[size] = rowsBySize.get(size)?.totalUnits ?? 0
+    for (const col of columns) {
+      out[col] = rowsBySize.get(col)?.totalUnits ?? 0
+    }
+    if (isMask) {
+      out[PLANO_KEY] = rowsBySize.get(PLANO_KEY)?.totalUnits ?? 0
     }
     return out
-  }, [columns, rowsBySize])
+  }, [columns, rowsBySize, isMask])
 
   const [cells, setCells] = useState<Record<string, number>>(initial)
   const [fillValue, setFillValue] = useState<number>(4)
@@ -86,26 +95,35 @@ export function ManufacturerMatrixSection({
   const sizeSystemChanged = gearType === 'fins' && sizeSystem !== (initialSizeSystem ?? 'eu') && !!initialSizeSystem
 
   const cellsChanged = useMemo(() => {
-    for (const size of columns) {
-      if ((cells[size] ?? 0) !== (initial[size] ?? 0)) return true
+    for (const col of columns) {
+      if ((cells[col] ?? 0) !== (initial[col] ?? 0)) return true
     }
+    if (isMask && (cells[PLANO_KEY] ?? 0) !== (initial[PLANO_KEY] ?? 0)) return true
     return false
-  }, [cells, columns, initial])
+  }, [cells, columns, initial, isMask])
 
   const isDirty = cellsChanged || manufacturerChanged || sizeSystemChanged
 
-  const hasAnyNonZero = useMemo(() => Object.values(cells).some((v) => v > 0), [cells])
+  const hasAnyNonZero = useMemo(() => {
+    for (const col of columns) {
+      if ((cells[col] ?? 0) > 0) return true
+    }
+    if (isMask && (cells[PLANO_KEY] ?? 0) > 0) return true
+    return false
+  }, [cells, columns, isMask])
   const hasExistingRows = rowsBySize.size > 0
   const canSave = manufacturer.length > 0 && isDirty && (hasAnyNonZero || hasExistingRows)
 
-  const handleCellChange = useCallback((size: string, v: number | undefined) => {
-    setCells((prev) => ({ ...prev, [size]: v ?? 0 }))
+  const handleCellChange = useCallback((col: string, v: number | undefined) => {
+    setCells((prev) => ({ ...prev, [col]: v ?? 0 }))
   }, [])
 
   const handleFillAll = useCallback(() => {
-    const next: Record<string, number> = {}
-    for (const size of columns) next[size] = fillValue
-    setCells(next)
+    setCells((prev) => {
+      const next: Record<string, number> = { ...prev }
+      for (const col of columns) next[col] = fillValue
+      return next
+    })
   }, [columns, fillValue])
 
   const handleSave = useCallback(async () => {
@@ -113,12 +131,15 @@ export function ManufacturerMatrixSection({
     setSaving(true)
     setSaved(false)
     try {
+      const payloadCells: Record<string, number> = {}
+      for (const col of columns) payloadCells[col] = cells[col] ?? 0
+      if (isMask) payloadCells[PLANO_KEY] = cells[PLANO_KEY] ?? 0
       await onBulkSave({
         previousManufacturer: initialManufacturer,
         previousSizeSystem: initialSizeSystem,
         manufacturer,
         ...(gearType === 'fins' ? { sizeSystem } : {}),
-        cells,
+        cells: payloadCells,
       })
       setSaved(true)
       setTimeout(() => setSaved(false), 1500)
@@ -127,7 +148,9 @@ export function ManufacturerMatrixSection({
     } finally {
       setSaving(false)
     }
-  }, [cells, manufacturer, sizeSystem, gearType, initialManufacturer, initialSizeSystem, onBulkSave])
+  }, [cells, columns, manufacturer, sizeSystem, gearType, isMask, initialManufacturer, initialSizeSystem, onBulkSave])
+
+  const emptyHintKey = isMask ? 'addAtLeastOneQty' : 'addAtLeastOneSize'
 
   return (
     <ItemCard
@@ -178,15 +201,29 @@ export function ManufacturerMatrixSection({
               </Button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-6 gap-3">
-              {columns.map((size) => (
+            {isMask && (
+              <div className="flex flex-col gap-1">
                 <NumberPicker
-                  key={size}
-                  label={size}
+                  label={tBooking('noPrescription')}
                   min={0}
                   max={500}
-                  value={cells[size] ?? 0}
-                  onChange={(v) => handleCellChange(size, v)}
+                  value={cells[PLANO_KEY] ?? 0}
+                  onChange={(v) => handleCellChange(PLANO_KEY, v)}
+                  className="field-number"
+                />
+                <p className="text-body text-secondary">{tBooking('prescriptionStrength')}</p>
+              </div>
+            )}
+
+            <div className={isMask ? 'grid grid-cols-1 sm:grid-cols-4 md:grid-cols-6 gap-3' : 'grid grid-cols-1 sm:grid-cols-3 md:grid-cols-6 gap-3'}>
+              {columns.map((col) => (
+                <NumberPicker
+                  key={col}
+                  label={col}
+                  min={0}
+                  max={500}
+                  value={cells[col] ?? 0}
+                  onChange={(v) => handleCellChange(col, v)}
                 />
               ))}
             </div>
@@ -203,7 +240,7 @@ export function ManufacturerMatrixSection({
           label={tCommon('save')}
         />
         {manufacturer.length > 0 && !hasAnyNonZero && !hasExistingRows && (
-          <p className="text-body text-secondary text-right">{tBooking('addAtLeastOneSize')}</p>
+          <p className="text-body text-secondary text-right">{tBooking(emptyHintKey)}</p>
         )}
         {saveError && <InlineError>{saveError}</InlineError>}
       </div>

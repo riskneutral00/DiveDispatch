@@ -16,12 +16,12 @@ import {
   type MatrixGearType,
   type FinSizeSystem,
 } from '@/lib/constants/gear-sizing'
+import { PLANO_KEY, diopterCellKey } from '@/lib/constants/diopters'
 import { GEAR_REQUIRED_FIELDS, isGearItemComplete } from '@/lib/constants/gear-required-fields'
 import { MenuButton } from '@/components/ui/menu-button'
 import { ItemCard } from '@/components/ui/item-card'
 import { SimpleSelect } from '@/components/ui/simple-select'
 import { Input } from '@/components/ui/input'
-import { Checkbox } from '@/components/ui/checkbox'
 import { NumberPicker } from '@/components/ui/number-picker'
 import { Button } from '@/components/ui/button'
 import { LoadingCard } from '@/components/ui/loading-card'
@@ -72,6 +72,8 @@ export function ConnectedEquipmentGear() {
   const removeItemMutation = useMutation(api.equipmentInventory.removeItem)
   const bulkSetMutation = useMutation(api.equipmentInventory.bulkSetByManufacturer)
   const renameGroupMutation = useMutation(api.equipmentInventory.renameManufacturerGroup)
+  const bulkSetMasksMutation = useMutation(api.equipmentInventory.bulkSetMasksByManufacturer)
+  const renameMaskGroupMutation = useMutation(api.equipmentInventory.renameMaskManufacturerGroup)
 
   const [activeGearType, setActiveGearType] = useState<GearType>('wetsuit')
   const [pendingRemove, setPendingRemove] = useState<InventoryRow | null>(null)
@@ -214,40 +216,54 @@ export function ConnectedEquipmentGear() {
       const manufacturerChanged = previousManufacturer !== undefined && previousManufacturer !== manufacturer
       const sizeSystemChanged = gearType === 'fins' && previousSizeSystem !== undefined && previousSizeSystem !== sizeSystem
 
-      if ((manufacturerChanged || sizeSystemChanged) && previousManufacturer !== undefined) {
-        await renameGroupMutation({
+      if (gearType === 'mask') {
+        if (manufacturerChanged && previousManufacturer !== undefined) {
+          await renameMaskGroupMutation({ previousManufacturer, manufacturer })
+        }
+        await bulkSetMasksMutation({ manufacturer, cells })
+      } else {
+        if ((manufacturerChanged || sizeSystemChanged) && previousManufacturer !== undefined) {
+          await renameGroupMutation({
+            gearType,
+            previousManufacturer,
+            ...(previousSizeSystem !== undefined ? { previousSizeSystem } : {}),
+            manufacturer,
+            ...(sizeSystem !== undefined ? { sizeSystem } : {}),
+          })
+        }
+
+        await bulkSetMutation({
           gearType,
-          previousManufacturer,
-          ...(previousSizeSystem !== undefined ? { previousSizeSystem } : {}),
           manufacturer,
           ...(sizeSystem !== undefined ? { sizeSystem } : {}),
+          cells,
         })
       }
-
-      await bulkSetMutation({
-        gearType,
-        manufacturer,
-        ...(sizeSystem !== undefined ? { sizeSystem } : {}),
-        cells,
-      })
 
       if (pendingLocalId) {
         setPendingMatrices((prev) => prev.filter((p) => p.localId !== pendingLocalId))
       }
     },
-    [activeGearType, renameGroupMutation, bulkSetMutation],
+    [activeGearType, renameGroupMutation, bulkSetMutation, renameMaskGroupMutation, bulkSetMasksMutation],
   )
 
   const handleConfirmGroupRemove = useCallback(async () => {
     if (!pendingRemoveGroup) return
-    await bulkSetMutation({
-      gearType: activeGearType,
-      manufacturer: pendingRemoveGroup.manufacturer,
-      ...(pendingRemoveGroup.sizeSystem !== undefined ? { sizeSystem: pendingRemoveGroup.sizeSystem } : {}),
-      cells: {},
-    })
+    if (activeGearType === 'mask') {
+      await bulkSetMasksMutation({
+        manufacturer: pendingRemoveGroup.manufacturer,
+        cells: {},
+      })
+    } else {
+      await bulkSetMutation({
+        gearType: activeGearType,
+        manufacturer: pendingRemoveGroup.manufacturer,
+        ...(pendingRemoveGroup.sizeSystem !== undefined ? { sizeSystem: pendingRemoveGroup.sizeSystem } : {}),
+        cells: {},
+      })
+    }
     setPendingRemoveGroup(null)
-  }, [bulkSetMutation, activeGearType, pendingRemoveGroup])
+  }, [bulkSetMutation, bulkSetMasksMutation, activeGearType, pendingRemoveGroup])
 
   const handleAddAnotherMatrix = useCallback(() => {
     if (!isMatrixGearType(activeGearType)) return
@@ -415,7 +431,12 @@ function MatrixView({
       {groups.map((group) => {
         const rowsBySize = new Map<string, InventoryCellRow>()
         for (const r of group.rows) {
-          if (r.size) rowsBySize.set(r.size, { _id: r._id, size: r.size, totalUnits: r.totalUnits })
+          if (gearType === 'mask') {
+            const key = r.isPrescription && typeof r.diopter === 'number' ? diopterCellKey(r.diopter) : PLANO_KEY
+            rowsBySize.set(key, { _id: r._id, totalUnits: r.totalUnits })
+          } else if (r.size) {
+            rowsBySize.set(r.size, { _id: r._id, size: r.size, totalUnits: r.totalUnits })
+          }
         }
         return (
           <ManufacturerMatrixSection
@@ -497,8 +518,6 @@ function ExistingItemCard({ item, gearType, recentManufacturers, onSave, onRemov
         manufacturer: item.manufacturer,
         size: item.size,
         totalUnits: item.totalUnits,
-        isPrescription: item.isPrescription,
-        diopter: item.diopter,
       }}
       onCommit={onSave}
       onRemove={onRemove}
@@ -550,8 +569,6 @@ interface GearItemCardProps {
     manufacturer?: string
     size?: string
     totalUnits?: number
-    isPrescription?: boolean
-    diopter?: number
   }
   onCommit: (patch: Partial<InventoryRow>) => Promise<void>
   onRemove?: () => void
@@ -564,8 +581,6 @@ function GearItemCard({ kind, gearType, recentManufacturers, initial, onCommit, 
   const [manufacturer, setManufacturer] = useState(initial.manufacturer ?? '')
   const [size, setSize] = useState(initial.size ?? '')
   const [totalUnits, setTotalUnits] = useState<number>(initial.totalUnits ?? 1)
-  const [isPrescription, setIsPrescription] = useState(initial.isPrescription ?? false)
-  const [diopter, setDiopter] = useState<number | undefined>(initial.diopter)
   const [saveError, setSaveError] = useState('')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -576,8 +591,6 @@ function GearItemCard({ kind, gearType, recentManufacturers, initial, onCommit, 
     manufacturer: manufacturer.trim() || undefined,
     size: size.trim() || undefined,
     totalUnits,
-    isPrescription,
-    diopter,
   }
 
   const isValid = isGearItemComplete(currentState, gearType)
@@ -585,9 +598,7 @@ function GearItemCard({ kind, gearType, recentManufacturers, initial, onCommit, 
   const isDirty =
     (initial.manufacturer ?? '') !== manufacturer ||
     (initial.size ?? '') !== size ||
-    (initial.totalUnits ?? 1) !== totalUnits ||
-    (initial.isPrescription ?? false) !== isPrescription ||
-    (initial.diopter ?? undefined) !== diopter
+    (initial.totalUnits ?? 1) !== totalUnits
 
   const needsSize = GEAR_REQUIRED_FIELDS[gearType].includes('size')
 
@@ -603,10 +614,6 @@ function GearItemCard({ kind, gearType, recentManufacturers, initial, onCommit, 
         manufacturer: currentState.manufacturer,
         size: currentState.size,
         totalUnits,
-        isPrescription,
-      }
-      if (gearType === 'mask' && isPrescription && typeof diopter === 'number') {
-        patch.diopter = diopter
       }
       await onCommit(patch)
       setSaved(true)
@@ -616,9 +623,8 @@ function GearItemCard({ kind, gearType, recentManufacturers, initial, onCommit, 
     } finally {
       setSaving(false)
     }
-  }, [canSave, currentState.manufacturer, currentState.size, totalUnits, isPrescription, diopter, gearType, onCommit])
+  }, [canSave, currentState.manufacturer, currentState.size, totalUnits, onCommit])
 
-  const isMask = gearType === 'mask'
   const sizeOptions = canonicalSizesFor(manufacturer, gearType)
 
   return (
@@ -666,31 +672,6 @@ function GearItemCard({ kind, gearType, recentManufacturers, initial, onCommit, 
           onChange={(v) => { if (v !== undefined) setTotalUnits(v) }}
           className="field-number"
         />
-        {isMask && (
-          <div className="flex items-center">
-            <Checkbox
-              label={tBooking('prescription')}
-              checked={isPrescription}
-              onChange={(checked) => {
-                setIsPrescription(checked)
-                if (!checked) setDiopter(undefined)
-              }}
-            />
-          </div>
-        )}
-        {isMask && isPrescription && (
-          <NumberPicker
-            label={tBooking('diopter')}
-            min={-6}
-            max={3}
-            step={0.5}
-            decimals={1}
-            value={diopter}
-            onChange={setDiopter}
-            className="field-number"
-            required
-          />
-        )}
       </div>
       {saveError && <InlineError className="mt-2">{saveError}</InlineError>}
     </ItemCard>
