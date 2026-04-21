@@ -97,12 +97,12 @@ export type BookingDetail = {
   instructorId: string | undefined
   boatId: string | undefined
   equipmentManagerId: string | undefined
-  poolId: string | undefined
+  venueId: string | undefined
   compressorId: string | undefined
   instructorName: string | undefined
   boatName: string | undefined
   equipmentManagerName: string | undefined
-  poolName: string | undefined
+  venueName: string | undefined
   compressorName: string | undefined
   sessions: BookingDetailSession[]
   reservations: BookingDetailReservation[]
@@ -143,7 +143,7 @@ export type RequestItem = {
 }
 
 const RESOURCE_ROLES = new Set([
-  'Instructor', 'Boat', 'Equipment', 'Pool', 'Compressor', 'DiveSite',
+  'Instructor', 'Boat', 'Equipment', 'Venue', 'Compressor',
 ])
 
 export async function buildInstructorNameMap(
@@ -270,7 +270,7 @@ export async function _listByOwner(
   const ownedBookings = await ctx.db
     .query('bookings')
     .withIndex('by_ownerId_ownerType', (q) =>
-      q.eq('ownerId', args.ownerId).eq('ownerType', args.ownerType as "DiveCenter" | "Agent" | "Liveaboard" | "DiveResort" | "DiveHostel" | "DiveSite"),
+      q.eq('ownerId', args.ownerId).eq('ownerType', args.ownerType as "DiveCenter" | "Agent" | "Liveaboard" | "DiveResort" | "DiveHostel"),
     )
     .collect() // bounded: per-booking joins
 
@@ -563,7 +563,7 @@ export async function _getBookingDetail(
   const instructorBR = bookingResourceRows.find((r: BookingResource) => r.resourceType === 'Instructor')
   const boatBR = bookingResourceRows.find((r: BookingResource) => r.resourceType === 'Boat')
   const emBR = bookingResourceRows.find((r: BookingResource) => r.resourceType === 'Equipment')
-  const poolBR = bookingResourceRows.find((r: BookingResource) => r.resourceType === 'Pool')
+  const venueBR = bookingResourceRows.find((r: BookingResource) => r.resourceType === 'Venue')
   const compBR = bookingResourceRows.find((r: BookingResource) => r.resourceType === 'Compressor')
 
   return {
@@ -588,7 +588,7 @@ export async function _getBookingDetail(
     instructorId: instructorBR?.resourceId as string | undefined,
     boatId: boatBR?.resourceId as string | undefined,
     equipmentManagerId: emBR?.resourceId as string | undefined,
-    poolId: poolBR?.resourceId as string | undefined,
+    venueId: venueBR?.resourceId as string | undefined,
     compressorId: compBR?.resourceId as string | undefined,
     instructorName: instructorBR
       ? (instructorBR.resourceId ? nameMap.get(instructorBR.resourceId) : instructorBR.externalName)
@@ -599,8 +599,8 @@ export async function _getBookingDetail(
     equipmentManagerName: emBR
       ? (emBR.resourceId ? nameMap.get(emBR.resourceId) : emBR.externalName)
       : undefined,
-    poolName: poolBR
-      ? (poolBR.resourceId ? nameMap.get(poolBR.resourceId) : poolBR.externalName)
+    venueName: venueBR
+      ? (venueBR.resourceId ? nameMap.get(venueBR.resourceId) : venueBR.externalName)
       : undefined,
     compressorName: compBR
       ? (compBR.resourceId ? nameMap.get(compBR.resourceId) : compBR.externalName)
@@ -685,7 +685,7 @@ export const listByResource = query({
       v.literal('Instructor'),
       v.literal('Boat'),
       v.literal('Equipment'),
-      v.literal('Pool'),
+      v.literal('Venue'),
       v.literal('Compressor'),
     ),
   },

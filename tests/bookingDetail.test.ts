@@ -37,7 +37,7 @@ async function seedReservationWithAutoSession(
 async function seedTestUser(
   ctx: SeedCtx,
   slug: string,
-  role: 'DiveCenter' | 'Instructor' | 'Boat' | 'Equipment' | 'Pool' | 'Compressor' | 'Agent' = 'DiveCenter',
+  role: 'DiveCenter' | 'Instructor' | 'Boat' | 'Equipment' | 'Venue' | 'Compressor' | 'Agent' = 'DiveCenter',
   email?: string,
 ) {
   return seedUser(ctx, {

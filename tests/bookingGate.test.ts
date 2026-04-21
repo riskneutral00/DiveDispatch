@@ -80,7 +80,7 @@ async function seedFullDCWithCoverage(ctx: SeedCtx, slug: string) {
   const venueUserId = await seedUser(ctx, {
     slug: 'test-venue',
     tokenIdentifier: 'clerk|test-venue',
-    role: 'Pool',
+    role: 'Venue',
     email: 'venue@test.com',
     name: 'Test Venue',
     firstName: 'Test',
@@ -90,7 +90,7 @@ async function seedFullDCWithCoverage(ctx: SeedCtx, slug: string) {
     userId: venueUserId,
     name: 'Test Pool',
     hasCompressor: false,
-    venueCategory: 'pool',
+    subtype: 'pool',
   })
   await seedUser(ctx, {
     slug: 'test-compressor',

@@ -95,7 +95,7 @@ describe('Wave 8 — C3 invariant (multi-role user shares one org)', () => {
     let userId: Id<'users'> | undefined
     await t.run(async (ctx) => {
       userId = await seedUser(ctx, 'somchai', 'DiveCenter')
-      await addRole(ctx, userId, 'Pool')
+      await addRole(ctx, userId, 'Venue')
       await addRole(ctx, userId, 'Boat')
       await addRole(ctx, userId, 'Equipment')
     })
@@ -114,8 +114,10 @@ describe('Wave 8 — C3 invariant (multi-role user shares one org)', () => {
     })
     const poolId = await t.withIdentity(identity).mutation(api.venues.create, {
       name: 'Hug Ocean Pool', ...ADDR_ARGS,
-      venueCategory: 'pool' as const,
+      subtype: 'pool' as const,
       hasCompressor: false,
+      maxDepth: 2.5,
+      maxCapacity: 5,
     })
     const boatId = await t.withIdentity(identity).mutation(api.boats.create, {
       name: 'Hug Ocean Boat', ...ADDR_ARGS,

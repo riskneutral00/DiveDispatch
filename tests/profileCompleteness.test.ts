@@ -176,7 +176,8 @@ describe('checkProfileCompleteness', () => {
         'acceptanceMode',
         'preferredInstructor',
         'preferredEquipment',
-        'preferredVenueOrBoat',
+        'preferredVenue',
+        'preferredBoat',
         'preferredCompressor',
       ]))
     })

@@ -9,12 +9,11 @@ export const stakeholderTypeValidator = v.union(
   v.literal('Instructor'),
   v.literal('Boat'),
   v.literal('Equipment'),
-  v.literal('Pool'),
   v.literal('Compressor'),
   v.literal('Liveaboard'),
   v.literal('DiveResort'),
   v.literal('DiveHostel'),
-  v.literal('DiveSite'),
+  v.literal('Venue'),
 )
 
 export type StakeholderRole = typeof stakeholderTypeValidator['type']

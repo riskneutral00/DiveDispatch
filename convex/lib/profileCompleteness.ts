@@ -141,7 +141,7 @@ export async function checkProfileCompleteness(
   let coverageFieldCount = 0
 
   if (isOperator) {
-    coverageFieldCount = 4 // instructor, equipment, venueOrBoat, compressor
+    coverageFieldCount = 4
     const instrSlugs = (prefs?.preferredInstructorSlugs ?? []) as string[]
     const equipSlugs = (prefs?.preferredEquipmentSlugs ?? []) as string[]
     const venueSlugs = (prefs?.preferredVenueSlugs ?? []) as string[]
@@ -150,7 +150,10 @@ export async function checkProfileCompleteness(
 
     if (instrSlugs.length === 0) incomplete.push('preferredInstructor')
     if (equipSlugs.length === 0) incomplete.push('preferredEquipment')
-    if (venueSlugs.length === 0 && boatSlugs.length === 0) incomplete.push('preferredVenueOrBoat')
+    if (venueSlugs.length === 0 && boatSlugs.length === 0) {
+      incomplete.push('preferredVenue')
+      incomplete.push('preferredBoat')
+    }
 
     let hasCompressor = compSlugs.length > 0
     if (!hasCompressor) {

@@ -34,14 +34,14 @@ const RESOURCE_FIELD_MAP: Record<string, Doc<'bookingResources'>['resourceType']
   instructorId: 'Instructor',
   boatId: 'Boat',
   equipmentManagerId: 'Equipment',
-  poolId: 'Pool',
+  poolId: 'Venue',
   compressorId: 'Compressor',
 }
 const EXT_FIELD_MAP: Record<string, Doc<'bookingResources'>['resourceType']> = {
   instructorName: 'Instructor',
   boatName: 'Boat',
   equipmentManagerName: 'Equipment',
-  poolName: 'Pool',
+  poolName: 'Venue',
   compressorName: 'Compressor',
 }
 
@@ -464,12 +464,12 @@ describe('listByResource', () => {
   it('works for Pool resource type', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
-      await seedTestUser(ctx, 'pool-1', 'Pool')
+      await seedTestUser(ctx, 'pool-1', 'Venue')
       await seedBookingWithResources(ctx, 'dc-1', { status: 'Draft', poolId: 'pool-1' })
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'clerk|pool-1' })
-      .query(api.bookings.listByResource, { resourceId: 'pool-1', resourceType: 'Pool' })
+      .query(api.bookings.listByResource, { resourceId: 'pool-1', resourceType: 'Venue' })
 
     expect(result).toHaveLength(1)
   })

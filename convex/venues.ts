@@ -1,58 +1,29 @@
 import { ConvexError, v } from 'convex/values'
-import { mutation, query } from './_generated/server'
+import { mutation, query, type MutationCtx } from './_generated/server'
 import { authorize } from './lib/auth'
-import { getActiveOrg } from './lib/activeOrg'
-import { profileByUser, profileMine } from './lib/profileHelpers'
+import { getActiveOrg, tryGetActiveOrg } from './lib/activeOrg'
 import { checkHasRole } from './userRoles'
 import { ErrorCode } from './lib/errorCodes'
 import { BASE_PROFILE_CREATE_FIELDS, BASE_PROFILE_UPDATE_FIELDS, ACCESS_CONTROL_FIELDS, BUSINESS_NAME_CREATE_FIELD, BUSINESS_NAME_UPDATE_FIELD } from './lib/validators'
 import {
-  venueCategoryValidator,
-  diveSiteTypeValidator,
-  type VenueCategory,
-  type DiveSiteType,
+  venueSubtypeValidator,
+  type VenueSubtype,
 } from './shared/venueTypes'
+import { assertCapabilitiesPresentForSubtype, assertVenueRange, assertVenueSubtypeConsistent } from './lib/venueValidators'
 
-type VenueWriteInput = {
-  venueCategory?: VenueCategory
-  diveSiteTypes?: DiveSiteType[]
-  confinedCapable?: boolean
-  maxCapacity?: number
-}
-
-type ResolvedVenueFields = {
-  venueCategory: VenueCategory
-  diveSiteTypes: DiveSiteType[] | undefined
-  confinedCapable: boolean | undefined
-}
-
-function resolveVenueFields(input: VenueWriteInput): ResolvedVenueFields {
-  if (!input.venueCategory) {
-    throw new ConvexError({ code: ErrorCode.INVALID_INPUT, field: 'venueCategory' })
-  }
-
-  if (input.venueCategory === 'pool') {
-    if (input.diveSiteTypes && input.diveSiteTypes.length > 0) {
-      throw new ConvexError({ code: ErrorCode.INVALID_INPUT, field: 'diveSiteTypes' })
-    }
-    if (input.confinedCapable !== undefined) {
-      throw new ConvexError({ code: ErrorCode.INVALID_INPUT, field: 'confinedCapable' })
-    }
-    return {
-      venueCategory: 'pool',
-      diveSiteTypes: undefined,
-      confinedCapable: undefined,
-    }
-  }
-
-  if (!input.diveSiteTypes || input.diveSiteTypes.length === 0) {
-    throw new ConvexError({ code: ErrorCode.INVALID_INPUT, field: 'diveSiteTypes' })
-  }
-
-  return {
-    venueCategory: 'diveSite',
-    diveSiteTypes: input.diveSiteTypes,
-    confinedCapable: input.confinedCapable,
+async function mintUniqueVenueSlug(ctx: MutationCtx, baseName: string): Promise<string> {
+  const base = baseName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'venue'
+  let candidate = base
+  let suffix = 1
+  // bounded: collision retries rare in practice; worst-case scan tiny
+  while (true) {
+    const existing = await ctx.db
+      .query('venues')
+      .withIndex('by_slug', (q) => q.eq('slug', candidate))
+      .unique()
+    if (!existing) return candidate
+    suffix += 1
+    candidate = `${base}-${suffix}`
   }
 }
 
@@ -63,8 +34,7 @@ export const create = mutation({
     ...ACCESS_CONTROL_FIELDS,
     email: v.optional(v.string()),
     phone: v.optional(v.string()),
-    venueCategory: venueCategoryValidator,
-    diveSiteTypes: v.optional(v.array(diveSiteTypeValidator)),
+    subtype: venueSubtypeValidator,
     confinedCapable: v.optional(v.boolean()),
     hasCompressor: v.boolean(),
     maxDepth: v.optional(v.number()),
@@ -73,54 +43,41 @@ export const create = mutation({
   handler: async (ctx, args) => {
     const { user } = await authorize(ctx, null, 'resource:manage', { type: 'resource' })
 
-    const resolved = resolveVenueFields({
-      venueCategory: args.venueCategory,
-      diveSiteTypes: args.diveSiteTypes,
-      confinedCapable: args.confinedCapable,
-      maxCapacity: args.maxCapacity,
-    })
+    const subtype = args.subtype
+    const confinedCapable = args.confinedCapable
+    assertVenueSubtypeConsistent(subtype, confinedCapable)
+    assertVenueRange(subtype, args.maxDepth, args.maxCapacity)
+    assertCapabilitiesPresentForSubtype(subtype, args.maxDepth, args.maxCapacity)
 
-    if (resolved.venueCategory === 'pool' && !(await checkHasRole(ctx, user._id, 'Pool'))) {
-      throw new ConvexError({ code: ErrorCode.FORBIDDEN })
-    }
-    if (resolved.venueCategory === 'diveSite' && !(await checkHasRole(ctx, user._id, 'DiveSite'))) {
+    const hasVenueRole = await checkHasRole(ctx, user._id, 'Venue')
+    if (!hasVenueRole) {
       throw new ConvexError({ code: ErrorCode.FORBIDDEN })
     }
 
     const { org: activeOrg } = await getActiveOrg(ctx)
 
-    const existing = await ctx.db
-      .query('venues')
-      .withIndex('by_organizationId', (q) => q.eq('organizationId', activeOrg._id))
-      .unique()
-    if (existing) return existing._id
+    const slug = await mintUniqueVenueSlug(ctx, args.name)
 
-    const {
-      venueCategory: _ignoredCategory,
-      diveSiteTypes: _ignoredTypes,
-      confinedCapable: _ignoredConfined,
-      ...rest
-    } = args
+    const { subtype: _ignoredSubtype, confinedCapable: _ignoredConfined, ...rest } = args
 
     const venueId = await ctx.db.insert('venues', {
       ...rest,
-      venueCategory: resolved.venueCategory,
-      diveSiteTypes: resolved.diveSiteTypes,
-      confinedCapable: resolved.confinedCapable,
+      slug,
+      subtype,
+      confinedCapable: subtype === 'shore' || subtype === 'other' ? confinedCapable : undefined,
       organizationId: activeOrg._id,
       verified: false,
     })
 
     const totalUnits = args.maxCapacity && args.maxCapacity > 0 ? args.maxCapacity : 999999
-    const resourceType = resolved.venueCategory === 'diveSite' ? 'DiveSite' : 'Pool'
     await ctx.db.insert('inventoryUnits', {
-      resourceType,
-      resourceId: user.slug,
+      resourceType: 'Venue',
+      resourceId: slug,
       displayName: args.name,
       capacityModel: 'Pooled',
       totalUnits,
-      ownerId: user.slug,
-      ownerType: resourceType,
+      ownerId: slug,
+      ownerType: 'Venue',
     })
 
     return venueId
@@ -129,11 +86,11 @@ export const create = mutation({
 
 export const update = mutation({
   args: {
+    venueId: v.id('venues'),
     ...BASE_PROFILE_UPDATE_FIELDS,
     ...BUSINESS_NAME_UPDATE_FIELD,
     ...ACCESS_CONTROL_FIELDS,
-    venueCategory: v.optional(venueCategoryValidator),
-    diveSiteTypes: v.optional(v.array(diveSiteTypeValidator)),
+    subtype: v.optional(venueSubtypeValidator),
     confinedCapable: v.optional(v.boolean()),
     hasCompressor: v.optional(v.boolean()),
     maxDepth: v.optional(v.number()),
@@ -142,46 +99,39 @@ export const update = mutation({
   handler: async (ctx, args) => {
     const { user } = await authorize(ctx, null, 'resource:manage', { type: 'resource' })
 
-    const profile = await profileByUser(ctx, user._id, 'venues')
-    if (!profile) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
+    const venue = await ctx.db.get(args.venueId)
+    if (!venue) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
 
-    const { venueCategory, diveSiteTypes, confinedCapable, ...rest } = args
-    const patch: Record<string, unknown> = { ...rest }
-
-    const hasCategoryInput =
-      venueCategory !== undefined ||
-      diveSiteTypes !== undefined ||
-      confinedCapable !== undefined
-
-    if (hasCategoryInput) {
-      const existingCategory = profile.venueCategory as VenueCategory | undefined
-      if (!existingCategory) {
-        throw new ConvexError({ code: ErrorCode.INVALID_STATE, field: 'venueCategory' })
-      }
-      if (venueCategory !== undefined && venueCategory !== existingCategory) {
-        throw new ConvexError({ code: ErrorCode.INVALID_INPUT, field: 'venueCategory' })
-      }
-
-      const resolved = resolveVenueFields({
-        venueCategory: existingCategory,
-        diveSiteTypes: diveSiteTypes ?? (profile.diveSiteTypes as DiveSiteType[] | undefined),
-        confinedCapable: confinedCapable ?? profile.confinedCapable,
-      })
-
-      patch.venueCategory = resolved.venueCategory
-      patch.diveSiteTypes = resolved.diveSiteTypes
-      patch.confinedCapable = resolved.confinedCapable
+    if (!user.organizationId || venue.organizationId !== user.organizationId) {
+      throw new ConvexError({ code: ErrorCode.FORBIDDEN })
     }
 
-    await ctx.db.patch(profile._id, patch)
+    const { venueId: _vid, subtype, confinedCapable, ...rest } = args
+    const patch: Record<string, unknown> = { ...rest }
+
+    const effectiveSubtype: VenueSubtype = subtype ?? (venue.subtype as VenueSubtype)
+    if (subtype !== undefined) {
+      patch.subtype = subtype
+    }
+    if (confinedCapable !== undefined) {
+      assertVenueSubtypeConsistent(effectiveSubtype, confinedCapable)
+      patch.confinedCapable =
+        effectiveSubtype === 'shore' || effectiveSubtype === 'other' ? confinedCapable : undefined
+    }
+
+    assertVenueRange(effectiveSubtype, args.maxDepth, args.maxCapacity)
+
+    const effectiveMaxDepth = args.maxDepth ?? (venue.maxDepth as number | undefined)
+    const effectiveMaxCapacity = args.maxCapacity ?? (venue.maxCapacity as number | undefined)
+    assertCapabilitiesPresentForSubtype(effectiveSubtype, effectiveMaxDepth, effectiveMaxCapacity)
+
+    await ctx.db.patch(args.venueId, patch)
 
     if (args.maxCapacity !== undefined) {
-      const existingCategory = profile.venueCategory as VenueCategory | undefined
-      const resourceType = existingCategory === 'pool' ? 'Pool' : 'DiveSite'
       const unit = await ctx.db
         .query('inventoryUnits')
         .withIndex('by_ownerId_ownerType', (q) =>
-          q.eq('ownerId', user.slug).eq('ownerType', resourceType),
+          q.eq('ownerId', venue.slug).eq('ownerType', 'Venue'),
         )
         .unique()
       if (unit) {
@@ -189,12 +139,65 @@ export const update = mutation({
         await ctx.db.patch(unit._id, { totalUnits })
       }
     }
+
+    if (args.name !== undefined && args.name !== venue.name) {
+      const unit = await ctx.db
+        .query('inventoryUnits')
+        .withIndex('by_ownerId_ownerType', (q) =>
+          q.eq('ownerId', venue.slug).eq('ownerType', 'Venue'),
+        )
+        .unique()
+      if (unit) {
+        await ctx.db.patch(unit._id, { displayName: args.name })
+      }
+    }
+  },
+})
+
+export const remove = mutation({
+  args: { venueId: v.id('venues') },
+  handler: async (ctx, { venueId }) => {
+    const { user } = await authorize(ctx, null, 'resource:manage', { type: 'resource' })
+
+    const venue = await ctx.db.get(venueId)
+    if (!venue) return
+
+    if (!user.organizationId || venue.organizationId !== user.organizationId) {
+      throw new ConvexError({ code: ErrorCode.FORBIDDEN })
+    }
+
+    const unit = await ctx.db
+      .query('inventoryUnits')
+      .withIndex('by_ownerId_ownerType', (q) =>
+        q.eq('ownerId', venue.slug).eq('ownerType', 'Venue'),
+      )
+      .unique()
+    if (unit) {
+      await ctx.db.delete(unit._id)
+    }
+
+    await ctx.db.delete(venueId)
   },
 })
 
 export const mine = query({
   args: {},
   handler: async (ctx) => {
-    return await profileMine(ctx, 'venues')
+    const activeOrg = await tryGetActiveOrg(ctx)
+    if (!activeOrg) return []
+    return await ctx.db
+      .query('venues')
+      .withIndex('by_organizationId', (q) => q.eq('organizationId', activeOrg._id))
+      .collect() // bounded: per-org venue count, realistic cap ~20
+  },
+})
+
+export const bySlug = query({
+  args: { slug: v.string() },
+  handler: async (ctx, { slug }) => {
+    return await ctx.db
+      .query('venues')
+      .withIndex('by_slug', (q) => q.eq('slug', slug))
+      .unique()
   },
 })

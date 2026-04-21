@@ -10,7 +10,7 @@ describe('PROFILE_REGISTRY', () => {
     expect(roles).toContain('boat')
     expect(roles).toContain('compressor')
     expect(roles).toContain('equipment')
-    expect(roles).toContain('pool')
+    expect(roles).toContain('venue')
   })
 
   it('all entries have non-empty labels', () => {
@@ -44,9 +44,9 @@ describe('PROFILE_REGISTRY', () => {
     expect(PROFILE_REGISTRY.agent.tabs).not.toBeNull()
   })
 
-  it('pool has tabs', () => {
-    expect(PROFILE_REGISTRY.pool.tabs).not.toBeNull()
-    expect(PROFILE_REGISTRY.pool.tabs?.map((t) => t.id)).toEqual([
+  it('venue has tabs', () => {
+    expect(PROFILE_REGISTRY.venue.tabs).not.toBeNull()
+    expect(PROFILE_REGISTRY.venue.tabs?.map((t) => t.id)).toEqual([
       'contact',
       'capabilities',
       'booking',

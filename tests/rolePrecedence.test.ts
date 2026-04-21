@@ -15,11 +15,11 @@ describe('deriveDefaultRole', () => {
   })
 
   it('returns Agent over resource roles', () => {
-    expect(deriveDefaultRole(['Pool', 'Agent', 'Compressor'])).toBe('Agent')
+    expect(deriveDefaultRole(['Venue', 'Agent', 'Compressor'])).toBe('Agent')
   })
 
-  it('returns Instructor over Boat/Equipment/Pool/Compressor', () => {
-    expect(deriveDefaultRole(['Equipment', 'Pool', 'Instructor'])).toBe('Instructor')
+  it('returns Instructor over Boat/Equipment/Venue/Compressor', () => {
+    expect(deriveDefaultRole(['Equipment', 'Venue', 'Instructor'])).toBe('Instructor')
   })
 
   it('throws for empty roles array', () => {
@@ -49,7 +49,7 @@ describe('ROLE_PRECEDENCE', () => {
   it('all expected roles are defined', () => {
     const expected = [
       'DiveCenter', 'Agent', 'Liveaboard', 'DiveResort', 'DiveHostel',
-      'DiveSite', 'Instructor', 'Boat', 'Equipment', 'Pool', 'Compressor',
+      'Venue', 'Instructor', 'Boat', 'Equipment', 'Compressor',
     ]
     for (const role of expected) {
       expect(ROLE_PRECEDENCE).toHaveProperty(role)

@@ -49,17 +49,14 @@ describe('ROLES tableName consistency', () => {
     }
   })
 
-  it('Pool and DiveSite share venues tableName', () => {
-    expect(ROLE_BY_CLERK_ROLE['Pool'].tableName).toBe('venues')
-    expect(ROLE_BY_CLERK_ROLE['DiveSite'].tableName).toBe('venues')
+  it('Venue has venues tableName', () => {
+    expect(ROLE_BY_CLERK_ROLE['Venue'].tableName).toBe('venues')
   })
 
-  it('no non-venue roles share a tableName with venues', () => {
+  it('only venue ROLES entry has tableName=venues', () => {
     const venueRoles = ROLES.filter((r) => r.tableName === 'venues')
-    const venueClerkRoles = new Set(venueRoles.map((r) => r.clerkRole))
-    expect(venueClerkRoles.has('Pool')).toBe(true)
-    expect(venueClerkRoles.has('DiveSite')).toBe(true)
-    expect(venueClerkRoles.size).toBe(2)
+    const venueKeys = new Set(venueRoles.map((r) => r.key))
+    expect(venueKeys).toEqual(new Set(['venue']))
   })
 })
 
@@ -139,13 +136,6 @@ describe('ROLES display group partitioning', () => {
     }
   })
 
-  it('DiveSite is in DISPLAY_OPERATOR_ROLES despite being isResource', () => {
-    const diveSite = ROLE_BY_CLERK_ROLE['DiveSite']
-    expect(diveSite.isResource).toBe(true)
-    expect(diveSite.isOrganizer).toBe(false)
-    expect(diveSite.displayGroup).toBe('operator')
-    expect(DISPLAY_OPERATOR_ROLES).toContain(diveSite)
-  })
 })
 
 // ── ROLES ↔ ROLE_PRECEDENCE completeness ────────────────────────────────────

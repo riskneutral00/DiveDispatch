@@ -228,7 +228,7 @@ export const seedStakeholders = internalMutation({
 
     for (const s of ALL_STAKEHOLDERS) {
       const userId = await insertUser(ctx, s) // batch-exempt
-      const orgName = s.diveCenter?.name ?? s.boat?.name ?? s.equipment?.name ?? s.compressor?.name ?? s.agent?.name ?? s.liveaboard?.name ?? s.diveResort?.name ?? s.pool?.name ?? `Seed Org ${s.user.slug}`
+      const orgName = s.diveCenter?.name ?? s.boat?.name ?? s.equipment?.name ?? s.compressor?.name ?? s.agent?.name ?? s.liveaboard?.name ?? s.diveResort?.name ?? s.venue?.name ?? `Seed Org ${s.user.slug}`
       const organizationId = await getOrCreateSeedOrg(ctx, s.user.slug, orgName) // batch-exempt
       await setUserOrganization(ctx, userId, organizationId) // batch-exempt
 
@@ -238,8 +238,9 @@ export const seedStakeholders = internalMutation({
       if (s.boat) {
         await ctx.db.insert('boats', { organizationId, ...s.boat }) // batch-exempt
       }
-      if (s.pool) {
-        await ctx.db.insert('venues', { organizationId, ...s.pool }) // batch-exempt
+      if (s.venue) {
+        const venueSlug = s.venue.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || `venue-${organizationId}`
+        await ctx.db.insert('venues', { organizationId, slug: venueSlug, ...s.venue }) // batch-exempt
       }
       if (s.equipment) {
         const { inventoryOverrides: _overrides, ...equipmentProfile } = s.equipment
@@ -396,15 +397,15 @@ export const seedResourceInventory = internalMutation({
         }
       }
 
-      if (s.pool) {
+      if (s.venue) {
         await ctx.db.insert('inventoryUnits', { // batch-exempt
-          resourceType: 'Pool',
+          resourceType: 'Venue',
           resourceId: s.user.slug,
-          displayName: s.pool.name,
+          displayName: s.venue.name,
           capacityModel: 'Pooled',
-          totalUnits: s.pool.maxCapacity ?? 1,
+          totalUnits: s.venue.maxCapacity ?? 1,
           ownerId: s.user.slug,
-          ownerType: 'Pool',
+          ownerType: 'Venue',
         })
       }
 
@@ -424,22 +425,22 @@ export const seedResourceInventory = internalMutation({
 
     for (const site of UNOWNED_DIVE_SITES) {
       await ctx.db.insert('inventoryUnits', { // batch-exempt
-        resourceType: 'DiveSite',
+        resourceType: 'Venue',
         resourceId: site.slug,
         displayName: site.name,
         capacityModel: 'Pooled',
         totalUnits: site.capacity,
         ownerId: '__unowned__',
-        ownerType: 'DiveSite',
+        ownerType: 'Venue',
       })
       await ctx.db.insert('venues', { // batch-exempt orgid-helper-ok unowned-dive-site
         name: site.name,
+        slug: site.slug,
         address: { city: 'Phuket', country: 'TH' },
         lat: 7.8206,
         lng: 98.3003,
         verified: true,
-        venueCategory: 'diveSite',
-        diveSiteTypes: ['shore'],
+        subtype: 'shore',
         confinedCapable: true,
         hasCompressor: false,
         maxCapacity: site.capacity,

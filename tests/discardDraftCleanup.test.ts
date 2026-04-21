@@ -68,7 +68,7 @@ describe('discardDraft cleanup (DD-157)', () => {
       const bookingId = await seedBooking(ctx, { ownerId: 'dc-discard2' })
 
       const res1 = await seedBookingResource(ctx, bookingId, { resourceType: 'Instructor', resourceId: 'inst-1' })
-      const res2 = await seedBookingResource(ctx, bookingId, { resourceType: 'DiveSite', externalName: 'Coral Reef' })
+      const res2 = await seedBookingResource(ctx, bookingId, { resourceType: 'Venue', externalName: 'Coral Reef' })
 
       return { bookingId, res1, res2 }
     })

@@ -514,7 +514,7 @@ export const listDiveSites = query({
     await requireAuth(ctx)
     const units = await ctx.db
       .query('inventoryUnits')
-      .withIndex('by_resourceType', (q) => q.eq('resourceType', 'DiveSite'))
+      .withIndex('by_resourceType', (q) => q.eq('resourceType', 'Venue'))
       .take(INVENTORY_UNITS_LIMIT)
     return units.map((u) => ({ id: u.resourceId, label: u.displayName }))
   },

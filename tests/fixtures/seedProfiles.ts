@@ -1,5 +1,6 @@
 import type { Doc, Id } from '../../convex/_generated/dataModel'
 import { GEAR_TYPES, type GearType } from '../../convex/shared/gearSizing'
+import { type VenueSubtype } from '../../convex/shared/venueTypes'
 import type { SeedCtx } from './seedUsers'
 import { getOrCreateTestOrg } from './seedUsers'
 
@@ -109,31 +110,29 @@ export async function seedVenue(
     address?: AddressOverride
     lat?: number
     lng?: number
-    venueCategory?: Doc<'venues'>['venueCategory']
-    diveSiteTypes?: Doc<'venues'>['diveSiteTypes']
+    subtype?: VenueSubtype
     verified?: boolean
     confinedCapable?: boolean
     hasCompressor?: boolean
     organizationId?: Id<'organizations'>
   } = {},
 ) {
-  const venueCategory = overrides.venueCategory ?? 'pool'
+  const subtype = overrides.subtype ?? 'pool'
   const organizationId = overrides.organizationId
     ?? (overrides.userId ? await getOrCreateTestOrg(ctx, overrides.userId, overrides.name ?? 'Test Venue') : undefined)
   const address = resolveAddress(overrides)
+  const isPool = subtype === 'pool'
+  const venueName = overrides.name ?? 'Test Venue'
+  const venueSlug = venueName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'test-venue'
   return ctx.db.insert('venues', {
-    name: overrides.name ?? 'Test Venue',
+    name: venueName,
+    slug: venueSlug,
     address,
     lat: overrides.lat ?? 10.0957,
     lng: overrides.lng ?? 99.8408,
-    venueCategory,
-    ...(venueCategory === 'diveSite'
-      ? { diveSiteTypes: overrides.diveSiteTypes ?? ['shore'] }
-      : {}),
+    subtype,
     verified: overrides.verified ?? true,
-    ...(venueCategory === 'diveSite'
-      ? { confinedCapable: overrides.confinedCapable ?? true }
-      : {}),
+    ...(isPool ? {} : { confinedCapable: overrides.confinedCapable ?? true }),
     hasCompressor: overrides.hasCompressor ?? false,
     ...(organizationId !== undefined ? { organizationId } : {}),
   })

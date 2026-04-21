@@ -6,7 +6,6 @@ export const OPERATOR_TYPES = [
   'Liveaboard',
   'DiveResort',
   'DiveHostel',
-  'DiveSite',
 ] as const
 
 export type OperatorType = (typeof OPERATOR_TYPES)[number]

@@ -87,8 +87,7 @@ interface VenueProfile {
   email: string
   phone: string
   verified: boolean
-  venueCategory: 'pool' | 'diveSite'
-  diveSiteTypes?: Array<'shore' | 'reef' | 'lake' | 'river' | 'quarry' | 'other'>
+  subtype: 'pool' | 'shore' | 'reef' | 'lake' | 'river' | 'quarry' | 'other'
   confinedCapable?: boolean
   hasCompressor: boolean
   maxDepth?: number
@@ -191,7 +190,7 @@ export interface SeedStakeholder {
   roles?: { role: StakeholderRole }[]
   diveCenter?: DiveCenterProfile
   boat?: BoatProfile
-  pool?: VenueProfile
+  venue?: VenueProfile
   equipment?: EquipmentProfile
   compressor?: CompressorProfile
   agent?: AgentProfile
@@ -266,7 +265,7 @@ export const HUG_OCEAN: SeedStakeholder = {
   roles: [
     { role: 'DiveCenter' },
     { role: 'Boat' },
-    { role: 'Pool' },
+    { role: 'Venue' },
     { role: 'Equipment' },
   ],
   diveCenter: {
@@ -294,7 +293,7 @@ export const HUG_OCEAN: SeedStakeholder = {
     hasCompressor: true,
     verified: VERIFIED,
   },
-  pool: {
+  venue: {
     name: 'Hug Ocean',
     ...PHUKET,
     email: 'hug-ocean@divedispatch.dev',
@@ -302,7 +301,7 @@ export const HUG_OCEAN: SeedStakeholder = {
     maxDepth: 3,
     maxCapacity: 15,
     verified: VERIFIED,
-    venueCategory: 'pool',
+    subtype: 'pool',
 
     hasCompressor: false,
   },
@@ -329,7 +328,7 @@ export const NEPTUNE: SeedStakeholder = {
   },
   roles: [
     { role: 'DiveCenter' },
-    { role: 'Pool' },
+    { role: 'Venue' },
     { role: 'Equipment' },
   ],
   diveCenter: {
@@ -341,7 +340,7 @@ export const NEPTUNE: SeedStakeholder = {
     customerLanguages: ['zh-CN', 'zh-TW', 'en', 'th'],
     verified: VERIFIED,
   },
-  pool: {
+  venue: {
     name: 'Neptune',
     ...PHUKET,
     email: 'neptune@divedispatch.dev',
@@ -349,7 +348,7 @@ export const NEPTUNE: SeedStakeholder = {
     maxDepth: 2.5,
     maxCapacity: 6,
     verified: VERIFIED,
-    venueCategory: 'pool',
+    subtype: 'pool',
 
     hasCompressor: false,
   },
@@ -938,9 +937,9 @@ export const WATER_PRO: SeedStakeholder = {
     phone: '+6676394001',
   },
   roles: [
-    { role: 'Pool' },
+    { role: 'Venue' },
   ],
-  pool: {
+  venue: {
     name: 'Water Pro',
     ...PHUKET,
     email: 'water-pro@divedispatch.dev',
@@ -948,7 +947,7 @@ export const WATER_PRO: SeedStakeholder = {
     maxDepth: 2.5,
     maxCapacity: 25,
     verified: VERIFIED,
-    venueCategory: 'pool',
+    subtype: 'pool',
     hasCompressor: false,
   },
 }
@@ -964,9 +963,9 @@ export const SHARK_BITES: SeedStakeholder = {
     phone: '+6676394002',
   },
   roles: [
-    { role: 'Pool' },
+    { role: 'Venue' },
   ],
-  pool: {
+  venue: {
     name: 'Shark Bites',
     ...PHUKET,
     email: 'shark-bites@divedispatch.dev',
@@ -974,7 +973,7 @@ export const SHARK_BITES: SeedStakeholder = {
     maxDepth: 2.5,
     maxCapacity: 8,
     verified: VERIFIED,
-    venueCategory: 'pool',
+    subtype: 'pool',
     hasCompressor: false,
   },
 }

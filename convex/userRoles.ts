@@ -237,7 +237,7 @@ export const deleteRole = mutation({
 
     await ctx.db.delete(roleId)
 
-    await deleteProfileForRole(ctx, roleRow.role, user._id)
+    await deleteProfileForRole(ctx, roleRow.role, roleRow.organizationId)
 
     const prefs = await ctx.db
       .query('stakeholderPreferences')
@@ -299,19 +299,20 @@ export const deleteRole = mutation({
 async function deleteProfileForRole(
   ctx: MutationCtx,
   role: Doc<'userRoles'>['role'],
-  userId: Id<'users'>,
+  organizationId: Id<'organizations'>,
 ): Promise<void> {
   const tableName = ROLE_TABLE_MAP[role]
   if (!tableName) return
-  const user = await ctx.db.get(userId)
-  if (!user) return
-  const org = await ctx.db
-    .query('organizations')
-    .withIndex('by_slug', (q) => q.eq('slug', user.slug))
-    .unique()
-  if (!org) return
+
+  const otherHolder = await ctx.db
+    .query('userRoles')
+    .withIndex('by_organizationId', (q) => q.eq('organizationId', organizationId))
+    .filter((q) => q.eq(q.field('role'), role))
+    .first()
+  if (otherHolder) return
+
   const p = await queryDynamicTable(ctx.db, tableName)
-    .withIndex('by_organizationId', (q) => q.eq('organizationId', org._id))
+    .withIndex('by_organizationId', (q) => q.eq('organizationId', organizationId))
     .unique()
   if (p) await deleteDynamic(ctx.db, p._id)
 }

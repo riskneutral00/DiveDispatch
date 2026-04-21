@@ -457,14 +457,24 @@ describe('organizations.getBySlug / getById', () => {
       svixId: makeSvixId(),
     })
 
-    const result = await t.query(api.organizations.getBySlug, { slug: 'slug-test' })
+    const result = await t
+      .withIdentity({ tokenIdentifier: 'clerk|slug-reader' })
+      .query(api.organizations.getBySlug, { slug: 'slug-test' })
     expect(result?.name).toBe('Slug Test')
     expect(result?.clerkOrgId).toBe(clerkOrgId)
   })
 
-  it('returns null for unknown slug', async () => {
+  it('returns null for unauthenticated caller', async () => {
     const t = makeT()
-    const result = await t.query(api.organizations.getBySlug, { slug: 'does-not-exist' })
+    const result = await t.query(api.organizations.getBySlug, { slug: 'slug-test' })
+    expect(result).toBeNull()
+  })
+
+  it('returns null for unknown slug (authenticated)', async () => {
+    const t = makeT()
+    const result = await t
+      .withIdentity({ tokenIdentifier: 'clerk|slug-reader' })
+      .query(api.organizations.getBySlug, { slug: 'does-not-exist' })
     expect(result).toBeNull()
   })
 
@@ -479,8 +489,25 @@ describe('organizations.getBySlug / getById', () => {
       svixId: makeSvixId(),
     })
 
-    const result = await t.query(api.organizations.getById, { id })
+    const result = await t
+      .withIdentity({ tokenIdentifier: 'clerk|id-reader' })
+      .query(api.organizations.getById, { id })
     expect(result?.name).toBe('Id Test')
+  })
+
+  it('getById returns null for unauthenticated caller', async () => {
+    const t = makeT()
+    const clerkOrgId = makeClerkOrgId('id-unauth')
+
+    const id = await t.mutation(internal.organizations.upsertFromWebhook, {
+      clerkOrgId,
+      name: 'Unauth',
+      slug: 'unauth',
+      svixId: makeSvixId(),
+    })
+
+    const result = await t.query(api.organizations.getById, { id })
+    expect(result).toBeNull()
   })
 })
 

@@ -29,14 +29,12 @@ describe('ORGANIZER_WIZARD_CONFIG', () => {
     expect(ORGANIZER_WIZARD_CONFIG.DiveHostel).toEqual(['basic'])
   })
 
-  it('DiveSite has 1 step: basic', () => {
-    expect(ORGANIZER_WIZARD_CONFIG.DiveSite).toEqual(['basic'])
-  })
-
   it('resource roles are not in the config', () => {
     expect(ORGANIZER_WIZARD_CONFIG.Instructor).toBeUndefined()
     expect(ORGANIZER_WIZARD_CONFIG.Boat).toBeUndefined()
     expect(ORGANIZER_WIZARD_CONFIG.Equipment).toBeUndefined()
+    expect(ORGANIZER_WIZARD_CONFIG.Venue).toBeUndefined()
+    expect(ORGANIZER_WIZARD_CONFIG.Compressor).toBeUndefined()
   })
 })
 
@@ -61,33 +59,29 @@ describe('getOrganizerSteps', () => {
     expect(getOrganizerSteps('DiveHostel')).toEqual(['basic'])
   })
 
-  it('returns configured steps for DiveSite', () => {
-    expect(getOrganizerSteps('DiveSite')).toEqual(['basic'])
-  })
-
   it('defaults to ["basic"] for unconfigured roles', () => {
     expect(getOrganizerSteps('Instructor')).toEqual(['basic'])
     expect(getOrganizerSteps('Boat')).toEqual(['basic'])
+    expect(getOrganizerSteps('Venue')).toEqual(['basic'])
   })
 
 })
 
 describe('ORGANIZER_WIZARD_ROLES', () => {
-  it('contains all 6 organizer roles', () => {
-    expect(ORGANIZER_WIZARD_ROLES).toHaveLength(6)
+  it('contains all 5 organizer roles', () => {
+    expect(ORGANIZER_WIZARD_ROLES).toHaveLength(5)
     expect(ORGANIZER_WIZARD_ROLES).toContain('DiveCenter')
     expect(ORGANIZER_WIZARD_ROLES).toContain('Agent')
     expect(ORGANIZER_WIZARD_ROLES).toContain('Liveaboard')
     expect(ORGANIZER_WIZARD_ROLES).toContain('DiveResort')
     expect(ORGANIZER_WIZARD_ROLES).toContain('DiveHostel')
-    expect(ORGANIZER_WIZARD_ROLES).toContain('DiveSite')
   })
 
   it('does not contain resource roles', () => {
     expect(ORGANIZER_WIZARD_ROLES).not.toContain('Instructor')
     expect(ORGANIZER_WIZARD_ROLES).not.toContain('Boat')
     expect(ORGANIZER_WIZARD_ROLES).not.toContain('Equipment')
-    expect(ORGANIZER_WIZARD_ROLES).not.toContain('Pool')
+    expect(ORGANIZER_WIZARD_ROLES).not.toContain('Venue')
     expect(ORGANIZER_WIZARD_ROLES).not.toContain('Compressor')
   })
 })
@@ -148,12 +142,12 @@ describe('getOrganizerRoleFlags', () => {
     })
   })
 
-  it('DiveSite uses single location model and no course preferences', () => {
-    const flags = getOrganizerRoleFlags('DiveSite')
+  it('Venue (resource) falls back to defaults', () => {
+    const flags = getOrganizerRoleFlags('Venue')
     expect(flags).toEqual({
       supportsCoursePreferences: false,
       locationModel: 'single',
-      displayLabel: 'dive site',
+      displayLabel: 'venue',
     })
   })
 

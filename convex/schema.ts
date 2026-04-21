@@ -5,7 +5,7 @@ import { operatorTypeValidator as operatorType } from './shared/operatorTypes'
 import { resourceOwnerTypeValidator as resourceOwnerType } from './shared/resourceOwnerTypes'
 import { boatTypeValidator as boatTypeUnion } from './shared/boatTypes'
 import { gasMixValidator as gasMix } from './shared/gasMixes'
-import { venueCategoryValidator, diveSiteTypeValidator } from './shared/venueTypes'
+import { venueSubtypeValidator } from './shared/venueTypes'
 import { capacityModelValidator as capacityModel, genderValidator as gender, shoeSizeUnitValidator as shoeSizeUnit, acceptanceModeValidator as acceptanceMode } from './shared/schemaEnums'
 import { stakeholderTypeValidator as stakeholderType, gearTypeValidator as gearType, finSizeSystemValidator, rentalChecklistValidator } from './lib/validators'
 import { bookingStatusValidator as bookingStatus, reservationStatusValidator as reservationStatus, bagStatusValidator, notificationTypeValidator as notificationType, vacatedReasonValidator } from './shared/statuses'
@@ -75,6 +75,8 @@ export default defineSchema({
     email: v.optional(v.string()),
     address: v.optional(addressStructured),
     placeId: v.optional(v.string()),
+    lat: v.optional(v.number()),
+    lng: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -422,6 +424,7 @@ export default defineSchema({
 
   venues: defineTable({
     organizationId: v.optional(v.id('organizations')),
+    slug: v.string(),
     name: v.string(),
     ...structuredLocationFields,
     lat: v.number(),
@@ -429,15 +432,15 @@ export default defineSchema({
     email: v.optional(v.string()),
     phone: v.optional(v.string()),
     verified: v.boolean(),
-    venueCategory: venueCategoryValidator,
-    diveSiteTypes: v.optional(v.array(diveSiteTypeValidator)),
+    subtype: venueSubtypeValidator,
     ...accessControlFields,
     confinedCapable: v.optional(v.boolean()),
     hasCompressor: v.boolean(),
     maxDepth: v.optional(v.number()),
     maxCapacity: v.optional(v.number()),
   })
-    .index('by_organizationId', ['organizationId']),
+    .index('by_organizationId', ['organizationId'])
+    .index('by_slug', ['slug']),
 
   compressors: defineTable({
     organizationId: v.id('organizations'),

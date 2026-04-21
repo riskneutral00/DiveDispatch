@@ -55,9 +55,9 @@ describe('ROLES constant integrity', () => {
     }
   })
 
-  it('Agent / DiveSite / Instructor / Boat / Equipment / Pool / Compressor are freelance', () => {
+  it('Agent / Venue / Instructor / Boat / Equipment / Compressor are freelance', () => {
     const freelanceKeys: ClerkRole[] = [
-      'Agent', 'DiveSite', 'Instructor', 'Boat', 'Equipment', 'Pool', 'Compressor',
+      'Agent', 'Venue', 'Instructor', 'Boat', 'Equipment', 'Compressor',
     ]
     for (const key of freelanceKeys) {
       expect(ROLE_BY_CLERK_ROLE[key].roleClass).toBe('freelance')

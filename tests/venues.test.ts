@@ -1,9 +1,16 @@
 /**
- * venues.ts — DiveSite auto-inventory business logic tests.
+ * venues.ts — multi-row multi-venue business logic tests.
  *
- * Tests the two pieces of business logic added by DD-368:
- * 1. venues.create auto-creates an inventoryUnit with Pooled capacity for DiveSite owners.
- * 2. Pool owners do NOT get an auto-created inventoryUnit (no regression).
+ * Covers:
+ *   1. venues.create mints a unique per-row slug + auto-creates inventoryUnit keyed on venue.slug.
+ *   2. Creating multiple venues under one org — .unique() gone; no idempotency collapse.
+ *   3. venues.update by venueId patches the correct row; capacity sync updates the right inventoryUnit.
+ *   4. venues.remove deletes the row AND its inventoryUnit.
+ *   5. venues.mine returns an array of all venues for the active org (not a single doc).
+ *   6. venues.bySlug resolves across operators for cross-DC bookability.
+ *   7. accessControlFields (isAllowed / notAllowed) persisted per venue row.
+ *   8. FORBIDDEN on update/remove for venues owned by a different organization.
+ *   9. Non-Venue-role callers rejected on create.
  */
 
 import { describe, it, expect } from 'vitest'
@@ -12,7 +19,7 @@ import type { Doc, Id } from '../convex/_generated/dataModel'
 import { seedUser, getOrCreateTestOrg, type SeedCtx } from './fixtures'
 import { makeT, orgIdentityFor } from './helpers/convex-helpers'
 
-async function seedDiveSiteUser(ctx: SeedCtx, slug: string) {
+async function seedVenueUser(ctx: SeedCtx, slug: string) {
   const userId = await seedUser(ctx, {
     tokenIdentifier: `clerk|${slug}`,
     slug,
@@ -20,21 +27,7 @@ async function seedDiveSiteUser(ctx: SeedCtx, slug: string) {
     name: slug,
     firstName: slug,
     lastName: 'Test',
-    role: 'DiveSite',
-  })
-  await getOrCreateTestOrg(ctx, userId, slug)
-  return userId
-}
-
-async function seedPoolUser(ctx: SeedCtx, slug: string) {
-  const userId = await seedUser(ctx, {
-    tokenIdentifier: `clerk|${slug}`,
-    slug,
-    email: `${slug}@test.com`,
-    name: slug,
-    firstName: slug,
-    lastName: 'Test',
-    role: 'Pool',
+    role: 'Venue',
   })
   await getOrCreateTestOrg(ctx, userId, slug)
   return userId
@@ -45,8 +38,7 @@ const VALID_DIVE_SITE_ARGS = {
   address: { city: 'Koh Tao', country: 'TH' },
   lat: 10.09,
   lng: 99.84,
-  venueCategory: 'diveSite' as const,
-  diveSiteTypes: ['reef' as const],
+  subtype: 'reef' as const,
   confinedCapable: false,
   hasCompressor: false,
   maxCapacity: 20,
@@ -57,297 +49,303 @@ const VALID_POOL_ARGS = {
   address: { city: 'Koh Tao', country: 'TH' },
   lat: 10.09,
   lng: 99.84,
-  venueCategory: 'pool' as const,
+  subtype: 'pool' as const,
   hasCompressor: false,
   maxCapacity: 15,
   maxDepth: 5,
 }
 
-// ── venues.create — DiveSite auto-inventory ────────────────────────────────────
+const VALID_SHORE_ARGS = {
+  name: 'Beach Entry',
+  address: { city: 'Phuket', country: 'TH' },
+  lat: 7.88,
+  lng: 98.39,
+  subtype: 'shore' as const,
+  confinedCapable: true,
+  hasCompressor: false,
+  maxCapacity: 10,
+}
 
-describe('venues.create — DiveSite auto-inventory', () => {
-  it('auto-creates an inventoryUnit when DiveSite user creates venue', async () => {
+describe('venues.create — slug minting + inventoryUnit', () => {
+  it('mints a unique slug derived from name', async () => {
     const t = makeT()
-    await t.run(async (ctx) => { await seedDiveSiteUser(ctx, 'site-owner') })
+    await t.run(async (ctx) => { await seedVenueUser(ctx, 'slug-test') })
 
-    await t.withIdentity(orgIdentityFor('site-owner'))
+    const venueId = await t.withIdentity(orgIdentityFor('slug-test'))
       .mutation(api.venues.create, VALID_DIVE_SITE_ARGS)
 
-    await t.run(async (ctx) => {
-      const units = await ctx.db
-        .query('inventoryUnits')
-        .withIndex('by_ownerId_ownerType', (q) =>
-          q.eq('ownerId', 'site-owner').eq('ownerType', 'DiveSite'),
-        )
-        .collect()
-
-      expect(units).toHaveLength(1)
-      expect(units[0].resourceType).toBe('DiveSite')
-      expect(units[0].capacityModel).toBe('Pooled')
-      expect(units[0].totalUnits).toBe(20)
-      expect(units[0].ownerId).toBe('site-owner')
-      expect(units[0].ownerType).toBe('DiveSite')
-      expect(units[0].displayName).toBe('Shark Bay Reef')
-      expect(units[0].resourceId).toBe('site-owner')
-    })
+    const venue = await t.run(async (ctx) => await ctx.db.get(venueId)) as Doc<'venues'>
+    expect(venue.slug).toBe('shark-bay-reef')
   })
 
-  it('inventoryUnit totalUnits matches maxCapacity', async () => {
+  it('auto-creates inventoryUnit keyed on venue.slug (not user.slug)', async () => {
     const t = makeT()
-    await t.run(async (ctx) => { await seedDiveSiteUser(ctx, 'cap-test') })
+    await t.run(async (ctx) => { await seedVenueUser(ctx, 'inv-test') })
 
-    await t.withIdentity(orgIdentityFor('cap-test'))
-      .mutation(api.venues.create, { ...VALID_DIVE_SITE_ARGS, maxCapacity: 50 })
-
-    await t.run(async (ctx) => {
-      const units = await ctx.db
-        .query('inventoryUnits')
-        .withIndex('by_ownerId_ownerType', (q) =>
-          q.eq('ownerId', 'cap-test').eq('ownerType', 'DiveSite'),
-        )
-        .collect()
-
-      expect(units[0].totalUnits).toBe(50)
-    })
-  })
-
-  it('does NOT create duplicate inventoryUnit when venue already exists (returns existing ID)', async () => {
-    const t = makeT()
-    await t.run(async (ctx) => { await seedDiveSiteUser(ctx, 'dup-site') })
-    const identity = orgIdentityFor('dup-site')
-
-    // First create
-    await t.withIdentity(identity).mutation(api.venues.create, VALID_DIVE_SITE_ARGS)
-    // Second create returns existing id without re-inserting
-    await t.withIdentity(identity).mutation(api.venues.create, VALID_DIVE_SITE_ARGS)
-
-    await t.run(async (ctx) => {
-      const units = await ctx.db
-        .query('inventoryUnits')
-        .withIndex('by_ownerId_ownerType', (q) =>
-          q.eq('ownerId', 'dup-site').eq('ownerType', 'DiveSite'),
-        )
-        .collect()
-
-      expect(units).toHaveLength(1)
-    })
-  })
-
-  it('uses unbounded sentinel when maxCapacity is omitted (uncapped DiveSite)', async () => {
-    const t = makeT()
-    await t.run(async (ctx) => { await seedDiveSiteUser(ctx, 'no-cap') })
-
-    const { maxCapacity: _omit, ...argsWithoutCapacity } = VALID_DIVE_SITE_ARGS
-    await t.withIdentity(orgIdentityFor('no-cap'))
-      .mutation(api.venues.create, argsWithoutCapacity)
-
-    await t.run(async (ctx) => {
-      const units = await ctx.db
-        .query('inventoryUnits')
-        .withIndex('by_ownerId_ownerType', (q) =>
-          q.eq('ownerId', 'no-cap').eq('ownerType', 'DiveSite'),
-        )
-        .collect()
-
-      expect(units).toHaveLength(1)
-      expect(units[0].totalUnits).toBe(999999)
-    })
-  })
-
-  it('auto-creates a Pool inventoryUnit when Pool user creates venue', async () => {
-    const t = makeT()
-    await t.run(async (ctx) => { await seedPoolUser(ctx, 'pool-owner') })
-
-    await t.withIdentity(orgIdentityFor('pool-owner'))
-      .mutation(api.venues.create, VALID_POOL_ARGS)
-
-    await t.run(async (ctx) => {
-      const units = await ctx.db
-        .query('inventoryUnits')
-        .withIndex('by_ownerId_ownerType', (q) =>
-          q.eq('ownerId', 'pool-owner').eq('ownerType', 'Pool'),
-        )
-        .collect()
-
-      expect(units).toHaveLength(1)
-      expect(units[0].resourceType).toBe('Pool')
-      expect(units[0].capacityModel).toBe('Pooled')
-      expect(units[0].totalUnits).toBe(15)
-      expect(units[0].displayName).toBe('Sairee Training Pool')
-    })
-  })
-
-  it('Pool create without maxCapacity uses 999999 sentinel', async () => {
-    const t = makeT()
-    await t.run(async (ctx) => { await seedPoolUser(ctx, 'pool-no-cap') })
-
-    const { maxCapacity: _omit, ...argsWithoutCapacity } = VALID_POOL_ARGS
-    await t.withIdentity(orgIdentityFor('pool-no-cap'))
-      .mutation(api.venues.create, argsWithoutCapacity)
-
-    await t.run(async (ctx) => {
-      const units = await ctx.db
-        .query('inventoryUnits')
-        .withIndex('by_ownerId_ownerType', (q) =>
-          q.eq('ownerId', 'pool-no-cap').eq('ownerType', 'Pool'),
-        )
-        .collect()
-
-      expect(units).toHaveLength(1)
-      expect(units[0].totalUnits).toBe(999999)
-    })
-  })
-
-  it('still inserts the venue row for DiveSite', async () => {
-    const t = makeT()
-    let userId: Id<'users'> | undefined
-    await t.run(async (ctx) => {
-      userId = await seedDiveSiteUser(ctx, 'venue-check')
-    })
-
-    const venueId = await t.withIdentity(orgIdentityFor('venue-check'))
+    const venueId = await t.withIdentity(orgIdentityFor('inv-test'))
       .mutation(api.venues.create, VALID_DIVE_SITE_ARGS)
 
-    await t.run(async (ctx) => {
-      const venue = await ctx.db.get(venueId as Id<'venues'>) as Doc<'venues'> | null
-      expect(venue).not.toBeNull()
-      expect(venue!.name).toBe('Shark Bay Reef')
-      expect(venue!.venueCategory).toBe('diveSite')
-      expect(venue!.diveSiteTypes).toEqual(['reef'])
-      expect(venue!.organizationId).toBeDefined()
+    const venue = await t.run(async (ctx) => await ctx.db.get(venueId)) as Doc<'venues'>
+
+    const units = await t.run(async (ctx) => {
+      return await ctx.db
+        .query('inventoryUnits')
+        .withIndex('by_ownerId_ownerType', (q) =>
+          q.eq('ownerId', venue.slug).eq('ownerType', 'Venue'),
+        )
+        .collect()
     })
+    expect(units).toHaveLength(1)
+    expect(units[0].totalUnits).toBe(20)
+    expect(units[0].displayName).toBe('Shark Bay Reef')
+    expect(units[0].resourceId).toBe('shark-bay-reef')
+  })
+
+  it('resolves slug collision with incremental suffix', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedVenueUser(ctx, 'collide-test') })
+    const identity = orgIdentityFor('collide-test')
+
+    const firstId = await t.withIdentity(identity).mutation(api.venues.create, VALID_POOL_ARGS)
+    const secondId = await t.withIdentity(identity).mutation(api.venues.create, VALID_POOL_ARGS)
+
+    const [first, second] = await t.run(async (ctx) => [
+      await ctx.db.get(firstId),
+      await ctx.db.get(secondId),
+    ]) as [Doc<'venues'>, Doc<'venues'>]
+
+    expect(first.slug).toBe('sairee-training-pool')
+    expect(second.slug).toBe('sairee-training-pool-2')
   })
 })
 
-describe('venues.create — Pool vs DiveSite invariants', () => {
-  it('rejects DiveSite user submitting venueCategory: pool', async () => {
+describe('venues.create — multi-row under one org', () => {
+  it('allows an operator to create multiple venues (no .unique() idempotency)', async () => {
     const t = makeT()
-    await t.run(async (ctx) => { await seedDiveSiteUser(ctx, 'ds-wrong-cat') })
+    await t.run(async (ctx) => { await seedVenueUser(ctx, 'multi-op') })
+    const identity = orgIdentityFor('multi-op')
+
+    const poolId = await t.withIdentity(identity).mutation(api.venues.create, VALID_POOL_ARGS)
+    const reefId = await t.withIdentity(identity).mutation(api.venues.create, VALID_DIVE_SITE_ARGS)
+    const shoreId = await t.withIdentity(identity).mutation(api.venues.create, VALID_SHORE_ARGS)
+
+    expect(poolId).not.toBe(reefId)
+    expect(reefId).not.toBe(shoreId)
+
+    const venues = await t.withIdentity(identity).query(api.venues.mine, {})
+    expect(venues).toHaveLength(3)
+  })
+})
+
+describe('venues.update — by venueId', () => {
+  it('patches the correct row among multiple venues', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedVenueUser(ctx, 'patch-target') })
+    const identity = orgIdentityFor('patch-target')
+
+    const poolId = await t.withIdentity(identity).mutation(api.venues.create, VALID_POOL_ARGS)
+    const reefId = await t.withIdentity(identity).mutation(api.venues.create, VALID_DIVE_SITE_ARGS)
+
+    await t.withIdentity(identity).mutation(api.venues.update, {
+      venueId: poolId,
+      maxCapacity: 22,
+    })
+
+    const [pool, reef] = await t.run(async (ctx) => [
+      await ctx.db.get(poolId),
+      await ctx.db.get(reefId),
+    ]) as [Doc<'venues'>, Doc<'venues'>]
+
+    expect(pool.maxCapacity).toBe(22)
+    expect(reef.maxCapacity).toBe(20)
+  })
+
+  it('syncs inventoryUnit.totalUnits to the correct venue row on capacity change', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedVenueUser(ctx, 'cap-sync') })
+    const identity = orgIdentityFor('cap-sync')
+
+    const poolId = await t.withIdentity(identity).mutation(api.venues.create, VALID_POOL_ARGS)
+    await t.withIdentity(identity).mutation(api.venues.create, VALID_DIVE_SITE_ARGS)
+
+    await t.withIdentity(identity).mutation(api.venues.update, {
+      venueId: poolId,
+      maxCapacity: 30,
+    })
+
+    const pool = await t.run(async (ctx) => await ctx.db.get(poolId)) as Doc<'venues'>
+    const poolUnit = await t.run(async (ctx) =>
+      await ctx.db
+        .query('inventoryUnits')
+        .withIndex('by_ownerId_ownerType', (q) =>
+          q.eq('ownerId', pool.slug).eq('ownerType', 'Venue'),
+        )
+        .unique(),
+    )
+    expect(poolUnit?.totalUnits).toBe(30)
+  })
+
+  it('rejects update of a venue owned by a different organization', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => {
+      await seedVenueUser(ctx, 'venue-owner')
+      await seedVenueUser(ctx, 'other-op')
+    })
+
+    const venueId = await t.withIdentity(orgIdentityFor('venue-owner'))
+      .mutation(api.venues.create, VALID_POOL_ARGS)
 
     await expect(
-      t.withIdentity(orgIdentityFor('ds-wrong-cat'))
-        .mutation(api.venues.create, { ...VALID_POOL_ARGS, name: 'Misdeclared' }),
+      t.withIdentity(orgIdentityFor('other-op')).mutation(api.venues.update, {
+        venueId,
+        maxCapacity: 99,
+      }),
+    ).rejects.toThrow(/FORBIDDEN/)
+  })
+})
+
+describe('venues.remove', () => {
+  it('deletes the venue row and its inventoryUnit', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedVenueUser(ctx, 'del-test') })
+    const identity = orgIdentityFor('del-test')
+
+    const venueId = await t.withIdentity(identity).mutation(api.venues.create, VALID_POOL_ARGS)
+    const venue = await t.run(async (ctx) => await ctx.db.get(venueId)) as Doc<'venues'>
+
+    await t.withIdentity(identity).mutation(api.venues.remove, { venueId })
+
+    const [venueAfter, units] = await t.run(async (ctx) => [
+      await ctx.db.get(venueId),
+      await ctx.db
+        .query('inventoryUnits')
+        .withIndex('by_ownerId_ownerType', (q) =>
+          q.eq('ownerId', venue.slug).eq('ownerType', 'Venue'),
+        )
+        .collect(),
+    ])
+
+    expect(venueAfter).toBeNull()
+    expect(units).toHaveLength(0)
+  })
+
+  it('rejects remove of a venue owned by a different organization', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => {
+      await seedVenueUser(ctx, 'del-owner')
+      await seedVenueUser(ctx, 'del-intruder')
+    })
+
+    const venueId = await t.withIdentity(orgIdentityFor('del-owner'))
+      .mutation(api.venues.create, VALID_POOL_ARGS)
+
+    await expect(
+      t.withIdentity(orgIdentityFor('del-intruder')).mutation(api.venues.remove, { venueId }),
     ).rejects.toThrow(/FORBIDDEN/)
   })
 
-  it('rejects Pool payload with diveSiteTypes', async () => {
+  it('returns silently when the venue does not exist', async () => {
     const t = makeT()
-    await t.run(async (ctx) => { await seedPoolUser(ctx, 'pool-bad-types') })
+    await t.run(async (ctx) => { await seedVenueUser(ctx, 'del-ghost') })
+    const identity = orgIdentityFor('del-ghost')
+
+    const realId = await t.withIdentity(identity).mutation(api.venues.create, VALID_POOL_ARGS)
+    await t.withIdentity(identity).mutation(api.venues.remove, { venueId: realId })
 
     await expect(
-      t.withIdentity(orgIdentityFor('pool-bad-types'))
-        .mutation(api.venues.create, {
-          ...VALID_POOL_ARGS,
-          diveSiteTypes: ['reef' as const],
-        }),
-    ).rejects.toThrow(/INVALID_INPUT/)
+      t.withIdentity(identity).mutation(api.venues.remove, { venueId: realId }),
+    ).resolves.toBeNull()
+  })
+})
+
+describe('venues.mine — multi-row return', () => {
+  it('returns an array of all venues for the active org', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedVenueUser(ctx, 'mine-test') })
+    const identity = orgIdentityFor('mine-test')
+
+    const venues = await t.withIdentity(identity).query(api.venues.mine, {})
+    expect(venues).toEqual([])
+
+    await t.withIdentity(identity).mutation(api.venues.create, VALID_POOL_ARGS)
+    await t.withIdentity(identity).mutation(api.venues.create, VALID_DIVE_SITE_ARGS)
+
+    const venuesAfter = await t.withIdentity(identity).query(api.venues.mine, {})
+    expect(venuesAfter).toHaveLength(2)
+    expect(venuesAfter.map((v) => v.subtype).sort()).toEqual(['pool', 'reef'])
   })
 
-  it('rejects Pool payload with confinedCapable', async () => {
+  it('returns empty array for unauthenticated caller', async () => {
     const t = makeT()
-    await t.run(async (ctx) => { await seedPoolUser(ctx, 'pool-bad-confined') })
-
-    await expect(
-      t.withIdentity(orgIdentityFor('pool-bad-confined'))
-        .mutation(api.venues.create, {
-          ...VALID_POOL_ARGS,
-          confinedCapable: true,
-        }),
-    ).rejects.toThrow(/INVALID_INPUT/)
+    const venues = await t.query(api.venues.mine, {})
+    expect(venues).toEqual([])
   })
+})
 
-  it('rejects DiveSite payload with empty diveSiteTypes', async () => {
+describe('venues.bySlug — cross-operator resolution', () => {
+  it('resolves a venue by slug regardless of calling user', async () => {
     const t = makeT()
-    await t.run(async (ctx) => { await seedDiveSiteUser(ctx, 'ds-empty') })
+    await t.run(async (ctx) => {
+      await seedVenueUser(ctx, 'slug-owner')
+      await seedVenueUser(ctx, 'slug-lookup')
+    })
 
-    await expect(
-      t.withIdentity(orgIdentityFor('ds-empty'))
-        .mutation(api.venues.create, {
-          ...VALID_DIVE_SITE_ARGS,
-          diveSiteTypes: [],
-        }),
-    ).rejects.toThrow(/INVALID_INPUT/)
-  })
-
-  it('persists Pool without confinedCapable field', async () => {
-    const t = makeT()
-    await t.run(async (ctx) => { await seedPoolUser(ctx, 'pool-clean') })
-
-    const venueId = await t.withIdentity(orgIdentityFor('pool-clean'))
+    await t.withIdentity(orgIdentityFor('slug-owner'))
       .mutation(api.venues.create, VALID_POOL_ARGS)
 
-    await t.run(async (ctx) => {
-      const venue = await ctx.db.get(venueId as Id<'venues'>) as Doc<'venues'> | null
-      expect(venue!.venueCategory).toBe('pool')
-      expect(venue!.confinedCapable).toBeUndefined()
-      expect(venue!.diveSiteTypes).toBeUndefined()
-    })
+    const venue = await t.withIdentity(orgIdentityFor('slug-lookup'))
+      .query(api.venues.bySlug, { slug: 'sairee-training-pool' })
+
+    expect(venue).not.toBeNull()
+    expect(venue?.name).toBe('Sairee Training Pool')
   })
 
-})
-
-// ── venues.update — inventoryUnit totalUnits sync ─────────────────────────────
-
-describe('venues.update — capacity sync to inventoryUnit', () => {
-  it('syncs inventoryUnit.totalUnits when DiveSite maxCapacity changes', async () => {
+  it('returns null for unknown slug', async () => {
     const t = makeT()
-    await t.run(async (ctx) => { await seedDiveSiteUser(ctx, 'ds-cap-change') })
-    const identity = orgIdentityFor('ds-cap-change')
-
-    await t.withIdentity(identity).mutation(api.venues.create, VALID_DIVE_SITE_ARGS)
-    await t.withIdentity(identity).mutation(api.venues.update, { maxCapacity: 35 })
-
-    await t.run(async (ctx) => {
-      const units = await ctx.db
-        .query('inventoryUnits')
-        .withIndex('by_ownerId_ownerType', (q) =>
-          q.eq('ownerId', 'ds-cap-change').eq('ownerType', 'DiveSite'),
-        )
-        .collect()
-      expect(units[0].totalUnits).toBe(35)
-    })
-  })
-
-  it('syncs inventoryUnit.totalUnits when Pool maxCapacity changes', async () => {
-    const t = makeT()
-    await t.run(async (ctx) => { await seedPoolUser(ctx, 'pool-cap-change') })
-    const identity = orgIdentityFor('pool-cap-change')
-
-    await t.withIdentity(identity).mutation(api.venues.create, VALID_POOL_ARGS)
-    await t.withIdentity(identity).mutation(api.venues.update, { maxCapacity: 42 })
-
-    await t.run(async (ctx) => {
-      const units = await ctx.db
-        .query('inventoryUnits')
-        .withIndex('by_ownerId_ownerType', (q) =>
-          q.eq('ownerId', 'pool-cap-change').eq('ownerType', 'Pool'),
-        )
-        .collect()
-      expect(units[0].totalUnits).toBe(42)
-    })
-  })
-
-  it('leaves inventoryUnit untouched when update omits maxCapacity', async () => {
-    const t = makeT()
-    await t.run(async (ctx) => { await seedPoolUser(ctx, 'pool-no-update') })
-    const identity = orgIdentityFor('pool-no-update')
-
-    await t.withIdentity(identity).mutation(api.venues.create, VALID_POOL_ARGS)
-    await t.withIdentity(identity).mutation(api.venues.update, { name: 'Renamed Pool' })
-
-    await t.run(async (ctx) => {
-      const units = await ctx.db
-        .query('inventoryUnits')
-        .withIndex('by_ownerId_ownerType', (q) =>
-          q.eq('ownerId', 'pool-no-update').eq('ownerType', 'Pool'),
-        )
-        .collect()
-      expect(units[0].totalUnits).toBe(15)
-    })
+    const venue = await t.query(api.venues.bySlug, { slug: 'does-not-exist' })
+    expect(venue).toBeNull()
   })
 })
 
-// ── venues.create — access control (unchanged invariants) ─────────────────────
+describe('venues — access control persistence', () => {
+  it('persists isAllowed + notAllowed arrays per venue row', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedVenueUser(ctx, 'acl-test') })
+    const identity = orgIdentityFor('acl-test')
+
+    const venueId = await t.withIdentity(identity).mutation(api.venues.create, {
+      ...VALID_POOL_ARGS,
+      isAllowed: ['dc-a', 'dc-b'],
+      notAllowed: ['blocked-dc'],
+    })
+
+    const venue = await t.run(async (ctx) => await ctx.db.get(venueId)) as Doc<'venues'>
+    expect(venue.isAllowed).toEqual(['dc-a', 'dc-b'])
+    expect(venue.notAllowed).toEqual(['blocked-dc'])
+  })
+
+  it('allows updating access-control lists independently per venue', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedVenueUser(ctx, 'acl-update') })
+    const identity = orgIdentityFor('acl-update')
+
+    const poolId = await t.withIdentity(identity).mutation(api.venues.create, VALID_POOL_ARGS)
+    const reefId = await t.withIdentity(identity).mutation(api.venues.create, VALID_DIVE_SITE_ARGS)
+
+    await t.withIdentity(identity).mutation(api.venues.update, {
+      venueId: poolId,
+      isAllowed: ['only-this-dc'],
+    })
+
+    const [pool, reef] = await t.run(async (ctx) => [
+      await ctx.db.get(poolId),
+      await ctx.db.get(reefId),
+    ]) as [Doc<'venues'>, Doc<'venues'>]
+
+    expect(pool.isAllowed).toEqual(['only-this-dc'])
+    expect(reef.isAllowed ?? []).toEqual([])
+  })
+})
 
 describe('venues.create — access control', () => {
   it('rejects unauthenticated callers', async () => {
@@ -357,10 +355,10 @@ describe('venues.create — access control', () => {
     ).rejects.toThrow(/UNAUTHENTICATED/)
   })
 
-  it('rejects callers without Pool or DiveSite role', async () => {
+  it('rejects callers without the Venue role', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
-      await seedUser(ctx, {
+      const userId = await seedUser(ctx, {
         tokenIdentifier: 'clerk|dc-user',
         slug: 'dc-user',
         email: 'dc@test.com',
@@ -369,6 +367,7 @@ describe('venues.create — access control', () => {
         lastName: 'User',
         role: 'DiveCenter',
       })
+      await getOrCreateTestOrg(ctx, userId, 'dc-user')
     })
 
     await expect(
@@ -378,31 +377,5 @@ describe('venues.create — access control', () => {
   })
 })
 
-describe('venues.update — access control round-trip', () => {
-  it('persists isAllowed + notAllowed arrays', async () => {
-    const t = makeT()
-    await t.run(async (ctx) => { await seedPoolUser(ctx, 'pool-acl') })
-
-    await t.withIdentity(orgIdentityFor('pool-acl'))
-      .mutation(api.venues.create, {
-        name: 'ACL Pool',
-        address: { city: 'Koh Tao', country: 'TH' },
-        lat: 10.09,
-        lng: 99.84,
-        venueCategory: 'pool' as const,
-        hasCompressor: false,
-        maxCapacity: 15,
-      })
-
-    await t.withIdentity(orgIdentityFor('pool-acl'))
-      .mutation(api.venues.update, {
-        isAllowed: ['dc-a'],
-        notAllowed: ['blocked-dc'],
-      })
-
-    const venue = await t.withIdentity(orgIdentityFor('pool-acl'))
-      .query(api.venues.mine, {}) as Doc<'venues'> | null
-    expect(venue!.isAllowed).toEqual(['dc-a'])
-    expect(venue!.notAllowed).toEqual(['blocked-dc'])
-  })
-})
+// Prevent "unused import" TS on helper types kept for future suite additions
+void (null as unknown as Id<'venues'>)

@@ -200,13 +200,13 @@ export const getManifestData = query({
 
               let diveSiteName: string | undefined
               const resRows = await getResourcesForBooking(ctx, String(booking._id))
-              const diveSiteRow = resRows.find(
-                (r) => r.resourceType === 'DiveSite' && r.resourceId,
+              const venueRow = resRows.find(
+                (r) => r.resourceType === 'Venue' && r.resourceId,
               )
-              if (diveSiteRow?.resourceId) {
+              if (venueRow?.resourceId) {
                 const siteOrg = await ctx.db
                   .query('organizations')
-                  .withIndex('by_slug', (q) => q.eq('slug', diveSiteRow.resourceId!))
+                  .withIndex('by_slug', (q) => q.eq('slug', venueRow.resourceId!))
                   .unique()
                 if (siteOrg) {
                   const venue = await ctx.db

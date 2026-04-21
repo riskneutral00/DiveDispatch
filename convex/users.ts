@@ -22,9 +22,13 @@ import { isAdult, MIN_SIGNUP_AGE_YEARS } from './lib/age'
 import { normalizeAppLanguageOrThrow } from './lib/i18nValidators'
 import { readOrgClaims } from './lib/activeOrg'
 import { parseTokenIdentifier, isAllowedRebind } from './lib/tokenIdentifier'
-import { insertUserRole } from './lib/userRoleHelpers'
+import { insertUserRole, getAllUserRoles } from './lib/userRoleHelpers'
 import { setUserOrganization } from './lib/userOrg'
 import { ensureSystemThemesInline } from './lib/ensureSystemThemes'
+import { ROLE_PRECEDENCE } from './lib/rolePrecedence'
+import { ROLE_TABLE_MAP, profileMine } from './lib/profileHelpers'
+import { tryGetActiveOrg } from './lib/activeOrg'
+import type { AddressStructured } from './shared/addressValidator'
 
 function publicUser(user: Doc<'users'>) {
   const { tokenIdentifier: _ti, email: _e, ...rest } = user
@@ -373,6 +377,65 @@ export const getAccountDefaults = query({
     return {
       defaultLocation: user.defaultLocation,
     }
+  },
+})
+
+const INHERITANCE_SOURCE_ROLES: ReadonlySet<string> = new Set([
+  'DiveCenter',
+  'Agent',
+  'Liveaboard',
+  'DiveResort',
+  'DiveHostel',
+  'Equipment',
+  'Venue',
+  'Compressor',
+])
+
+type InheritedContactProfile = {
+  name?: string
+  address?: AddressStructured
+  placeId?: string
+  lat?: number
+  lng?: number
+  email?: string
+  phone?: string
+}
+
+export const inheritedContactDefaults = query({
+  args: { excludeRole: stakeholderType },
+  handler: async (ctx, args) => {
+    const user = await getAuthUser(ctx)
+    if (!user) return null
+
+    const activeOrg = await tryGetActiveOrg(ctx)
+    if (!activeOrg) return null
+
+    const roles = await getAllUserRoles(ctx, user._id)
+    const candidates = roles
+      .filter((r) => r.role !== args.excludeRole)
+      .filter((r) => r.organizationId === activeOrg._id)
+      .filter((r) => INHERITANCE_SOURCE_ROLES.has(r.role))
+      .map((r) => r.role)
+      .sort((a, b) => (ROLE_PRECEDENCE[a] ?? Infinity) - (ROLE_PRECEDENCE[b] ?? Infinity))
+
+    for (const role of candidates) {
+      const tableName = ROLE_TABLE_MAP[role]
+      if (!tableName) continue
+      const profile = (await profileMine(ctx, tableName)) as InheritedContactProfile | null
+      if (!profile) continue
+
+      return {
+        name: profile.name ?? '',
+        ...(profile.address !== undefined && { address: profile.address }),
+        ...(profile.placeId !== undefined && { placeId: profile.placeId }),
+        lat: profile.lat ?? 0,
+        lng: profile.lng ?? 0,
+        email: profile.email ?? '',
+        phone: profile.phone ?? '',
+      }
+    }
+
+    return null
   },
 })
 

@@ -947,7 +947,7 @@ describe('_getCapacityForDates', () => {
   it('no snapshot for date → returns full capacity from unit', async () => {
     await t.run(async (ctx) => {
       const unitId = await seedInventoryUnit(ctx, {
-        resourceType: 'Pool',
+        resourceType: 'Venue',
         capacityModel: 'Pooled',
         totalUnits: 10,
       })
@@ -1298,7 +1298,7 @@ describe('listDiveSites auth gate', () => {
   it('returns results for authenticated caller', async () => {
     await t.run(async (ctx) => {
       await seedUser(ctx)
-      await seedInventoryUnit(ctx, { resourceType: 'DiveSite' })
+      await seedInventoryUnit(ctx, { resourceType: 'Venue' })
     })
 
     const result = await t

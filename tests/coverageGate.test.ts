@@ -32,7 +32,7 @@ async function seedVenueUser(
   slug: string,
   caps: { confinedCapable: boolean; hasCompressor: boolean },
 ) {
-  const userId = await seedUser(ctx, { tokenIdentifier: `clerk|${slug}`, slug, email: `${slug}@test.com`, name: `${slug} Display`, firstName: slug, lastName: 'Test', role: 'Pool' })
+  const userId = await seedUser(ctx, { tokenIdentifier: `clerk|${slug}`, slug, email: `${slug}@test.com`, name: `${slug} Display`, firstName: slug, lastName: 'Test', role: 'Venue' })
   await seedVenue(ctx, {
     userId,
     name: `${slug} Venue`,
@@ -119,7 +119,8 @@ describe('createDraftShell — coverage gate', () => {
       return (
         d.code === 'PROFILE_INCOMPLETE' &&
         d.missing.includes('preferredEquipment') &&
-        d.missing.includes('preferredVenueOrBoat') &&
+        d.missing.includes('preferredVenue') &&
+        d.missing.includes('preferredBoat') &&
         d.missing.includes('preferredCompressor')
       )
     })

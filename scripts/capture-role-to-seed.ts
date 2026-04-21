@@ -8,8 +8,7 @@ import { api } from '../convex/_generated/api'
 type StakeholderRole =
   | 'DiveCenter'
   | 'Boat'
-  | 'Pool'
-  | 'DiveSite'
+  | 'Venue'
   | 'Equipment'
   | 'Compressor'
   | 'Agent'
@@ -21,8 +20,7 @@ type StakeholderRole =
 const SEED_BLOCK_BY_ROLE: Record<StakeholderRole, string> = {
   DiveCenter: 'diveCenter',
   Boat: 'boat',
-  Pool: 'pool',
-  DiveSite: 'pool',
+  Venue: 'venue',
   Equipment: 'equipment',
   Compressor: 'compressor',
   Agent: 'agent',

@@ -398,9 +398,9 @@ describe('expireBooking', () => {
       })
 
       const poolUnitId = await seedInventoryUnit(ctx, {
-        resourceType: 'Pool',
+        resourceType: 'Venue',
         ownerId: 'pool-h1-2',
-        ownerType: 'Pool',
+        ownerType: 'Venue',
         displayName: 'Pool H1-2',
       })
 

@@ -22,7 +22,7 @@ import { getOrCreateTestOrg, type SeedCtx } from '../fixtures'
 
 type Ctx = Parameters<Parameters<ReturnType<typeof makeT>['run']>[0]>[0]
 
-type StakeholderRole = 'DiveCenter' | 'Agent' | 'Liveaboard' | 'DiveResort' | 'DiveHostel' | 'DiveSite' | 'Boat' | 'Equipment' | 'Pool' | 'Compressor' | 'Instructor' | 'DiveMaster'
+type StakeholderRole = 'DiveCenter' | 'Agent' | 'Liveaboard' | 'DiveResort' | 'DiveHostel' | 'Venue' | 'Boat' | 'Equipment' | 'Venue' | 'Compressor' | 'Instructor' | 'DiveMaster'
 
 async function seedUser(
   ctx: Ctx,
@@ -183,7 +183,7 @@ describe('acceptByBookingForCaller', () => {
     const { bookingId, instResId, venueResId } = await t.run(async (ctx) => {
       await seedUser(ctx, 'dc-accept-3', 'DiveCenter')
       await seedUser(ctx, 'inst-accept-3', 'Instructor')
-      await seedUser(ctx, 'pool-accept-3', 'Pool')
+      await seedUser(ctx, 'pool-accept-3', 'Venue')
       const bookingId = await seedBooking(ctx, 'dc-accept-3')
 
       // Instructor unit
@@ -193,13 +193,13 @@ describe('acceptByBookingForCaller', () => {
 
       // Pool unit (different stakeholder)
       const poolUnitId = await ctx.db.insert('inventoryUnits', {
-        resourceType: 'Pool',
+        resourceType: 'Venue',
         resourceId: 'pool-accept-3',
         displayName: 'Pool Unit',
         capacityModel: 'Exclusive',
         totalUnits: 1,
         ownerId: 'pool-accept-3',
-        ownerType: 'Pool',
+        ownerType: 'Venue',
       })
       const poolSessionId = await seedSession(ctx, bookingId, poolUnitId, testDate(5))
       const venueResId = await seedReservation(ctx, bookingId, poolUnitId, poolSessionId)

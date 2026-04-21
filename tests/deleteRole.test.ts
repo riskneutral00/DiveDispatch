@@ -375,4 +375,149 @@ describe('userRoles.deleteRole', () => {
         .mutation(api.userRoles.deleteRole, { roleId: roleId! }),
     ).rejects.toThrow(/FORBIDDEN/)
   })
+
+  it('deletes role profile when org slug differs from user slug (real Clerk-org scenario)', async () => {
+    const t = makeT()
+    let roleId: Id<'userRoles'>
+    let userId: Id<'users'>
+    let orgId: Id<'organizations'>
+
+    await t.run(async (ctx) => {
+      userId = await ctx.db.insert('users', {
+        tokenIdentifier: 'clerk|rene',
+        originalTokenIdentifier: 'clerk|rene',
+        slug: 'rene-user-slug',
+        email: 'rene@example.com',
+        name: 'Rene Balot',
+        firstName: 'Rene',
+        lastName: 'Balot',
+        appLanguage: 'en',
+      })
+      orgId = await ctx.db.insert('organizations', {
+        clerkOrgId: 'org_seafun',
+        slug: 'sea-fun-divers',
+        name: 'Sea Fun Divers',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      })
+      await ctx.db.patch(userId, { organizationId: orgId })
+
+      await ctx.db.insert('userRoles', {
+        userId,
+        role: 'DiveCenter',
+        organizationId: orgId,
+        createdAt: Date.now(),
+      })
+      roleId = await ctx.db.insert('userRoles', {
+        userId,
+        role: 'Compressor',
+        organizationId: orgId,
+        createdAt: Date.now(),
+      })
+
+      await ctx.db.insert('compressors', {
+        organizationId: orgId,
+        name: 'Scuba Market',
+        address: { city: 'Phuket', country: 'TH' },
+        lat: 7.88,
+        lng: 98.39,
+        email: 'compressor@example.com',
+        phone: '+66111222333',
+        gasMixes: ['air'],
+        verified: false,
+      })
+    })
+
+    const result = await t
+      .withIdentity({
+        tokenIdentifier: 'clerk|rene',
+        orgId: 'org_seafun',
+        orgRole: 'admin',
+        orgSlug: 'sea-fun-divers',
+      })
+      .mutation(api.userRoles.deleteRole, { roleId: roleId! })
+
+    expect(result).toEqual({ deleted: true })
+
+    await t.run(async (ctx) => {
+      const orphan = await ctx.db
+        .query('compressors')
+        .withIndex('by_organizationId', (q) => q.eq('organizationId', orgId!))
+        .unique()
+      expect(orphan).toBeNull()
+    })
+  })
+
+  it('keeps the profile when another user in the same org still holds the role', async () => {
+    const t = makeT()
+    let roleId: Id<'userRoles'>
+    let orgId: Id<'organizations'>
+
+    await t.run(async (ctx) => {
+      orgId = await ctx.db.insert('organizations', {
+        clerkOrgId: 'org_shared',
+        slug: 'shared-org',
+        name: 'Shared Org',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      })
+
+      const aliceId = await ctx.db.insert('users', {
+        tokenIdentifier: 'clerk|alice',
+        originalTokenIdentifier: 'clerk|alice',
+        slug: 'alice-slug',
+        email: 'alice@example.com',
+        name: 'Alice',
+        firstName: 'Alice',
+        lastName: 'A',
+        organizationId: orgId,
+        appLanguage: 'en',
+      })
+      const bobId = await ctx.db.insert('users', {
+        tokenIdentifier: 'clerk|bob',
+        originalTokenIdentifier: 'clerk|bob',
+        slug: 'bob-slug',
+        email: 'bob@example.com',
+        name: 'Bob',
+        firstName: 'Bob',
+        lastName: 'B',
+        organizationId: orgId,
+        appLanguage: 'en',
+      })
+
+      await ctx.db.insert('userRoles', { userId: aliceId, role: 'DiveCenter', organizationId: orgId, createdAt: Date.now() })
+      roleId = await ctx.db.insert('userRoles', { userId: aliceId, role: 'Compressor', organizationId: orgId, createdAt: Date.now() })
+      await ctx.db.insert('userRoles', { userId: bobId, role: 'Compressor', organizationId: orgId, createdAt: Date.now() })
+
+      await ctx.db.insert('compressors', {
+        organizationId: orgId,
+        name: 'Shared Compressor',
+        address: { city: 'Koh Tao', country: 'TH' },
+        lat: 10,
+        lng: 99,
+        email: 'shared@example.com',
+        phone: '+66111222333',
+        gasMixes: ['air'],
+        verified: false,
+      })
+    })
+
+    await t
+      .withIdentity({
+        tokenIdentifier: 'clerk|alice',
+        orgId: 'org_shared',
+        orgRole: 'admin',
+        orgSlug: 'shared-org',
+      })
+      .mutation(api.userRoles.deleteRole, { roleId: roleId! })
+
+    await t.run(async (ctx) => {
+      const profile = await ctx.db
+        .query('compressors')
+        .withIndex('by_organizationId', (q) => q.eq('organizationId', orgId!))
+        .unique()
+      expect(profile).not.toBeNull()
+      expect(profile!.name).toBe('Shared Compressor')
+    })
+  })
 })

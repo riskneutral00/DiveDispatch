@@ -82,9 +82,9 @@ describe('ROLE_REQUIRED', () => {
     }
   })
 
-  it('Equipment requires gearInventory; Pool requires only name and address', () => {
+  it('Equipment requires gearInventory; Venue requires name, address, subtype', () => {
     expect(ROLE_REQUIRED.Equipment).toEqual(['name', 'address', 'gearInventory'])
-    expect(ROLE_REQUIRED.Pool).toEqual(['name', 'address'])
+    expect(ROLE_REQUIRED.Venue).toEqual(['name', 'address', 'subtype'])
   })
 
   it('Compressor requires gasMixes (happy-path P0-18 gate)', () => {
@@ -95,15 +95,15 @@ describe('ROLE_REQUIRED', () => {
     expect(ROLE_REQUIRED.Instructor).toContain('teachingLanguages')
   })
 
-  it('DiveSite has required fields defined', () => {
-    const fields = ROLE_REQUIRED['DiveSite']
+  it('Venue has required fields defined', () => {
+    const fields = ROLE_REQUIRED['Venue']
     expect(fields).toContain('name')
     expect(fields).toContain('address')
-    expect(fields).toContain('diveSiteTypes')
+    expect(fields).toContain('subtype')
   })
 
-  it('DiveSite required fields are exactly the spec list (maxCapacity is optional)', () => {
-    expect(ROLE_REQUIRED['DiveSite']).toEqual(['name', 'address', 'diveSiteTypes'])
+  it('Venue required fields are exactly the spec list (maxCapacity is optional)', () => {
+    expect(ROLE_REQUIRED['Venue']).toEqual(['name', 'address', 'subtype'])
   })
 })
 

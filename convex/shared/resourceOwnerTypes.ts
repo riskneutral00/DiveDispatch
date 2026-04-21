@@ -3,11 +3,10 @@ import { v, type Infer } from 'convex/values'
 export const RESOURCE_OWNER_TYPES = [
   'Boat',
   'Equipment',
-  'Pool',
+  'Venue',
   'Compressor',
   'Instructor',
   'Liveaboard',
-  'DiveSite',
 ] as const
 
 export type ResourceOwnerType = (typeof RESOURCE_OWNER_TYPES)[number]

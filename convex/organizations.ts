@@ -93,6 +93,8 @@ export const deleteFromWebhook = internalMutation({
 export const getBySlug = query({
   args: { slug: v.string() },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity()
+    if (!identity) return null
     return await ctx.db
       .query('organizations')
       .withIndex('by_slug', (q) => q.eq('slug', args.slug))
@@ -103,21 +105,27 @@ export const getBySlug = query({
 export const getById = query({
   args: { id: v.id('organizations') },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity()
+    if (!identity) return null
     return await ctx.db.get(args.id)
   },
 })
 
 export const updateBusinessMetadata = mutation({
   args: {
+    name: v.optional(v.string()),
     phone: v.optional(v.string()),
     email: v.optional(v.string()),
     address: v.optional(addressStructuredValidator),
     placeId: v.optional(v.string()),
+    lat: v.optional(v.number()),
+    lng: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const { org } = await requireOrgAdmin(ctx)
 
     const patch: Record<string, unknown> = { updatedAt: Date.now() }
+    if (args.name !== undefined) patch.name = args.name
     if (args.phone !== undefined) patch.phone = args.phone
     if (args.email !== undefined) patch.email = args.email
     if (args.address !== undefined) {
@@ -125,6 +133,8 @@ export const updateBusinessMetadata = mutation({
       patch.address = args.address
     }
     if (args.placeId !== undefined) patch.placeId = args.placeId
+    if (args.lat !== undefined) patch.lat = args.lat
+    if (args.lng !== undefined) patch.lng = args.lng
 
     if (Object.keys(patch).length === 1) {
       throw new ConvexError({ code: ErrorCode.VALIDATION, reason: 'no_fields_to_update' })
@@ -132,5 +142,19 @@ export const updateBusinessMetadata = mutation({
 
     await ctx.db.patch(org._id, patch)
     return org._id
+  },
+})
+
+export const mine = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity()
+    if (!identity) return null
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_tokenIdentifier', (q) => q.eq('tokenIdentifier', identity.tokenIdentifier))
+      .unique()
+    if (!user?.organizationId) return null
+    return await ctx.db.get(user.organizationId)
   },
 })

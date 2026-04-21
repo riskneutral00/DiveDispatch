@@ -3,8 +3,8 @@ import { OPERATOR_ROLE_SET } from '../convex/lib/auth'
 import { ORGANIZER_ROLES, RESOURCE_ROLES } from '../src/lib/constants/roles'
 
 describe('Backend OPERATOR_ROLE_SET alignment', () => {
-  it('contains exactly: DiveCenter, Agent, Liveaboard, DiveResort, DiveHostel, DiveSite', () => {
-    const expected = new Set(['DiveCenter', 'Agent', 'Liveaboard', 'DiveResort', 'DiveHostel', 'DiveSite'])
+  it('contains exactly: DiveCenter, Agent, Liveaboard, DiveResort, DiveHostel', () => {
+    const expected = new Set(['DiveCenter', 'Agent', 'Liveaboard', 'DiveResort', 'DiveHostel'])
     expect(OPERATOR_ROLE_SET).toEqual(expected)
   })
 
@@ -14,7 +14,7 @@ describe('Backend OPERATOR_ROLE_SET alignment', () => {
       'DiveMaster',
       'Boat',
       'Equipment',
-      'Pool',
+      'Venue',
       'Compressor',
     ]
     for (const role of pureResourceRoles) {
@@ -22,15 +22,13 @@ describe('Backend OPERATOR_ROLE_SET alignment', () => {
     }
   })
 
-  it('ORGANIZER_ROLES plus DiveSite match OPERATOR_ROLE_SET', () => {
+  it('ORGANIZER_ROLES matches OPERATOR_ROLE_SET', () => {
     const frontendOrganizerClerkRoles = new Set(ORGANIZER_ROLES.map((r) => r.clerkRole))
-    // DiveSite is in both OPERATOR_ROLE_SET and RESOURCE_ROLES (dual role)
-    frontendOrganizerClerkRoles.add('DiveSite')
     expect(OPERATOR_ROLE_SET).toEqual(frontendOrganizerClerkRoles)
   })
 
-  it('has exactly 6 operator roles', () => {
-    expect(OPERATOR_ROLE_SET.size).toBe(6)
+  it('has exactly 5 operator roles', () => {
+    expect(OPERATOR_ROLE_SET.size).toBe(5)
   })
 
   it('ORGANIZER_ROLES and RESOURCE_ROLES together cover all roles', () => {
