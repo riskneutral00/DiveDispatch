@@ -2,6 +2,7 @@ import { ConvexError } from 'convex/values'
 import { internalMutation } from '../_generated/server'
 import { ErrorCode } from '../lib/errorCodes'
 import { isDevEnvironment } from '../lib/devGuard'
+import { setUserOrganization } from '../lib/userOrg'
 
 export const backfillPersonalOrgs = internalMutation({
   args: {},
@@ -26,7 +27,7 @@ export const backfillPersonalOrgs = internalMutation({
         .unique()
 
       if (existingOrg) {
-        await ctx.db.patch(user._id, { organizationId: existingOrg._id }) // batch-exempt: dev-only backfill
+        await setUserOrganization(ctx, user._id, existingOrg._id) // batch-exempt: dev-only backfill
         results.push({ userId: user._id, slug: user.slug, action: 'linked' })
         continue
       }
@@ -38,7 +39,7 @@ export const backfillPersonalOrgs = internalMutation({
         createdAt: now,
         updatedAt: now,
       })
-      await ctx.db.patch(user._id, { organizationId: orgId }) // batch-exempt: dev-only backfill
+      await setUserOrganization(ctx, user._id, orgId) // batch-exempt: dev-only backfill
       results.push({ userId: user._id, slug: user.slug, action: 'created' })
     }
 

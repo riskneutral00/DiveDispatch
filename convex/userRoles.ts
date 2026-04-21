@@ -131,9 +131,14 @@ export const addRole = mutation({
       .unique()
     if (existing) throw new ConvexError({ code: ErrorCode.DUPLICATE_ROLE })
 
+    if (!user.organizationId) {
+      throw new ConvexError({ code: ErrorCode.FORBIDDEN, reason: 'no_active_org' })
+    }
+
     return insertUserRole(ctx, {
       userId: user._id,
       role,
+      organizationId: user.organizationId,
     })
   },
 })

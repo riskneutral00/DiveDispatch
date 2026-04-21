@@ -17,6 +17,7 @@ import {
 } from './lib/defaultThemes'
 import { stakeholderPreferenceIdsToDelete } from './lib/stakeholderPreferencesDedupe'
 import { insertUserRole } from './lib/userRoleHelpers'
+import { setUserOrganization } from './lib/userOrg'
 import { ALL_INSTRUCTORS } from './seedInstructorData'
 import {
   ALL_GEAR_SIZING,
@@ -226,9 +227,10 @@ export const seedStakeholders = internalMutation({
     if (existing) return 'Already seeded'
 
     for (const s of ALL_STAKEHOLDERS) {
-      await insertUser(ctx, s) // batch-exempt
+      const userId = await insertUser(ctx, s) // batch-exempt
       const orgName = s.diveCenter?.name ?? s.boat?.name ?? s.equipment?.name ?? s.compressor?.name ?? s.agent?.name ?? s.liveaboard?.name ?? s.diveResort?.name ?? s.pool?.name ?? `Seed Org ${s.user.slug}`
       const organizationId = await getOrCreateSeedOrg(ctx, s.user.slug, orgName) // batch-exempt
+      await setUserOrganization(ctx, userId, organizationId) // batch-exempt
 
       if (s.diveCenter) {
         await ctx.db.insert('diveCenters', { organizationId, ...s.diveCenter }) // batch-exempt
@@ -276,10 +278,13 @@ export const seedUserRoles = internalMutation({
         .unique()
       if (!user) continue
 
+      if (!user.organizationId) continue
+
       for (const r of s.roles) {
         await insertUserRole(ctx, { // batch-exempt
           userId: user._id,
           role: r.role,
+          organizationId: user.organizationId,
         })
       }
     }
@@ -296,9 +301,10 @@ export const seedInstructors = internalMutation({
     if (existingInstructor) return 'Already seeded'
 
     for (const s of ALL_INSTRUCTORS) {
-      await insertUser(ctx, s)
+      const userId = await insertUser(ctx, s)
       if (s.instructor) {
         const organizationId = await getOrCreateSeedOrg(ctx, s.user.slug, s.instructor.name ?? s.user.name) // batch-exempt
+        await setUserOrganization(ctx, userId, organizationId) // batch-exempt
         await ctx.db.insert('diveStaff', { organizationId, ...s.instructor, role: 'Instructor' }) // batch-exempt: sequential per-instructor seed
       }
     }

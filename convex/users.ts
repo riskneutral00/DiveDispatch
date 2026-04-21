@@ -1,6 +1,6 @@
 import { ConvexError, v } from 'convex/values'
 import { internalAction, internalMutation, internalQuery, mutation, query } from './_generated/server'
-import type { DatabaseWriter } from './_generated/server'
+import type { DatabaseWriter, MutationCtx } from './_generated/server'
 import { internal } from './_generated/api'
 import type { Doc, Id } from './_generated/dataModel'
 import { authorize, getAuthUser, OPERATOR_ROLE_SET } from './lib/auth'
@@ -23,6 +23,7 @@ import { normalizeAppLanguageOrThrow } from './lib/i18nValidators'
 import { readOrgClaims } from './lib/activeOrg'
 import { parseTokenIdentifier, isAllowedRebind } from './lib/tokenIdentifier'
 import { insertUserRole } from './lib/userRoleHelpers'
+import { setUserOrganization } from './lib/userOrg'
 
 function publicUser(user: Doc<'users'>) {
   const { tokenIdentifier: _ti, email: _e, ...rest } = user
@@ -42,7 +43,7 @@ async function generateUniqueSlug(db: DatabaseWriter): Promise<string> {
 }
 
 async function ensurePersonalOrg(
-  db: DatabaseWriter,
+  ctx: MutationCtx,
   userId: Id<'users'>,
   userSlug: string,
   firstName: string,
@@ -51,13 +52,13 @@ async function ensurePersonalOrg(
   now: number,
 ): Promise<Id<'organizations'>> {
   const displayName = `${firstName} ${lastName}`.trim() || email || userSlug
-  const orgId = await db.insert('organizations', {
+  const orgId = await ctx.db.insert('organizations', {
     slug: userSlug,
     name: displayName,
     createdAt: now,
     updatedAt: now,
   })
-  await db.patch(userId, { organizationId: orgId })
+  await setUserOrganization(ctx, userId, orgId)
   return orgId
 }
 
@@ -120,13 +121,17 @@ export const createUser = mutation({
         ...(args.tcVersion !== existing.tcVersion && { tcVersion: args.tcVersion, tcAcceptedAt: now }),
       })
 
+      let resolvedOrgId: Id<'organizations'> | undefined = existing.organizationId
       if (activeOrgId) {
         if (existing.organizationId !== activeOrgId) {
-          await ctx.db.patch(existing._id, { organizationId: activeOrgId })
+          await setUserOrganization(ctx, existing._id, activeOrgId)
         }
+        resolvedOrgId = activeOrgId
       } else if (!existing.organizationId) {
-        await ensurePersonalOrg(ctx.db, existing._id, existing.slug, args.firstName, args.lastName, email, now)
+        resolvedOrgId = await ensurePersonalOrg(ctx, existing._id, existing.slug, args.firstName, args.lastName, email, now)
       }
+
+      if (!resolvedOrgId) throw new ConvexError({ code: ErrorCode.INVARIANT_VIOLATION, reason: 'no_resolved_org' })
 
       if (args.roles && args.roles.length > 0) {
         const existingRoles = await ctx.db
@@ -140,6 +145,7 @@ export const createUser = mutation({
             await insertUserRole(ctx, { // batch-exempt: roles is a tiny bounded array (user-selected roles, max ~5)
               userId: existing._id,
               role,
+              organizationId: resolvedOrgId,
               createdAt: now,
             })
           }
@@ -166,10 +172,12 @@ export const createUser = mutation({
       appLanguage: args.appLanguage ? normalizeAppLanguageOrThrow(args.appLanguage) : 'en',
     })
 
+    let resolvedOrgId: Id<'organizations'>
     if (activeOrgId) {
-      await ctx.db.patch(userId, { organizationId: activeOrgId })
+      await setUserOrganization(ctx, userId, activeOrgId)
+      resolvedOrgId = activeOrgId
     } else {
-      await ensurePersonalOrg(ctx.db, userId, slug, args.firstName, args.lastName, email, now)
+      resolvedOrgId = await ensurePersonalOrg(ctx, userId, slug, args.firstName, args.lastName, email, now)
     }
 
     if (args.roles && args.roles.length > 0) {
@@ -179,6 +187,7 @@ export const createUser = mutation({
         await insertUserRole(ctx, { // batch-exempt: roles is a tiny bounded array (user-selected roles, max ~5)
           userId,
           role: uniqueRoles[i],
+          organizationId: resolvedOrgId,
           createdAt: insertAt,
         })
       }

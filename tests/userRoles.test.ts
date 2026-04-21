@@ -7,7 +7,7 @@
 
 import { describe, it, expect } from 'vitest'
 import { api } from '../convex/_generated/api'
-import { seedUser, TEST_TOKENS, TEST_SLUGS } from './fixtures'
+import { seedUser, TEST_TOKENS, TEST_SLUGS, getOrCreateTestOrg } from './fixtures'
 import { makeT } from './helpers/convex-helpers'
 
 // ─── hasRole (tested via internal helper, exposed through myRoles) ───────────
@@ -142,7 +142,8 @@ describe('userRoles.addRole', () => {
   it('adds a new role to the user', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
-      await seedUser(ctx, { skipUserRoles: true })
+      const userId = await seedUser(ctx, { skipUserRoles: true })
+      await getOrCreateTestOrg(ctx, userId)
     })
 
     await t

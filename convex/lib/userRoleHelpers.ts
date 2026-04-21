@@ -20,19 +20,14 @@ export async function insertUserRole(
   args: {
     userId: Id<'users'>
     role: StakeholderType
-    organizationId?: Id<'organizations'>
+    organizationId: Id<'organizations'>
     createdAt?: number
   },
 ): Promise<Id<'userRoles'>> {
-  let organizationId = args.organizationId
-  if (organizationId === undefined) {
-    const user = await ctx.db.get(args.userId)
-    organizationId = user?.organizationId
-  }
   return await ctx.db.insert('userRoles', {
     userId: args.userId,
     role: args.role,
+    organizationId: args.organizationId,
     createdAt: args.createdAt ?? Date.now(),
-    ...(organizationId !== undefined && { organizationId }),
   })
 }

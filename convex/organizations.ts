@@ -7,6 +7,7 @@ import { ErrorCode } from './lib/errorCodes'
 import { addressStructuredValidator } from './shared/addressValidator'
 import { assertCountryCode } from './lib/i18nValidators'
 import { cascadeOrgDelete } from './lib/orgCascade'
+import { setUserOrganization } from './lib/userOrg'
 
 export const upsertFromWebhook = internalMutation({
   args: {
@@ -59,7 +60,7 @@ export const upsertFromWebhook = internalMutation({
         .withIndex('by_tokenIdentifier', (q) => q.eq('tokenIdentifier', args.creatorTokenIdentifier!))
         .unique()
       if (creator) {
-        await ctx.db.patch(creator._id, { organizationId: orgId })
+        await setUserOrganization(ctx, creator._id, orgId)
       }
     }
 
