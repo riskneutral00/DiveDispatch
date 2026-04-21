@@ -108,8 +108,8 @@ export function finSizesFor(system: FinSizeSystem): readonly string[] {
   return FIN_SIZES_LETTER;
 }
 
-export type MatrixGearType = Exclude<GearType, 'mask' | 'regulator'>;
+export type MatrixGearType = Exclude<GearType, 'regulator'>;
 
 export function isMatrixGearType(g: GearType): g is MatrixGearType {
-  return g !== 'mask' && g !== 'regulator';
+  return g !== 'regulator';
 }

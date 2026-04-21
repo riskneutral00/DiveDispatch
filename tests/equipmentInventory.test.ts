@@ -1004,3 +1004,219 @@ describe('equipmentInventory.renameManufacturerGroup', () => {
     )
   })
 })
+
+// ── bulkSetMasksByManufacturer ───────────────────────────────────────────────
+
+describe('equipmentInventory.bulkSetMasksByManufacturer', () => {
+  let t: ReturnType<typeof makeT>
+  beforeEach(() => { t = makeT() })
+
+  const seedEquipment = async () => {
+    await t.withIdentity({ tokenIdentifier: EM_TOKEN }).run(async (ctx) => {
+      await seedUser(ctx, { tokenIdentifier: EM_TOKEN, slug: EM_SLUG, role: 'Equipment', email: 'em@test.com' })
+    })
+  }
+
+  it('creates plano + Rx rows with correct discriminator fields', async () => {
+    await seedEquipment()
+
+    await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
+      api.equipmentInventory.bulkSetMasksByManufacturer,
+      {
+        manufacturer: 'ScubaPro',
+        cells: { plano: 5, '-3.0': 2, '-4.5': 1, '-2.0': 0 },
+      },
+    )
+
+    await t.run(async (ctx) => {
+      const rows = await ctx.db.query('equipmentInventory').collect()
+      expect(rows).toHaveLength(3)
+
+      const plano = rows.find((r) => !r.isPrescription)!
+      expect(plano.isPrescription).toBe(false)
+      expect(plano.diopter).toBeUndefined()
+
+      const rx30 = rows.find((r) => r.diopter === -3.0)!
+      expect(rx30.isPrescription).toBe(true)
+
+      const rx45 = rows.find((r) => r.diopter === -4.5)!
+      expect(rx45.isPrescription).toBe(true)
+    })
+  })
+
+  it('updates existing rows and deletes cells set to 0', async () => {
+    await seedEquipment()
+
+    await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
+      api.equipmentInventory.bulkSetMasksByManufacturer,
+      { manufacturer: 'ScubaPro', cells: { plano: 5, '-3.0': 2 } },
+    )
+
+    const result = await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
+      api.equipmentInventory.bulkSetMasksByManufacturer,
+      { manufacturer: 'ScubaPro', cells: { plano: 10, '-3.0': 0, '-4.0': 1 } },
+    )
+
+    expect(result.created).toBe(1)
+    expect(result.updated).toBe(1)
+    expect(result.deleted).toBe(1)
+
+    await t.run(async (ctx) => {
+      const rows = await ctx.db.query('equipmentInventory').collect()
+      expect(rows).toHaveLength(2)
+      const plano = rows.find((r) => !r.isPrescription)!
+      const unit = await ctx.db.get(plano.inventoryUnitId)
+      expect(unit!.totalUnits).toBe(10)
+    })
+  })
+
+  it('rejects invalid cell keys', async () => {
+    await seedEquipment()
+
+    await expectConvexError(
+      t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
+        api.equipmentInventory.bulkSetMasksByManufacturer,
+        { manufacturer: 'ScubaPro', cells: { 'not-a-number': 2 } },
+      ),
+      'VALIDATION',
+    )
+  })
+
+  it('blocks reducing a cell below reserved count', async () => {
+    await seedEquipment()
+
+    await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
+      api.equipmentInventory.bulkSetMasksByManufacturer,
+      { manufacturer: 'ScubaPro', cells: { '-3.0': 5 } },
+    )
+
+    const unitId = await t.run(async (ctx) => {
+      const row = (await ctx.db.query('equipmentInventory').collect())[0]
+      return row.inventoryUnitId
+    })
+
+    await t.run(async (ctx) => {
+      await seedSnapshot(ctx, unitId, {
+        date: '2026-05-01',
+        totalUnits: 5,
+        reservedUnits: 3,
+        availableUnits: 2,
+      })
+    })
+
+    await expectConvexError(
+      t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
+        api.equipmentInventory.bulkSetMasksByManufacturer,
+        { manufacturer: 'ScubaPro', cells: { '-3.0': 2 } },
+      ),
+      'VALIDATION',
+    )
+  })
+})
+
+// ── renameMaskManufacturerGroup ──────────────────────────────────────────────
+
+describe('equipmentInventory.renameMaskManufacturerGroup', () => {
+  let t: ReturnType<typeof makeT>
+  beforeEach(() => { t = makeT() })
+
+  const seedEquipment = async () => {
+    await t.withIdentity({ tokenIdentifier: EM_TOKEN }).run(async (ctx) => {
+      await seedUser(ctx, { tokenIdentifier: EM_TOKEN, slug: EM_SLUG, role: 'Equipment', email: 'em@test.com' })
+    })
+  }
+
+  it('renames manufacturer on all mask rows preserving diopter/plano', async () => {
+    await seedEquipment()
+
+    await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
+      api.equipmentInventory.bulkSetMasksByManufacturer,
+      { manufacturer: 'ScubaPro', cells: { plano: 4, '-3.0': 2 } },
+    )
+
+    const result = await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
+      api.equipmentInventory.renameMaskManufacturerGroup,
+      { previousManufacturer: 'ScubaPro', manufacturer: 'Cressi' },
+    )
+
+    expect(result.renamed).toBe(2)
+
+    await t.run(async (ctx) => {
+      const rows = await ctx.db.query('equipmentInventory').collect()
+      expect(rows.every((r) => r.manufacturer === 'Cressi')).toBe(true)
+      expect(rows.find((r) => !r.isPrescription)).toBeDefined()
+      expect(rows.find((r) => r.diopter === -3.0)).toBeDefined()
+    })
+  })
+
+  it('rejects rename when target manufacturer already exists', async () => {
+    await seedEquipment()
+
+    await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
+      api.equipmentInventory.bulkSetMasksByManufacturer,
+      { manufacturer: 'ScubaPro', cells: { plano: 1 } },
+    )
+    await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
+      api.equipmentInventory.bulkSetMasksByManufacturer,
+      { manufacturer: 'Cressi', cells: { plano: 1 } },
+    )
+
+    await expectConvexError(
+      t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
+        api.equipmentInventory.renameMaskManufacturerGroup,
+        { previousManufacturer: 'ScubaPro', manufacturer: 'Cressi' },
+      ),
+      'CONFLICT',
+    )
+  })
+
+  it('rejects unauthenticated caller on bulkSetMasksByManufacturer', async () => {
+    await expectConvexError(
+      t.mutation(
+        api.equipmentInventory.bulkSetMasksByManufacturer,
+        { manufacturer: 'ScubaPro', cells: { plano: 1 } },
+      ),
+      'UNAUTHENTICATED',
+    )
+  })
+
+  it('rejects FORBIDDEN for non-Equipment-role caller on bulkSetMasksByManufacturer', async () => {
+    const INSTRUCTOR_TOKEN = 'test|instructor-only'
+    await t.withIdentity({ tokenIdentifier: INSTRUCTOR_TOKEN }).run(async (ctx) => {
+      await seedUser(ctx, { tokenIdentifier: INSTRUCTOR_TOKEN, slug: 'instructor-only', role: 'Instructor', email: 'inst@test.com' })
+    })
+
+    await expectConvexError(
+      t.withIdentity({ tokenIdentifier: INSTRUCTOR_TOKEN }).mutation(
+        api.equipmentInventory.bulkSetMasksByManufacturer,
+        { manufacturer: 'ScubaPro', cells: { plano: 1 } },
+      ),
+      'FORBIDDEN',
+    )
+  })
+
+  it('rejects unauthenticated caller on renameMaskManufacturerGroup', async () => {
+    await expectConvexError(
+      t.mutation(
+        api.equipmentInventory.renameMaskManufacturerGroup,
+        { previousManufacturer: 'ScubaPro', manufacturer: 'Cressi' },
+      ),
+      'UNAUTHENTICATED',
+    )
+  })
+
+  it('rejects FORBIDDEN for non-Equipment-role caller on renameMaskManufacturerGroup', async () => {
+    const INSTRUCTOR_TOKEN = 'test|instructor-only-2'
+    await t.withIdentity({ tokenIdentifier: INSTRUCTOR_TOKEN }).run(async (ctx) => {
+      await seedUser(ctx, { tokenIdentifier: INSTRUCTOR_TOKEN, slug: 'instructor-only-2', role: 'Instructor', email: 'inst2@test.com' })
+    })
+
+    await expectConvexError(
+      t.withIdentity({ tokenIdentifier: INSTRUCTOR_TOKEN }).mutation(
+        api.equipmentInventory.renameMaskManufacturerGroup,
+        { previousManufacturer: 'ScubaPro', manufacturer: 'Cressi' },
+      ),
+      'FORBIDDEN',
+    )
+  })
+})

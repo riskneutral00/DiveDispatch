@@ -6,6 +6,7 @@ import { gearTypeValidator, finSizeSystemValidator } from './lib/validators'
 import { ErrorCode } from './lib/errorCodes'
 import { isActiveReservation } from './bookings/_shared'
 import { syncManufacturersByGearType } from './lib/equipmentManufacturersSync'
+import { PLANO_KEY, diopterFromCellKey } from './shared/diopters'
 
 export const addItem = mutation({
   args: {
@@ -187,6 +188,9 @@ export const bulkSetByManufacturer = mutation({
       }
     }
 
+    if (args.gearType === 'mask') {
+      throw new ConvexError({ code: ErrorCode.VALIDATION, reason: 'Use bulkSetMasksByManufacturer for masks' })
+    }
     if (args.gearType === 'fins' && args.sizeSystem === undefined) {
       throw new ConvexError({ code: ErrorCode.VALIDATION, reason: 'sizeSystem required for fins' })
     }
@@ -369,6 +373,199 @@ export const renameManufacturerGroup = mutation({
       if (unit) {
         await ctx.db.patch(row.inventoryUnitId, { // batch-exempt: bounded by sizes per manufacturer
           displayName: `${args.gearType} - ${args.manufacturer}${row.size ? ` (${row.size})` : ''}`,
+        })
+      }
+    }
+
+    await syncManufacturersByGearType(ctx, user.slug)
+
+    return { renamed: sourceRows.length }
+  },
+})
+
+export const bulkSetMasksByManufacturer = mutation({
+  args: {
+    manufacturer: v.string(),
+    cells: v.record(v.string(), v.number()),
+  },
+  handler: async (ctx, args) => {
+    const { user } = await authorize(ctx, null, 'resource:manage', { type: 'resource', requiredRole: 'Equipment' })
+
+    for (const [key, count] of Object.entries(args.cells)) {
+      if (!Number.isInteger(count) || count < 0) {
+        throw new ConvexError({ code: ErrorCode.VALIDATION, reason: `Invalid unit count for ${key}` })
+      }
+      if (key !== PLANO_KEY && diopterFromCellKey(key) === null) {
+        throw new ConvexError({ code: ErrorCode.VALIDATION, reason: `Invalid mask cell key: ${key}` })
+      }
+    }
+
+    const allRows = await ctx.db
+      .query('equipmentInventory')
+      .withIndex('by_equipmentManagerId', (q) => q.eq('equipmentManagerId', user.slug))
+      .take(500)
+
+    const scopedRows = allRows.filter((r) =>
+      r.gearType === 'mask' && r.manufacturer === args.manufacturer,
+    )
+
+    const keyForRow = (r: Doc<'equipmentInventory'>): string =>
+      r.isPrescription && typeof r.diopter === 'number'
+        ? r.diopter.toFixed(1)
+        : PLANO_KEY
+
+    const rowsByKey = new Map<string, Doc<'equipmentInventory'>>()
+    for (const row of scopedRows) {
+      rowsByKey.set(keyForRow(row), row)
+    }
+
+    const creates: Array<{ key: string; count: number }> = []
+    const updates: Array<{ row: Doc<'equipmentInventory'>; newCount: number }> = []
+    const deletes: Doc<'equipmentInventory'>[] = []
+
+    for (const [key, count] of Object.entries(args.cells)) {
+      const existing = rowsByKey.get(key)
+      if (count > 0 && !existing) {
+        creates.push({ key, count })
+      } else if (count > 0 && existing) {
+        updates.push({ row: existing, newCount: count })
+      } else if (count === 0 && existing) {
+        deletes.push(existing)
+      }
+    }
+
+    for (const row of scopedRows) {
+      const key = keyForRow(row)
+      if (!(key in args.cells)) {
+        if (!deletes.some((d) => d._id === row._id)) {
+          deletes.push(row)
+        }
+      }
+    }
+
+    for (const { row, newCount } of updates) {
+      const unit = await ctx.db.get(row.inventoryUnitId) // batch-exempt: bounded by diopter cells per manufacturer
+      if (!unit) continue
+      if (newCount < unit.totalUnits) {
+        const snaps = await ctx.db // batch-exempt: bounded by diopter cells per manufacturer
+          .query('availabilitySnapshots')
+          .withIndex('by_inventoryUnitId_date', (q) => q.eq('inventoryUnitId', row.inventoryUnitId))
+          .take(500)
+        const maxReserved = snaps.reduce((m, s) => Math.max(m, s.reservedUnits), 0)
+        if (newCount < maxReserved) {
+          const label = row.isPrescription && typeof row.diopter === 'number' ? `Rx ${row.diopter.toFixed(1)}` : 'plano'
+          throw new ConvexError({
+            code: ErrorCode.VALIDATION,
+            reason: `Cannot reduce ${args.manufacturer} ${label} below reserved count (${maxReserved})`,
+          })
+        }
+      }
+    }
+
+    for (const row of deletes) {
+      const reservations = await ctx.db // batch-exempt: bounded by diopter cells per manufacturer
+        .query('reservations')
+        .withIndex('by_inventoryUnitId_status', (q) => q.eq('inventoryUnitId', row.inventoryUnitId))
+        .take(500)
+      if (reservations.some(isActiveReservation)) {
+        const label = row.isPrescription && typeof row.diopter === 'number' ? `Rx ${row.diopter.toFixed(1)}` : 'plano'
+        throw new ConvexError({
+          code: ErrorCode.CONFLICT,
+          reason: `Cannot remove ${args.manufacturer} ${label} with active reservations`,
+        })
+      }
+    }
+
+    for (const { key, count } of creates) {
+      const isPlano = key === PLANO_KEY
+      const diopter = isPlano ? undefined : diopterFromCellKey(key)
+      const label = isPlano ? 'plano' : `Rx ${key}`
+      const unitId: Id<'inventoryUnits'> = await ctx.db.insert('inventoryUnits', { // batch-exempt: bounded by diopter cells per manufacturer
+        resourceType: 'Equipment',
+        resourceId: user.slug,
+        displayName: `mask - ${args.manufacturer} (${label})`,
+        capacityModel: 'Pooled',
+        totalUnits: count,
+        ownerId: user.slug,
+        ownerType: 'Equipment',
+      })
+      await ctx.db.insert('equipmentInventory', { // batch-exempt: bounded by diopter cells per manufacturer
+        inventoryUnitId: unitId,
+        equipmentManagerId: user.slug,
+        gearType: 'mask',
+        manufacturer: args.manufacturer,
+        isPrescription: !isPlano,
+        ...(diopter !== null && diopter !== undefined ? { diopter } : {}),
+      })
+    }
+
+    for (const { row, newCount } of updates) {
+      await ctx.db.patch(row.inventoryUnitId, { totalUnits: newCount }) // batch-exempt: bounded by diopter cells per manufacturer
+      const snaps = await ctx.db // batch-exempt: bounded by diopter cells per manufacturer
+        .query('availabilitySnapshots')
+        .withIndex('by_inventoryUnitId_date', (q) => q.eq('inventoryUnitId', row.inventoryUnitId))
+        .take(500)
+      for (const snap of snaps) {
+        await ctx.db.patch(snap._id, { // batch-exempt: bounded by snapshots per unit
+          totalUnits: newCount,
+          availableUnits: newCount - snap.reservedUnits,
+        })
+      }
+    }
+
+    for (const row of deletes) {
+      await ctx.db.delete(row.inventoryUnitId) // batch-exempt: bounded by diopter cells per manufacturer
+      await ctx.db.delete(row._id) // batch-exempt: bounded by diopter cells per manufacturer
+    }
+
+    if (creates.length > 0 || deletes.length > 0) {
+      await syncManufacturersByGearType(ctx, user.slug)
+    }
+
+    return { created: creates.length, updated: updates.length, deleted: deletes.length }
+  },
+})
+
+export const renameMaskManufacturerGroup = mutation({
+  args: {
+    previousManufacturer: v.string(),
+    manufacturer: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { user } = await authorize(ctx, null, 'resource:manage', { type: 'resource', requiredRole: 'Equipment' })
+
+    if (args.previousManufacturer === args.manufacturer) return { renamed: 0 }
+
+    const allRows = await ctx.db
+      .query('equipmentInventory')
+      .withIndex('by_equipmentManagerId', (q) => q.eq('equipmentManagerId', user.slug))
+      .take(500)
+
+    const sourceRows = allRows.filter((r) =>
+      r.gearType === 'mask' && r.manufacturer === args.previousManufacturer,
+    )
+
+    if (sourceRows.length === 0) {
+      throw new ConvexError({ code: ErrorCode.NOT_FOUND, reason: 'No mask rows found for previous manufacturer' })
+    }
+
+    const targetConflict = allRows.some((r) =>
+      r.gearType === 'mask' && r.manufacturer === args.manufacturer,
+    )
+    if (targetConflict) {
+      throw new ConvexError({
+        code: ErrorCode.CONFLICT,
+        reason: `Target group ${args.manufacturer} already exists`,
+      })
+    }
+
+    for (const row of sourceRows) {
+      await ctx.db.patch(row._id, { manufacturer: args.manufacturer }) // batch-exempt: bounded by diopter cells per manufacturer
+      const unit = await ctx.db.get(row.inventoryUnitId) // batch-exempt: bounded by diopter cells per manufacturer
+      if (unit) {
+        const label = row.isPrescription && typeof row.diopter === 'number' ? `Rx ${row.diopter.toFixed(1)}` : 'plano'
+        await ctx.db.patch(row.inventoryUnitId, { // batch-exempt: bounded by diopter cells per manufacturer
+          displayName: `mask - ${args.manufacturer} (${label})`,
         })
       }
     }
