@@ -23,7 +23,7 @@ export const update = mutation({
     ...BUSINESS_NAME_UPDATE_FIELD,
     ...ACCESS_CONTROL_FIELDS,
   },
-  handler: async (ctx, args) => profileUpdate(ctx, args, 'equipment'),
+  handler: async (ctx, args) => profileUpdate(ctx, args, 'equipment', 'Equipment'),
 })
 
 export const mine = query({

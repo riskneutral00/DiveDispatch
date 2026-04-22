@@ -13,6 +13,7 @@ import { assertCapabilitiesPresentForSubtype, assertVenueRange, assertVenueSubty
 import { assertPhoneE164, assertCountryCode } from './lib/i18nValidators'
 import { cleanupInventoryForOwner } from './lib/inventoryCleanup'
 import { isActiveReservation } from './bookings/_shared'
+import { setRoleProfileComplete } from './lib/setRoleProfileComplete'
 
 async function mintUniqueVenueSlug(ctx: MutationCtx, baseName: string): Promise<string> {
   const base = baseName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'venue'
@@ -90,6 +91,8 @@ export const create = mutation({
       ownerType: 'Venue',
     })
 
+    await setRoleProfileComplete(ctx, user._id, 'Venue')
+
     return venueId
   },
 })
@@ -107,7 +110,7 @@ export const update = mutation({
     maxCapacity: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    await authorize(ctx, null, 'resource:manage', { type: 'resource' })
+    const { user } = await authorize(ctx, null, 'resource:manage', { type: 'resource' })
 
     const venue = await ctx.db.get(args.venueId)
     if (!venue) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
@@ -167,13 +170,15 @@ export const update = mutation({
         await ctx.db.patch(unit._id, { displayName: args.name })
       }
     }
+
+    await setRoleProfileComplete(ctx, user._id, 'Venue')
   },
 })
 
 export const remove = mutation({
   args: { venueId: v.id('venues') },
   handler: async (ctx, { venueId }) => {
-    await authorize(ctx, null, 'resource:manage', { type: 'resource' })
+    const { user } = await authorize(ctx, null, 'resource:manage', { type: 'resource' })
 
     const venue = await ctx.db.get(venueId)
     if (!venue) return
@@ -199,6 +204,8 @@ export const remove = mutation({
 
     await cleanupInventoryForOwner(ctx, venue.slug, 'Venue')
     await ctx.db.delete(venueId)
+
+    await setRoleProfileComplete(ctx, user._id, 'Venue')
   },
 })
 

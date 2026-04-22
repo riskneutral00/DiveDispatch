@@ -29,7 +29,7 @@ export const update = mutation({
     ...ACCESS_CONTROL_FIELDS,
     associations: v.optional(v.array(associationValidator)),
   },
-  handler: async (ctx, args) => profileUpdate(ctx, args, 'agents'),
+  handler: async (ctx, args) => profileUpdate(ctx, args, 'agents', 'Agent'),
 })
 
 export const mine = query({

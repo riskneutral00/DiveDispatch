@@ -114,7 +114,7 @@ export async function profileUpdate(
   ctx: MutationCtx,
   args: Record<string, unknown>,
   tableName: TableNames,
-  role?: string,
+  role: string,
 ) {
   const { user } = await authorize(ctx, null, 'profile:manage', { type: 'profile' })
   const { org: activeOrg } = await getActiveOrg(ctx)
@@ -133,7 +133,7 @@ export async function profileUpdate(
 
   await patchDynamic(ctx.db, profile._id, safeArgs)
 
-  if (role) await setRoleProfileComplete(ctx, user._id, role)
+  await setRoleProfileComplete(ctx, user._id, role)
 }
 
 export async function profileCreate(

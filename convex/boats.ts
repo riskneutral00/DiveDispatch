@@ -69,7 +69,7 @@ export const update = mutation({
         (v) => v.boatType === 'day_boat' || v.boatType === 'liveaboard',
       )
     }
-    return profileUpdate(ctx, { ...rest, ...extras }, 'boats')
+    return profileUpdate(ctx, { ...rest, ...extras }, 'boats', 'Boat')
   },
 })
 

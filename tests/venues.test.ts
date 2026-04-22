@@ -515,6 +515,66 @@ describe('venues.create — access control', () => {
   })
 })
 
+describe('venues.* — Rule 12: profileComplete denorm flips', () => {
+  async function readVenueRoleComplete(t: ReturnType<typeof makeT>, slug: string): Promise<boolean | undefined> {
+    return await t.run(async (ctx) => {
+      const user = await ctx.db
+        .query('users')
+        .withIndex('by_slug', (q) => q.eq('slug', slug))
+        .unique()
+      if (!user) return undefined
+      const row = await ctx.db
+        .query('userRoles')
+        .withIndex('by_userId_role', (q) => q.eq('userId', user._id).eq('role', 'Venue'))
+        .unique()
+      return row?.profileComplete
+    })
+  }
+
+  it('flips profileComplete=true on venues.create when completeness reaches 100%', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedVenueUser(ctx, 'venue-complete-create') })
+
+    expect(await readVenueRoleComplete(t, 'venue-complete-create')).not.toBe(true)
+
+    await t.withIdentity(orgIdentityFor('venue-complete-create'))
+      .mutation(api.venues.create, VALID_DIVE_SITE_ARGS)
+
+    expect(await readVenueRoleComplete(t, 'venue-complete-create')).toBe(true)
+  })
+
+  it('re-computes profileComplete on venues.update (denorm stays fresh)', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedVenueUser(ctx, 'venue-complete-update') })
+    const identity = orgIdentityFor('venue-complete-update')
+    const venueId = await t.withIdentity(identity)
+      .mutation(api.venues.create, VALID_DIVE_SITE_ARGS)
+
+    expect(await readVenueRoleComplete(t, 'venue-complete-update')).toBe(true)
+
+    await t.withIdentity(identity).mutation(api.venues.update, {
+      venueId,
+      name: 'Renamed Reef',
+    })
+
+    expect(await readVenueRoleComplete(t, 'venue-complete-update')).toBe(true)
+  })
+
+  it('flips profileComplete=false when the last venue is removed', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedVenueUser(ctx, 'venue-complete-remove') })
+    const identity = orgIdentityFor('venue-complete-remove')
+    const venueId = await t.withIdentity(identity)
+      .mutation(api.venues.create, VALID_DIVE_SITE_ARGS)
+
+    expect(await readVenueRoleComplete(t, 'venue-complete-remove')).toBe(true)
+
+    await t.withIdentity(identity).mutation(api.venues.remove, { venueId })
+
+    expect(await readVenueRoleComplete(t, 'venue-complete-remove')).not.toBe(true)
+  })
+})
+
 describe('venues.create — i18n validators at boundary', () => {
   it('rejects non-E.164 phone with VALIDATION', async () => {
     const t = makeT()

@@ -56,7 +56,7 @@ export const update = mutation({
     }
     const user = await getAuthUser(ctx)
     const name = user ? deriveStaffName(user) : undefined
-    return profileUpdate(ctx, { ...args, ...(name ? { name } : {}) }, 'diveStaff', 'diveStaff')
+    return profileUpdate(ctx, { ...args, ...(name ? { name } : {}) }, 'diveStaff', 'Instructor')
   },
 })
 

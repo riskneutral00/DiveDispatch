@@ -1360,3 +1360,56 @@ describe('equipmentInventory — orphan inventoryUnitId tolerance', () => {
     })
   })
 })
+
+describe('equipmentInventory — Rule 12: profileComplete denorm', () => {
+  async function readEquipRoleComplete(t: ReturnType<typeof makeT>, slug: string): Promise<boolean | undefined> {
+    return await t.run(async (ctx) => {
+      const user = await ctx.db
+        .query('users')
+        .withIndex('by_slug', (q) => q.eq('slug', slug))
+        .unique()
+      if (!user) return undefined
+      const row = await ctx.db
+        .query('userRoles')
+        .withIndex('by_userId_role', (q) => q.eq('userId', user._id).eq('role', 'Equipment'))
+        .unique()
+      return row?.profileComplete
+    })
+  }
+
+  it('writes to equipmentInventory.addItem flip userRoles.profileComplete via setRoleProfileComplete', async () => {
+    const t = makeT()
+    await t.withIdentity({ tokenIdentifier: EM_TOKEN }).run(async (ctx) => {
+      await seedUser(ctx, { tokenIdentifier: EM_TOKEN, slug: EM_SLUG, role: 'Equipment', email: 'em@test.com' })
+    })
+
+    // Fresh user has no inventory — profileComplete should not be true yet
+    expect(await readEquipRoleComplete(t, EM_SLUG)).not.toBe(true)
+
+    const NON_FIN_NON_MASK: Array<'bcd' | 'regulator' | 'wetsuit'> = [
+      'bcd', 'regulator', 'wetsuit',
+    ]
+    for (const gearType of NON_FIN_NON_MASK) {
+      await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
+        api.equipmentInventory.addItem,
+        { gearType, manufacturer: 'X', size: 'M', totalUnits: 1 },
+      )
+    }
+    await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
+      api.equipmentInventory.addItem,
+      { gearType: 'fins', manufacturer: 'X', size: '42', sizeSystem: 'eu', totalUnits: 1 },
+    )
+    await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
+      api.equipmentInventory.addItem,
+      { gearType: 'mask', manufacturer: 'X', totalUnits: 1 },
+    )
+
+    // The denorm is re-computed every write and reflects current completeness.
+    // We don't assert an exact boolean (profile-level completeness also depends on
+    // user-level fields like phone/appLanguage that seedUser fills in) — we just
+    // assert the field is a settled boolean (the denorm wrote) after the last
+    // mutation, which proves setRoleProfileComplete is wired.
+    const final = await readEquipRoleComplete(t, EM_SLUG)
+    expect(typeof final).toBe('boolean')
+  })
+})

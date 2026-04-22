@@ -7,6 +7,7 @@ import { ErrorCode } from './lib/errorCodes'
 import { isActiveReservation } from './bookings/_shared'
 import { syncManufacturersByGearType } from './lib/equipmentManufacturersSync'
 import { safeDeleteIfExists, safePatchIfExists } from './lib/safeDbOps'
+import { setRoleProfileComplete } from './lib/setRoleProfileComplete'
 import { PLANO_KEY, diopterFromCellKey } from './shared/diopters'
 
 export const addItem = mutation({
@@ -52,6 +53,7 @@ export const addItem = mutation({
     })
 
     await syncManufacturersByGearType(ctx, user.slug)
+    await setRoleProfileComplete(ctx, user._id, 'Equipment')
 
     return inventoryId
   },
@@ -137,6 +139,8 @@ export const updateItem = mutation({
     if (cleanPatch.manufacturer !== undefined) {
       await syncManufacturersByGearType(ctx, item.equipmentManagerId)
     }
+
+    await setRoleProfileComplete(ctx, user._id, 'Equipment')
   },
 })
 
@@ -170,6 +174,7 @@ export const removeItem = mutation({
     await ctx.db.delete(args.inventoryId)
 
     await syncManufacturersByGearType(ctx, item.equipmentManagerId)
+    await setRoleProfileComplete(ctx, user._id, 'Equipment')
   },
 })
 
@@ -317,6 +322,8 @@ export const bulkSetByManufacturer = mutation({
       await syncManufacturersByGearType(ctx, user.slug)
     }
 
+    await setRoleProfileComplete(ctx, user._id, 'Equipment')
+
     return { created: creates.length, updated: updates.length, deleted: deletes.length }
   },
 })
@@ -384,6 +391,7 @@ export const renameManufacturerGroup = mutation({
     }
 
     await syncManufacturersByGearType(ctx, user.slug)
+    await setRoleProfileComplete(ctx, user._id, 'Equipment')
 
     return { renamed: sourceRows.length }
   },
@@ -533,6 +541,8 @@ export const bulkSetMasksByManufacturer = mutation({
       await syncManufacturersByGearType(ctx, user.slug)
     }
 
+    await setRoleProfileComplete(ctx, user._id, 'Equipment')
+
     return { created: creates.length, updated: updates.length, deleted: deletes.length }
   },
 })
@@ -582,6 +592,7 @@ export const renameMaskManufacturerGroup = mutation({
     }
 
     await syncManufacturersByGearType(ctx, user.slug)
+    await setRoleProfileComplete(ctx, user._id, 'Equipment')
 
     return { renamed: sourceRows.length }
   },

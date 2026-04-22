@@ -38,7 +38,7 @@ export const update = mutation({
     associations: v.optional(v.array(associationValidator)),
     customerLanguages: v.optional(v.array(v.string())),
   },
-  handler: async (ctx, args) => profileUpdate(ctx, args, 'diveCenters'),
+  handler: async (ctx, args) => profileUpdate(ctx, args, 'diveCenters', 'DiveCenter'),
 })
 
 export const mine = query({
