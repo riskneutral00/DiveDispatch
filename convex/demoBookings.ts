@@ -1,13 +1,16 @@
-import { v } from 'convex/values'
+import { v, type Infer } from 'convex/values'
 import { internalAction, internalMutation } from './_generated/server'
 import { internal } from './_generated/api'
 import type { Id } from './_generated/dataModel'
 import { HOLD_TTL_MS } from './lib/auth'
 import { BOOKING_LINK_TTL_MS } from './lib/timeConstants'
-import { type CourseCode } from './shared/courseCodes'
+import { type CourseCode, courseCodeValidator } from './shared/courseCodes'
 import { batchDelete } from './lib/batch'
 import { dateStr, addDays, COURSE_DURATIONS } from './lib/seedUtils'
 import type { BookingStatus } from './shared/statuses'
+import { bookingStatusValidator } from './shared/statuses'
+import { operatorTypeValidator } from './shared/operatorTypes'
+import { resourceOwnerTypeValidator } from './shared/resourceOwnerTypes'
 
 const NOW = Date.now()
 
@@ -54,17 +57,15 @@ function todayStr(): string {
 export const scheduleDemoBookings = internalAction({
   args: {
     slug: v.string(),
-    role: v.string(),
+    role: operatorTypeValidator,
     operatorName: v.string(),
   },
   handler: async (ctx, args) => {
     const today = todayStr()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const bookingRecords: Record<string, any>[] = []
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const customerRecords: Record<string, any>[] = []
-    const profileRecords: { bookingLocalIndex: number; customerLocalIndex: number; linkToken: string }[] = []
-    const resourceRecords: { bookingLocalIndex: number; resourceType: string; externalName: string }[] = []
+    const bookingRecords: Infer<typeof demoBookingValidator>[] = []
+    const customerRecords: Infer<typeof demoCustomerValidator>[] = []
+    const profileRecords: Infer<typeof demoProfileValidator>[] = []
+    const resourceRecords: Infer<typeof demoResourceValidator>[] = []
 
     let customerCursor = 0
 
@@ -161,12 +162,74 @@ export const scheduleDemoBookings = internalAction({
   },
 })
 
+// comments-ok validator-guard-ok: internal-only seeder; nested phone/country are server-generated literals
+const demoDiverValidator = v.object({
+  name: v.string(),
+  abbrev: v.string(),
+  flag: v.object({ code: v.string(), label: v.string() }),
+  startDate: v.string(),
+  endDate: v.string(),
+  agency: v.string(),
+  activityType: v.array(courseCodeValidator),
+})
+
+const demoBookingValidator = v.object({
+  ownerId: v.string(),
+  ownerType: operatorTypeValidator,
+  status: bookingStatusValidator,
+  createdAt: v.number(),
+  holdTTL: v.number(),
+  expiresAt: v.optional(v.number()),
+  paid: v.boolean(),
+  activityType: v.array(courseCodeValidator),
+  startDate: v.string(),
+  endDate: v.string(),
+  divers: v.array(demoDiverValidator),
+  operatorName: v.string(),
+  portalContact: v.boolean(),
+  portalMedical: v.boolean(),
+  portalWaiver: v.boolean(),
+  medicalHardBlock: v.boolean(),
+  bookingFormComplete: v.boolean(),
+  customerFormComplete: v.boolean(),
+  isDemo: v.boolean(),
+})
+
+const demoCustomerValidator = v.object({
+  legalFirstName: v.string(),
+  legalLastName: v.string(),
+  email: v.string(),
+  phone: v.string(),
+  nationality: v.string(),
+  dateOfBirth: v.string(),
+  passportNumber: v.string(),
+  passportIssuingCountry: v.string(),
+  passportExpirationDate: v.string(),
+  gender: v.union(v.literal('M'), v.literal('F'), v.literal('Other')),
+  emergencyContactName: v.string(),
+  emergencyContactPhone: v.string(),
+  emergencyContactRelation: v.string(),
+  createdAt: v.number(),
+})
+
+const demoProfileValidator = v.object({
+  bookingLocalIndex: v.number(),
+  customerLocalIndex: v.number(),
+  linkToken: v.string(),
+})
+
+const demoResourceValidator = v.object({
+  bookingLocalIndex: v.number(),
+  resourceType: resourceOwnerTypeValidator,
+  externalName: v.string(),
+})
+
 export const insertDemoBatch = internalMutation({
   args: {
-    bookings: v.array(v.any()),
-    customers: v.array(v.any()),
-    profiles: v.array(v.any()),
-    resources: v.array(v.any()),
+    bookings: v.array(demoBookingValidator),
+    customers: v.array(demoCustomerValidator),
+    profiles: v.array(demoProfileValidator),
+    resources: v.array(demoResourceValidator),
   },
   handler: async (ctx, args) => {
     const [customerIds, bookingIds] = await Promise.all([

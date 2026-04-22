@@ -14,6 +14,7 @@ import { assertPhoneE164, assertCountryCode } from './lib/i18nValidators'
 import { cleanupInventoryForOwner } from './lib/inventoryCleanup'
 import { isActiveReservation } from './bookings/_shared'
 import { setRoleProfileComplete } from './lib/setRoleProfileComplete'
+import { safePatchIfExists } from './lib/safeDbOps'
 
 async function mintUniqueVenueSlug(ctx: MutationCtx, baseName: string): Promise<string> {
   const base = baseName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'venue'
@@ -155,7 +156,7 @@ export const update = mutation({
         .unique()
       if (unit) {
         const totalUnits = args.maxCapacity > 0 ? args.maxCapacity : 999999
-        await ctx.db.patch(unit._id, { totalUnits })
+        await safePatchIfExists(ctx, unit._id, { totalUnits })
       }
     }
 
@@ -167,7 +168,7 @@ export const update = mutation({
         )
         .unique()
       if (unit) {
-        await ctx.db.patch(unit._id, { displayName: args.name })
+        await safePatchIfExists(ctx, unit._id, { displayName: args.name })
       }
     }
 

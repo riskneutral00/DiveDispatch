@@ -3,7 +3,7 @@ import { internalAction, internalMutation, internalQuery, mutation, query } from
 import type { DatabaseWriter, MutationCtx } from './_generated/server'
 import { internal } from './_generated/api'
 import type { Doc, Id } from './_generated/dataModel'
-import { authorize, getAuthUser, OPERATOR_ROLE_SET } from './lib/auth'
+import { authorize, getAuthUser, isOperatorRole } from './lib/auth'
 import { checkProfileCompleteness, checkAllRolesCompleteness } from './lib/profileCompleteness'
 import { stakeholderTypeValidator as stakeholderType } from './lib/validators'
 import { ErrorCode } from './lib/errorCodes'
@@ -204,7 +204,7 @@ export const createUser = mutation({
       }
     }
 
-    if (OPERATOR_ROLE_SET.has(args.role)) {
+    if (isOperatorRole(args.role)) {
       await ctx.scheduler.runAfter(0, internal.demoBookings.scheduleDemoBookings, {
         slug,
         role: args.role,

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { toHeightCm, toWeightKg, toShoeSizeNum } from '../src/lib/utils/unit-conversion'
+import { parseNumber, parseOptionalInt } from '../src/lib/utils/numbers'
 
 describe('unit-conversion', () => {
   describe('toHeightCm', () => {
@@ -45,5 +46,37 @@ describe('unit-conversion', () => {
       expect(toShoeSizeNum('0')).toBeUndefined()
       expect(toShoeSizeNum('-3')).toBeUndefined()
     })
+  })
+})
+
+describe('parseNumber (canonical) — behaviour contract for integer inputs', () => {
+  it('empty string returns 0 (not NaN)', () => {
+    expect(parseNumber('', true)).toBe(0)
+  })
+
+  it('whitespace-padded integer parses', () => {
+    expect(parseNumber('  42 ', true)).toBe(42)
+  })
+
+  it('non-numeric returns 0 (not NaN)', () => {
+    expect(parseNumber('abc', true)).toBe(0)
+  })
+
+  it('decimal in integer mode truncates', () => {
+    expect(parseNumber('3.7', true)).toBe(3)
+  })
+
+  it('negative integer parses', () => {
+    expect(parseNumber('-5', true)).toBe(-5)
+  })
+
+  it('float mode parses decimals', () => {
+    expect(parseNumber('3.14', false)).toBeCloseTo(3.14)
+  })
+
+  it('parseOptionalInt returns undefined for empty or garbage', () => {
+    expect(parseOptionalInt('')).toBeUndefined()
+    expect(parseOptionalInt('abc')).toBeUndefined()
+    expect(parseOptionalInt('12')).toBe(12)
   })
 })

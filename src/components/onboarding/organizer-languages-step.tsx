@@ -11,6 +11,7 @@ import { LanguageField } from '@/components/ui/language-field'
 import { SpecialtyField } from '@/components/profiles/specialty-field'
 import type { Language } from '@/lib/types/language'
 import { parseConvexError } from '@/lib/utils/convex-error'
+import { parseNumber } from '@/lib/utils/numbers'
 import type { ClerkRole } from '@/lib/constants/roles'
 import { useOrganizerRoleApi } from '@/lib/hooks/use-organizer-role-api'
 import { getOrganizerRoleFlags } from '@/lib/constants/organizer-wizard-config'
@@ -85,9 +86,9 @@ function LanguagesStepInner({ role, roleApi, onSaved, onBack }: LanguagesStepInn
     setError(null)
     try {
       if (supportsCoursePreferences) {
-        const owDaysNum = owDays ? parseInt(owDays, 10) : undefined
-        const aowDaysNum = aowDays ? parseInt(aowDays, 10) : undefined
-        const oaDaysNum = oaDays ? parseInt(oaDays, 10) : undefined
+        const owDaysNum = owDays ? parseNumber(owDays, true) : undefined
+        const aowDaysNum = aowDays ? parseNumber(aowDays, true) : undefined
+        const oaDaysNum = oaDays ? parseNumber(oaDays, true) : undefined
         const specialties = aowSpecialties.length > 0 ? aowSpecialties : undefined
 
         const currentAssocs = existing && 'associations' in existing ? existing.associations : []

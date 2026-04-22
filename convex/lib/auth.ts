@@ -3,7 +3,7 @@ import type { QueryCtx, MutationCtx } from '../_generated/server'
 import type { Doc, Id } from '../_generated/dataModel'
 import type { UserIdentity } from 'convex/server'
 import { ErrorCode } from './errorCodes'
-import { OPERATOR_TYPES } from '../shared/operatorTypes'
+import { OPERATOR_TYPES, type OperatorType } from '../shared/operatorTypes'
 import { getAllUserRoles } from './userRoleHelpers'
 import { requireActiveRole, requireRoleReadiness } from '../userRoles'
 
@@ -38,6 +38,10 @@ export function assertOrgOwnership(
 export type DbCtx = QueryCtx | MutationCtx
 
 export const OPERATOR_ROLE_SET: ReadonlySet<string> = new Set(OPERATOR_TYPES)
+
+export function isOperatorRole(role: string): role is OperatorType {
+  return OPERATOR_ROLE_SET.has(role)
+}
 
 export const HOLD_TTL_MS = 43200000
 
