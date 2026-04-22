@@ -49,6 +49,11 @@ interface InventoryRow {
 interface DraftRow {
   localId: string
   gearType: GearType
+  optimisticManufacturer?: string
+  optimisticSize?: string
+  optimisticSizeSystem?: FinSizeSystem
+  optimisticIsPrescription?: boolean
+  optimisticDiopter?: number
 }
 
 interface PendingMatrix {
@@ -96,6 +101,20 @@ export function ConnectedEquipmentGear() {
   const activeDrafts = useMemo(
     () => drafts.filter((d) => d.gearType === activeGearType),
     [drafts, activeGearType],
+  )
+
+  const visibleDrafts = useMemo(
+    () => activeDrafts.filter((d) => {
+      if (!d.optimisticManufacturer) return true
+      return !items.some((it) =>
+        it.manufacturer === d.optimisticManufacturer &&
+        it.size === d.optimisticSize &&
+        it.sizeSystem === d.optimisticSizeSystem &&
+        it.isPrescription === d.optimisticIsPrescription &&
+        it.diopter === d.optimisticDiopter,
+      )
+    }),
+    [activeDrafts, items],
   )
 
   const isMatrix = isMatrixGearType(activeGearType)
@@ -170,6 +189,24 @@ export function ConnectedEquipmentGear() {
     })
   }, [matrixGroups])
 
+  useEffect(() => {
+    setDrafts((prev) => {
+      const stillPending = prev.filter((d) => {
+        if (!d.optimisticManufacturer) return true
+        if (d.gearType !== activeGearType) return true
+        const matched = items.some((it) =>
+          it.manufacturer === d.optimisticManufacturer &&
+          it.size === d.optimisticSize &&
+          it.sizeSystem === d.optimisticSizeSystem &&
+          it.isPrescription === d.optimisticIsPrescription &&
+          it.diopter === d.optimisticDiopter,
+        )
+        return !matched
+      })
+      return stillPending.length === prev.length ? prev : stillPending
+    })
+  }, [items, activeGearType])
+
   const handleAddDraft = useCallback(() => {
     setDrafts((prev) => [
       ...prev,
@@ -181,6 +218,9 @@ export function ConnectedEquipmentGear() {
     setDrafts((prev) => prev.filter((d) => d.localId !== localId))
   }, [])
 
+  const draftsRef = useRef(drafts)
+  useEffect(() => { draftsRef.current = drafts }, [drafts])
+
   const handleDraftSave = useCallback(
     async (localId: string, payload: {
       gearType: GearType
@@ -190,8 +230,22 @@ export function ConnectedEquipmentGear() {
       isPrescription?: boolean
       totalUnits: number
     }) => {
+      const current = draftsRef.current.find((d) => d.localId === localId)
+      if (current?.optimisticManufacturer) return
       await addItemMutation(payload)
-      setDrafts((prev) => prev.filter((d) => d.localId !== localId))
+      setDrafts((prev) =>
+        prev.map((d) =>
+          d.localId === localId
+            ? {
+                ...d,
+                optimisticManufacturer: payload.manufacturer,
+                optimisticSize: payload.size,
+                optimisticIsPrescription: payload.isPrescription,
+                optimisticDiopter: payload.diopter,
+              }
+            : d,
+        ),
+      )
     },
     [addItemMutation],
   )
@@ -304,7 +358,7 @@ export function ConnectedEquipmentGear() {
   const activeLabel = GEAR_TYPE_LABELS[activeGearType]
   const recentManufacturers = distinctManufacturers(allItems, activeGearType)
 
-  const itemCardCount = items.length + activeDrafts.length
+  const itemCardCount = items.length + visibleDrafts.length
   const canRemoveItemCard = itemCardCount > 1
 
   return (
@@ -356,7 +410,7 @@ export function ConnectedEquipmentGear() {
               onRemove={canRemoveItemCard ? () => setPendingRemove(item) : undefined}
             />
           ))}
-          {activeDrafts.map((draft) => (
+          {visibleDrafts.map((draft) => (
             <DraftItemCard
               key={draft.localId}
               gearType={draft.gearType}
@@ -371,7 +425,7 @@ export function ConnectedEquipmentGear() {
             variant="secondary"
             size="sm"
             onClick={handleAddDraft}
-            disabled={activeDrafts.length > 0}
+            disabled={visibleDrafts.length > 0}
           >
             <Plus size={14} />
             {tBooking('addGearType', { type: activeLabel })}

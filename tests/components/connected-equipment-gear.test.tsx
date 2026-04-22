@@ -140,6 +140,27 @@ describe('ConnectedEquipmentGear', () => {
     expect(callArg.cells).toEqual({})
   })
 
+  it('non-matrix draft card stays visible with saved values until Convex refetch arrives', async () => {
+    mockAddItem.mockResolvedValueOnce(undefined)
+    groupedReturn = {}
+
+    render(<ConnectedEquipmentGear />)
+
+    fireEvent.click(screen.getByRole('tab', { name: /Regulator/i }))
+
+    const manufacturer = await screen.findByLabelText(/Manufacturer/i)
+    fireEvent.change(manufacturer, { target: { value: 'ScubaPro' } })
+    fireEvent.change(screen.getByLabelText(/Units/i), { target: { value: '3' } })
+
+    fireEvent.click(screen.getByRole('button', { name: /^Save$/i }))
+    await vi.waitFor(() => expect(mockAddItem).toHaveBeenCalled())
+
+    await new Promise((r) => setTimeout(r, 50))
+    const selects = screen.queryAllByLabelText(/Manufacturer/i) as HTMLSelectElement[]
+    expect(selects.length).toBeGreaterThan(0)
+    expect(selects[0]!.value).toBe('ScubaPro')
+  })
+
   it('pending matrix section stays visible after first save while the group is refetching', async () => {
     mockBulkSet.mockResolvedValueOnce(undefined)
     groupedReturn = {}
