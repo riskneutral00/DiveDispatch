@@ -27,9 +27,6 @@ export const ROLE_TABLE_MAP: Record<string, TableNames> = {
   Compressor: 'compressors',
   DiveCenter: 'diveCenters',
   Agent: 'agents',
-  Liveaboard: 'liveaboards',
-  DiveResort: 'diveResorts',
-  DiveHostel: 'diveHostels',
 }
 
 export async function profileMine<T extends TableNames>(

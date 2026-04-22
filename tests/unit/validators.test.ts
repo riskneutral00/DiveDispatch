@@ -21,14 +21,6 @@ describe('effectiveResourceType', () => {
     expect(effectiveResourceType('Agent')).toBeNull()
   })
 
-  it('returns null for DiveResort (operator, not resource)', () => {
-    expect(effectiveResourceType('DiveResort')).toBeNull()
-  })
-
-  it('returns null for DiveHostel (operator, not resource)', () => {
-    expect(effectiveResourceType('DiveHostel')).toBeNull()
-  })
-
   it('returns null for unknown role', () => {
     expect(effectiveResourceType('UnknownRole')).toBeNull()
   })

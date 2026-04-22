@@ -6,7 +6,6 @@ export const RESOURCE_OWNER_TYPES = [
   'Venue',
   'Compressor',
   'Instructor',
-  'Liveaboard',
 ] as const
 
 export type ResourceOwnerType = (typeof RESOURCE_OWNER_TYPES)[number]

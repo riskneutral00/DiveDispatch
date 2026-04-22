@@ -3,9 +3,6 @@ import { v, type Infer } from 'convex/values'
 export const OPERATOR_TYPES = [
   'DiveCenter',
   'Agent',
-  'Liveaboard',
-  'DiveResort',
-  'DiveHostel',
 ] as const
 
 export type OperatorType = (typeof OPERATOR_TYPES)[number]

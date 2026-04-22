@@ -27,7 +27,7 @@ beforeEach(() => {
 async function seedConfirmedBooking(
   ctx: Parameters<Parameters<typeof t.run>[0]>[0],
   ownerId: string,
-  ownerType: 'DiveCenter' | 'Agent' | 'Liveaboard' = 'DiveCenter',
+  ownerType: 'DiveCenter' | 'Agent' = 'DiveCenter',
 ): Promise<Id<'bookings'>> {
   return seedBooking(ctx, {
     ownerId,
@@ -254,19 +254,6 @@ describe('tryAutoAdvance logistics notification', () => {
       const notifications = await ctx.db.query('notifications').collect()
       const confirmed = notifications.find((n) => n.type === NOTIFICATION_TYPE.BookingConfirmed)
       expect(confirmed?.userId).toBe(agentSlug)
-    })
-  })
-
-  it('emits confirmed notification for Liveaboard-owned booking (multi-role)', async () => {
-    await t.run(async (ctx) => {
-      const liveaboardSlug = 'mv-pacific-star'
-      const bookingId = await seedConfirmedBooking(ctx, liveaboardSlug, 'Liveaboard')
-
-      await tryAutoAdvance(ctx, bookingId)
-
-      const notifications = await ctx.db.query('notifications').collect()
-      const confirmed = notifications.find((n) => n.type === NOTIFICATION_TYPE.BookingConfirmed)
-      expect(confirmed?.userId).toBe(liveaboardSlug)
     })
   })
 

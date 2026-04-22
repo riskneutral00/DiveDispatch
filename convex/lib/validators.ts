@@ -10,9 +10,6 @@ export const stakeholderTypeValidator = v.union(
   v.literal('Boat'),
   v.literal('Equipment'),
   v.literal('Compressor'),
-  v.literal('Liveaboard'),
-  v.literal('DiveResort'),
-  v.literal('DiveHostel'),
   v.literal('Venue'),
 )
 

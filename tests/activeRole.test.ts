@@ -89,7 +89,7 @@ describe('createDraftShell — activeRole validation', () => {
       t
         .withIdentity({ tokenIdentifier: 'clerk|dc-rej-1' })
         .mutation(api.bookingDraftMutations.createDraftShell, {
-          activeRole: 'Liveaboard',
+          activeRole: 'Agent',
         }),
       'ROLE_NOT_HELD',
     )

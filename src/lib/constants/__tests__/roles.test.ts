@@ -28,26 +28,20 @@ describe('Binary role classification', () => {
     }
   })
 
-  it('total role count is 10', () => {
-    expect(ROLES).toHaveLength(10)
+  it('total role count is 7', () => {
+    expect(ROLES).toHaveLength(7)
   })
 })
 
 describe('Specific role assignments', () => {
-  it('Liveaboard is organizer, not resource', () => {
-    const r = ROLE_BY_KEY['liveaboard']
-    expect(r.isOrganizer).toBe(true)
-    expect(r.isResource).toBe(false)
-  })
-
   it('Venue is resource, not organizer', () => {
     const r = ROLE_BY_KEY['venue']
     expect(r.isOrganizer).toBe(false)
     expect(r.isResource).toBe(true)
   })
 
-  it('DiveCenter, Agent, DiveResort, DiveHostel are all organizers', () => {
-    const organizerKeys: RoleKey[] = ['dive-center', 'agent', 'dive-resort', 'dive-hostel']
+  it('DiveCenter, Agent are organizers', () => {
+    const organizerKeys: RoleKey[] = ['dive-center', 'agent']
     for (const key of organizerKeys) {
       const r = ROLE_BY_KEY[key]
       expect(r.isOrganizer, `${key} should be organizer`).toBe(true)
@@ -72,12 +66,10 @@ describe('Specific role assignments', () => {
 })
 
 describe('Derived lists', () => {
-  it('ORGANIZER_ROLES has exactly 5 members', () => {
-    expect(ORGANIZER_ROLES).toHaveLength(5)
+  it('ORGANIZER_ROLES has exactly 2 members', () => {
+    expect(ORGANIZER_ROLES).toHaveLength(2)
     const keys = ORGANIZER_ROLES.map((r) => r.key).sort()
-    expect(keys).toEqual(
-      ['agent', 'dive-center', 'dive-hostel', 'dive-resort', 'liveaboard'].sort(),
-    )
+    expect(keys).toEqual(['agent', 'dive-center'].sort())
   })
 
   it('RESOURCE_ROLES has exactly 5 members', () => {
@@ -90,10 +82,10 @@ describe('Derived lists', () => {
 })
 
 describe('Display grouping', () => {
-  it('DISPLAY_OPERATOR_ROLES has 5 members (all organizers)', () => {
-    expect(DISPLAY_OPERATOR_ROLES).toHaveLength(5)
+  it('DISPLAY_OPERATOR_ROLES has 2 members (all organizers)', () => {
+    expect(DISPLAY_OPERATOR_ROLES).toHaveLength(2)
     const keys = DISPLAY_OPERATOR_ROLES.map((r) => r.key).sort()
-    expect(keys).toEqual(['agent', 'dive-center', 'dive-hostel', 'dive-resort', 'liveaboard'])
+    expect(keys).toEqual(['agent', 'dive-center'])
   })
 
   it('DISPLAY_RESOURCE_ROLES has 5 members', () => {
@@ -112,12 +104,12 @@ describe('Display grouping', () => {
     }
   })
 
-  it('union of display groups covers all 10 roles with no gaps', () => {
+  it('union of display groups covers all 7 roles with no gaps', () => {
     const displayKeys = new Set([
       ...DISPLAY_OPERATOR_ROLES.map((r) => r.key),
       ...DISPLAY_RESOURCE_ROLES.map((r) => r.key),
     ])
-    expect(displayKeys.size).toBe(10)
+    expect(displayKeys.size).toBe(7)
     expect(displayKeys.size).toBe(ROLES.length)
     for (const role of ROLES) {
       expect(displayKeys.has(role.key), `${role.key} missing from display groups`).toBe(true)
@@ -144,11 +136,9 @@ describe('Lookup maps', () => {
 })
 
 describe('Booking creation eligibility (isOrganizer gates QuickBookRail + createDraftShell)', () => {
-  it('exactly these 5 roles can create bookings', () => {
+  it('exactly these 2 roles can create bookings', () => {
     const keys = ORGANIZER_ROLES.map((r) => r.key).sort()
-    expect(keys).toEqual(
-      ['agent', 'dive-center', 'dive-hostel', 'dive-resort', 'liveaboard'],
-    )
+    expect(keys).toEqual(['agent', 'dive-center'])
   })
 
   it('exactly these 5 roles cannot create bookings', () => {

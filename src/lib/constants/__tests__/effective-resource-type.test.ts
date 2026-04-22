@@ -14,7 +14,7 @@ describe('effectiveResourceType', () => {
   })
 
   it('returns null for non-resource stakeholder roles', () => {
-    const nonResourceRoles = ['DiveCenter', 'Agent', 'DiveResort', 'DiveHostel']
+    const nonResourceRoles = ['DiveCenter', 'Agent']
     for (const role of nonResourceRoles) {
       expect(effectiveResourceType(role)).toBeNull()
     }

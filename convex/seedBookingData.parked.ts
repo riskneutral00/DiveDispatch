@@ -287,22 +287,6 @@ export const BOOKING_CONFIGS: BookingConfig[] = [
     statusMix: { Upcoming: 9, Draft: 3, Completed: 3, Cancelled: 0 },
     referralDCs: ['n7rq5j', 'p5ky3w', 'q9bz7r', 'h3cp6n', 'z8mv4c', 'v6js2t', 'm4fx8d', 't7gw1k'],
   },
-  {
-    ownerSlug: 'k8lv3a',
-    ownerName: 'Andaman Explorer',
-    ownerType: 'Liveaboard',
-    count: 5,
-    activityMix: { DSD: 1, OW: 1, AOW: 1, FD: 2 },
-    statusMix: { Upcoming: 3, Draft: 1, Completed: 1, Cancelled: 0 },
-  },
-  {
-    ownerSlug: 'j2dn9f',
-    ownerName: 'Coral Bay Resort',
-    ownerType: 'DiveResort',
-    count: 5,
-    activityMix: { DSD: 2, OW: 1, AOW: 1, FD: 1 },
-    statusMix: { Upcoming: 3, Draft: 1, Completed: 1, Cancelled: 0 },
-  },
 ]
 
 const HUG_OCEAN_BOOKINGS: {

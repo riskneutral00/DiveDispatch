@@ -270,7 +270,7 @@ export async function _listByOwner(
   const ownedBookings = await ctx.db
     .query('bookings')
     .withIndex('by_ownerId_ownerType', (q) =>
-      q.eq('ownerId', args.ownerId).eq('ownerType', args.ownerType as "DiveCenter" | "Agent" | "Liveaboard" | "DiveResort" | "DiveHostel"),
+      q.eq('ownerId', args.ownerId).eq('ownerType', args.ownerType as OperatorType),
     )
     .collect() // bounded: per-booking joins
 
@@ -657,9 +657,6 @@ export const listByOwner = query({
     ownerType: v.union(
       v.literal('DiveCenter'),
       v.literal('Agent'),
-      v.literal('Liveaboard'),
-      v.literal('DiveResort'),
-      v.literal('DiveHostel'),
     ),
   },
   handler: _listByOwner,

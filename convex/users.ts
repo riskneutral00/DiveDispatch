@@ -383,9 +383,6 @@ export const getAccountDefaults = query({
 const INHERITANCE_SOURCE_ROLES: ReadonlySet<string> = new Set([
   'DiveCenter',
   'Agent',
-  'Liveaboard',
-  'DiveResort',
-  'DiveHostel',
   'Equipment',
   'Venue',
   'Compressor',

@@ -266,11 +266,6 @@ describe('organizations.deleteFromWebhook', () => {
       userId,
       userRoleId,
       diveCenterId,
-      liveaboardId,
-      cabinId,
-      tripScheduleId,
-      diveResortId,
-      roomId,
     } = await t.run(async (ctx) => {
       const userId = await ctx.db.insert('users', {
         tokenIdentifier: `clerk|cascade-user-${crypto.randomUUID().slice(0, 8)}`,
@@ -300,60 +295,10 @@ describe('organizations.deleteFromWebhook', () => {
         associations: [],
         verified: false,
       })
-      const liveaboardId = await ctx.db.insert('liveaboards', {
-        organizationId: orgId,
-        name: 'Cascade Liveaboard',
-        address: { city: 'Phuket', country: 'TH' },
-        lat: 7.88,
-        lng: 98.39,
-        email: 'la@test.com',
-        phone: '+66800000002',
-        verified: false,
-      })
-      const cabinId = await ctx.db.insert('cabins', {
-        liveaboardId,
-        name: 'Deluxe Cabin 1',
-        cabinType: 'Double',
-        totalBerths: 2,
-        amenities: [],
-      })
-      const tripScheduleId = await ctx.db.insert('tripSchedules', {
-        liveaboardId,
-        name: 'Trip Week 1',
-        startDate: '2026-05-01',
-        endDate: '2026-05-07',
-        itinerary: 'Similan Islands',
-        maxPassengers: 16,
-        currentPassengers: 0,
-        status: 'Scheduled',
-      })
-      const diveResortId = await ctx.db.insert('diveResorts', {
-        organizationId: orgId,
-        name: 'Cascade Resort',
-        address: { city: 'Phuket', country: 'TH' },
-        lat: 7.88,
-        lng: 98.39,
-        email: 'dr@test.com',
-        phone: '+66800000003',
-        verified: false,
-      })
-      const roomId = await ctx.db.insert('rooms', {
-        diveResortId,
-        name: 'Deluxe Room 1',
-        roomType: 'Deluxe',
-        totalCount: 3,
-        maxOccupancy: 2,
-        amenities: [],
-      })
       return {
         userId,
         userRoleId,
         diveCenterId,
-        liveaboardId,
-        cabinId,
-        tripScheduleId,
-        diveResortId,
-        roomId,
       }
     })
 
@@ -366,11 +311,6 @@ describe('organizations.deleteFromWebhook', () => {
       user: await ctx.db.get(userId),
       userRole: await ctx.db.get(userRoleId),
       diveCenter: await ctx.db.get(diveCenterId),
-      liveaboard: await ctx.db.get(liveaboardId),
-      cabin: await ctx.db.get(cabinId),
-      tripSchedule: await ctx.db.get(tripScheduleId),
-      diveResort: await ctx.db.get(diveResortId),
-      room: await ctx.db.get(roomId),
       org: await ctx.db.get(orgId),
     }))
 
@@ -378,11 +318,6 @@ describe('organizations.deleteFromWebhook', () => {
     expect(results.user?.email).toBe('cascade@test.com')
     expect(results.userRole).toBeNull()
     expect(results.diveCenter).toBeNull()
-    expect(results.liveaboard).toBeNull()
-    expect(results.cabin).toBeNull()
-    expect(results.tripSchedule).toBeNull()
-    expect(results.diveResort).toBeNull()
-    expect(results.room).toBeNull()
     expect(results.org).toBeNull()
   })
 

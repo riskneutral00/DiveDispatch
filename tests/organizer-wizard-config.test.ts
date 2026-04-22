@@ -17,18 +17,6 @@ describe('ORGANIZER_WIZARD_CONFIG', () => {
     expect(ORGANIZER_WIZARD_CONFIG.Agent).toEqual(['basic', 'agency'])
   })
 
-  it('Liveaboard has 1 step: basic', () => {
-    expect(ORGANIZER_WIZARD_CONFIG.Liveaboard).toEqual(['basic'])
-  })
-
-  it('DiveResort has 1 step: basic', () => {
-    expect(ORGANIZER_WIZARD_CONFIG.DiveResort).toEqual(['basic'])
-  })
-
-  it('DiveHostel has 1 step: basic', () => {
-    expect(ORGANIZER_WIZARD_CONFIG.DiveHostel).toEqual(['basic'])
-  })
-
   it('resource roles are not in the config', () => {
     expect(ORGANIZER_WIZARD_CONFIG.Instructor).toBeUndefined()
     expect(ORGANIZER_WIZARD_CONFIG.Boat).toBeUndefined()
@@ -47,18 +35,6 @@ describe('getOrganizerSteps', () => {
     expect(getOrganizerSteps('Agent')).toEqual(['basic', 'agency'])
   })
 
-  it('returns configured steps for Liveaboard', () => {
-    expect(getOrganizerSteps('Liveaboard')).toEqual(['basic'])
-  })
-
-  it('returns configured steps for DiveResort', () => {
-    expect(getOrganizerSteps('DiveResort')).toEqual(['basic'])
-  })
-
-  it('returns configured steps for DiveHostel', () => {
-    expect(getOrganizerSteps('DiveHostel')).toEqual(['basic'])
-  })
-
   it('defaults to ["basic"] for unconfigured roles', () => {
     expect(getOrganizerSteps('Instructor')).toEqual(['basic'])
     expect(getOrganizerSteps('Boat')).toEqual(['basic'])
@@ -68,13 +44,10 @@ describe('getOrganizerSteps', () => {
 })
 
 describe('ORGANIZER_WIZARD_ROLES', () => {
-  it('contains all 5 organizer roles', () => {
-    expect(ORGANIZER_WIZARD_ROLES).toHaveLength(5)
+  it('contains all organizer roles', () => {
+    expect(ORGANIZER_WIZARD_ROLES).toHaveLength(2)
     expect(ORGANIZER_WIZARD_ROLES).toContain('DiveCenter')
     expect(ORGANIZER_WIZARD_ROLES).toContain('Agent')
-    expect(ORGANIZER_WIZARD_ROLES).toContain('Liveaboard')
-    expect(ORGANIZER_WIZARD_ROLES).toContain('DiveResort')
-    expect(ORGANIZER_WIZARD_ROLES).toContain('DiveHostel')
   })
 
   it('does not contain resource roles', () => {
@@ -112,33 +85,6 @@ describe('getOrganizerRoleFlags', () => {
       supportsCoursePreferences: false,
       locationModel: 'multi',
       displayLabel: 'agent',
-    })
-  })
-
-  it('Liveaboard uses single location model and supports course preferences', () => {
-    const flags = getOrganizerRoleFlags('Liveaboard')
-    expect(flags).toEqual({
-      supportsCoursePreferences: true,
-      locationModel: 'single',
-      displayLabel: 'liveaboard',
-    })
-  })
-
-  it('DiveResort uses single location model and supports course preferences', () => {
-    const flags = getOrganizerRoleFlags('DiveResort')
-    expect(flags).toEqual({
-      supportsCoursePreferences: true,
-      locationModel: 'single',
-      displayLabel: 'dive resort',
-    })
-  })
-
-  it('DiveHostel uses single location model and no course preferences', () => {
-    const flags = getOrganizerRoleFlags('DiveHostel')
-    expect(flags).toEqual({
-      supportsCoursePreferences: false,
-      locationModel: 'single',
-      displayLabel: 'dive hostel',
     })
   })
 

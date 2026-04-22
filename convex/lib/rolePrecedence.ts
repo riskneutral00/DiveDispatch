@@ -1,9 +1,6 @@
 export const ROLE_PRECEDENCE: Record<string, number> = {
   DiveCenter: 0,
   Agent: 1,
-  Liveaboard: 2,
-  DiveResort: 3,
-  DiveHostel: 4,
   Instructor: 6,
   Boat: 8,
   Equipment: 9,

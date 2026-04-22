@@ -134,26 +134,6 @@ interface CompressorProfile {
   verified: boolean
 }
 
-interface LiveaboardProfile {
-  name: string
-  address: SeedAddress
-  lat: number
-  lng: number
-  email: string
-  phone: string
-  verified: boolean
-}
-
-interface DiveResortProfile {
-  name: string
-  address: SeedAddress
-  lat: number
-  lng: number
-  email: string
-  phone: string
-  verified: boolean
-}
-
 interface AgentProfile {
   name: string
   address: SeedAddress
@@ -195,8 +175,6 @@ export interface SeedStakeholder {
   compressor?: CompressorProfile
   agent?: AgentProfile
   instructor?: InstructorProfile
-  liveaboard?: LiveaboardProfile
-  diveResort?: DiveResortProfile
 }
 
 export interface SeedDiveSite {
@@ -882,50 +860,6 @@ export const EVA_AGENT: SeedStakeholder = {
   },
 }
 
-export const ANDAMAN_EXPLORER: SeedStakeholder = {
-  user: {
-    slug: 'k8lv3a',
-    email: 'andaman-explorer+clerk_test@divedispatch.dev',
-    name: 'Chaiwat Meesuk',
-    firstName: 'Chaiwat',
-    lastName: 'Meesuk',
-    appLanguage: 'en',
-    phone: '+66812345011',
-  },
-  roles: [
-    { role: 'Liveaboard' },
-  ],
-  liveaboard: {
-    name: 'Andaman Explorer',
-    ...PHUKET,
-    email: 'andaman-explorer@divedispatch.dev',
-    phone: '+6676392001',
-    verified: VERIFIED,
-  },
-}
-
-export const CORAL_BAY_RESORT: SeedStakeholder = {
-  user: {
-    slug: 'j2dn9f',
-    email: 'coral-bay-resort+clerk_test@divedispatch.dev',
-    name: 'Supattra Laohakul',
-    firstName: 'Supattra',
-    lastName: 'Laohakul',
-    appLanguage: 'th',
-    phone: '+66812345012',
-  },
-  roles: [
-    { role: 'DiveResort' },
-  ],
-  diveResort: {
-    name: 'Coral Bay Resort',
-    ...PHUKET,
-    email: 'coral-bay-resort@divedispatch.dev',
-    phone: '+6676393001',
-    verified: VERIFIED,
-  },
-}
-
 export const WATER_PRO: SeedStakeholder = {
   user: {
     slug: 'b3wt9f',
@@ -1119,8 +1053,6 @@ export const PARKED_STAKEHOLDERS: SeedStakeholder[] = [
   WATER_PRO,
   SHARK_BITES,
   SCUBA_REVOLUTION,
-  ANDAMAN_EXPLORER,
-  CORAL_BAY_RESORT,
   RESTORED_SOMBAT,
   RESTORED_ALEX,
 ]

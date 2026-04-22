@@ -22,7 +22,7 @@ import { getOrCreateTestOrg, type SeedCtx } from '../fixtures'
 
 type Ctx = Parameters<Parameters<ReturnType<typeof makeT>['run']>[0]>[0]
 
-type StakeholderRole = 'DiveCenter' | 'Agent' | 'Liveaboard' | 'DiveResort' | 'DiveHostel' | 'Venue' | 'Boat' | 'Equipment' | 'Venue' | 'Compressor' | 'Instructor' | 'DiveMaster'
+type StakeholderRole = 'DiveCenter' | 'Agent' | 'Venue' | 'Boat' | 'Equipment' | 'Compressor' | 'Instructor' | 'DiveMaster'
 
 async function seedUser(
   ctx: Ctx,

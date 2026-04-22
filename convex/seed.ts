@@ -7,8 +7,7 @@ import { internal } from './_generated/api'
 import { OPERATOR_ROLE_SET } from './lib/auth'
 import type { OperatorType } from './shared/operatorTypes'
 import { queryDynamicTable, deleteDynamic } from './lib/typedDb'
-import { ALL_STAKEHOLDERS, SeedStakeholder, StakeholderRole, UNOWNED_DIVE_SITES, type SeedInventoryLine } from './seedData'
-import { insertLiveaboard, insertDiveResort } from './sketchTableGuards'
+import { ALL_STAKEHOLDERS, SeedStakeholder, StakeholderRole, type SeedInventoryLine } from './seedData'
 import { ensureSystemThemesInline } from './lib/ensureSystemThemes'
 import { stakeholderPreferenceIdsToDelete } from './lib/stakeholderPreferencesDedupe'
 import { insertUserRole } from './lib/userRoleHelpers'
@@ -162,8 +161,6 @@ const TABLES_TO_WIPE = [
   'equipmentBags', 'gearSizingLookup',
   'bookingTemplates',
   'agents',
-  'liveaboards', 'cabins', 'tripSchedules',
-  'diveResorts', 'rooms', 'diveHostels',
   'stakeholderBlockedDates',
 ] as const
 
@@ -223,7 +220,7 @@ export const seedStakeholders = internalMutation({
 
     for (const s of ALL_STAKEHOLDERS) {
       const userId = await insertUser(ctx, s) // batch-exempt
-      const orgName = s.diveCenter?.name ?? s.boat?.name ?? s.equipment?.name ?? s.compressor?.name ?? s.agent?.name ?? s.liveaboard?.name ?? s.diveResort?.name ?? s.venue?.name ?? `Seed Org ${s.user.slug}`
+      const orgName = s.diveCenter?.name ?? s.boat?.name ?? s.equipment?.name ?? s.compressor?.name ?? s.agent?.name ?? s.venue?.name ?? `Seed Org ${s.user.slug}`
       const organizationId = await getOrCreateSeedOrg(ctx, s.user.slug, orgName) // batch-exempt
       await setUserOrganization(ctx, userId, organizationId) // batch-exempt
 
@@ -247,12 +244,6 @@ export const seedStakeholders = internalMutation({
       if (s.agent) {
         const agentPayload = { organizationId, ...s.agent, customerLanguages: s.user.customerLanguages ?? [] }
         await ctx.db.insert('agents', agentPayload) // batch-exempt orgid-helper-ok
-      }
-      if (s.liveaboard) {
-        await insertLiveaboard(ctx, { organizationId, ...s.liveaboard }) // batch-exempt
-      }
-      if (s.diveResort) {
-        await insertDiveResort(ctx, { organizationId, ...s.diveResort }) // batch-exempt
       }
     }
   },
@@ -417,30 +408,6 @@ export const seedResourceInventory = internalMutation({
       }
 
     }
-
-    for (const site of UNOWNED_DIVE_SITES) {
-      await ctx.db.insert('inventoryUnits', { // batch-exempt
-        resourceType: 'Venue',
-        resourceId: site.slug,
-        displayName: site.name,
-        capacityModel: 'Pooled',
-        totalUnits: site.capacity,
-        ownerId: '__unowned__',
-        ownerType: 'Venue',
-      })
-      await ctx.db.insert('venues', { // batch-exempt orgid-helper-ok unowned-dive-site
-        name: site.name,
-        slug: site.slug,
-        address: { city: 'Phuket', country: 'TH' },
-        lat: 7.8206,
-        lng: 98.3003,
-        verified: true,
-        subtype: 'shore',
-        confinedCapable: true,
-        hasCompressor: false,
-        maxCapacity: site.capacity,
-      })
-    }
   },
 })
 
@@ -537,12 +504,6 @@ export const seedStakeholderPreferences = internalMutation({
       'e6eu5z': { // Eva (Agent) — de, fr, nl
         instructors: ['stefan-braun', 'pierre-dubois', 'camille-moreau', 'sophie-laurent', 'hans-weber'],
         boats: ['n7rq5j', 'p5ky3w'], venues: ['z8mv4c'], compressors: ['x4kp2m'], equipment: ['v8sr2p'],
-      },
-      'k8lv3a': { // Andaman Explorer (Liveaboard) — en — instructors only
-        instructors: ['ryan-clarke', 'somphon-kaew', 'nattaya-srisuk', 'pierre-dubois', 'li-ming'],
-      },
-      'j2dn9f': { // Coral Bay Resort (DiveResort) — th, en — instructors only
-        instructors: ['ryan-clarke', 'nattaya-srisuk', 'somphon-kaew', 'mei-lin', 'budi-santoso'],
       },
     }
 

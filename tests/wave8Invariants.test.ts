@@ -51,44 +51,6 @@ const ADDR_ARGS = {
   phone: '+66123456789',
 }
 
-describe('Wave 8 — Rule 11 strict org gate (new role tables)', () => {
-  it('liveaboards.create throws no_active_org without org claim', async () => {
-    const t = makeT()
-    await t.run(async (ctx) => { await seedUser(ctx, 'no-org-la', 'Liveaboard') })
-
-    await expectConvexError(
-      t.withIdentity({ tokenIdentifier: 'clerk|no-org-la' })
-        .mutation(api.liveaboards.create, { name: 'X', ...ADDR_ARGS }),
-      'FORBIDDEN',
-      'no_active_org',
-    )
-  })
-
-  it('diveResorts.create throws no_active_org without org claim', async () => {
-    const t = makeT()
-    await t.run(async (ctx) => { await seedUser(ctx, 'no-org-dr', 'DiveResort') })
-
-    await expectConvexError(
-      t.withIdentity({ tokenIdentifier: 'clerk|no-org-dr' })
-        .mutation(api.diveResorts.create, { name: 'X', ...ADDR_ARGS }),
-      'FORBIDDEN',
-      'no_active_org',
-    )
-  })
-
-  it('diveHostels.create throws no_active_org without org claim', async () => {
-    const t = makeT()
-    await t.run(async (ctx) => { await seedUser(ctx, 'no-org-dh', 'DiveHostel') })
-
-    await expectConvexError(
-      t.withIdentity({ tokenIdentifier: 'clerk|no-org-dh' })
-        .mutation(api.diveHostels.create, { name: 'X', ...ADDR_ARGS, bedCount: 10, dormCount: 2 }),
-      'FORBIDDEN',
-      'no_active_org',
-    )
-  })
-})
-
 describe('Wave 8 — C3 invariant (multi-role user shares one org)', () => {
   it('Somchai-shape user (DiveCenter + Pool + Boat + Equipment) lands all role rows in the same org', async () => {
     const t = makeT()
