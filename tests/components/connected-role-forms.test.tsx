@@ -16,9 +16,6 @@ vi.mock('@/components/profiles/personal-profile-form', () => ({
   InstructorProfileForm: (props: Record<string, unknown>) => (
     <div data-testid="instructor-form" data-section={props.section as string} />
   ),
-  DiveMasterProfileForm: (props: Record<string, unknown>) => (
-    <div data-testid="divemaster-form" data-section={props.section as string} />
-  ),
 }))
 
 vi.mock('@/components/profiles/boat-profile-form', () => ({
@@ -36,18 +33,6 @@ vi.mock('@/components/profiles/compressor-profile-form', () => ({
 vi.mock('@/components/profiles/equipment-profile-form', () => ({
   EquipmentProfileForm: (props: Record<string, unknown>) => (
     <div data-testid="equipment-form" data-section={props.section as string} />
-  ),
-}))
-
-vi.mock('@/components/profiles/pool-profile-form', () => ({
-  PoolProfileForm: (props: Record<string, unknown>) => (
-    <div data-testid="pool-form" data-section={props.section as string} />
-  ),
-}))
-
-vi.mock('@/components/profiles/dive-site-profile-form', () => ({
-  DiveSiteProfileForm: (props: Record<string, unknown>) => (
-    <div data-testid="dive-site-form" data-section={props.section as string} />
   ),
 }))
 
