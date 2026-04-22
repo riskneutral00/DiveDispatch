@@ -105,7 +105,7 @@ describe('RESOURCE_OWNER_TYPES ↔ ROLES', () => {
     }
   })
 
-  it('every RESOURCE_OWNER_TYPES entry maps to a role with isResource=true OR is an organizer that owns inventory (Liveaboard)', () => {
+  it('every RESOURCE_OWNER_TYPES entry maps to a role with isResource=true OR is an organizer that owns inventory', () => {
     for (const type of RESOURCE_OWNER_TYPES) {
       const role = ROLE_BY_CLERK_ROLE[type as keyof typeof ROLE_BY_CLERK_ROLE]
       const isResourceOwner = role?.isResource || role?.isOrganizer

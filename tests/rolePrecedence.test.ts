@@ -48,7 +48,7 @@ describe('ROLE_PRECEDENCE', () => {
 
   it('all expected roles are defined', () => {
     const expected = [
-      'DiveCenter', 'Agent', 'Liveaboard', 'DiveResort', 'DiveHostel',
+      'DiveCenter', 'Agent',
       'Venue', 'Instructor', 'Boat', 'Equipment', 'Compressor',
     ]
     for (const role of expected) {

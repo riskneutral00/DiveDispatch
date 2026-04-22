@@ -7,7 +7,6 @@
  * - Referral bookings are marked isReferral=true
  * - Owned bookings are marked isReferral=false
  * - DiveCenter dashboard unchanged — does not include agent's referral bookings
- * - Liveaboard dashboard unchanged — only shows its own owned bookings
  */
 
 import { describe, it, expect } from 'vitest'
@@ -24,8 +23,6 @@ const AGENT_SLUG = 'agent-ocean'
 const AGENT_TOKEN = 'test|agent-ocean'
 const DC_SLUG = 'blue-ocean-dc'
 const DC_TOKEN = 'test|blue-ocean-dc'
-const LA_SLUG = 'liveaboard-sea'
-const LA_TOKEN = 'test|liveaboard-sea'
 
 // ─── listByOwner: Agent branch ────────────────────────────────────────────────
 
@@ -185,27 +182,3 @@ describe('listByOwner — DiveCenter role (unchanged)', () => {
   })
 })
 
-// ─── listByOwner: Liveaboard branch unchanged ──────────────────────────────────
-
-describe('listByOwner — Liveaboard role (unchanged)', () => {
-  it('only returns bookings owned by Liveaboard', async () => {
-    const t = makeT()
-    await t.run(async (ctx: SeedCtx) => {
-      await seedUser(ctx, { tokenIdentifier: LA_TOKEN, slug: LA_SLUG, role: 'Liveaboard' })
-      // Liveaboard-owned booking
-      await seedBooking(ctx, {
-        ownerId: LA_SLUG,
-        ownerType: 'Liveaboard',
-        status: 'Upcoming',
-        startDate: testDate(3),
-        endDate: testDate(5),
-      })
-    })
-
-    const result = await t.withIdentity({ tokenIdentifier: LA_TOKEN })
-      .query(api.bookings.listByOwner, { ownerId: LA_SLUG, ownerType: 'Liveaboard' })
-
-    expect(result).toHaveLength(1)
-    expect(result[0].isReferral).toBe(false)
-  })
-})

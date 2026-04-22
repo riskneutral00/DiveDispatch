@@ -6,7 +6,7 @@
  * 1. Renders logistics fields when present (DiveCenter operator data)
  * 2. Renders without logistics section when logistics is absent
  * 3. Renders partial logistics (only departureTime)
- * 4. Logistics section renders identically for DiveCenter, Agent, and Liveaboard operator data
+ * 4. Logistics section renders identically for DiveCenter and Agent operator data
  */
 
 import { describe, it, expect } from 'vitest'
@@ -104,10 +104,10 @@ describe('NotificationItem — logistics rendering', () => {
     expect(screen.getByText('MV Agent Special')).toBeInTheDocument()
   })
 
-  it('renders logistics identically for Liveaboard-owned booking data', () => {
+  it('renders logistics identically for Agent-owned booking with departure data', () => {
     const notification = baseNotification({
       type: 'booking_confirmed',
-      message: 'Liveaboard trip confirmed.',
+      message: 'Trip confirmed.',
       logistics: {
         departureTime: '10:00',
         departureLocation: 'Chumphon pier',

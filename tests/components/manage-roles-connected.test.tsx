@@ -10,9 +10,6 @@ vi.mock('@/lib/icons/role-icons', () => {
   return {
     DiveCenterIcon: stub,
     AgentIcon: stub,
-    LiveaboardIcon: stub,
-    DiveResortIcon: stub,
-    DiveHostelIcon: stub,
     DiveSiteIcon: stub,
     InstructorIcon: stub,
     DiveMasterIcon: stub,

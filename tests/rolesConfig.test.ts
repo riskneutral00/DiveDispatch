@@ -48,8 +48,8 @@ describe('ROLES constant integrity', () => {
     }
   })
 
-  it('DiveCenter / Liveaboard / DiveResort / DiveHostel are business', () => {
-    const businessKeys: ClerkRole[] = ['DiveCenter', 'Liveaboard', 'DiveResort', 'DiveHostel']
+  it('DiveCenter is business', () => {
+    const businessKeys: ClerkRole[] = ['DiveCenter']
     for (const key of businessKeys) {
       expect(ROLE_BY_CLERK_ROLE[key].roleClass).toBe('business')
     }

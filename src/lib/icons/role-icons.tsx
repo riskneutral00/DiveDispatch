@@ -49,42 +49,6 @@ export function AgentIcon(props: RoleIconProps) {
   )
 }
 
-export function LiveaboardIcon(props: RoleIconProps) {
-  return (
-    <IconBase {...props}>
-      <path d="M2 16c1 3 5 4 8 4s7-1 8-4" />
-      <path d="M6 16V10h8v6" />
-      <path d="M10 10V6" />
-      <circle cx="20.5" cy="16.5" r="1.5" />
-      <path d="M18 22a2.5 2.5 0 0 1 5 0" />
-    </IconBase>
-  )
-}
-
-export function DiveResortIcon(props: RoleIconProps) {
-  return (
-    <IconBase {...props}>
-      <rect x="5" y="3" width="10" height="15" rx="0.5" />
-      <path d="M5 8h10M5 13h10" />
-      <path d="M8 5v2M12 5v2M8 10v2M12 10v2" />
-      <path d="M9 18v-3h2v3" />
-      <path d="M2 21q3-2 6 0t6 0t6 0" />
-    </IconBase>
-  )
-}
-
-export function DiveHostelIcon(props: RoleIconProps) {
-  return (
-    <IconBase {...props}>
-      <path d="M4 3h12v18H4z" />
-      <path d="M4 11h12" />
-      <rect x="6" y="7" width="4" height="2.5" rx="1" />
-      <rect x="6" y="14.5" width="4" height="2.5" rx="1" />
-      <path d="M18 11v10M16 14h2M16 17h2" />
-    </IconBase>
-  )
-}
-
 export function DiveSiteIcon(props: RoleIconProps) {
   return (
     <IconBase {...props}>

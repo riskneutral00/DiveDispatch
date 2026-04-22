@@ -32,7 +32,7 @@ import type { CalendarBooking } from '../../../convex/bookings'
 import type { Id } from '@/lib/convex-generated'
 import type { BookingPreFill } from '@/lib/booking/wizard-state'
 
-type OperatorType = 'DiveCenter' | 'Agent' | 'Liveaboard' | 'DiveResort' | 'DiveHostel'
+type OperatorType = 'DiveCenter' | 'Agent'
 
 export function DashboardContent({ roleSlug, slug }: { roleSlug: string; slug: string }) {
   const roleConfig = ROLE_BY_KEY[roleSlug as RoleKey]

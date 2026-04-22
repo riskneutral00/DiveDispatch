@@ -15,7 +15,6 @@ describe('ResourceOwnerType single source of truth', () => {
       'Venue',
       'Compressor',
       'Instructor',
-      'Liveaboard',
     ])
   })
 

@@ -145,7 +145,7 @@ describe('OrganizerBasicStep', () => {
       lng: 98.39,
     }
 
-    render(<OrganizerBasicStep role="Liveaboard" onSaved={vi.fn()} />)
+    render(<OrganizerBasicStep role="Agent" onSaved={vi.fn()} />)
 
     await waitFor(() => {
       expect(screen.getByDisplayValue('Sea Fun Divers')).toBeInTheDocument()
@@ -155,7 +155,7 @@ describe('OrganizerBasicStep', () => {
 
   it('existing profile takes precedence over inheritance', async () => {
     mockExisting = {
-      name: 'Real Liveaboard Name',
+      name: 'Real Agent Name',
       email: 'real@liveaboard.example',
       phone: '+66111222333',
       lat: 10,
@@ -173,10 +173,10 @@ describe('OrganizerBasicStep', () => {
       lng: 98.39,
     }
 
-    render(<OrganizerBasicStep role="Liveaboard" onSaved={vi.fn()} />)
+    render(<OrganizerBasicStep role="Agent" onSaved={vi.fn()} />)
 
     await waitFor(() => {
-      expect(screen.getByDisplayValue('Real Liveaboard Name')).toBeInTheDocument()
+      expect(screen.getByDisplayValue('Real Agent Name')).toBeInTheDocument()
     })
     expect(screen.queryByDisplayValue('Inherited DC Name')).toBeNull()
   })
@@ -186,7 +186,7 @@ describe('OrganizerBasicStep', () => {
     mockMe = { email: 'me@test.com' }
     mockInheritance = undefined
 
-    render(<OrganizerBasicStep role="Liveaboard" onSaved={vi.fn()} />)
+    render(<OrganizerBasicStep role="Agent" onSaved={vi.fn()} />)
     expect(screen.queryByText('Basic Information')).toBeNull()
   })
 

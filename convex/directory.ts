@@ -134,10 +134,6 @@ async function fetchProfile(
     }
     case 'Compressor':
       return { ...base, gasMixes: (p.gasMixes ?? []) as string[] }
-    case 'Liveaboard':
-    case 'DiveResort':
-    case 'DiveHostel':
-      return base
     case 'Venue':
       return {
         ...base,

@@ -49,8 +49,7 @@ vi.mock('@clerk/nextjs', () => ({
 vi.mock('@/components/icons/role-icons', () => {
   const stub = () => <svg data-testid="icon" />
   return {
-    DiveCenterIcon: stub, AgentIcon: stub, LiveaboardIcon: stub,
-    DiveResortIcon: stub, DiveHostelIcon: stub, DiveSiteIcon: stub,
+    DiveCenterIcon: stub, AgentIcon: stub, DiveSiteIcon: stub,
     InstructorIcon: stub, DiveMasterIcon: stub, BoatIcon: stub,
     EquipmentIcon: stub, PoolIcon: stub, CompressorIcon: stub,
   }

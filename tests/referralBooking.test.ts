@@ -144,34 +144,4 @@ describe('createDraftShell — referral mode', () => {
     })
   })
 
-  it('allows referral to Liveaboard target', async () => {
-    const t = makeT()
-    await t.run(async (ctx) => {
-      await seedReadyAgent(ctx, 'agent-lb')
-      const lbId = await seedUser(ctx, { slug: 'target-lb', tokenIdentifier: 'clerk|target-lb', role: 'Liveaboard' })
-      await ctx.db.patch(lbId, { phone: '+66800000000' })
-      await seedStakeholderPreferences(ctx, 'target-lb', {
-        stakeholderType: 'Liveaboard',
-        preferredInstructorSlugs: ['i'],
-        preferredEquipmentSlugs: ['e'],
-        preferredVenueSlugs: ['v'],
-        preferredCompressorSlugs: ['c'],
-      })
-    })
-
-    const bookingId = await t.withIdentity({ tokenIdentifier: 'clerk|agent-lb' })
-      .mutation(api.bookingDraftMutations.createDraftShell, {
-        activeRole: 'Agent',
-        isReferral: true,
-        targetOperatorSlug: 'target-lb',
-      })
-
-    await t.run(async (ctx) => {
-      const booking = await ctx.db.get(bookingId as Id<'bookings'>)
-      expect(booking!.ownerId).toBe('target-lb')
-      expect(booking!.ownerType).toBe('Liveaboard')
-      expect(booking!.referrerId).toBe('agent-lb')
-      expect(booking!.referrerType).toBe('Agent')
-    })
-  })
 })

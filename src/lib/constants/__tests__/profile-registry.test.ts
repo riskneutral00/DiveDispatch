@@ -32,9 +32,6 @@ describe('Every role has booking tab', () => {
     'compressor',
     'equipment',
     'venue',
-    'liveaboard',
-    'dive-resort',
-    'dive-hostel',
   ]
 
   for (const role of allRoles) {

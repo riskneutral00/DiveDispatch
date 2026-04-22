@@ -15,10 +15,7 @@ import {
 import { Card } from '@/components/ui/card'
 import { parseConvexError } from '@/lib/utils/convex-error'
 
-const DEV_SWITCHER_EXCLUDED_ROLE_KEYS = new Set<RoleKey>([
-  'liveaboard',
-  'dive-resort',
-])
+const DEV_SWITCHER_EXCLUDED_ROLE_KEYS = new Set<RoleKey>([])
 
 type DevUser = {
   slug: string

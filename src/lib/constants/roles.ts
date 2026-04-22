@@ -2,9 +2,6 @@ import type { ComponentType } from 'react'
 import {
   DiveCenterIcon,
   AgentIcon,
-  LiveaboardIcon,
-  DiveResortIcon,
-  DiveHostelIcon,
   DiveSiteIcon,
   InstructorIcon,
   BoatIcon,
@@ -16,9 +13,6 @@ import {
 export type RoleKey =
   | 'dive-center'
   | 'agent'
-  | 'liveaboard'
-  | 'dive-resort'
-  | 'dive-hostel'
   | 'instructor'
   | 'boat'
   | 'equipment'
@@ -28,9 +22,6 @@ export type RoleKey =
 export type ClerkRole =
   | 'DiveCenter'
   | 'Agent'
-  | 'Liveaboard'
-  | 'DiveResort'
-  | 'DiveHostel'
   | 'Instructor'
   | 'Boat'
   | 'Equipment'
@@ -101,66 +92,6 @@ export const ROLES: RoleConfig[] = [
     profileTabs: [
       { id: 'contact', label: 'Contact', fields: ['name', 'address', 'customerLanguages'] },
       { id: 'associations', label: 'Affiliations', fields: ['associations'] },
-      { id: 'resources', label: 'Preferences', fields: ['preferredInstructor', 'preferredEquipment', 'preferredVenue', 'preferredBoat', 'preferredCompressor'] },
-      { id: 'booking', label: 'Booking', fields: ['acceptanceMode'] },
-    ],
-  },
-  {
-    key: 'liveaboard',
-    clerkRole: 'Liveaboard',
-    label: 'Liveaboard',
-    pluralLabel: 'Liveaboards',
-    route: '/liveaboard',
-    browseRoute: '/resources/liveaboards',
-    icon: LiveaboardIcon,
-    isOrganizer: true,
-    isResource: false,
-    displayGroup: 'operator',
-    roleClass: 'business',
-    tableName: 'liveaboards',
-    description: 'Run multi-day dive expeditions with onboard accommodation and guided services.',
-    profileTabs: [
-      { id: 'contact', label: 'Contact' },
-      { id: 'resources', label: 'Preferences', fields: ['preferredInstructor', 'preferredEquipment', 'preferredVenue', 'preferredBoat', 'preferredCompressor'] },
-      { id: 'booking', label: 'Booking', fields: ['acceptanceMode'] },
-    ],
-  },
-  {
-    key: 'dive-resort',
-    clerkRole: 'DiveResort',
-    label: 'Dive Resort',
-    pluralLabel: 'Dive Resorts',
-    route: '/dive-resort',
-    browseRoute: '/resources/dive-resorts',
-    icon: DiveResortIcon,
-    isOrganizer: true,
-    isResource: false,
-    displayGroup: 'operator',
-    roleClass: 'business',
-    tableName: 'diveResorts',
-    description: 'Offer dive packages, courses, and guided dives from a resort base.',
-    profileTabs: [
-      { id: 'contact', label: 'Contact' },
-      { id: 'resources', label: 'Preferences', fields: ['preferredInstructor', 'preferredEquipment', 'preferredVenue', 'preferredBoat', 'preferredCompressor'] },
-      { id: 'booking', label: 'Booking', fields: ['acceptanceMode'] },
-    ],
-  },
-  {
-    key: 'dive-hostel',
-    clerkRole: 'DiveHostel',
-    label: 'Dive Hostel',
-    pluralLabel: 'Dive Hostels',
-    route: '/dive-hostel',
-    browseRoute: '/resources/dive-hostels',
-    icon: DiveHostelIcon,
-    isOrganizer: true,
-    isResource: false,
-    displayGroup: 'operator',
-    roleClass: 'business',
-    tableName: 'diveHostels',
-    description: 'Provide budget-friendly accommodation and dive services to traveling divers.',
-    profileTabs: [
-      { id: 'contact', label: 'Contact' },
       { id: 'resources', label: 'Preferences', fields: ['preferredInstructor', 'preferredEquipment', 'preferredVenue', 'preferredBoat', 'preferredCompressor'] },
       { id: 'booking', label: 'Booking', fields: ['acceptanceMode'] },
     ],

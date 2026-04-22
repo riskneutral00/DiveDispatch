@@ -3,8 +3,8 @@ import { OPERATOR_ROLE_SET } from '../convex/lib/auth'
 import { ORGANIZER_ROLES, RESOURCE_ROLES } from '../src/lib/constants/roles'
 
 describe('Backend OPERATOR_ROLE_SET alignment', () => {
-  it('contains exactly: DiveCenter, Agent, Liveaboard, DiveResort, DiveHostel', () => {
-    const expected = new Set(['DiveCenter', 'Agent', 'Liveaboard', 'DiveResort', 'DiveHostel'])
+  it('contains exactly: DiveCenter, Agent', () => {
+    const expected = new Set(['DiveCenter', 'Agent'])
     expect(OPERATOR_ROLE_SET).toEqual(expected)
   })
 
@@ -27,8 +27,8 @@ describe('Backend OPERATOR_ROLE_SET alignment', () => {
     expect(OPERATOR_ROLE_SET).toEqual(frontendOrganizerClerkRoles)
   })
 
-  it('has exactly 5 operator roles', () => {
-    expect(OPERATOR_ROLE_SET.size).toBe(5)
+  it('has exactly 2 operator roles', () => {
+    expect(OPERATOR_ROLE_SET.size).toBe(2)
   })
 
   it('ORGANIZER_ROLES and RESOURCE_ROLES together cover all roles', () => {

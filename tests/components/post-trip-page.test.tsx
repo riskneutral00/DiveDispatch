@@ -76,10 +76,10 @@ describe('PostTripPage', () => {
     expect(screen.getByRole('link', { name: /sign up/i })).toBeInTheDocument()
   })
 
-  it('renders identically for Liveaboard operator data', () => {
+  it('renders identically for Agent operator data', () => {
     const { container } = render(
       <PostTripPage
-        operatorName="Ocean Dreams Liveaboard"
+        operatorName="Ocean Dreams Agency"
         startDate="2026-01-15"
         endDate="2026-01-22"
       />,
