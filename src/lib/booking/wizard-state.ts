@@ -59,8 +59,8 @@ export interface DayConfig {
   venueType?: 'pool' | 'boat' | 'shore'
   dives: DiveSlot[]
   inventoryUnitId?: string
-  poolInventoryUnitId?: string
-  externalPoolName?: string
+  confinedInventoryUnitId?: string
+  externalConfinedVenueName?: string
   instructorSlug?: string
   diveMasterSlug?: string
   externalDiveMasterName?: string
@@ -147,7 +147,7 @@ export type WizardAction =
   | { type: 'SET_SAME_FOR_ALL'; value: boolean }
   | { type: 'SET_DAY_INSTRUCTOR'; dayIndex: number; slug: string }
   | { type: 'SET_DAY_DIVE_MASTER'; dayIndex: number; slug: string }
-  | { type: 'UPDATE_DAY'; dayIndex: number; patch: Partial<Pick<DayConfig, 'inventoryUnitId' | 'venueType' | 'externalInstructorName' | 'externalVenueName' | 'externalDiveMasterName' | 'poolInventoryUnitId' | 'externalPoolName' | 'startTime' | 'endTime'>> }
+  | { type: 'UPDATE_DAY'; dayIndex: number; patch: Partial<Pick<DayConfig, 'inventoryUnitId' | 'venueType' | 'externalInstructorName' | 'externalVenueName' | 'externalDiveMasterName' | 'confinedInventoryUnitId' | 'externalConfinedVenueName' | 'startTime' | 'endTime'>> }
   | { type: 'APPLY_INSTRUCTOR_TO_REMAINING'; fromDayIndex: number; slug: string }
   | { type: 'APPLY_VENUE_TO_REMAINING'; fromDayIndex: number; unitId: string }
   | { type: 'REMOVE_DAY'; dayIndex: number }
@@ -369,7 +369,7 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
         days: state.days.map((d, i) => {
           if (i < action.fromDayIndex || d.venueType !== venueType) return d
           if (venueType === 'pool') {
-            return { ...d, poolInventoryUnitId: action.unitId, externalPoolName: sourceDay.externalPoolName }
+            return { ...d, confinedInventoryUnitId: action.unitId, externalConfinedVenueName: sourceDay.externalConfinedVenueName }
           }
           return { ...d, inventoryUnitId: action.unitId, externalVenueName: sourceDay.externalVenueName }
         }),

@@ -4,7 +4,7 @@ import { e164Schema } from './i18n'
 import { AOW_REQUIRED_SPECIALTY_COUNT } from '@/lib/constants/agencies'
 import { BOAT_TYPES } from '@/lib/constants/boat-types'
 import { GAS_MIXES } from '@/lib/constants/gas-mixes'
-import { DIVE_SITE_TYPES } from '../../../convex/shared/venueTypes'
+import { VENUE_SUBTYPES } from '../../../convex/shared/venueTypes'
 import {
   customerLanguagesFieldSchema,
   teachingLanguagesFieldSchema,
@@ -140,7 +140,7 @@ export const compressorGasMixesSchema = z
 export const diveSiteDetailsSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   location: addressLocationSchema.nullable().refine((v) => v !== null, { message: 'Location is required' }),
-  diveSiteTypes: z.array(z.enum(DIVE_SITE_TYPES)).min(1, 'Select at least one site type'),
+  subtype: z.enum(VENUE_SUBTYPES),
 })
 
 export const diveSiteCapabilitiesSchema = z.object({

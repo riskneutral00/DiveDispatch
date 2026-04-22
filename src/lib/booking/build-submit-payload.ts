@@ -71,7 +71,7 @@ export function buildSubmitPayload(state: WizardState): SubmitPayload {
     const deliveryLocation = (d.venueType === 'pool' ? 'Pool' : 'BoatPier') as 'BoatPier' | 'Pool' | 'Beach'
 
     if (d.venueType !== 'shore') {
-      const venueSlug = d.venueType === 'pool' ? d.poolInventoryUnitId : d.inventoryUnitId
+      const venueSlug = d.venueType === 'pool' ? d.confinedInventoryUnitId : d.inventoryUnitId
       const venueUnitId = venueSlug ? inventoryUnitMap[venueSlug] : undefined
       if (venueUnitId) {
         const key = sessionKey(venueUnitId, d.date)
@@ -195,13 +195,13 @@ export function buildSubmitPayload(state: WizardState): SubmitPayload {
         resources.push({ resourceType: 'Boat', externalName: d.externalVenueName })
       }
     }
-    if (d.venueType === 'pool' && d.poolInventoryUnitId) {
-      if (!resources.some(r => r.resourceType === 'Venue' && r.resourceId === d.poolInventoryUnitId)) {
-        resources.push({ resourceType: 'Venue', resourceId: d.poolInventoryUnitId })
+    if (d.venueType === 'pool' && d.confinedInventoryUnitId) {
+      if (!resources.some(r => r.resourceType === 'Venue' && r.resourceId === d.confinedInventoryUnitId)) {
+        resources.push({ resourceType: 'Venue', resourceId: d.confinedInventoryUnitId })
       }
-    } else if (d.venueType === 'pool' && d.externalPoolName?.trim()) {
-      if (!resources.some(r => r.resourceType === 'Venue' && r.externalName === d.externalPoolName)) {
-        resources.push({ resourceType: 'Venue', externalName: d.externalPoolName })
+    } else if (d.venueType === 'pool' && d.externalConfinedVenueName?.trim()) {
+      if (!resources.some(r => r.resourceType === 'Venue' && r.externalName === d.externalConfinedVenueName)) {
+        resources.push({ resourceType: 'Venue', externalName: d.externalConfinedVenueName })
       }
     }
   }

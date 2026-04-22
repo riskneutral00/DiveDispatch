@@ -7,7 +7,6 @@ import {
   CAPABILITIES_REQUIRED_BY_SUBTYPE,
   RECOMMENDED_BY_SUBTYPE,
   isVenueConfinedCapable,
-  deriveSubtypeFromLegacy,
   type VenueSubtype,
 } from '../convex/shared/venueTypes'
 import {
@@ -75,24 +74,6 @@ describe('isVenueConfinedCapable', () => {
 describe('SUBTYPES_WITH_OPTIONAL_CONFINED', () => {
   it('contains exactly shore and other', () => {
     expect(SUBTYPES_WITH_OPTIONAL_CONFINED).toEqual(new Set(['shore', 'other']))
-  })
-})
-
-describe('deriveSubtypeFromLegacy', () => {
-  it('maps pool category to pool subtype', () => {
-    expect(deriveSubtypeFromLegacy('pool', undefined)).toBe('pool')
-    expect(deriveSubtypeFromLegacy('pool', ['shore'])).toBe('pool')
-  })
-
-  it('uses first diveSiteType when category is diveSite', () => {
-    expect(deriveSubtypeFromLegacy('diveSite', ['shore'])).toBe('shore')
-    expect(deriveSubtypeFromLegacy('diveSite', ['reef', 'shore'])).toBe('reef')
-    expect(deriveSubtypeFromLegacy('diveSite', ['quarry'])).toBe('quarry')
-  })
-
-  it('falls back to other when diveSiteTypes is empty or undefined', () => {
-    expect(deriveSubtypeFromLegacy('diveSite', undefined)).toBe('other')
-    expect(deriveSubtypeFromLegacy('diveSite', [])).toBe('other')
   })
 })
 

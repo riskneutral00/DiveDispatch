@@ -9,7 +9,9 @@ import {
   serializeDraftState,
   deserializeDraftState,
   type CustomerData,
+  type WizardState,
 } from '../src/lib/booking/wizard-state'
+import { buildSubmitPayload } from '../src/lib/booking/build-submit-payload'
 import { testDate } from './helpers/dates'
 
 // ── Step Definitions ────────────────────────────────────────────────────────
@@ -342,7 +344,7 @@ describe('canAdvanceFromItinerary', () => {
       ...makeInitialState(), ...REQUIRED_RESOURCES,
       customers: [customer],
       days: [
-        { date: testDate(3), venueType: 'pool' as const, dives: [{ courseCode: 'OW', diveNumber: 0, isConfined: true }], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok', instructorSlug: 'inst-1', poolInventoryUnitId: 'pool-1' },
+        { date: testDate(3), venueType: 'pool' as const, dives: [{ courseCode: 'OW', diveNumber: 0, isConfined: true }], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok', instructorSlug: 'inst-1', confinedInventoryUnitId: 'pool-1' },
         { date: testDate(4), venueType: 'boat' as const, dives: [{ courseCode: 'OW', diveNumber: 1, isConfined: false }, { courseCode: 'OW', diveNumber: 2, isConfined: false }], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok', instructorSlug: 'inst-1', inventoryUnitId: 'boat-1' },
       ],
     }
@@ -356,7 +358,7 @@ describe('canAdvanceFromItinerary', () => {
       ...makeInitialState(),
       customers: [customer],
       days: [
-        { date: testDate(3), venueType: 'pool' as const, dives: [{ courseCode: 'OW', diveNumber: 0, isConfined: true }], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok', poolInventoryUnitId: 'pool-1' },
+        { date: testDate(3), venueType: 'pool' as const, dives: [{ courseCode: 'OW', diveNumber: 0, isConfined: true }], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok', confinedInventoryUnitId: 'pool-1' },
       ],
     }
     expect(canAdvanceFromItinerary(state)).toBe(false)
@@ -565,15 +567,15 @@ describe('APPLY_VENUE_TO_REMAINING', () => {
     state = {
       ...state,
       days: [
-        { date: testDate(3), venueType: 'pool', dives: [{ courseCode: 'OW', diveNumber: 0, isConfined: true }], divesPerDay: 3, startTime: '09:00', endTime: '14:00', timezone: 'Asia/Bangkok', poolInventoryUnitId: 'pool-1' },
+        { date: testDate(3), venueType: 'pool', dives: [{ courseCode: 'OW', diveNumber: 0, isConfined: true }], divesPerDay: 3, startTime: '09:00', endTime: '14:00', timezone: 'Asia/Bangkok', confinedInventoryUnitId: 'pool-1' },
         { date: testDate(4), venueType: 'boat', dives: [{ courseCode: 'OW', diveNumber: 1, isConfined: false }], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok' },
         { date: testDate(5), venueType: 'pool', dives: [{ courseCode: 'OW', diveNumber: 0, isConfined: true }], divesPerDay: 3, startTime: '09:00', endTime: '14:00', timezone: 'Asia/Bangkok' },
       ],
     }
     state = wizardReducer(state, { type: 'APPLY_VENUE_TO_REMAINING', fromDayIndex: 0, unitId: 'pool-1' })
-    expect(state.days[0].poolInventoryUnitId).toBe('pool-1')
-    expect(state.days[1].poolInventoryUnitId).toBeUndefined() // boat day unchanged
-    expect(state.days[2].poolInventoryUnitId).toBe('pool-1')
+    expect(state.days[0].confinedInventoryUnitId).toBe('pool-1')
+    expect(state.days[1].confinedInventoryUnitId).toBeUndefined() // boat day unchanged
+    expect(state.days[2].confinedInventoryUnitId).toBe('pool-1')
   })
 
   it('does not affect days before fromDayIndex', () => {
@@ -852,5 +854,85 @@ describe('serializeDraftState / deserializeDraftState', () => {
 
   it('returns null for invalid JSON', () => {
     expect(deserializeDraftState('not-json{{')).toBeNull()
+  })
+})
+
+// ── Post-migration naming lock ─────────────────────────────────────────────
+
+describe('buildSubmitPayload confined naming (venue unification lock)', () => {
+  it('emits Venue resources from confinedInventoryUnitId, never pool fields', () => {
+    const customer: CustomerData = {
+      id: 'cust-1',
+      name: 'Anna',
+      contact: { email: 'anna@test.com' },
+      flags: [{ code: 'GB', label: 'English' }],
+      courseEntries: [{ id: 'e1', activityCode: 'OW', dates: [testDate(3)], agency: 'PADI' }],
+    }
+    const state: WizardState = {
+      ...makeInitialState('booking-1'),
+      customers: [customer],
+      startDate: testDate(3),
+      endDate: testDate(3),
+      days: [
+        {
+          date: testDate(3),
+          venueType: 'pool',
+          dives: [{ courseCode: 'OW', diveNumber: 0, isConfined: true }],
+          divesPerDay: 3,
+          startTime: '09:00',
+          endTime: '14:00',
+          timezone: 'Asia/Bangkok',
+          instructorSlug: 'inst-1',
+          confinedInventoryUnitId: 'venue-pool-1',
+        },
+      ],
+      inventoryUnitMap: { 'venue-pool-1': 'inv-unit-venue-1', 'inst-1': 'inv-unit-instr-1' },
+    }
+
+    const payload = buildSubmitPayload(state)
+
+    const serialized = JSON.stringify(payload)
+    expect(serialized).not.toContain('poolInventoryUnitId')
+    expect(serialized).not.toContain('externalPoolName')
+
+    const venueResource = payload.bookingData.resources.find((r) => r.resourceType === 'Venue')
+    expect(venueResource).toBeDefined()
+    expect(venueResource!.resourceId).toBe('venue-pool-1')
+  })
+
+  it('emits Venue externalName from externalConfinedVenueName when no resource id', () => {
+    const customer: CustomerData = {
+      id: 'cust-1',
+      name: 'Anna',
+      contact: { email: 'anna@test.com' },
+      flags: [{ code: 'GB', label: 'English' }],
+      courseEntries: [{ id: 'e1', activityCode: 'OW', dates: [testDate(3)], agency: 'PADI' }],
+    }
+    const state: WizardState = {
+      ...makeInitialState('booking-1'),
+      customers: [customer],
+      startDate: testDate(3),
+      endDate: testDate(3),
+      days: [
+        {
+          date: testDate(3),
+          venueType: 'pool',
+          dives: [{ courseCode: 'OW', diveNumber: 0, isConfined: true }],
+          divesPerDay: 3,
+          startTime: '09:00',
+          endTime: '14:00',
+          timezone: 'Asia/Bangkok',
+          instructorSlug: 'inst-1',
+          externalConfinedVenueName: 'Neighbor Pool',
+        },
+      ],
+      inventoryUnitMap: { 'inst-1': 'inv-unit-instr-1' },
+    }
+
+    const payload = buildSubmitPayload(state)
+    const venueResource = payload.bookingData.resources.find((r) => r.resourceType === 'Venue')
+    expect(venueResource).toBeDefined()
+    expect(venueResource!.externalName).toBe('Neighbor Pool')
+    expect(venueResource!.resourceId).toBeUndefined()
   })
 })
