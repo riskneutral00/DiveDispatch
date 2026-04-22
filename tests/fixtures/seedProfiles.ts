@@ -120,6 +120,9 @@ export async function seedVenue(
   const subtype = overrides.subtype ?? 'pool'
   const organizationId = overrides.organizationId
     ?? (overrides.userId ? await getOrCreateTestOrg(ctx, overrides.userId, overrides.name ?? 'Test Venue') : undefined)
+  if (!organizationId) {
+    throw new Error('seedVenue requires organizationId or userId')
+  }
   const address = resolveAddress(overrides)
   const isPool = subtype === 'pool'
   const venueName = overrides.name ?? 'Test Venue'
@@ -134,7 +137,7 @@ export async function seedVenue(
     verified: overrides.verified ?? true,
     ...(isPool ? {} : { confinedCapable: overrides.confinedCapable ?? true }),
     hasCompressor: overrides.hasCompressor ?? false,
-    ...(organizationId !== undefined ? { organizationId } : {}),
+    organizationId,
   })
 }
 

@@ -387,7 +387,6 @@ const INHERITANCE_SOURCE_ROLES: ReadonlySet<string> = new Set([
   'DiveResort',
   'DiveHostel',
   'Equipment',
-  'Venue',
   'Compressor',
 ])
 

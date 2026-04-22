@@ -7,7 +7,7 @@ import { internal } from './_generated/api'
 import { OPERATOR_ROLE_SET } from './lib/auth'
 import type { OperatorType } from './shared/operatorTypes'
 import { queryDynamicTable, deleteDynamic } from './lib/typedDb'
-import { ALL_STAKEHOLDERS, SeedStakeholder, StakeholderRole, UNOWNED_DIVE_SITES, type SeedInventoryLine } from './seedData'
+import { ALL_STAKEHOLDERS, SeedStakeholder, StakeholderRole, type SeedInventoryLine } from './seedData'
 import { insertLiveaboard, insertDiveResort } from './sketchTableGuards'
 import { ensureSystemThemesInline } from './lib/ensureSystemThemes'
 import { stakeholderPreferenceIdsToDelete } from './lib/stakeholderPreferencesDedupe'
@@ -416,30 +416,6 @@ export const seedResourceInventory = internalMutation({
         })
       }
 
-    }
-
-    for (const site of UNOWNED_DIVE_SITES) {
-      await ctx.db.insert('inventoryUnits', { // batch-exempt
-        resourceType: 'Venue',
-        resourceId: site.slug,
-        displayName: site.name,
-        capacityModel: 'Pooled',
-        totalUnits: site.capacity,
-        ownerId: '__unowned__',
-        ownerType: 'Venue',
-      })
-      await ctx.db.insert('venues', { // batch-exempt orgid-helper-ok unowned-dive-site
-        name: site.name,
-        slug: site.slug,
-        address: { city: 'Phuket', country: 'TH' },
-        lat: 7.8206,
-        lng: 98.3003,
-        verified: true,
-        subtype: 'shore',
-        confinedCapable: true,
-        hasCompressor: false,
-        maxCapacity: site.capacity,
-      })
     }
   },
 })

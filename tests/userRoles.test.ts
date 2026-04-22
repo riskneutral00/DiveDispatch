@@ -286,3 +286,60 @@ describe('userRoles.primaryRole', () => {
     expect(primary).toBeNull()
   })
 })
+
+describe('userRoles.deleteRole — Venue multi-row cascade', () => {
+  it('deleting the Venue role cascades inventory for every venue in the org', async () => {
+    const t = makeT()
+    let venueRoleId: any
+    await t.run(async (ctx) => {
+      const userId = await seedUser(ctx, { role: 'Venue', tokenIdentifier: 'clerk|venuemulti', slug: 'venuemulti' })
+      const orgId = await getOrCreateTestOrg(ctx, userId, 'venuemulti')
+      await ctx.db.insert('userRoles', {
+        userId,
+        role: 'DiveCenter',
+        organizationId: orgId,
+        createdAt: Date.now() + 1,
+      })
+      venueRoleId = (await ctx.db
+        .query('userRoles')
+        .withIndex('by_userId_role', (q) => q.eq('userId', userId).eq('role', 'Venue'))
+        .unique())!._id
+
+      for (const slug of ['v-one', 'v-two']) {
+        await ctx.db.insert('venues', {
+          organizationId: orgId,
+          name: slug, slug,
+          address: { city: 'Koh Tao', country: 'TH' },
+          lat: 10, lng: 99, subtype: 'pool',
+          hasCompressor: false, verified: true,
+        })
+        await ctx.db.insert('inventoryUnits', {
+          resourceType: 'Venue',
+          resourceId: slug,
+          displayName: slug,
+          capacityModel: 'Pooled',
+          totalUnits: 5,
+          ownerId: slug,
+          ownerType: 'Venue',
+        })
+      }
+    })
+
+    await t
+      .withIdentity({ tokenIdentifier: 'clerk|venuemulti' })
+      .mutation(api.userRoles.deleteRole, { roleId: venueRoleId })
+
+    const { units, venues, role } = await t.run(async (ctx) => {
+      const units = await ctx.db
+        .query('inventoryUnits')
+        .withIndex('by_resourceType', (q) => q.eq('resourceType', 'Venue'))
+        .collect()
+      const venues = await ctx.db.query('venues').collect()
+      const role = await ctx.db.get(venueRoleId)
+      return { units, venues, role }
+    })
+    expect(units).toHaveLength(0)
+    expect(venues).toHaveLength(0)
+    expect(role).toBeNull()
+  })
+})

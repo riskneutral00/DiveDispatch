@@ -390,3 +390,29 @@ describe('listByRole credentials passthrough', () => {
     expect(result[0].agencies).toEqual([])
   })
 })
+
+describe('listByRole Venue — legacy __unowned__ branch is gone', () => {
+  it('does not surface venue rows based on the legacy __unowned__ ownerId', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => {
+      await seedCallerUser(ctx, 'caller-unowned')
+      // Legacy artifact only — under the new schema this cannot coexist with the
+      // venues.organizationId required invariant, but the listing must never
+      // resurface a venue via the __unowned__ inventoryUnit fallback regardless.
+      await ctx.db.insert('inventoryUnits', {
+        resourceType: 'Venue',
+        resourceId: 'legacy-site',
+        displayName: 'Legacy Site',
+        capacityModel: 'Pooled',
+        totalUnits: 10,
+        ownerId: '__unowned__',
+        ownerType: 'Venue',
+      })
+    })
+
+    const result = await t.withIdentity({ tokenIdentifier: 'user|caller-unowned' })
+      .query(api.directory.listByRole, { role: 'Venue' })
+
+    expect(result.some((r) => r.name === 'Legacy Site')).toBe(false)
+  })
+})
