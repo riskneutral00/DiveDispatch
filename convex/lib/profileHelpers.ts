@@ -6,15 +6,33 @@ import { checkHasRole } from '../userRoles'
 import { ErrorCode } from './errorCodes'
 import { queryDynamicTable, insertDynamicTable, patchDynamic } from './typedDb'
 import { getActiveOrg, tryGetActiveOrg } from './activeOrg'
-import { assertCountryCode } from './i18nValidators'
+import { assertCountryCode, assertPhoneE164, assertLanguageCodes } from './i18nValidators'
 import { setRoleProfileComplete } from './setRoleProfileComplete'
 
-function validateStructuredAddress(args: Record<string, unknown>): void {
+const LANGUAGE_ARRAY_FIELDS: readonly string[] = [
+  'customerLanguages',
+  'teachingLanguages',
+  'languages',
+]
+
+export function validateContactInput(args: Record<string, unknown>): void {
   const address = args.address
   if (address && typeof address === 'object' && address !== null) {
     const country = (address as { country?: unknown }).country
     if (typeof country === 'string') {
       assertCountryCode(country, 'address.country')
+    }
+  }
+
+  const phone = args.phone
+  if (typeof phone === 'string' && phone.length > 0) {
+    assertPhoneE164(phone, 'phone')
+  }
+
+  for (const field of LANGUAGE_ARRAY_FIELDS) {
+    const codes = args[field]
+    if (Array.isArray(codes) && codes.length > 0) {
+      assertLanguageCodes(codes as string[], field)
     }
   }
 }
@@ -106,7 +124,7 @@ export async function profileUpdate(
     .unique()
   if (!profile) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
 
-  validateStructuredAddress(args)
+  validateContactInput(args)
 
   const safeArgs: Record<string, unknown> = {}
   for (const [key, value] of Object.entries(args)) {
@@ -142,7 +160,7 @@ export async function profileCreate(
     .unique()
   if (existing) return existing._id
 
-  validateStructuredAddress(args)
+  validateContactInput(args)
 
   const mergedArgs = { ...args }
   if (!mergedArgs.email || (typeof mergedArgs.email === 'string' && mergedArgs.email.trim() === '')) {

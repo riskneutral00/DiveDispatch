@@ -19,7 +19,7 @@ import { extractErrorCode, ISOLATABLE_ERRORS } from './lib/errorClassification'
 import { batchDelete, batchPatch } from './lib/batch'
 import { sanitizeFields, USER_FIELDS } from './lib/sanitize'
 import { isAdult, MIN_SIGNUP_AGE_YEARS } from './lib/age'
-import { normalizeAppLanguageOrThrow } from './lib/i18nValidators'
+import { normalizeAppLanguageOrThrow, assertPhoneE164 } from './lib/i18nValidators'
 import { readOrgClaims } from './lib/activeOrg'
 import { parseTokenIdentifier, isAllowedRebind } from './lib/tokenIdentifier'
 import { insertUserRole, getAllUserRoles } from './lib/userRoleHelpers'
@@ -93,6 +93,10 @@ export const createUser = mutation({
         code: ErrorCode.VALIDATION,
         reason: `Must be ${MIN_SIGNUP_AGE_YEARS} or older`,
       })
+    }
+
+    if (args.phone !== undefined && args.phone !== '') {
+      assertPhoneE164(args.phone, 'phone')
     }
 
     const existing = await ctx.db
@@ -228,6 +232,10 @@ export const updateProfile = mutation({
 
     if (args.dateOfBirth !== undefined && !isAdult(args.dateOfBirth)) {
       throw new ConvexError({ code: ErrorCode.VALIDATION, reason: `Must be at least ${MIN_SIGNUP_AGE_YEARS} years old` })
+    }
+
+    if (sanitized.phone !== undefined && sanitized.phone !== '') {
+      assertPhoneE164(sanitized.phone, 'phone')
     }
 
     await ctx.db.patch(user._id, {

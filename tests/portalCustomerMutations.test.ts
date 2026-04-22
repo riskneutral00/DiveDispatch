@@ -117,6 +117,40 @@ describe('savePortalContact', () => {
     })
   })
 
+  it('rejects non-E.164 phone with VALIDATION', async () => {
+    const t = makeT()
+    let token: string
+    await t.run(async (ctx) => {
+      const fixture = await seedPortalFixture(ctx)
+      token = fixture.token
+    })
+    await expectConvexError(
+      t.mutation(api.customers.savePortalContact, {
+        token: token!,
+        ...VALID_CONTACT,
+        phone: '123',
+      }),
+      'VALIDATION',
+    )
+  })
+
+  it('rejects malformed language code with VALIDATION', async () => {
+    const t = makeT()
+    let token: string
+    await t.run(async (ctx) => {
+      const fixture = await seedPortalFixture(ctx)
+      token = fixture.token
+    })
+    await expectConvexError(
+      t.mutation(api.customers.savePortalContact, {
+        token: token!,
+        ...VALID_CONTACT,
+        languages: ['EN', 'zh_TW'],
+      }),
+      'VALIDATION',
+    )
+  })
+
   it('rejects empty languages array with INVALID_INPUT', async () => {
     const t = makeT()
     let token: string

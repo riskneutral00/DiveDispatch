@@ -88,11 +88,11 @@ describe('instructors.update', () => {
     })
 
     await t.withIdentity(orgIdentityFor('upd-instr'))
-      .mutation(api.instructors.update, { phone: '+660000000000' })
+      .mutation(api.instructors.update, { phone: '+66812345680' })
 
     await t.run(async (ctx) => {
       const instr = await ctx.db.get(instrId!) as Doc<'diveStaff'> | null
-      expect(instr!.phone).toBe('+660000000000')
+      expect(instr!.phone).toBe('+66812345680')
       expect(instr!.name).toBe('upd-instr Test')
     })
   })

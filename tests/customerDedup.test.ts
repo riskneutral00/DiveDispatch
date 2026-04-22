@@ -32,7 +32,7 @@ async function seedExistingCustomer(ctx: SeedCtx) {
     passportIssuingCountry: 'United Kingdom',
     passportExpirationDate: passportExpiry(),
     emergencyContactName: 'Bob Smith',
-    emergencyContactPhone: '+44712345678',
+    emergencyContactPhone: '+447123456789',
     emergencyContactRelation: 'Spouse',
     agency: 'PADI',
     agencyID: 'PADI-12345',
@@ -235,7 +235,7 @@ describe('savePortalContact — returning customer', () => {
         passportIssuingCountry: 'United Kingdom',
         passportExpirationDate: passportExpiry(),
         emergencyContactName: 'Bob',
-        emergencyContactPhone: '+44712345678',
+        emergencyContactPhone: '+447123456789',
         emergencyContactRelation: 'Spouse',
         languages: ['en-GB'],
       })
@@ -270,7 +270,7 @@ describe('savePortalContact — returning customer', () => {
         passportIssuingCountry: 'United Kingdom',
         passportExpirationDate: passportExpiry(8),
         emergencyContactName: 'Bob',
-        emergencyContactPhone: '+44712345678',
+        emergencyContactPhone: '+447123456789',
         emergencyContactRelation: 'Spouse',
         languages: ['en-GB'],
       })
@@ -318,7 +318,7 @@ describe('savePortalContact — returning customer', () => {
         passportIssuingCountry: 'United Kingdom',
         passportExpirationDate: passportExpiry(),
         emergencyContactName: 'Bob',
-        emergencyContactPhone: '+44712345678',
+        emergencyContactPhone: '+447123456789',
         emergencyContactRelation: 'Spouse',
         languages: ['en-GB'],
       }

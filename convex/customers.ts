@@ -6,6 +6,7 @@ import { resolvePortalToken, resolvePortalTokenSoft } from './lib/portal'
 import { sanitizeFields, sanitizePassport, PORTAL_CONTACT_FIELDS } from './lib/sanitize'
 import { checkRateLimit } from './lib/rateLimiter'
 import { ErrorCode } from './lib/errorCodes'
+import { assertPhoneE164, assertLanguageCodes } from './lib/i18nValidators'
 
 export async function _checkReturningCustomerHandler(
   ctx: QueryCtx,
@@ -159,6 +160,10 @@ export async function _savePortalContactHandler(
   if (args.languages.length === 0) {
     throw new ConvexError({ code: ErrorCode.INVALID_INPUT, reason: 'At least one language required' })
   }
+
+  assertPhoneE164(args.phone, 'phone')
+  assertPhoneE164(args.emergencyContactPhone, 'emergencyContactPhone')
+  assertLanguageCodes(args.languages, 'languages')
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars -- comments-ok
   const { token: _token, existingCustomerId: _existingId, ...rawContactData } = args

@@ -15,7 +15,7 @@ function makeContactArgs(token: string, overrides: Record<string, unknown> = {})
     legalFirstName: 'Bob',
     legalLastName: 'Diver',
     email: 'bob@example.com',
-    phone: '+61 412 345 678',
+    phone: '+61412345678',
     dateOfBirth: dob(37),
     gender: 'M' as const,
     nationality: 'Australia',
@@ -23,7 +23,7 @@ function makeContactArgs(token: string, overrides: Record<string, unknown> = {})
     passportIssuingCountry: 'Australia',
     passportExpirationDate: passportExpiry(),
     emergencyContactName: 'Carol Diver',
-    emergencyContactPhone: '+61 400 111 222',
+    emergencyContactPhone: '+61400111222',
     emergencyContactRelation: 'Spouse',
     languages: ['en-GB'],
     ...overrides,
@@ -97,7 +97,7 @@ describe('getPortalContext', () => {
         legalFirstName: 'Bob',
         legalLastName: 'Diver',
         email: 'bob@example.com',
-        phone: '+61 412 345 678',
+        phone: '+61412345678',
         dateOfBirth: dob(37),
         gender: 'M',
         nationality: 'Australia',
@@ -105,7 +105,7 @@ describe('getPortalContext', () => {
         passportIssuingCountry: 'Australia',
         passportExpirationDate: passportExpiry(),
         emergencyContactName: 'Carol Diver',
-        emergencyContactPhone: '+61 400 111 222',
+        emergencyContactPhone: '+61400111222',
         emergencyContactRelation: 'Spouse',
         createdAt: Date.now(),
       })
@@ -178,7 +178,7 @@ describe('savePortalContact', () => {
     expect(customer!.legalFirstName).toBe('Bob')
     expect(customer!.legalLastName).toBe('Diver')
     expect(customer!.email).toBe('bob@example.com')
-    expect(customer!.phone).toBe('+61 412 345 678')
+    expect(customer!.phone).toBe('+61412345678')
     expect(customer!.nationality).toBe('Australia')
     expect(customer!.emergencyContactName).toBe('Carol Diver')
   })
@@ -215,7 +215,7 @@ describe('savePortalContact', () => {
       api.customers.savePortalContact,
       makeContactArgs(token, {
         legalFirstName: 'Robert',
-        phone: '+61 499 000 001',
+        phone: '+61499000001',
         emergencyContactRelation: 'Parent',
       }),
     )
@@ -229,7 +229,7 @@ describe('savePortalContact', () => {
     // Still only one customer (patched, not duplicated)
     expect(typeof profile!.customerId).toBe('string')
     expect(customer!.legalFirstName).toBe('Robert')
-    expect(customer!.phone).toBe('+61 499 000 001')
+    expect(customer!.phone).toBe('+61499000001')
     expect(customer!.emergencyContactRelation).toBe('Parent')
   })
 })

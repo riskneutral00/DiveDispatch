@@ -515,5 +515,51 @@ describe('venues.create — access control', () => {
   })
 })
 
+describe('venues.create — i18n validators at boundary', () => {
+  it('rejects non-E.164 phone with VALIDATION', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedVenueUser(ctx, 'phone-check') })
+    await expect(
+      t.withIdentity(orgIdentityFor('phone-check'))
+        .mutation(api.venues.create, { ...VALID_DIVE_SITE_ARGS, phone: 'not-e164' }),
+    ).rejects.toThrow(/VALIDATION/)
+  })
+
+  it('rejects invalid ISO-2 country on address with VALIDATION', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedVenueUser(ctx, 'country-check') })
+    await expect(
+      t.withIdentity(orgIdentityFor('country-check'))
+        .mutation(api.venues.create, {
+          ...VALID_DIVE_SITE_ARGS,
+          address: { city: 'X', country: 'zz' },
+        }),
+    ).rejects.toThrow(/VALIDATION/)
+  })
+
+  it('accepts empty-string phone (optional field convention)', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedVenueUser(ctx, 'empty-phone') })
+    const venueId = await t.withIdentity(orgIdentityFor('empty-phone'))
+      .mutation(api.venues.create, { ...VALID_DIVE_SITE_ARGS, phone: '' })
+    expect(venueId).toBeTruthy()
+  })
+})
+
+describe('venues.update — i18n validators at boundary', () => {
+  it('rejects non-E.164 phone update with VALIDATION', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedVenueUser(ctx, 'update-phone') })
+    const identity = orgIdentityFor('update-phone')
+    const venueId = await t.withIdentity(identity).mutation(api.venues.create, VALID_DIVE_SITE_ARGS)
+    await expect(
+      t.withIdentity(identity).mutation(api.venues.update, {
+        venueId,
+        phone: '1234',
+      }),
+    ).rejects.toThrow(/VALIDATION/)
+  })
+})
+
 // Prevent "unused import" TS on helper types kept for future suite additions
 void (null as unknown as Id<'venues'>)

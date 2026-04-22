@@ -22,7 +22,7 @@ function makeContactArgs(token: string) {
     legalFirstName: 'Test',
     legalLastName: 'Diver',
     email: 'test@example.com',
-    phone: '+61 412 345 678',
+    phone: '+61412345678',
     dateOfBirth: TEST_DOB,
     gender: 'M' as const,
     nationality: 'Australia',
@@ -30,7 +30,7 @@ function makeContactArgs(token: string) {
     passportIssuingCountry: 'Australia',
     passportExpirationDate: TEST_PASSPORT_EXPIRY,
     emergencyContactName: 'Jane Diver',
-    emergencyContactPhone: '+61 400 111 222',
+    emergencyContactPhone: '+61400111222',
     emergencyContactRelation: 'Spouse',
     languages: ['en-GB'],
   }
@@ -89,10 +89,10 @@ describe('savePortalContact — all required fields', () => {
     expect(customer!.passportIssuingCountry).toBe('Australia')
     expect(customer!.passportExpirationDate).toBe(TEST_PASSPORT_EXPIRY)
     expect(customer!.emergencyContactName).toBe('Jane Diver')
-    expect(customer!.emergencyContactPhone).toBe('+61 400 111 222')
+    expect(customer!.emergencyContactPhone).toBe('+61400111222')
     expect(customer!.emergencyContactRelation).toBe('Spouse')
     expect(customer!.email).toBe('test@example.com')
-    expect(customer!.phone).toBe('+61 412 345 678')
+    expect(customer!.phone).toBe('+61412345678')
     expect(customer!.gender).toBe('M')
     expect(typeof customer!.createdAt).toBe('number')
   })

@@ -10,6 +10,7 @@ import {
   type VenueSubtype,
 } from './shared/venueTypes'
 import { assertCapabilitiesPresentForSubtype, assertVenueRange, assertVenueSubtypeConsistent } from './lib/venueValidators'
+import { assertPhoneE164, assertCountryCode } from './lib/i18nValidators'
 import { cleanupInventoryForOwner } from './lib/inventoryCleanup'
 import { isActiveReservation } from './bookings/_shared'
 
@@ -50,6 +51,13 @@ export const create = mutation({
     assertVenueSubtypeConsistent(subtype, confinedCapable)
     assertVenueRange(subtype, args.maxDepth, args.maxCapacity)
     assertCapabilitiesPresentForSubtype(subtype, args.maxDepth, args.maxCapacity)
+
+    if (args.phone !== undefined && args.phone !== '') {
+      assertPhoneE164(args.phone, 'phone')
+    }
+    if (args.address?.country) {
+      assertCountryCode(args.address.country, 'address.country')
+    }
 
     const hasVenueRole = await checkHasRole(ctx, user._id, 'Venue')
     if (!hasVenueRole) {
@@ -106,6 +114,13 @@ export const update = mutation({
 
     const { org: activeOrg } = await getActiveOrg(ctx)
     assertOrgOwnership(venue, activeOrg)
+
+    if (args.phone !== undefined && args.phone !== '') {
+      assertPhoneE164(args.phone, 'phone')
+    }
+    if (args.address?.country) {
+      assertCountryCode(args.address.country, 'address.country')
+    }
 
     const { venueId: _vid, subtype, confinedCapable, ...rest } = args
     const patch: Record<string, unknown> = { ...rest }

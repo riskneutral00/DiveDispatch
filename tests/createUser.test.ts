@@ -164,7 +164,7 @@ describe('createUser mutation', () => {
     vi.useFakeTimers({ now: Date.now() })
     await t.withIdentity(identity).mutation(api.users.createUser, { ...createUserDefaults,
       role: 'Agent',
-      phone: '+1234567890',
+      phone: '+66987654321',
       nickname: 'Updated Nick',
     })
 
@@ -174,7 +174,7 @@ describe('createUser mutation', () => {
     const user = await t
       .withIdentity(identity)
       .query(api.users.me, {})
-    expect(user?.phone).toBe('+1234567890')
+    expect(user?.phone).toBe('+66987654321')
     expect(user?.nickname).toBe('Updated Nick')
   })
 })
@@ -736,5 +736,52 @@ describe('upsertFromWebhook email-rebind safety', () => {
     const user = await t.run(async (ctx) => ctx.db.get(userId))
     expect(user?.email).toBe('deleted@deleted.invalid')
     expect(user?.firstName).toBe('')
+  })
+})
+
+describe('createUser + updateProfile — phone validation at boundary', () => {
+  it('createUser rejects non-E.164 phone with VALIDATION', async () => {
+    const t = makeT()
+    await expect(
+      t
+        .withIdentity({ tokenIdentifier: 'clerk|bad-phone-create' })
+        .mutation(api.users.createUser, {
+          ...createUserDefaults,
+          role: 'Compressor',
+          phone: 'abc',
+        }),
+    ).rejects.toThrow(/VALIDATION/)
+  })
+
+  it('updateProfile rejects non-E.164 phone with VALIDATION', async () => {
+    const t = makeT()
+    await t
+      .withIdentity({ tokenIdentifier: 'clerk|update-profile-phone' })
+      .mutation(api.users.createUser, {
+        ...createUserDefaults,
+        role: 'Compressor',
+      })
+
+    await expect(
+      t
+        .withIdentity({ tokenIdentifier: 'clerk|update-profile-phone' })
+        .mutation(api.users.updateProfile, { phone: 'abc' }),
+    ).rejects.toThrow(/VALIDATION/)
+  })
+
+  it('updateProfile accepts empty-string phone (clear convention)', async () => {
+    const t = makeT()
+    await t
+      .withIdentity({ tokenIdentifier: 'clerk|clear-phone' })
+      .mutation(api.users.createUser, {
+        ...createUserDefaults,
+        role: 'Compressor',
+      })
+
+    await expect(
+      t
+        .withIdentity({ tokenIdentifier: 'clerk|clear-phone' })
+        .mutation(api.users.updateProfile, { phone: '' }),
+    ).resolves.not.toThrow()
   })
 })
