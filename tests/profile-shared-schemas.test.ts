@@ -283,7 +283,7 @@ describe('diveSiteDetailsSchema', () => {
       diveSiteDetailsSchema.safeParse({
         name: 'Similan Island #9',
         location: validLocation,
-        diveSiteTypes: ['reef'],
+        subtype: 'reef',
       }).success,
     ).toBe(true)
   })
@@ -293,17 +293,27 @@ describe('diveSiteDetailsSchema', () => {
       diveSiteDetailsSchema.safeParse({
         name: 'Similan Island #9',
         location: null,
+        subtype: 'reef',
+      }).success,
+    ).toBe(false)
+  })
+
+  it('rejects diveSiteTypes array field', () => {
+    expect(
+      diveSiteDetailsSchema.safeParse({
+        name: 'Similan Island #9',
+        location: validLocation,
         diveSiteTypes: ['reef'],
       }).success,
     ).toBe(false)
   })
 
-  it('rejects empty diveSiteTypes', () => {
+  it('rejects invalid subtype literal', () => {
     expect(
       diveSiteDetailsSchema.safeParse({
         name: 'Similan Island #9',
         location: validLocation,
-        diveSiteTypes: [],
+        subtype: 'nonsense',
       }).success,
     ).toBe(false)
   })
