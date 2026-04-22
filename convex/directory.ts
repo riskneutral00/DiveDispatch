@@ -232,33 +232,6 @@ export const listByRole = query({
 
     const filtered = results.filter((r): r is DirectoryEntry => r !== null)
 
-    if (args.role === 'Venue') {
-      const allVenues = await ctx.db.query('venues').take(200)
-      const unowned = allVenues.filter((v) => !v.organizationId)
-      for (const venue of unowned) {
-        if (!isResourceAccessible(venue, caller.slug)) continue
-        const invUnit = await ctx.db
-          .query('inventoryUnits')
-          .withIndex('by_ownerId_ownerType', (q) => q.eq('ownerId', '__unowned__'))
-          .filter((q) => q.eq(q.field('displayName'), venue.name))
-          .first()
-        const slug = invUnit?.resourceId ?? venue.name.toLowerCase().replace(/\s+/g, '-')
-        filtered.push({
-          slug,
-          name: venue.name,
-          placeName: venue.address.city,
-          country: venue.address.country,
-          verified: venue.verified,
-          role: args.role,
-          subtype: venue.subtype,
-          confinedCapable: venue.confinedCapable,
-          hasCompressor: venue.hasCompressor,
-          maxDepth: venue.maxDepth,
-          maxCapacity: venue.maxCapacity,
-        })
-      }
-    }
-
     if (args.role === 'Instructor') {
       filtered.sort((a, b) => (b.isPreferred ? 1 : 0) - (a.isPreferred ? 1 : 0))
     }

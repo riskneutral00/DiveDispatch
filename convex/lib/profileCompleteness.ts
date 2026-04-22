@@ -10,6 +10,37 @@ import { evaluateGearInventoryCompleteness } from './equipmentGearCompleteness'
 
 export type CompletenessKind = 'not_started' | 'partial' | 'complete'
 
+function countVenueMissingRequired(venue: Record<string, unknown>, fields: readonly string[]): number {
+  const str = (v: unknown) => typeof v === 'string' && v.trim().length > 0
+  let missing = 0
+  for (const field of fields) {
+    if (field === 'address') {
+      const addr = venue.address as { city?: unknown; country?: unknown } | undefined
+      if (!addr || !str(addr.city) || !str(addr.country)) missing += 1
+      continue
+    }
+    if (!str(venue[field])) missing += 1
+  }
+  return missing
+}
+
+function selectMostCompleteVenue(
+  venues: Record<string, unknown>[],
+  fields: readonly string[],
+): Record<string, unknown> | null {
+  if (venues.length === 0) return null
+  let best = venues[0]
+  let bestMissing = countVenueMissingRequired(best, fields)
+  for (let i = 1; i < venues.length; i += 1) {
+    const missing = countVenueMissingRequired(venues[i], fields)
+    if (missing < bestMissing) {
+      best = venues[i]
+      bestMissing = missing
+    }
+  }
+  return best
+}
+
 export async function checkProfileCompleteness(
   ctx: QueryCtx,
   user: { _id: Id<'users'> },
@@ -71,10 +102,18 @@ export async function checkProfileCompleteness(
       orgId = activeOrg?._id
     }
     if (orgId) {
-      profile = await ctx.db
-        .query(table as 'diveCenters')
-        .withIndex('by_organizationId', (q) => q.eq('organizationId', orgId))
-        .unique()
+      if (role === 'Venue') {
+        const venues = await ctx.db
+          .query('venues')
+          .withIndex('by_organizationId', (q) => q.eq('organizationId', orgId))
+          .collect() // bounded: per-org venue count, realistic cap ~20
+        profile = selectMostCompleteVenue(venues, ROLE_REQUIRED['Venue'] ?? [])
+      } else {
+        profile = await ctx.db
+          .query(table as 'diveCenters')
+          .withIndex('by_organizationId', (q) => q.eq('organizationId', orgId))
+          .unique()
+      }
     }
   }
 

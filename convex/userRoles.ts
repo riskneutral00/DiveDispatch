@@ -11,6 +11,7 @@ import { batchGet, batchDelete } from './lib/batch'
 import { ROLE_TABLE_MAP } from './lib/profileHelpers'
 import { queryDynamicTable, deleteDynamic } from './lib/typedDb'
 import { checkProfileCompleteness } from './lib/profileCompleteness'
+import { cleanupInventoryForOwner } from './lib/inventoryCleanup'
 
 export { getAllUserRoles } from './lib/userRoleHelpers'
 
@@ -237,6 +238,18 @@ export const deleteRole = mutation({
 
     await ctx.db.delete(roleId)
 
+    if (resourceType === 'Venue') {
+      const venues = await ctx.db
+        .query('venues')
+        .withIndex('by_organizationId', (q) => q.eq('organizationId', roleRow.organizationId))
+        .collect() // bounded: per-org venue count, realistic cap ~20
+      for (const venue of venues) {
+        await cleanupInventoryForOwner(ctx, venue.slug, 'Venue')
+      }
+    } else if (resourceType) {
+      await cleanupInventoryForOwner(ctx, user.slug, resourceType)
+    }
+
     await deleteProfileForRole(ctx, roleRow.role, roleRow.organizationId)
 
     const prefs = await ctx.db
@@ -253,44 +266,6 @@ export const deleteRole = mutation({
       )
       .collect() // bounded: per-user roles, max ~12
     await batchDelete(ctx, blockedDates)
-
-    if (resourceType) {
-      const units = await ctx.db
-        .query('inventoryUnits')
-        .withIndex('by_ownerId_ownerType', (q) =>
-          q.eq('ownerId', user.slug).eq('ownerType', resourceType),
-        )
-        .collect() // bounded: per-user roles, max ~12
-
-      const [reservationSets, snapshotSets] = await Promise.all([
-        Promise.all(
-          units.map((unit) =>
-            ctx.db
-              .query('reservations')
-              .withIndex('by_inventoryUnitId_status', (q) =>
-                q.eq('inventoryUnitId', unit._id),
-              )
-              .collect(), // bounded: per-user roles, max ~12
-          ),
-        ),
-        Promise.all(
-          units.map((unit) =>
-            ctx.db
-              .query('availabilitySnapshots')
-              .withIndex('by_inventoryUnitId_date', (q) =>
-                q.eq('inventoryUnitId', unit._id),
-              )
-              .collect(), // bounded: per-user roles, max ~12
-          ),
-        ),
-      ])
-      const allReservations = reservationSets.flat()
-      const allSnapshots = snapshotSets.flat()
-
-      await batchDelete(ctx, allReservations)
-      await batchDelete(ctx, allSnapshots)
-      await batchDelete(ctx, units)
-    }
 
     return { deleted: true as const }
   },
@@ -310,6 +285,17 @@ async function deleteProfileForRole(
     .filter((q) => q.eq(q.field('role'), role))
     .first()
   if (otherHolder) return
+
+  if (role === 'Venue') {
+    const venues = await ctx.db
+      .query('venues')
+      .withIndex('by_organizationId', (q) => q.eq('organizationId', organizationId))
+      .collect() // bounded: per-org venue count, realistic cap ~20
+    for (const venue of venues) {
+      await deleteDynamic(ctx.db, venue._id)
+    }
+    return
+  }
 
   const p = await queryDynamicTable(ctx.db, tableName)
     .withIndex('by_organizationId', (q) => q.eq('organizationId', organizationId))

@@ -1,6 +1,6 @@
 import { ConvexError, v } from 'convex/values'
 import { mutation, query, type MutationCtx } from './_generated/server'
-import { authorize } from './lib/auth'
+import { authorize, assertOrgOwnership } from './lib/auth'
 import { getActiveOrg, tryGetActiveOrg } from './lib/activeOrg'
 import { checkHasRole } from './userRoles'
 import { ErrorCode } from './lib/errorCodes'
@@ -10,6 +10,8 @@ import {
   type VenueSubtype,
 } from './shared/venueTypes'
 import { assertCapabilitiesPresentForSubtype, assertVenueRange, assertVenueSubtypeConsistent } from './lib/venueValidators'
+import { cleanupInventoryForOwner } from './lib/inventoryCleanup'
+import { isActiveReservation } from './bookings/_shared'
 
 async function mintUniqueVenueSlug(ctx: MutationCtx, baseName: string): Promise<string> {
   const base = baseName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'venue'
@@ -97,14 +99,13 @@ export const update = mutation({
     maxCapacity: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const { user } = await authorize(ctx, null, 'resource:manage', { type: 'resource' })
+    await authorize(ctx, null, 'resource:manage', { type: 'resource' })
 
     const venue = await ctx.db.get(args.venueId)
     if (!venue) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
 
-    if (!user.organizationId || venue.organizationId !== user.organizationId) {
-      throw new ConvexError({ code: ErrorCode.FORBIDDEN })
-    }
+    const { org: activeOrg } = await getActiveOrg(ctx)
+    assertOrgOwnership(venue, activeOrg)
 
     const { venueId: _vid, subtype, confinedCapable, ...rest } = args
     const patch: Record<string, unknown> = { ...rest }
@@ -157,25 +158,31 @@ export const update = mutation({
 export const remove = mutation({
   args: { venueId: v.id('venues') },
   handler: async (ctx, { venueId }) => {
-    const { user } = await authorize(ctx, null, 'resource:manage', { type: 'resource' })
+    await authorize(ctx, null, 'resource:manage', { type: 'resource' })
 
     const venue = await ctx.db.get(venueId)
     if (!venue) return
 
-    if (!user.organizationId || venue.organizationId !== user.organizationId) {
-      throw new ConvexError({ code: ErrorCode.FORBIDDEN })
-    }
+    const { org: activeOrg } = await getActiveOrg(ctx)
+    assertOrgOwnership(venue, activeOrg)
 
-    const unit = await ctx.db
+    const units = await ctx.db
       .query('inventoryUnits')
       .withIndex('by_ownerId_ownerType', (q) =>
         q.eq('ownerId', venue.slug).eq('ownerType', 'Venue'),
       )
-      .unique()
-    if (unit) {
-      await ctx.db.delete(unit._id)
+      .collect() // bounded: per-venue inventory unit count, typically 1
+    for (const unit of units) {
+      const activeReservations = await ctx.db
+        .query('reservations')
+        .withIndex('by_inventoryUnitId_status', (q) => q.eq('inventoryUnitId', unit._id))
+        .collect() // bounded: reservations per unit, bounded by unit lifetime
+      if (activeReservations.some(isActiveReservation)) {
+        throw new ConvexError({ code: ErrorCode.CONFLICT, reason: 'active_reservations' })
+      }
     }
 
+    await cleanupInventoryForOwner(ctx, venue.slug, 'Venue')
     await ctx.db.delete(venueId)
   },
 })

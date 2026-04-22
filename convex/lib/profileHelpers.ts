@@ -42,6 +42,19 @@ export async function profileMine<T extends TableNames>(
   return doc as Doc<T> | null
 }
 
+export async function profileMineMulti<T extends TableNames>(
+  ctx: QueryCtx,
+  tableName: T,
+): Promise<Doc<T>[]> {
+  const activeOrg = await tryGetActiveOrg(ctx)
+  if (!activeOrg) return []
+
+  const docs = await queryDynamicTable(ctx.db, tableName)
+    .withIndex('by_organizationId', (q) => q.eq('organizationId', activeOrg._id))
+    .collect() // bounded: per-org venue count, realistic cap ~20
+  return docs as Doc<T>[]
+}
+
 export async function profileBySlug<T extends TableNames>(
   ctx: QueryCtx,
   slug: string,

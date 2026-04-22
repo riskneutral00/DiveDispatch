@@ -1,6 +1,7 @@
 import type { MutationCtx } from '../_generated/server'
-import type { Id } from '../_generated/dataModel'
+import type { Doc, Id } from '../_generated/dataModel'
 import { batchDelete, batchPatch } from './batch'
+import { cleanupInventoryForOwner } from './inventoryCleanup'
 
 const ROLE_TABLES = [
   'diveCenters',
@@ -11,6 +12,8 @@ const ROLE_TABLES = [
   'compressors',
   'venues',
 ] as const
+
+type InventoryOwnerType = Doc<'inventoryUnits'>['ownerType']
 
 export type CascadeCounts = {
   usersUnbound: number
@@ -47,13 +50,29 @@ export async function cascadeOrgDelete(
   await batchDelete(ctx, userRoles)
   counts.userRolesDeleted = userRoles.length
 
+  const venueSlugs: string[] = []
+
   for (const tableName of ROLE_TABLES) {
     const rows = await ctx.db
       .query(tableName)
       .withIndex('by_organizationId', (q) => q.eq('organizationId', orgId))
       .collect() // bounded: one org owns <20 rows per role table
+    if (tableName === 'venues') {
+      for (const r of rows) venueSlugs.push((r as Doc<'venues'>).slug)
+    }
     await batchDelete(ctx, rows)
     counts.profilesDeleted += rows.length
+  }
+
+  for (const venueSlug of venueSlugs) {
+    await cleanupInventoryForOwner(ctx, venueSlug, 'Venue')
+  }
+
+  const userBackedOwnerTypes: InventoryOwnerType[] = ['Boat', 'Equipment', 'Compressor']
+  for (const user of users) {
+    for (const ownerType of userBackedOwnerTypes) {
+      await cleanupInventoryForOwner(ctx, user.slug, ownerType)
+    }
   }
 
   return counts

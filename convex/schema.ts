@@ -423,7 +423,7 @@ export default defineSchema({
     .index('by_organizationId', ['organizationId']),
 
   venues: defineTable({
-    organizationId: v.optional(v.id('organizations')),
+    organizationId: v.id('organizations'),
     slug: v.string(),
     name: v.string(),
     ...structuredLocationFields,

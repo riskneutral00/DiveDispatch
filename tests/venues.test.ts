@@ -229,6 +229,144 @@ describe('venues.remove', () => {
     expect(units).toHaveLength(0)
   })
 
+  it('throws CONFLICT when an active reservation exists', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedVenueUser(ctx, 'cflct-owner') })
+    const identity = orgIdentityFor('cflct-owner')
+
+    const venueId = await t.withIdentity(identity).mutation(api.venues.create, VALID_POOL_ARGS)
+    const venue = await t.run(async (ctx) => await ctx.db.get(venueId)) as Doc<'venues'>
+
+    await t.run(async (ctx) => {
+      const unit = await ctx.db
+        .query('inventoryUnits')
+        .withIndex('by_ownerId_ownerType', (q) =>
+          q.eq('ownerId', venue.slug).eq('ownerType', 'Venue'),
+        )
+        .unique()
+      if (!unit) throw new Error('expected unit')
+      const bookingId = await ctx.db.insert('bookings', {
+        ownerId: 'cflct-owner',
+        ownerType: 'DiveCenter',
+        status: 'Upcoming',
+        createdAt: Date.now(),
+        holdTTL: 43200000,
+        paid: false,
+        activityType: ['OW'],
+        startDate: '2026-05-01',
+        endDate: '2026-05-01',
+        divers: [],
+        operatorName: 'Test Op',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: false,
+        customerFormComplete: false,
+      })
+      const sessionId = await ctx.db.insert('bookingSessions', {
+        bookingId,
+        inventoryUnitId: unit._id,
+        date: '2026-05-01',
+        startTime: '09:00',
+        endTime: '17:00',
+        timezone: 'Asia/Bangkok',
+      })
+      await ctx.db.insert('reservations', {
+        bookingId,
+        inventoryUnitId: unit._id,
+        bookingSessionId: sessionId,
+        unitsRequested: 1,
+        status: 'Confirmed',
+      })
+    })
+
+    await expect(
+      t.withIdentity(identity).mutation(api.venues.remove, { venueId }),
+    ).rejects.toThrow(/CONFLICT/)
+  })
+
+  it('cascades unit + snapshots + reservations on successful remove', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedVenueUser(ctx, 'casc-owner') })
+    const identity = orgIdentityFor('casc-owner')
+
+    const venueId = await t.withIdentity(identity).mutation(api.venues.create, VALID_POOL_ARGS)
+    const venue = await t.run(async (ctx) => await ctx.db.get(venueId)) as Doc<'venues'>
+
+    await t.run(async (ctx) => {
+      const unit = await ctx.db
+        .query('inventoryUnits')
+        .withIndex('by_ownerId_ownerType', (q) =>
+          q.eq('ownerId', venue.slug).eq('ownerType', 'Venue'),
+        )
+        .unique()
+      if (!unit) throw new Error('expected unit')
+      await ctx.db.insert('availabilitySnapshots', {
+        inventoryUnitId: unit._id,
+        date: '2026-05-01',
+        windowStart: '09:00',
+        windowEnd: '17:00',
+        totalUnits: 15,
+        reservedUnits: 0,
+        availableUnits: 15,
+      })
+      const bookingId = await ctx.db.insert('bookings', {
+        ownerId: 'casc-owner',
+        ownerType: 'DiveCenter',
+        status: 'Draft',
+        createdAt: Date.now(),
+        holdTTL: 43200000,
+        paid: false,
+        activityType: ['OW'],
+        startDate: '2026-05-01',
+        endDate: '2026-05-01',
+        divers: [],
+        operatorName: 'Test Op',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: false,
+        customerFormComplete: false,
+      })
+      const sessionId = await ctx.db.insert('bookingSessions', {
+        bookingId,
+        inventoryUnitId: unit._id,
+        date: '2026-05-01',
+        startTime: '09:00',
+        endTime: '17:00',
+        timezone: 'Asia/Bangkok',
+      })
+      // Vacated reservation (not active — won't block)
+      await ctx.db.insert('reservations', {
+        bookingId,
+        inventoryUnitId: unit._id,
+        bookingSessionId: sessionId,
+        unitsRequested: 1,
+        status: 'Vacated',
+      })
+    })
+
+    await t.withIdentity(identity).mutation(api.venues.remove, { venueId })
+
+    const { units, reservations, snapshots } = await t.run(async (ctx) => {
+      const units = await ctx.db
+        .query('inventoryUnits')
+        .withIndex('by_ownerId_ownerType', (q) =>
+          q.eq('ownerId', venue.slug).eq('ownerType', 'Venue'),
+        )
+        .collect()
+      const reservations = await ctx.db.query('reservations').collect()
+      const snapshots = await ctx.db.query('availabilitySnapshots').collect()
+      return { units, reservations, snapshots }
+    })
+
+    expect(units).toHaveLength(0)
+    expect(reservations).toHaveLength(0)
+    expect(snapshots).toHaveLength(0)
+  })
+
   it('rejects remove of a venue owned by a different organization', async () => {
     const t = makeT()
     await t.run(async (ctx) => {

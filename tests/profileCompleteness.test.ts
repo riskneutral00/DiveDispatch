@@ -381,3 +381,93 @@ describe('checkProfileCompleteness kind discriminator', () => {
     })
   })
 })
+
+describe('checkProfileCompleteness — Venue multi-row semantics', () => {
+  const completeVenueFields = (orgId: Parameters<typeof getOrCreateTestOrg>[1]) => ({ orgId })
+
+  it('does not throw when org has 2+ venues', async () => {
+    await t.run(async (ctx) => {
+      const userId = await seedUser(ctx, { role: 'Venue' })
+      const orgId = await getOrCreateTestOrg(ctx, userId, 'venue-multi')
+      await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
+      await ctx.db.insert('venues', {
+        organizationId: orgId,
+        name: 'Pool A', slug: 'pool-a',
+        address: { city: 'Koh Tao', country: 'TH' },
+        lat: 10, lng: 99, subtype: 'pool',
+        hasCompressor: false, verified: true,
+      })
+      await ctx.db.insert('venues', {
+        organizationId: orgId,
+        name: 'Pool B', slug: 'pool-b',
+        address: { city: 'Koh Tao', country: 'TH' },
+        lat: 10, lng: 99, subtype: 'pool',
+        hasCompressor: false, verified: true,
+      })
+
+      const result = await checkProfileCompleteness(ctx, { _id: userId }, 'Venue')
+      expect(result.kind).toBe('complete')
+      expect(result.percentage).toBe(100)
+    })
+  })
+
+  it('returns 100% when at least one venue has all required fields', async () => {
+    await t.run(async (ctx) => {
+      const userId = await seedUser(ctx, { role: 'Venue' })
+      const orgId = await getOrCreateTestOrg(ctx, userId, 'venue-one-complete')
+      await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
+      // First venue: missing address.country
+      await ctx.db.insert('venues', {
+        organizationId: orgId,
+        name: 'Incomplete', slug: 'incomplete',
+        address: { city: '', country: '' },
+        lat: 10, lng: 99, subtype: 'pool',
+        hasCompressor: false, verified: true,
+      })
+      // Second venue: fully complete
+      await ctx.db.insert('venues', {
+        organizationId: orgId,
+        name: 'Good Pool', slug: 'good-pool',
+        address: { city: 'Koh Tao', country: 'TH' },
+        lat: 10, lng: 99, subtype: 'pool',
+        hasCompressor: false, verified: true,
+      })
+
+      const result = await checkProfileCompleteness(ctx, { _id: userId }, 'Venue')
+      expect(result.percentage).toBe(100)
+    })
+  })
+
+  it('drops percentage when the most-complete venue is still missing address', async () => {
+    await t.run(async (ctx) => {
+      const userId = await seedUser(ctx, { role: 'Venue' })
+      const orgId = await getOrCreateTestOrg(ctx, userId, 'venue-partial')
+      await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
+      // Only one venue, missing address
+      await ctx.db.insert('venues', {
+        organizationId: orgId,
+        name: 'Partial', slug: 'partial',
+        address: { city: '', country: '' },
+        lat: 10, lng: 99, subtype: 'pool',
+        hasCompressor: false, verified: true,
+      })
+
+      const result = await checkProfileCompleteness(ctx, { _id: userId }, 'Venue')
+      expect(result.percentage).toBeLessThan(100)
+      expect(result.incomplete).toContain('address')
+    })
+  })
+
+  it('returns not_started when org has 0 venues', async () => {
+    await t.run(async (ctx) => {
+      const userId = await seedUser(ctx, { role: 'Venue' })
+      await getOrCreateTestOrg(ctx, userId, 'venue-zero')
+      await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
+
+      const result = await checkProfileCompleteness(ctx, { _id: userId }, 'Venue')
+      expect(result.kind).toBe('not_started')
+    })
+    // eslint silence helper param
+    void completeVenueFields
+  })
+})
