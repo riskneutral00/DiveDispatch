@@ -28,6 +28,7 @@ export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps
   const clerkRole = ROLE_BY_KEY[roleSlug]?.clerkRole ?? 'DiveCenter'
   const profileCompletion = useQuery(api.users.getProfileCompletionForRole, { role: clerkRole })
   const myRoles = useQuery(api.userRoles.myRoles)
+  const roleComplete = myRoles?.some((r) => r.role === clerkRole && r.profileComplete === true) ?? false
   const router = useRouter()
 
   const [overlayOpen, setOverlayOpen] = useState(false)
@@ -76,7 +77,12 @@ export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps
 
   return (
     <>
-      <TopNav onOpenOverlay={openProfileOverlay} profileCompletion={profileCompletion} roleSlug={roleSlug} />
+      <TopNav
+        onOpenOverlay={openProfileOverlay}
+        profileCompletion={profileCompletion}
+        roleComplete={roleComplete}
+        roleSlug={roleSlug}
+      />
 
       <HierarchySubBar slug={slug} roleSlug={roleSlug} />
 

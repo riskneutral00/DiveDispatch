@@ -115,7 +115,7 @@ describe('Dashboard toolbar touch targets (WCAG 2.5.8)', () => {
 
   it('TopNav avatar button has >= 44x44px touch target', () => {
     const { getByRole } = render(
-      <TopNav onOpenOverlay={vi.fn()} roleSlug="dive-center" />,
+      <TopNav onOpenOverlay={vi.fn()} roleComplete={false} roleSlug="dive-center" />,
     )
     const button = getByRole('button', { name: 'User menu' })
     expect(hasMinTouchTarget(button)).toBe(true)

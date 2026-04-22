@@ -20,13 +20,14 @@ import { BgSwitcher } from './bg-switcher'
 interface TopNavProps {
   onOpenOverlay: (tab: ProfileOverlayTab, section?: string) => void
   profileCompletion?: { percentage: number; incomplete: string[]; kind?: 'not_started' | 'partial' | 'complete' } | null
+  roleComplete: boolean
   roleSlug: RoleKey
 }
 
 const MENU_ITEM_CLASS =
   'flex items-center gap-2 px-3 py-2 text-body cursor-pointer text-secondary outline-none data-[focused]:bg-[color-mix(in_oklab,var(--color-primary)_10%,transparent)]'
 
-export function TopNav({ onOpenOverlay, profileCompletion, roleSlug }: TopNavProps) {
+export function TopNav({ onOpenOverlay, profileCompletion, roleComplete, roleSlug }: TopNavProps) {
   const tNav = useTranslations('nav')
   const { user: clerkUser } = useUser()
   const { user: convexUser } = useCurrentUser()
@@ -58,7 +59,7 @@ export function TopNav({ onOpenOverlay, profileCompletion, roleSlug }: TopNavPro
 
   return (
     <div className="sticky top-0 z-[var(--z-sticky)] flex items-center justify-end gap-2 px-4 py-2 bg-surface-elevated glass-divider">
-      {profileCompletion && profileCompletion.kind === 'not_started' && (
+      {!roleComplete && profileCompletion && profileCompletion.kind === 'not_started' && (
         <ProfileStartBanner
           roleSlug={roleSlug}
           onOpenOverlay={() => {
@@ -67,7 +68,7 @@ export function TopNav({ onOpenOverlay, profileCompletion, roleSlug }: TopNavPro
           }}
         />
       )}
-      {profileCompletion && profileCompletion.kind !== 'not_started' && profileCompletion.percentage < 100 && (
+      {!roleComplete && profileCompletion && profileCompletion.kind !== 'not_started' && profileCompletion.percentage < 100 && (
         <ProfileCompletionPill
           percentage={profileCompletion.percentage}
           onOpenOverlay={() => {
