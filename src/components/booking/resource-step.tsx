@@ -2,7 +2,8 @@
 
 import { useQuery } from 'convex/react'
 import { api } from '@/lib/convex-generated'
-import { Card } from '@/components/ui'
+import { Card, FieldRow } from '@/components/ui'
+import { CardTitle } from '@/components/ui/card-title'
 import { ResourceOrExternalField } from './resource-or-external-field'
 import type { WizardState, WizardAction } from '@/lib/booking/wizard-state'
 import type { Dispatch } from 'react'
@@ -22,13 +23,10 @@ export function ResourceStep({ state, dispatch }: ResourceStepProps) {
   return (
     <div className="flex flex-col gap-6">
       <Card padding="md">
-        <h3
-          className="text-body font-semibold mb-3 text-primary font-heading"
-        >
-          Equipment
-        </h3>
-        <div className="flex flex-wrap gap-3">
+        <CardTitle as="h3" size="sm" className="mb-3">Equipment</CardTitle>
+        <FieldRow>
           <ResourceOrExternalField
+            className="field-md"
             label="Equipment Manager"
             resources={equipmentOptions}
             selectedId={state.equipment}
@@ -40,6 +38,7 @@ export function ResourceStep({ state, dispatch }: ResourceStepProps) {
             placeholder="Equipment manager…"
           />
           <ResourceOrExternalField
+            className="field-md"
             label="Compressor"
             resources={compressorOptions}
             selectedId={state.compressor}
@@ -50,7 +49,7 @@ export function ResourceStep({ state, dispatch }: ResourceStepProps) {
             onExternalNameChange={(v) => dispatch({ type: 'SET_EXTERNAL_COMPRESSOR_NAME', value: v })}
             placeholder="Compressor…"
           />
-        </div>
+        </FieldRow>
       </Card>
     </div>
   )

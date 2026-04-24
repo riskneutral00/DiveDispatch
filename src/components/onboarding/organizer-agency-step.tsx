@@ -111,7 +111,6 @@ function AgencyStepInner({ roleApi, onSaved, onBack }: AgencyStepInnerProps) {
                 value={assoc.agency}
                 onChange={(v) => updateRow(idx, 'agency', v)}
                 options={DIVE_AGENCIES_EXTENDED.map(a => a)}
-                placeholder="Select agency..."
                 className="field-sm"
               />
               <Input

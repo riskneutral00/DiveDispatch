@@ -357,7 +357,6 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
               onChange={(e) => setPrescriptionDetails(e.target.value)}
               rows={DEFAULT_TEXTAREA_ROWS}
               error={displayErrors.prescriptionStrength}
-              className="field-xl"
             />
           </div>
         )}

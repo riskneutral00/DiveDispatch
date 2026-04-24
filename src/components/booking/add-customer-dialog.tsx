@@ -2,10 +2,8 @@
 
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { Dialog, Button, Input, ButtonGroup } from '@/components/ui'
-import { NameField } from '@/components/ui/name-field'
-import type { ButtonGroupOption } from '@/components/ui'
-import { LanguageField } from '@/components/ui/language-field'
+import { Dialog, DialogFooter } from '@/components/ui'
+import { CustomerContactFields, type CustomerContactType } from '@/components/booking/customer-contact-fields'
 import type { Language } from '@/lib/types/language'
 import type { CustomerContact } from '@/lib/booking/wizard-state'
 
@@ -15,16 +13,15 @@ interface AddCustomerDialogProps {
   onAdd: (name: string, contact: CustomerContact, flags: Language[]) => void
 }
 
-type ContactType = 'email' | 'whatsapp' | 'line'
-
 export function AddCustomerDialog({
   open,
   onClose,
   onAdd,
 }: AddCustomerDialogProps) {
   const tDialogs = useTranslations('booking.dialogs')
+  const tCommon = useTranslations('common')
   const [name, setName] = useState('')
-  const [contactType, setContactType] = useState<ContactType>('email')
+  const [contactType, setContactType] = useState<CustomerContactType>('email')
   const [contactValue, setContactValue] = useState('')
   const [languages, setLanguages] = useState<Language[]>([])
   const [nameError, setNameError] = useState('')
@@ -65,67 +62,40 @@ export function AddCustomerDialog({
   return (
     <Dialog open={open} onClose={handleClose} title={tDialogs('addCustomerTitle')} size="sm">
       <div className="flex flex-col gap-4">
-        <div className="flex flex-wrap gap-4 w-full">
-          <div className="flex flex-col gap-3 min-w-0">
-            <NameField
-              scope="given"
-              label="Full name"
-              value={name}
-              onChange={(v) => {
-                setName(v)
-                if (nameError) setNameError('')
-              }}
-              error={nameError}
-            />
-            <div className="flex flex-col gap-2">
-              <p
-                className="text-body font-medium text-secondary"
-              >
-                Contact (optional)
-              </p>
-              <ButtonGroup
-                variant="segment"
-                value={contactType}
-                onChange={(v) => setContactType(v as ContactType)}
-                aria-label="Contact type"
-                options={[
-                  { value: 'email', label: 'Email' },
-                  { value: 'whatsapp', label: 'WhatsApp' },
-                  { value: 'line', label: 'LINE' },
-                ] satisfies ButtonGroupOption[]}
-              />
-              <Input
-                value={contactValue}
-                onChange={(e) => setContactValue(e.target.value)}
-                placeholder={
-                  contactType === 'email'
-                    ? 'customer@email.com'
-                    : contactType === 'whatsapp'
-                      ? '+66 81 234 5678'
-                      : 'LINE ID'
-                }
-                type="text"
-                inputMode={contactType === 'email' ? 'email' : contactType === 'whatsapp' ? 'tel' : 'text'}
-              />
-            </div>
-          </div>
-          <div className="min-w-0">
-            <LanguageField
-              variant="customer"
-              value={languages}
-              onChange={setLanguages}
-            />
-          </div>
-        </div>
+        <CustomerContactFields
+          name={name}
+          onNameChange={(v) => {
+            setName(v)
+            if (nameError) setNameError('')
+          }}
+          nameError={nameError}
+          contactType={contactType}
+          onContactTypeChange={setContactType}
+          contactValue={contactValue}
+          onContactValueChange={setContactValue}
+          languages={languages}
+          onLanguagesChange={setLanguages}
+          labels={{
+            name: 'Full name',
+            contactTypeAria: 'Contact type',
+            emailOption: 'Email',
+            whatsappOption: 'WhatsApp',
+            lineOption: 'LINE',
+            whatsappField: 'WhatsApp number',
+            emailField: 'Email address',
+            lineField: 'LINE ID',
+            emailPlaceholder: 'customer@email.com',
+            linePlaceholder: 'LINE ID',
+          }}
+        />
 
-        <div className="flex gap-2 justify-end">
-          <Button variant="secondary" size="md" onClick={handleClose}>
-            Cancel
-          </Button>
-          <Button variant="primary" size="md" onClick={handleSubmit} disabled={!canSubmit}>
-            Add Customer
-          </Button>
-        </div>
+        <DialogFooter
+          primaryLabel={tDialogs('addCustomerTitle')}
+          onPrimary={handleSubmit}
+          primaryDisabled={!canSubmit}
+          secondaryLabel={tCommon('cancel')}
+          onSecondary={handleClose}
+        />
       </div>
     </Dialog>
   )

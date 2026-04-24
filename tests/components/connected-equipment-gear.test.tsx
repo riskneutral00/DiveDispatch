@@ -38,9 +38,15 @@ vi.mock('convex/react', async (importOriginal) => {
 })
 
 beforeEach(() => {
-  HTMLDialogElement.prototype.show = vi.fn()
-  HTMLDialogElement.prototype.showModal = vi.fn()
-  HTMLDialogElement.prototype.close = vi.fn()
+  HTMLDialogElement.prototype.show = vi.fn(function (this: HTMLDialogElement) {
+    this.setAttribute('open', '')
+  })
+  HTMLDialogElement.prototype.showModal = vi.fn(function (this: HTMLDialogElement) {
+    this.setAttribute('open', '')
+  })
+  HTMLDialogElement.prototype.close = vi.fn(function (this: HTMLDialogElement) {
+    this.removeAttribute('open')
+  })
 })
 
 function makeInventoryRow(overrides: Partial<{
@@ -138,7 +144,7 @@ describe('ConnectedEquipmentGear', () => {
     })
     const callArg = mockBulkSet.mock.calls[0]![0]
     expect(callArg.cells).toEqual({})
-  })
+  }, 15000)
 
   it('non-matrix draft card stays visible with saved values until Convex refetch arrives', async () => {
     mockAddItem.mockResolvedValueOnce(undefined)

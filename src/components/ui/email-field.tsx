@@ -1,6 +1,7 @@
 'use client'
 
 import { Input } from '@/components/ui/input'
+import { resolveFieldWidth } from '@/lib/utils/field-width'
 
 interface EmailFieldProps {
   label: string
@@ -46,7 +47,7 @@ export function EmailField({
       helperText={helperText}
       placeholder={placeholder}
       disabled={disabled}
-      className={className}
+      className={resolveFieldWidth('field-lg', className)}
       autoFocus={autoFocus}
     />
   )

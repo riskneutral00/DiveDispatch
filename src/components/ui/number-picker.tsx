@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react'
 import { SimpleSelect } from '@/components/ui/simple-select'
+import { resolveFieldWidth } from '@/lib/utils/field-width'
 
 interface NumberPickerProps {
   label?: string
@@ -62,7 +63,7 @@ export function NumberPicker({
       error={error}
       disabled={disabled}
       placeholder={placeholder}
-      className={className}
+      className={resolveFieldWidth('field-xs', className)}
       aria-label={ariaLabel}
       data-testid={testId}
     />

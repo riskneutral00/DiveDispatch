@@ -11,6 +11,8 @@ import { CalendarDate, parseDate } from '@internationalized/date'
 import { FieldError } from '@/components/ui/field-shell'
 import { RequiredAsterisk } from '@/components/ui/required-asterisk'
 import { cn } from '@/lib/utils/cn'
+import { isValidISODate } from '@/lib/utils/date'
+import { resolveFieldWidth } from '@/lib/utils/field-width'
 
 interface DateFieldProps {
   label: string
@@ -54,7 +56,7 @@ export function DateField({
     <AriaDateField
       id={id}
       value={dateValue}
-      onChange={(d) => onChange(d ? formatIso(d) : null)}
+      onChange={(d) => onChange(d ? d.toString() : null)}
       isRequired={required}
       isDisabled={disabled}
       isInvalid={!!error}
@@ -62,13 +64,7 @@ export function DateField({
       maxValue={maxValue}
       autoFocus={autoFocus}
       data-testid={testId}
-      className={cn(
-        'relative w-full',
-        className?.includes('w-') || className?.includes('field-') || className?.includes('col-span')
-          ? ''
-          : 'w-full',
-        className,
-      )}
+      className={cn('relative', resolveFieldWidth('field-md', className))}
     >
       <div className="relative pt-4 pb-1.5 field-underline">
         <Label className="absolute top-0 left-0 text-[10px] font-medium text-secondary label-float-in pointer-events-none">
@@ -101,17 +97,10 @@ export function DateField({
 }
 
 function safeParse(iso: string): CalendarDate | null {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return null
+  if (!isValidISODate(iso)) return null
   try {
     return parseDate(iso)
   } catch {
     return null
   }
-}
-
-function formatIso(d: { year: number; month: number; day: number }): string {
-  const y = String(d.year).padStart(4, '0')
-  const m = String(d.month).padStart(2, '0')
-  const day = String(d.day).padStart(2, '0')
-  return `${y}-${m}-${day}`
 }

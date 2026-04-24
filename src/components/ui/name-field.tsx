@@ -1,6 +1,7 @@
 'use client'
 
 import { Input } from '@/components/ui/input'
+import { resolveFieldWidth } from '@/lib/utils/field-width'
 
 export type NameScope = 'given' | 'family' | 'nickname' | 'organization'
 
@@ -57,7 +58,7 @@ export function NameField({
       helperText={helperText}
       placeholder={placeholder}
       disabled={disabled}
-      className={className}
+      className={resolveFieldWidth('field-md', className)}
     />
   )
 }

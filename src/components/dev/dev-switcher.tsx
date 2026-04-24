@@ -144,7 +144,7 @@ function DevSwitcherInner() {
         className="fixed bottom-4 right-4 z-[var(--z-dropdown)]"
       >
         {open && (
-          <div className="absolute bottom-full right-0 z-10 mb-2 w-80"> {/* design-ok */}
+          <div className="absolute bottom-full right-0 z-10 mb-2 w-80"> {/* design-ok: dev-only floating panel, fixed 320px width */}
             <Card padding="none" overflow="hidden">
             <div
               className="px-4 py-2 text-label font-semibold border-b text-secondary border-glass-border"
@@ -153,7 +153,7 @@ function DevSwitcherInner() {
             </div>
             {error && (
               <div
-                className="px-3 py-1.5 text-[11px] border-b border-glass-border" /* design-ok */
+                className="px-3 py-1.5 text-[11px] border-b border-glass-border" /* design-ok: dev-only error banner, dense font for tight panel */
                 style={{
                   color: 'var(--color-destructive, #dc2626)',
                 }}
@@ -163,11 +163,11 @@ function DevSwitcherInner() {
             )}
             <div className="max-h-96 overflow-y-auto overflow-x-hidden">
               {allUsers === undefined ? (
-                <div className="px-3 py-3 text-[11px] text-secondary"> {/* design-ok */}
+                <div className="px-3 py-3 text-[11px] text-secondary"> {/* design-ok: dev-only loading state, dense font for tight panel */}
                   Loading…
                 </div>
               ) : allUsers.length === 0 ? (
-                <div className="px-3 py-3 text-[11px] text-secondary"> {/* design-ok */}
+                <div className="px-3 py-3 text-[11px] text-secondary"> {/* design-ok: dev-only empty state, dense font for tight panel */}
                   No users in DB yet.
                 </div>
               ) : (
@@ -188,7 +188,7 @@ function DevSwitcherInner() {
                         className="h-3.5 w-3.5 shrink-0 text-secondary"
                       />
                       <span
-                        className="text-[11px] w-20 shrink-0 truncate text-secondary" /* design-ok */
+                        className="text-[11px] w-20 shrink-0 truncate text-secondary" /* design-ok: dev-only role label, dense font + fixed width for tight panel */
                       >
                         {config.label}
                       </span>
@@ -227,7 +227,7 @@ function DevSwitcherInner() {
           </div>
         )}
 
-        <button
+        <button /* design-ok: dev-only debug pill, bespoke glass styling */
           type="button"
           onClick={() => setOpen((v) => !v)}
           className="relative flex items-center gap-1.5 rounded-full px-3 py-1.5 text-label font-medium shadow-lg glass text-primary"

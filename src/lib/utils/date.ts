@@ -2,6 +2,12 @@ import { DAY_MS } from '@/lib/constants/time'
 
 export { getDatesInRange, parseDateLocal } from '../../../convex/shared/dateRange'
 
+export const ISO_DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/
+
+export function isValidISODate(value: string): boolean {
+  return ISO_DATE_REGEX.test(value)
+}
+
 export function diffDays(dateA: string, dateB: string): number {
   const a = new Date(dateA + 'T00:00:00')
   const b = new Date(dateB + 'T00:00:00')

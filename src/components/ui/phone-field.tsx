@@ -1,18 +1,23 @@
 'use client'
 
 import { useId, useState, type ComponentType } from 'react'
+import { useTranslations } from 'next-intl'
 import PhoneInputWithCountrySelect from 'react-phone-number-input/core'
 import enLabels from 'react-phone-number-input/locale/en.json'
-import metadata from 'libphonenumber-js/metadata.min.json'
-import { getCountryCallingCode } from 'libphonenumber-js/min'
+import metadata from 'libphonenumber-js/metadata.max.json'
+import { getCountryCallingCode, type CountryCode } from 'libphonenumber-js/min'
 import { FieldError } from '@/components/ui/field-shell'
 import { RequiredAsterisk } from '@/components/ui/required-asterisk'
 import { FlagEmoji, countryCodeToEmoji } from '@/components/ui/flag-emoji'
 import { useFloatingLabel } from '@/lib/hooks/use-floating-label'
-import { detectDefaultCountryFromLocale } from '@/lib/constants/i18n'
+import {
+  detectDefaultCountryFromLocale,
+  isValidPhoneE164,
+  normalizePhone,
+  normalizePhoneFromSelectedCountry,
+} from '@/lib/constants/i18n'
 import { cn } from '@/lib/utils/cn'
-
-type CountryCode = string
+import { resolveFieldWidth } from '@/lib/utils/field-width'
 
 interface PhoneFieldProps {
   label: string
@@ -39,41 +44,59 @@ export function PhoneField({
   id: externalId,
   defaultCountry,
 }: PhoneFieldProps) {
+  const tErrors = useTranslations('common')
   const generatedId = useId()
   const id = externalId ?? generatedId
   const [focused, setFocused] = useState(false)
+  const [internalError, setInternalError] = useState<string | undefined>(undefined)
   const { floated: baseFloated } = useFloatingLabel({ value, focused, required })
   const floated = baseFloated || focused
 
   const resolvedDefaultCountry = defaultCountry || detectDefaultCountry()
-  const normalizedValue = normalizeE164(value)
+  const normalizedValue = normalizeForInput(value, resolvedDefaultCountry)
+  const callingCode = safeCallingCode(resolvedDefaultCountry)
+  const nationalMaxLength = callingCode ? 15 - callingCode.length : 15
+  const displayError = error ?? internalError
 
   return (
     <div
-      className={cn(
-        'relative',
-        className?.includes('field-') ||
-          className?.includes('w-') ||
-          className?.includes('col-span')
-          ? ''
-          : 'w-full',
-        className,
-      )}
+      className={cn('relative', resolveFieldWidth('field-md', className))}
     >
       <PhoneInputWithCountrySelect
         id={id}
         value={normalizedValue as string}
-        onChange={(v) => onChange((v as string) ?? '')}
+        onChange={(v) => {
+          const next = (v as string) ?? ''
+          if (!next) {
+            setInternalError(undefined)
+            onChange('')
+            return
+          }
+          const normalized =
+            normalizePhoneFromSelectedCountry(
+              next,
+              resolvedDefaultCountry as CountryCode,
+            ) ?? next
+          onChange(normalized)
+          if (isValidPhoneE164(normalized)) setInternalError(undefined)
+        }}
         onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
+        onBlur={() => {
+          setFocused(false)
+          if (value && !isValidPhoneE164(value)) {
+            setInternalError(tErrors('phoneInvalid'))
+          } else {
+            setInternalError(undefined)
+          }
+        }}
         defaultCountry={resolvedDefaultCountry as never}
         displayInitialValueAsLocalNumber
         metadata={metadata as never}
         labels={enLabels}
         disabled={disabled}
-        aria-invalid={!!error}
+        aria-invalid={!!displayError}
         aria-describedby={
-          error ? `${id}-error` : helperText ? `${id}-helper` : undefined
+          displayError ? `${id}-error` : helperText ? `${id}-helper` : undefined
         }
         flagComponent={FlagComponent}
         countrySelectComponent={PhoneCountrySelect}
@@ -85,8 +108,10 @@ export function PhoneField({
         style={{
           /* design-ok */
           caretColor: 'var(--color-accent)',
-          ...(error ? { borderBottomColor: 'var(--color-destructive)' } : {}),
-          ...(focused && !error
+          ...(displayError
+            ? { borderBottomColor: 'var(--color-destructive)' }
+            : {}),
+          ...(focused && !displayError
             ? {
                 borderBottomColor: 'var(--color-primary)',
                 borderBottomWidth: '2px',
@@ -98,6 +123,7 @@ export function PhoneField({
             'flex-1 min-w-0 bg-transparent border-0 outline-none text-body text-primary',
           autoComplete: 'tel',
           inputMode: 'tel',
+          maxLength: nationalMaxLength,
         }}
       />
 
@@ -119,8 +145,8 @@ export function PhoneField({
         </label>
       )}
 
-      {error && <FieldError id={`${id}-error`} message={error} />}
-      {!error && helperText && (
+      {displayError && <FieldError id={`${id}-error`} message={displayError} />}
+      {!displayError && helperText && (
         <p
           id={`${id}-helper`}
           className="text-body text-secondary truncate"
@@ -251,13 +277,27 @@ function FlagComponent({
   )
 }
 
-function normalizeE164(raw: string | undefined): string {
+function normalizeForInput(
+  raw: string | undefined,
+  selectedCountry: string,
+): string {
   if (!raw) return ''
+
+  const strictNormalized = normalizePhone(raw, selectedCountry as CountryCode)
+  if (strictNormalized) return strictNormalized
+
   const cleaned = raw.replace(/[^\d+]/g, '')
   if (!cleaned) return ''
-  const digitsOnly = cleaned.replace(/\++/g, '').replace(/^\+?/, '')
+  const digitsOnly = cleaned.replace(/\D/g, '')
   if (!digitsOnly) return ''
-  return `+${digitsOnly}`
+
+  const dialCode = safeCallingCode(selectedCountry)
+  const doubledDialPrefix = dialCode ? `${dialCode}${dialCode}` : ''
+  const dedupedDigits =
+    doubledDialPrefix && digitsOnly.startsWith(doubledDialPrefix)
+      ? digitsOnly.slice(dialCode.length)
+      : digitsOnly
+  return `+${dedupedDigits}`
 }
 
 function safeCallingCode(country: string | undefined): string {

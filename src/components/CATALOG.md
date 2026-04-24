@@ -35,15 +35,19 @@ Governance: `.claude/rules/existing-components-first.md` + `.claude/rules/dry-fi
 
 ## Specialized field primitives
 
-| Component | Import | Use instead of |
-|---|---|---|
-| `NameField` | `@/components/ui/name-field` | Raw input for names. Enforces `NAME_MAX_LENGTH`. |
-| `EmailField` | `@/components/ui/email-field` | Raw `<input type="email">`. |
-| `PhoneField` | `@/components/ui/phone-field` | Raw `<input type="tel">` with country selector + E.164 normalization. |
-| `CountryField` | `@/components/ui/country-field` | Country picker. |
-| `BirthdayField` | `@/components/ui/birthday-field` | Three-select DOB. Stores ISO string. |
-| `DateField` | `@/components/ui/date-field` | Raw `<input type="date">`. |
-| `LanguageField` | `@/components/ui/language-field` | Language picker with FieldShell (label + required + error). Takes `label: string` (translated) + `max?: number` (default 4). For single-language app-locale selection, pass `max={1}`. Aligns with every other field primitive — label ownership is internal. |
+Each primitive applies a default `field-*` width token internally via `resolveFieldWidth` (`@/lib/utils/field-width`). **Universal rule: single-line inputs max out at 50% mobile (`field-md`). Only three exceptions: `EmailField` (`field-lg`), `LanguageField` (content-driven full-width), and `Textarea` (`field-xl`, multi-line).** Never pass `className="field-lg"` or `field-xl"` at a callsite on a single-line input; rely on horizontal scroll for overflow.
+
+| Component | Import | Default width | Use instead of |
+|---|---|---|---|
+| `NameField` | `@/components/ui/name-field` | `field-md` (all scopes — given / family / nickname / organization) | Raw input for names. Enforces `NAME_MAX_LENGTH`. |
+| `EmailField` | `@/components/ui/email-field` | `field-lg` *(exception — long addresses)* | Raw `<input type="email">`. |
+| `PhoneField` | `@/components/ui/phone-field` | `field-md` | Raw `<input type="tel">` with country selector + E.164 normalization. |
+| `CountryField` | `@/components/ui/country-field` | `field-md` | Country picker. |
+| `BirthdayField` | `@/components/ui/birthday-field` | `field-md` (container; internal `grid grid-cols-3` divides into year/month/day) | Three-select DOB. Stores ISO string. |
+| `DateField` | `@/components/ui/date-field` | `field-md` | Raw `<input type="date">`. |
+| `NumberPicker` | `@/components/ui/number-picker` | `field-xs` (112px — fits 5 digits; all integers share this width) | (listed under Form fields too — numeric dropdown.) |
+| `Textarea` | `@/components/ui/textarea` | `field-xl` *(exception — multi-line, vertical scroll)* | (listed under Form fields too — long-form text.) |
+| `LanguageField` | `@/components/ui/language-field` | full-width *(exception — content-driven)* | Language picker with FieldShell (label + required + error). Takes `label: string` (translated) + `max?: number` (default 4). For single-language app-locale selection, pass `max={1}`. Aligns with every other field primitive — label ownership is internal. |
 
 ## Field scaffolding
 
@@ -67,8 +71,7 @@ Governance: `.claude/rules/existing-components-first.md` + `.claude/rules/dry-fi
 | `BottomActionBar` | `@/components/ui/bottom-action-bar` | Fixed mobile bottom action bar (primary Save on mobile). |
 | `SectionDivider` | `@/components/ui/section-divider` | Horizontal divider between sections. |
 | `ItemCard` | `@/components/ui/item-card` | Removable card in a list (credentials, routes, fleet entries). Never hand-roll trash buttons. Optional `onSave` + `canSave` + `saving` + `saved` props render a Save icon-button next to the trash icon (used by draft-row-with-Save patterns like the Equipment Gear tab). |
-| `EntityCardList` | `@/components/ui/entity-card-list` | Responsive card grid editor for a list of embedded entities. Handles FormSectionHeader + Add button, empty state, add/remove wiring, minItems/maxItems enforcement. Consumer supplies `renderCard(item, update, index)` for card interior and `emptyItem()` factory for new entries. Uses `ItemCard` internally. Grid: `grid-cols-1 md:grid-cols-2 xl:grid-cols-3`. Use for any owner-edited array-of-entities pattern (venues, boat fleet, credentials, etc.); do NOT use for directory-pick lists — those use `SortableOverlayList`. |
-| `AddEntityButton` | `@/components/ui/add-entity-button` | Canonical "add row" button — secondary, small, with Plus icon. Used inside `EntityCardList`'s header action slot; also composable standalone. |
+| `EntityCardList` | `@/components/ui/entity-card-list` | Responsive card grid editor for a list of embedded entities. Handles FormSectionHeader + Add button (inline `Button` with Plus icon), empty state, add/remove wiring, minItems/maxItems enforcement. Consumer supplies `renderCard(item, update, index)` for card interior and `emptyItem()` factory for new entries. Uses `ItemCard` internally. Grid: `grid-cols-1 md:grid-cols-2 xl:grid-cols-3`. Use for any owner-edited array-of-entities pattern (venues, boat fleet, credentials, etc.); do NOT use for directory-pick lists — those use `SortableOverlayList`. |
 | `ListRow` | `@/components/ui/list-row` | Reusable row with compact variant. |
 
 ## Cards & content headers
@@ -105,7 +108,7 @@ Governance: `.claude/rules/existing-components-first.md` + `.claude/rules/dry-fi
 | `Spinner` | `@/components/ui/spinner` | Small loading spinner. |
 | `FullPageSpinner` | `@/components/ui/full-page-spinner` | Full-viewport loading state. |
 | `LoadingState` | `@/components/ui/loading-state` | Section-level loading skeleton frame. |
-| `LoadingCard` | `@/components/ui/loading-card` | `LoadingState` preset for card scope (callsite alias for `<LoadingState scope="card" variant={variant} message={message} />`). Preferred over calling `LoadingState` directly when the intent is "card-shaped skeleton" — same pattern as `SaveButton`/`AddEntityButton`/`FullPageSpinner` preset wrappers. |
+| `LoadingCard` | `@/components/ui/loading-card` | `LoadingState` preset for card scope (callsite alias for `<LoadingState scope="card" variant={variant} message={message} />`). Preferred over calling `LoadingState` directly when the intent is "card-shaped skeleton" — same pattern as `SaveButton`/`FullPageSpinner` preset wrappers. |
 | `Skeleton` | `@/components/ui/skeleton` | Raw skeleton primitive (rect / circle). |
 
 ## Overlays
@@ -155,9 +158,6 @@ Role-agnostic building blocks for stakeholder profile forms (`PatternLibrary/one
 | Component | Import | Purpose |
 |---|---|---|
 | `ProfileFormShell` | `@/components/profiles/profile-form-shell` | Wraps a profile section with header + footer. |
-| `ProfileFormHeader` | `@/components/profiles/profile-form-header` | Section header with role name and create/update hint. |
-| `ProfileFormFooter` | `@/components/profiles/profile-form-footer` | Save / close footer. |
-| `ProfileFormLoading` | `@/components/profiles/profile-form-loading` | Loading skeleton for profile forms. |
 | `ProfileBasicInfo` | `@/components/profiles/profile-basic-info` | Name + location + email + phone inputs. Used by every role's contact section. |
 | `ProfileAgencyInfo` | `@/components/profiles/profile-agency-info` | Agency/certification info block (generic over row type). |
 | `ProfileOverlay` | `@/components/profiles/profile-overlay` | Full-screen profile editor overlay. |

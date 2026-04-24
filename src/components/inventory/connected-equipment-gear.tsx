@@ -729,7 +729,7 @@ function GearItemCard({ kind, gearType, recentManufacturers, initial, onCommit, 
             ...canonicalManufacturers,
             ...recentManufacturers.filter((m) => m && !canonicalManufacturers.includes(m)),
           ]}
-          className="field-lg"
+          className="field-md"
         />
         {needsSize && (sizeOptions.length > 0 ? (
           <SimpleSelect

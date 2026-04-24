@@ -90,7 +90,7 @@ export function NotificationItem({ notification, onClick, onDelete }: Notificati
         isUnread ? 'bg-surface-elevated' : 'bg-transparent',
       )}
     >
-      {/* design-ok */}<button
+      <button /* design-ok: full-row tappable area inside notification list item, custom layout chrome */
         onClick={() => onClick(notification._id)}
         className="flex items-start gap-3 flex-1 min-w-0"
       >

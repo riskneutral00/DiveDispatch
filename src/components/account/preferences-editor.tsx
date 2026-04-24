@@ -158,7 +158,6 @@ function PreferredOperatorPicker({
           { value: '', label: 'None' },
           ...options,
         ]}
-        placeholder="Select an operator…"
       />
     </Card>
   )

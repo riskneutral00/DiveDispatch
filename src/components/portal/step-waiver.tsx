@@ -272,7 +272,6 @@ export function StepWaiver({
             onChange={(v) => setDate(v ?? '')}
             error={errors.date}
             max={todayLocal()}
-            className="field-md"
           />
         </div>
       </Card>

@@ -4,6 +4,7 @@ import { useMemo } from 'react'
 import { useLocale } from 'next-intl'
 import { SimpleSelect } from '@/components/ui/simple-select'
 import { listCountries } from '@/lib/utils/countries'
+import { resolveFieldWidth } from '@/lib/utils/field-width'
 
 interface CountryFieldProps {
   label: string
@@ -49,7 +50,7 @@ export function CountryField({
       error={error}
       placeholder={placeholder}
       disabled={disabled}
-      className={className}
+      className={resolveFieldWidth('field-md', className)}
     />
   )
 }

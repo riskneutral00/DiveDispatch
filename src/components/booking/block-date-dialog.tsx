@@ -1,5 +1,5 @@
 import { useTranslations } from 'next-intl'
-import { Dialog, Button } from '@/components/ui'
+import { Dialog, DialogFooter } from '@/components/ui'
 
 interface BlockDateDialogProps {
   pendingToggle: { date: string; mode: 'block' | 'unblock' }
@@ -24,19 +24,16 @@ export function BlockDateDialog({ pendingToggle, isToggling, onConfirm, onCancel
           ? tDialogs('blockDateBody', { date: pendingToggle.date })
           : tDialogs('unblockDateBody', { date: pendingToggle.date })}
       </p>
-      <div className="flex justify-end gap-2">
-        <Button size="sm" variant="secondary" onClick={onCancel} disabled={isToggling}>
-          {tCommon('cancel')}
-        </Button>
-        <Button
-          size="sm"
-          variant={isBlock ? 'destructive' : 'primary'}
-          onClick={onConfirm}
-          loading={isToggling}
-        >
-          {isBlock ? tDialogs('blockConfirm') : tDialogs('unblockConfirm')}
-        </Button>
-      </div>
+      <DialogFooter
+        size="sm"
+        primaryLabel={isBlock ? tDialogs('blockConfirm') : tDialogs('unblockConfirm')}
+        primaryVariant={isBlock ? 'destructive' : 'primary'}
+        onPrimary={onConfirm}
+        primaryLoading={isToggling}
+        secondaryLabel={tCommon('cancel')}
+        onSecondary={onCancel}
+        secondaryDisabled={isToggling}
+      />
     </Dialog>
   )
 }

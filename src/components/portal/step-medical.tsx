@@ -6,6 +6,7 @@ import { AlertTriangle } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { CardTitle } from '@/components/ui/card-title'
 import { InlineError } from '@/components/ui/inline-error'
+import { ErrorAlert } from '@/components/ui/error-alert'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { medicalAnswersSchema } from '@/lib/validation'
@@ -130,7 +131,7 @@ export function StepMedical({ token, onComplete }: StepMedicalProps) {
       <Card padding="sm">
         <p className="text-label leading-relaxed text-secondary">
           {t('privacy')}{' '}
-          <a
+          <a /* design-ok: internal policy page opened in new tab; ActionLink primitive renders <button>, not <a> */
             href="/privacy"
             target="_blank"
             rel="noopener noreferrer"
@@ -197,9 +198,9 @@ export function StepMedical({ token, onComplete }: StepMedicalProps) {
 
       <div aria-live="polite">
         {touched && unanswered.length > 0 && !error && (
-          <InlineError centered>
+          <ErrorAlert variant="warning">
             {tPortal('answerAllRemaining', { count: unanswered.length })}
-          </InlineError>
+          </ErrorAlert>
         )}
       </div>
     </PortalStepShell>

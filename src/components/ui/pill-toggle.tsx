@@ -18,6 +18,7 @@ interface PillToggleProps {
   size?: PillToggleSize
   variant?: PillToggleVariant
   as?: PillToggleAs
+  dense?: boolean
 }
 
 const TEXT_BY_SIZE: Record<PillToggleSize, string> = {
@@ -56,10 +57,11 @@ export function PillToggle({
   size = 'sm',
   variant = 'default',
   as = 'label',
+  dense = false,
 }: PillToggleProps) {
   const base = cn(
     'inline-flex items-center justify-center gap-1 rounded-full font-medium transition-all duration-theme',
-    TOUCH_TARGET_CLASS,
+    !dense && TOUCH_TARGET_CLASS,
     TEXT_BY_SIZE[size],
     PADDING_X[variant],
     PADDING_Y[variant],
@@ -85,9 +87,15 @@ export function PillToggle({
 
   return (
     <label
-      className={cn(base, locked ? 'cursor-default' : 'cursor-pointer')}
+      className={cn(
+        base,
+        locked && 'cursor-default',
+        disabled && !locked && 'cursor-not-allowed',
+        !locked && !disabled && 'cursor-pointer',
+        disabled && !checked && 'opacity-70',
+      )}
       style={toggleStyle(checked)}
-      aria-disabled={locked || undefined}
+      aria-disabled={locked || disabled || undefined}
     >
       <input
         type="checkbox"

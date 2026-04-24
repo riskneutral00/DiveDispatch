@@ -41,11 +41,10 @@ describe('DD-224: LocationPicker lazy wrapper', () => {
  * not directly from location-picker.tsx.
  */
 const CONSUMER_FILES = [
-  'src/components/profiles/personal-profile-form.tsx',
   'src/components/profiles/business-contact-section.tsx',
   'src/components/onboarding/organizer-basic-step.tsx',
-  'src/components/profiles/agent-profile-form.tsx',
   'src/components/profiles/profile-basic-info.tsx',
+  'src/components/profiles/venue-contact-section.tsx',
 ]
 
 describe('DD-224: consumers import from lazy wrapper', () => {

@@ -8,7 +8,7 @@ import { CheckCircle, Circle, AlertTriangle, PartyPopper } from 'lucide-react'
 import { api } from '@/lib/convex-generated'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { InlineError } from '@/components/ui/inline-error'
+import { ErrorAlert } from '@/components/ui/error-alert'
 import { Spinner } from '@/components/ui/spinner'
 import { CardTitle } from '@/components/ui/card-title'
 
@@ -77,11 +77,7 @@ export function PortalSubmit({ token }: PortalSubmitProps) {
   }
 
   if (status === null) {
-    return (
-      <Card padding="lg">
-        <InlineError centered>{tPortal('tokenExpired')}</InlineError>
-      </Card>
-    )
+    return <ErrorAlert>{tPortal('tokenExpired')}</ErrorAlert>
   }
 
   if (status.alreadySubmitted || submitted) {
@@ -167,7 +163,7 @@ export function PortalSubmit({ token }: PortalSubmitProps) {
         </p>
       )}
 
-      {error && <InlineError centered>{error}</InlineError>}
+      {error && <ErrorAlert>{error}</ErrorAlert>}
 
       <Button
         variant="primary"

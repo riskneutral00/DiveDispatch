@@ -30,7 +30,7 @@ export function NotificationBell() {
         <Bell size={18} />
         {!!unreadCount && (
           <span
-            className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center rounded-full text-[10px] font-bold px-1 pointer-events-none text-on-primary" /* design-ok */
+            className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center rounded-full text-[10px] font-bold px-1 pointer-events-none text-on-primary" /* design-ok: notification count badge chrome, fixed 18px diameter overlay */
             style={{ background: 'var(--color-status-urgent)' }} /* design-ok: --color-status-urgent not in @theme inline */
             aria-hidden="true"
           >

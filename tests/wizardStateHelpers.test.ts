@@ -42,12 +42,12 @@ describe('isValidWhatsApp', () => {
     expect(isValidWhatsApp('+66812345678')).toBe(true)
   })
 
-  it('accepts number with spaces', () => {
-    expect(isValidWhatsApp('+66 81 234 5678')).toBe(true)
+  it('rejects number with spaces', () => {
+    expect(isValidWhatsApp('+66 81 234 5678')).toBe(false)
   })
 
-  it('accepts number with dashes', () => {
-    expect(isValidWhatsApp('081-234-5678')).toBe(true)
+  it('rejects number with dashes', () => {
+    expect(isValidWhatsApp('081-234-5678')).toBe(false)
   })
 
   it('rejects too short', () => {

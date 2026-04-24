@@ -4,13 +4,20 @@ interface CardTitleProps {
   children: React.ReactNode
   as?: 'h2' | 'h3'
   weight?: 'semibold' | 'bold'
+  size?: 'md' | 'sm'
   className?: string
 }
 
-export function CardTitle({ children, as: Tag = 'h2', weight = 'semibold', className }: CardTitleProps) {
+const sizeMap = {
+  md: 'text-card-title',
+  sm: 'text-body',
+} as const
+
+export function CardTitle({ children, as: Tag = 'h2', weight = 'semibold', size = 'md', className }: CardTitleProps) {
   return (
     <Tag className={cn(
-      'text-card-title text-primary font-heading',
+      sizeMap[size],
+      'text-primary font-heading',
       weight === 'bold' ? 'font-bold' : 'font-semibold',
       className,
     )}>

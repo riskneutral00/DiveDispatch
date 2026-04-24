@@ -36,7 +36,7 @@ export function CalendarGrid({ year, month, renderDay, className = '' }: Calenda
 
   return (
     <div className={className}>
-      <div className="grid grid-cols-7 mb-1"> {/* design-ok */}
+      <div className="grid grid-cols-7 mb-1"> {/* design-ok: calendar week layout, fixed 7-day grid */}
         {WEEKDAYS.map((wd) => (
           <div
             key={wd}
@@ -47,7 +47,7 @@ export function CalendarGrid({ year, month, renderDay, className = '' }: Calenda
         ))}
       </div>
 
-      <div className="grid grid-cols-7 gap-1"> {/* design-ok */}
+      <div className="grid grid-cols-7 gap-1"> {/* design-ok: calendar week layout, fixed 7-day grid */}
         {days.map(({ date, isCurrentMonth }, i) => (
           <div key={i} style={{ opacity: isCurrentMonth ? 1 : 0.35 }}>
             {renderDay(date, isCurrentMonth)}

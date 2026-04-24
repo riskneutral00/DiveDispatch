@@ -261,11 +261,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
   }
 
   if (context === null) {
-    return (
-      <Card padding="lg">
-        <InlineError centered>{t('tokenExpired')}</InlineError>
-      </Card>
-    )
+    return <ErrorAlert>{t('tokenExpired')}</ErrorAlert>
   }
 
   const passportExpiringSoon = isPassportExpiringSoon(
@@ -317,7 +313,6 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             value={form.legalFirstName}
             onChange={(v) => setField('legalFirstName', v)}
             error={errors.legalFirstName}
-            className="field-md"
           />
           <NameField
             scope="family"
@@ -326,7 +321,6 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             value={form.legalLastName}
             onChange={(v) => setField('legalLastName', v)}
             error={errors.legalLastName}
-            className="field-md"
           />
           <NameField
             scope="nickname"
@@ -335,7 +329,6 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             value={form.preferredName ?? ''}
             onChange={(v) => setField('preferredName', v)}
             error={errors.preferredName}
-            className="field-md"
           />
           <PhoneField
             label={t('phone')}
@@ -343,7 +336,6 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             onChange={(v) => setField('phone', v)}
             error={errors.phone}
             helperText={t('helperCountryCode')}
-            className="field-md"
           />
           <EmailField
             label={t('email')}
@@ -351,7 +343,6 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             value={form.email}
             onChange={(v) => setField('email', v)}
             error={errors.email}
-            className="field-lg"
           />
           <div className="field-md">
             <BirthdayField
@@ -359,7 +350,6 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
               value={form.dateOfBirth || null}
               onChange={(v) => setField('dateOfBirth', v ?? '')}
               error={errors.dateOfBirth}
-              className="field-md"
             />
             <div aria-live="polite">
               {ageError && (
@@ -384,7 +374,6 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             placeholder={t('placeholderSelect')}
             error={errors.nationality}
             required
-            className="field-lg"
           />
         </FieldRow>
       </Card>
@@ -420,7 +409,6 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             placeholder={t('placeholderSelect')}
             error={errors.passportIssuingCountry}
             required
-            className="field-lg"
           />
           <div className="field-md">
             <DateField
@@ -428,7 +416,6 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
               value={form.passportExpirationDate || null}
               onChange={(v) => setField('passportExpirationDate', v ?? '')}
               error={errors.passportExpirationDate}
-              className="field-md"
             />
             {passportExpiringSoon && !errors.passportExpirationDate && (
               <ErrorAlert variant="warning" iconSize={16} className="mt-2">
@@ -449,7 +436,6 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             value={form.emergencyContactName}
             onChange={(v) => setField('emergencyContactName', v)}
             error={errors.emergencyContactName}
-            className="field-md"
           />
           <PhoneField
             label={t('phone')}
@@ -457,7 +443,6 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             onChange={(v) => setField('emergencyContactPhone', v)}
             error={errors.emergencyContactPhone}
             helperText={t('helperCountryCode')}
-            className="field-md"
           />
           <Input
             label={t('relationship')}
@@ -504,7 +489,6 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
           placeholder={t('placeholderAllergies')}
           value={form.allergies ?? ''}
           onChange={(e) => setField('allergies', e.target.value)}
-          className="field-xl"
         />
       </Card>
 

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
-import { AddEntityButton } from '@/components/ui/add-entity-button'
+import { Plus } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
 import { ItemCard } from '@/components/ui/item-card'
@@ -60,7 +61,10 @@ export function EntityCardList<T>({
         label={label}
         required={required}
         action={
-          <AddEntityButton label={addLabel} onClick={handleAdd} disabled={!canAdd} />
+          <Button type="button" size="sm" variant="secondary" onClick={handleAdd} disabled={!canAdd}>
+            <Plus size={14} />
+            {addLabel}
+          </Button>
         }
       />
       <div className="mt-3">

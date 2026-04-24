@@ -74,8 +74,12 @@ describe('firstIncompleteTab', () => {
     })
   })
 
-  it('routes Equipment gearInventory to gear tab', () => {
-    expect(firstIncompleteTab('equipment', ['gearInventory'])).toEqual({
+  it('routes Equipment gear:* slugs to gear tab', () => {
+    expect(firstIncompleteTab('equipment', ['gear:wetsuit'])).toEqual({
+      tab: 'role:equipment',
+      section: 'gear',
+    })
+    expect(firstIncompleteTab('equipment', ['gear:regulator'])).toEqual({
       tab: 'role:equipment',
       section: 'gear',
     })

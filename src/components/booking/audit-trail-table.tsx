@@ -144,7 +144,7 @@ function DiffExpander({ diff }: { diff: string }) {
 
   return (
     <div className="mt-1">
-      {/* design-ok */}<button
+      <button /* design-ok: inline expand/collapse toggle inside audit row, not a primary action */
         type="button"
         onClick={() => setOpen((o) => !o)}
         className={`flex items-center gap-1 text-label transition-colors duration-theme text-secondary ${TOUCH_TARGET_CLASS}`}
@@ -199,7 +199,7 @@ function TimelineEntry({
       )}
 
       <div
-        className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center z-10" /* design-ok */
+        className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center z-10" /* design-ok: timeline node decoration, fixed 32px diameter is correct (not a touch target) */
         style={{
           background: 'var(--color-glass-bg-elevated)',
           border: '1px solid var(--color-glass-border)',

@@ -28,8 +28,19 @@ export type ClerkRole =
   | 'Compressor'
   | 'Venue'
 
+export type ProfileSectionId =
+  | 'contact'
+  | 'associations'
+  | 'credentials'
+  | 'fleet'
+  | 'gear'
+  | 'gas-mixes'
+  | 'capabilities'
+  | 'resources'
+  | 'booking'
+
 export interface ProfileTab {
-  id: string
+  id: ProfileSectionId
   label: string
   fields?: readonly string[]
 }
@@ -152,7 +163,7 @@ export const ROLES: RoleConfig[] = [
     description: 'Supply rental gear and manage inventory across dive bookings.',
     profileTabs: [
       { id: 'contact', label: 'Contact', fields: ['name', 'address'] },
-      { id: 'gear', label: 'Gear', fields: ['gearInventory'] },
+      { id: 'gear', label: 'Gear', fields: ['gear:wetsuit', 'gear:bcd', 'gear:fins', 'gear:mask', 'gear:regulator'] },
       { id: 'booking', label: 'Booking' },
     ],
   },

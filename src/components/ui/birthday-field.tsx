@@ -6,6 +6,8 @@ import { SimpleSelect } from '@/components/ui/simple-select'
 import { FieldError } from '@/components/ui/field-shell'
 import { RequiredAsterisk } from '@/components/ui/required-asterisk'
 import { MIN_AGE_YEARS, MIN_BIRTH_YEAR } from '@/lib/constants/age'
+import { isValidISODate } from '@/lib/utils/date'
+import { resolveFieldWidth } from '@/lib/utils/field-width'
 
 interface BirthdayFieldProps {
   label: string
@@ -26,7 +28,7 @@ function daysInMonth(year: number, month: number): number {
 }
 
 function parts(value: string | null): { year: string; month: string; day: string } {
-  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+  if (!value || !isValidISODate(value)) {
     return { year: '', month: '', day: '' }
   }
   const [y, m, d] = value.split('-')
@@ -107,36 +109,45 @@ export function BirthdayField({
   }
 
   return (
-    <fieldset id={fieldsetId} className={className} disabled={disabled} aria-invalid={!!error}>
+    <fieldset id={fieldsetId} className={resolveFieldWidth('field-md', className)} disabled={disabled} aria-invalid={!!error}>
       <legend className="text-label text-secondary mb-1">
         {label}
         {required && <RequiredAsterisk />}
       </legend>
-      <div className="grid grid-cols-3 gap-2"> {/* design-ok */}
-        <SimpleSelect
-          label={tCommon('year')}
-          value={year}
-          onChange={(v) => pick(v, month, day)}
-          options={yearOptions}
-          disabled={disabled}
-          aria-label={tCommon('year')}
-        />
-        <SimpleSelect
-          label={tCommon('month')}
-          value={month}
-          onChange={(v) => pick(year, v, day)}
-          options={monthOptions}
-          disabled={disabled}
-          aria-label={tCommon('month')}
-        />
-        <SimpleSelect
-          label={tCommon('day')}
-          value={day}
-          onChange={(v) => pick(year, month, v)}
-          options={dayOptions}
-          disabled={disabled}
-          aria-label={tCommon('day')}
-        />
+      <div className="flex gap-2 items-end">
+        <div className="flex-1 min-w-0 basis-[96px]">
+          <SimpleSelect
+            label={tCommon('year')}
+            value={year}
+            onChange={(v) => pick(v, month, day)}
+            options={yearOptions}
+            disabled={disabled}
+            aria-label={tCommon('year')}
+            className="w-full"
+          />
+        </div>
+        <div className="flex-1 min-w-0 basis-[72px]">
+          <SimpleSelect
+            label={tCommon('month')}
+            value={month}
+            onChange={(v) => pick(year, v, day)}
+            options={monthOptions}
+            disabled={disabled}
+            aria-label={tCommon('month')}
+            className="w-full"
+          />
+        </div>
+        <div className="flex-1 min-w-0 basis-[56px]">
+          <SimpleSelect
+            label={tCommon('day')}
+            value={day}
+            onChange={(v) => pick(year, month, v)}
+            options={dayOptions}
+            disabled={disabled}
+            aria-label={tCommon('day')}
+            className="w-full"
+          />
+        </div>
       </div>
       {error && <FieldError id={`${fieldsetId}-error`} message={error} />}
       {!error && helperText && (

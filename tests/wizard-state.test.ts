@@ -280,7 +280,7 @@ describe('canAdvanceFromCustomers', () => {
 
   it('returns true with valid whatsapp number', () => {
     const customers: CustomerData[] = [{
-      id: '1', name: 'Anna', contact: { whatsapp: '+66 81 234 5678' },
+      id: '1', name: 'Anna', contact: { whatsapp: '+66812345678' },
       flags: [{ code: 'GB', label: 'English' }],
     }]
     expect(canAdvanceFromCustomers(customers)).toBe(true)

@@ -21,19 +21,19 @@ import {
   type MatchTier,
 } from "@/lib/utils/language-matching";
 
-export interface SelectOption {
+export interface InstructorPickerOption {
   id: string;
   label: string;
   languages?: string[];
   isPreferred?: boolean;
 }
 
-interface SelectProps {
+interface InstructorPickerProps {
   label?: string;
   className?: string;
   value: string;
   onChange: (v: string) => void;
-  options: SelectOption[];
+  options: InstructorPickerOption[];
   placeholder?: string;
   customerLanguages?: string[];
   "data-testid"?: string;
@@ -60,7 +60,7 @@ const OptionRow = memo(function OptionRow({
   id,
   matchTier,
 }: {
-  opt: SelectOption;
+  opt: InstructorPickerOption;
   isSelected: boolean;
   isFocused: boolean;
   onSelect: () => void;
@@ -85,7 +85,7 @@ const OptionRow = memo(function OptionRow({
         <span className="truncate">{opt.label}</span>
         {badge && (
           <span
-            className="text-[10px] font-medium px-1.5 py-0.5 rounded-full flex-shrink-0" /* design-ok */
+            className="text-[10px] font-medium px-1.5 py-0.5 rounded-full flex-shrink-0" /* design-ok: language-tier badge chrome inside listbox option */
             style={{
               color: badge.color,
               backgroundColor: `color-mix(in srgb, ${badge.color} 15%, transparent)`,
@@ -118,7 +118,7 @@ function TierSection({
   customerLanguages,
 }: {
   title: string;
-  items: SelectOption[];
+  items: InstructorPickerOption[];
   defaultOpen: boolean;
   value: string;
   onSelect: (id: string) => void;
@@ -148,10 +148,10 @@ function TierSection({
 
   return (
     <div>
-      <button
+      <button /* design-ok: tier-section collapsible header inside ARIA listbox */
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1.5 w-full px-3 py-1.5 text-[10px] uppercase tracking-wider font-bold text-secondary font-heading" /* design-ok */
+        className="flex items-center gap-1.5 w-full px-3 py-1.5 text-[10px] uppercase tracking-wider font-bold text-secondary font-heading"
       >
         {isOpen ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
         {title} ({items.length})
@@ -174,7 +174,7 @@ function TierSection({
             );
           })}
           {hiddenCount > 0 && !showAll && (
-            <button
+            <button /* design-ok: "show more" expander inside tier section */
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
@@ -191,7 +191,7 @@ function TierSection({
   );
 }
 
-export function Select({
+export function InstructorPicker({
   label,
   className,
   value,
@@ -203,7 +203,7 @@ export function Select({
   required,
   error,
   helperText,
-}: SelectProps) {
+}: InstructorPickerProps) {
   const [open, setOpen] = useState(false);
   const [focusedIdx, setFocusedIdx] = useState(-1);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -302,7 +302,7 @@ export function Select({
       )}
     >
       <div ref={containerRef} className="relative">
-        <button
+        <button /* design-ok: ARIA combobox trigger (role=combobox, aria-expanded, aria-controls) */
           id={id}
           type="button"
           role="combobox"
@@ -345,7 +345,7 @@ export function Select({
           <span className="flex items-center justify-between gap-2">
             <span className="truncate">
               {selectedOption?.label ??
-                (label && !floated ? "\u00A0" : placeholder)}
+                (label && !floated ? " " : placeholder)}
             </span>
             {selectedOption?.languages &&
               selectedOption.languages.length > 0 && (
@@ -367,7 +367,7 @@ export function Select({
         </button>
 
         {label && (
-          <label
+          <label /* design-ok: floating label positioned absolutely alongside ARIA combobox trigger */
             htmlFor={id}
             className={cn(
               "absolute left-0 pointer-events-none transition-all duration-theme",
@@ -377,7 +377,7 @@ export function Select({
                     open ? "text-primary" : "text-secondary",
                   )
                 : "top-3 text-body text-secondary",
-            )} /* design-ok */
+            )}
           >
             {label}
             {required && <RequiredAsterisk />}
@@ -392,7 +392,7 @@ export function Select({
             aria-activedescendant={
               focusedIdx >= 0 ? `${id}-opt-${focusedIdx}` : undefined
             }
-            className="absolute top-full left-0 w-full mt-1 overflow-auto z-[var(--z-dropdown)] py-1 glass-elevated"
+            className="absolute top-full left-0 w-full mt-1 overflow-auto z-[var(--z-dropdown)] py-1 glass-elevated glass-overlay-blur bg-surface-elevated border border-glass-border rounded-[var(--border-radius)] shadow-xl"
             style={{
               maxHeight: "280px",
             }}

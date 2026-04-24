@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl'
 import { Ship, ChevronDown, ChevronRight, AlertTriangle, Heart } from 'lucide-react'
 import { api } from '@/lib/convex-generated'
 import { Card, EmptyState } from '@/components/ui'
+import { CardTitle } from '@/components/ui/card-title'
 import { SimpleSelect } from '@/components/ui/simple-select'
 
 import { LoadingCard } from '@/components/ui/loading-card'
@@ -39,17 +40,17 @@ function DiverDetailRow({ diver }: { diver: ManifestDiver }) {
         {diver.nationality && (
           <>
             {diver.nationality.length === 2 && countryCodeToEmoji(diver.nationality)}{' '}
-            <span className="text-[10px]">{diver.nationality}</span> {/* design-ok */}
+            <span className="text-[10px]">{diver.nationality}</span> {/* design-ok: dense manifest table cell, off-scale font for column density */}
           </>
         )}
       </td>
-      <td className="py-1.5 px-2 text-secondary font-mono text-[11px]"> {/* design-ok */}
+      <td className="py-1.5 px-2 text-secondary font-mono text-[11px]"> {/* design-ok: dense manifest table cell, off-scale font for column density */}
         {diver.passportNumber ?? '—'}
         {diver.passportIssuingCountry && (
-          <span className="ml-1 text-[10px]" /* design-ok */>{diver.passportIssuingCountry}</span>
+          <span className="ml-1 text-[10px]" /* design-ok: dense manifest table cell, off-scale font for column density */>{diver.passportIssuingCountry}</span>
         )}
       </td>
-      <td className={`py-1.5 px-2 font-mono text-[11px] ${passportExpiring ? 'font-bold text-destructive' : 'text-secondary'}`} /* design-ok */>
+      <td className={`py-1.5 px-2 font-mono text-[11px] ${passportExpiring ? 'font-bold text-destructive' : 'text-secondary'}`} /* design-ok: dense manifest table cell, off-scale font for column density */>
         {diver.passportExpirationDate ?? '—'}
         {passportExpiring && (
           <span role="alert" className="ml-1" title="Expires within 6 months">
@@ -58,13 +59,13 @@ function DiverDetailRow({ diver }: { diver: ManifestDiver }) {
         )}
       </td>
       <td className="py-1.5 px-2 text-secondary">{diver.gender ?? '—'}</td>
-      <td className="py-1.5 px-2 text-secondary font-mono text-[11px]">{diver.dateOfBirth ?? '—'}</td> {/* design-ok */}
-      <td className="py-1.5 px-2 text-secondary text-[11px]"> {/* design-ok */}
+      <td className="py-1.5 px-2 text-secondary font-mono text-[11px]">{diver.dateOfBirth ?? '—'}</td> {/* design-ok: dense manifest table cell, off-scale font for column density */}
+      <td className="py-1.5 px-2 text-secondary text-[11px]"> {/* design-ok: dense manifest table cell, off-scale font for column density */}
         {diver.emergencyContactName
           ? `${diver.emergencyContactName} ${diver.emergencyContactPhone ?? ''} (${diver.emergencyContactRelation ?? ''})`
           : '—'}
       </td>
-      <td className="py-1.5 px-2 text-secondary text-[11px]"> {/* design-ok */}
+      <td className="py-1.5 px-2 text-secondary text-[11px]"> {/* design-ok: dense manifest table cell, off-scale font for column density */}
         {diver.agency ?? '—'}
         {diver.certLevel && <span className="ml-1">{diver.certLevel}</span>}
       </td>
@@ -77,7 +78,7 @@ function DiverDetailRow({ diver }: { diver: ManifestDiver }) {
             <span aria-label={`Allergies: ${diver.allergies}`}><AlertTriangle size={12} className="text-warning" /></span>
           )}
           {!diver.medicalFlags?.length && !diver.allergies && (
-            <span className="text-secondary text-[11px]" /* design-ok */>—</span>
+            <span className="text-secondary text-[11px]" /* design-ok: dense manifest table cell, off-scale font for column density */>—</span>
           )}
         </span>
       </td>
@@ -105,7 +106,7 @@ function GroupSection({ group }: { group: ManifestGroup }) {
 
   return (
     <div className="mb-2">
-      {/* design-ok */}<button
+      {/* design-ok: dense manifest table cell, off-scale font for column density */}<button
         type="button"
         onClick={() => setExpanded((v) => !v)}
         className="flex items-center gap-2 w-full text-left py-1.5 px-2 rounded-[var(--border-radius-button)] transition-colors duration-theme"
@@ -118,7 +119,7 @@ function GroupSection({ group }: { group: ManifestGroup }) {
         </span>
       </button>
       {whereLine && (
-        <p className="text-[11px] text-secondary px-2 pb-1 pl-8 font-body" /* design-ok */>
+        <p className="text-[11px] text-secondary px-2 pb-1 pl-8 font-body" /* design-ok: dense manifest table cell, off-scale font for column density */>
           {whereLine}
         </p>
       )}
@@ -127,7 +128,7 @@ function GroupSection({ group }: { group: ManifestGroup }) {
         <div className="overflow-x-auto">
           <table className="w-full min-w-[800px]">
             <thead>
-              <tr className="text-[10px] uppercase tracking-wider text-secondary"> {/* design-ok */}
+              <tr className="text-[10px] uppercase tracking-wider text-secondary"> {/* design-ok: dense manifest table cell, off-scale font for column density */}
                 <th scope="col" className="text-left py-1 px-2 font-medium">Name</th>
                 <th scope="col" className="text-left py-1 px-2 font-medium">Nationality</th>
                 <th scope="col" className="text-left py-1 px-2 font-medium">Passport</th>
@@ -179,9 +180,7 @@ function VesselSection({ vessel, groupBy }: { vessel: ManifestVessel; groupBy: G
     <Card padding="md" className="mb-4">
       <div className="flex items-center gap-3 mb-3">
         <Ship size={18} className="text-primary" />
-        <h3 className="text-card-title font-semibold text-primary font-heading">
-          {vessel.vesselName}
-        </h3>
+        <CardTitle as="h3">{vessel.vesselName}</CardTitle>
         <span className="text-label text-secondary px-2 py-0.5 rounded-[var(--border-radius-button)] glass-surface">
           {vessel.boatType.replace('_', ' ')}
         </span>

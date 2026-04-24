@@ -1,7 +1,8 @@
 'use client'
 
 import { X, Anchor, Waves, Droplets, AlertTriangle } from 'lucide-react'
-import { Card, Input, Select, SimpleSelect, IconButton, ActionLink, FieldRow } from '@/components/ui'
+import { Card, Input, SimpleSelect, IconButton, ActionLink, FieldRow } from '@/components/ui'
+import { InstructorPicker } from '@/components/booking/instructor-picker'
 import type { DayConfig, WizardAction, DiveSlot } from '@/lib/booking/wizard-state'
 import type { DiveSlotDef } from '@/lib/booking/generate-days'
 import { buildDiveSequence } from '@/lib/booking/generate-days'
@@ -179,7 +180,7 @@ export function DayRow({
                 onChange={(e) =>
                   dispatch({ type: 'UPDATE_DAY', dayIndex, patch: { externalInstructorName: e.target.value } })
                 }
-                className="field-lg"
+                className="field-md"
               />
               <ActionLink
                 onClick={() => {
@@ -191,9 +192,9 @@ export function DayRow({
               </ActionLink>
             </>
           ) : (
-            <Select
+            <InstructorPicker
               label="Instructor"
-              className="field-lg"
+              className="field-md"
               data-testid="instructor-select"
               value={day.instructorSlug ?? ''}
               onChange={(v) => {
@@ -206,7 +207,6 @@ export function DayRow({
                 { id: '__external__', label: 'External (not in system)' },
                 ...instructorOptions,
               ]}
-              placeholder="Select instructor…"
               customerLanguages={customerLanguages}
             />
           )}
@@ -268,7 +268,7 @@ export function DayRow({
                 onChange={(e) =>
                   dispatch({ type: 'UPDATE_DAY', dayIndex, patch: { externalDiveMasterName: e.target.value } })
                 }
-                className="field-lg"
+                className="field-md"
               />
               <ActionLink
                 onClick={() => {
@@ -294,7 +294,7 @@ export function DayRow({
                 })),
               ]}
               placeholder="None"
-              className="field-lg"
+              className="field-md"
             />
           )}
         </div>

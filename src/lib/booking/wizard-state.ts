@@ -5,6 +5,7 @@ import {
   validateNoDuplicateCourses,
   validateStartDateNotInPast,
 } from '@/lib/booking/activity-validation'
+import { isValidPhoneE164 } from '@/lib/constants/i18n'
 import { toISODateString } from '@/lib/utils/date'
 
 const WIZARD_STATE_VERSION = 1
@@ -530,7 +531,7 @@ export function isValidEmail(v: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)
 }
 export function isValidWhatsApp(v: string): boolean {
-  return /^\+?[\d\s\-().]{7,}$/.test(v)
+  return isValidPhoneE164(v)
 }
 export function isValidLine(v: string): boolean {
   return /^[a-zA-Z0-9._]{4,}$/.test(v)

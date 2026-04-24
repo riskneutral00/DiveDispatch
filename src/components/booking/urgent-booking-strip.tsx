@@ -27,7 +27,7 @@ export function UrgentBookingStrip({
       {sorted.map((b) => (
         <div
           key={b._id}
-          className="urgent-pulse inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold" /* design-ok */
+          className="urgent-pulse inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold" /* design-ok: urgent-booking pill chrome with pulse animation, intentional dense font/spacing */ /* spacing-ok: dense urgency pill, off-ladder px-2.5/py-0.5 intentional */
           style={{
             background: 'var(--color-status-urgent)',
             color: 'var(--color-text-on-primary)',

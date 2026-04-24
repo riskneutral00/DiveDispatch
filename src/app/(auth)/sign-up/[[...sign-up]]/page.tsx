@@ -8,7 +8,7 @@ import { useTranslations } from 'next-intl'
 import { api } from '@/lib/convex-generated'
 import { ROLE_BY_CLERK_ROLE, type ClerkRole, type RoleConfig } from '@/lib/constants/roles'
 import { deriveDefaultRole } from '@/lib/utils/role'
-import { InlineError } from '@/components/ui/inline-error'
+import { ErrorAlert } from '@/components/ui/error-alert'
 import { Spinner } from '@/components/ui/spinner'
 import { StepIndicator } from '@/components/ui/step-indicator'
 import { StepRoleSelection } from '@/components/onboarding/step-role-selection'
@@ -188,7 +188,7 @@ export default function SignUpPage() {
       return <Spinner label={t('loading')} />
     }
     if (!activeOrg) {
-      return <InlineError centered>{tAuth('noActiveOrg')}</InlineError>
+      return <ErrorAlert>{tAuth('noActiveOrg')}</ErrorAlert>
     }
     if (!orgRow) {
       return <Spinner label={tAuth('syncingOrganization')} />
@@ -232,9 +232,7 @@ export default function SignUpPage() {
       )}
       {submitting && <Spinner label={tAuth('creatingAccount')} />}
       {stage === 'role' && error && (
-        <InlineError centered className="mt-2">
-          {error}
-        </InlineError>
+        <ErrorAlert className="mt-2">{error}</ErrorAlert>
       )}
     </>
   )

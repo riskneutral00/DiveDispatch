@@ -327,11 +327,11 @@ export function BookingCalendar({
 
       <div className="overflow-x-auto mt-1">
         <div className="min-w-[320px]">
-          <div className="grid grid-cols-7"> {/* design-ok */}
+          <div className="grid grid-cols-7"> {/* design-ok: calendar week layout, fixed 7-day grid */}
             {dayHeaders.map((day, i) => (
               <div
                 key={day}
-                className="py-1.5 text-center text-[10px] sm:text-label font-bold uppercase tracking-widest" /* design-ok */
+                className="py-1.5 text-center text-[10px] sm:text-label font-bold uppercase tracking-widest" /* design-ok: calendar day-of-week header chrome, intentionally below text-label on mobile */
                 style={{
                   color:
                     i === todayCol
@@ -392,7 +392,7 @@ export function BookingCalendar({
                     onClick={isLocked || isPast ? undefined : () => onDateClick?.(day.dateString)}
                   >
                     <span
-                      className="text-[10px] leading-none mb-1 select-none pointer-events-none" /* design-ok */
+                      className="text-[10px] leading-none mb-1 select-none pointer-events-none" /* design-ok: dense day-number label inside calendar cell */
                       style={{
                         color: isBlocked
                           ? 'var(--color-date-blocked)'

@@ -1,21 +1,19 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { ErrorAlert } from '@/components/ui/error-alert'
-import { Button, ButtonGroup, Input } from '@/components/ui'
-import { NameField } from '@/components/ui/name-field'
-import type { ButtonGroupOption } from '@/components/ui'
-import { LanguageField } from '@/components/ui/language-field'
-import { SectionDivider } from '@/components/ui/section-divider'
+import { Button } from '@/components/ui'
+import { CustomerContactFields, type CustomerContactType } from '@/components/booking/customer-contact-fields'
 
 import { hasLanguageConflict } from '@/lib/utils/language-matching'
 import { isValidEmail, isValidWhatsApp, isValidLine, newEntryId } from '@/lib/booking/wizard-state'
 import type { CustomerData, CustomerContact, WizardAction } from '@/lib/booking/wizard-state'
 import type { Language } from '@/lib/types/language'
+import { SectionDivider } from '@/components/ui/section-divider'
 import type { Dispatch } from 'react'
 
-type ContactType = 'email' | 'whatsapp' | 'line'
+type ContactType = CustomerContactType
 
 interface CustomerStepProps {
   customers: CustomerData[]
@@ -122,61 +120,32 @@ function InlineCustomerForm({ customer, index, canRemove, totalCustomers, dispat
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-end gap-2">
-        <NameField
-          scope="given"
-          label="Name"
-          value={customer.name}
-          onChange={handleNameChange}
-          required
-          className="flex-1"
-        />
-        {canRemove && (
-          <Button
-            variant="destructive-ghost"
-            size="sm"
-            type="button"
-            onClick={() => dispatch({ type: 'REMOVE_CUSTOMER', id: customer.id })}
-            aria-label={`Remove ${customer.name || `customer ${index + 1}`}`}
-          >
-            <Trash2 size={16} />
-          </Button>
-        )}
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <ButtonGroup
-          variant="segment"
-          value={contactType}
-          onChange={(v) => handleContactTypeChange(v as ContactType)}
-          aria-label="Contact type"
-          options={[
-            { value: 'email', label: 'Email' },
-            { value: 'whatsapp', label: 'WhatsApp' },
-            { value: 'line', label: 'LINE' },
-          ] satisfies ButtonGroupOption[]}
-        />
-        <Input
-          label={contactType === 'email' ? 'Email address' : contactType === 'whatsapp' ? 'WhatsApp number' : 'LINE ID'}
-          value={getContactValue()}
-          onChange={(e) => handleContactValueChange(e.target.value)}
-          placeholder={
-            contactType === 'email'
-              ? 'customer@email.com'
-              : contactType === 'whatsapp'
-                ? '+66 81 234 5678'
-                : 'LINE ID'
-          }
-          type={contactType === 'email' ? 'email' : contactType === 'whatsapp' ? 'tel' : 'text'}
-          required
-        />
-        <ContactValidationHint contactType={contactType} value={getContactValue()} />
-      </div>
-
-      <LanguageField
-        variant="customer"
-        value={flags.map((f) => ({ code: f.code, label: f.label }))}
-        onChange={handleLanguagesChange}
+      <CustomerContactFields
+        name={customer.name}
+        onNameChange={handleNameChange}
+        nameRequired
+        onRemove={canRemove ? () => dispatch({ type: 'REMOVE_CUSTOMER', id: customer.id }) : undefined}
+        contactType={contactType}
+        onContactTypeChange={handleContactTypeChange}
+        contactValue={getContactValue()}
+        onContactValueChange={handleContactValueChange}
+        contactRequired
+        hint={<ContactValidationHint contactType={contactType} value={getContactValue()} />}
+        languages={flags.map((f) => ({ code: f.code, label: f.label }))}
+        onLanguagesChange={handleLanguagesChange}
+        labels={{
+          name: 'Name',
+          removeAria: `Remove ${customer.name || `customer ${index + 1}`}`,
+          contactTypeAria: 'Contact type',
+          emailOption: 'Email',
+          whatsappOption: 'WhatsApp',
+          lineOption: 'LINE',
+          whatsappField: 'WhatsApp number',
+          emailField: 'Email address',
+          lineField: 'LINE ID',
+          emailPlaceholder: 'customer@email.com',
+          linePlaceholder: 'LINE ID',
+        }}
       />
 
       <SectionDivider show={index < totalCustomers - 1} />

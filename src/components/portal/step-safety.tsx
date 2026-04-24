@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { Card } from '@/components/ui/card'
+import { CardTitle } from '@/components/ui/card-title'
 import { Input } from '@/components/ui/input'
 import { SimpleSelect } from '@/components/ui/simple-select'
 import { Textarea } from '@/components/ui/textarea'
@@ -102,11 +103,7 @@ export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
     >
       <Card padding="md">
         <div className="mb-5">
-          <h2
-            className="text-card-title font-semibold mb-1 text-primary font-heading"
-          >
-            {t('sectionSafety')}
-          </h2>
+          <CardTitle className="mb-1">{t('sectionSafety')}</CardTitle>
           <p className="text-body text-secondary">
             {t('safetyDescription')}
           </p>
@@ -129,7 +126,6 @@ export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
             placeholder={t('placeholderAllergiesSafety')}
             rows={DEFAULT_TEXTAREA_ROWS}
             maxLength={500}
-            className="field-xl"
           />
 
           <Textarea
@@ -139,7 +135,6 @@ export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
             placeholder={t('placeholderMedications')}
             rows={DEFAULT_TEXTAREA_ROWS}
             maxLength={500}
-            className="field-xl"
           />
 
           <Input

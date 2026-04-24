@@ -8,6 +8,7 @@ import { WizardStepShell } from '@/components/ui/wizard-step-shell'
 import { PhoneField } from '@/components/ui/phone-field'
 import { NameField } from '@/components/ui/name-field'
 import { BirthdayField } from '@/components/ui/birthday-field'
+import { FieldRow } from '@/components/ui/field-row'
 import { Checkbox } from '@/components/ui/checkbox'
 import { isAdult, MIN_SIGNUP_AGE_YEARS } from '@/lib/constants/age'
 
@@ -76,34 +77,34 @@ export function StepProfileCompletion({
       }}
       error={error ?? null}
     >
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full mb-4" data-testid="wizard-content">
-        <NameField
-          scope="given"
-          label={tCommon('firstName')}
-          value={firstName}
-          onChange={onFirstNameChange}
-          required
-        />
-        <NameField
-          scope="family"
-          label={tCommon('lastName')}
-          value={lastName}
-          onChange={onLastNameChange}
-          required
-        />
-        <NameField
-          scope="nickname"
-          label={tCommon('nickname')}
-          value={nickname}
-          onChange={onNicknameChange}
-        />
-        <PhoneField
-          label={tCommon('phone')}
-          value={phone}
-          onChange={onPhoneChange}
-          required
-        />
-        <div className="sm:col-span-2">
+      <div className="w-full mb-4 space-y-4" data-testid="wizard-content">
+        <FieldRow>
+          <NameField
+            scope="given"
+            label={tCommon('firstName')}
+            value={firstName}
+            onChange={onFirstNameChange}
+            required
+          />
+          <NameField
+            scope="family"
+            label={tCommon('lastName')}
+            value={lastName}
+            onChange={onLastNameChange}
+            required
+          />
+          <NameField
+            scope="nickname"
+            label={tCommon('nickname')}
+            value={nickname}
+            onChange={onNicknameChange}
+          />
+          <PhoneField
+            label={tCommon('phone')}
+            value={phone}
+            onChange={onPhoneChange}
+            required
+          />
           <BirthdayField
             label={tCommon('dateOfBirth')}
             value={dateOfBirth || null}
@@ -111,26 +112,24 @@ export function StepProfileCompletion({
             required
             minAge={MIN_SIGNUP_AGE_YEARS}
           />
-        </div>
-        <div className="sm:col-span-2">
-          <Checkbox
-            checked={tcAccepted}
-            onChange={onTcAcceptedChange}
-            required
-            label={t.rich('iAgreeToTerms', {
-              link: (chunks) => (
-                <Link
-                  href="/terms"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-accent underline underline-offset-2 hover:opacity-70 transition-opacity duration-theme"
-                >
-                  {chunks}
-                </Link>
-              ),
-            })}
-          />
-        </div>
+        </FieldRow>
+        <Checkbox
+          checked={tcAccepted}
+          onChange={onTcAcceptedChange}
+          required
+          label={t.rich('iAgreeToTerms', {
+            link: (chunks) => (
+              <Link
+                href="/terms"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-accent underline underline-offset-2 hover:opacity-70 transition-opacity duration-theme"
+              >
+                {chunks}
+              </Link>
+            ),
+          })}
+        />
       </div>
     </WizardStepShell>
   )

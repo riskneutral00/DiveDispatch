@@ -5,10 +5,12 @@ import { useQuery, useMutation } from 'convex/react'
 import { z } from 'zod'
 import { isValidPhoneNumber } from 'libphonenumber-js'
 import { api } from '@/lib/convex-generated'
+import { isValidISODate } from '@/lib/utils/date'
 import { NameField } from '@/components/ui/name-field'
 import { EmailField } from '@/components/ui/email-field'
 import { PhoneField } from '@/components/ui/phone-field'
 import { BirthdayField } from '@/components/ui/birthday-field'
+import { FieldRow } from '@/components/ui/field-row'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 import { ALL_LANGUAGES, languageToCode } from '@/lib/constants/dive-languages'
@@ -32,7 +34,7 @@ export const profileTabSchema = z.object({
   phone: z.string().refine((v) => isValidPhoneNumber(v), { message: 'Invalid phone number' }),
   dateOfBirth: z
     .string()
-    .refine((v) => v === '' || /^\d{4}-\d{2}-\d{2}$/.test(v), {
+    .refine((v) => v === '' || isValidISODate(v), {
       message: 'Invalid date',
     }),
   appLanguage: z.string().min(1, 'App language is required'),
@@ -56,7 +58,7 @@ export function profileFromUser(p: Record<string, unknown>): ProfileValues {
     nickname: (typeof p.nickname === 'string' ? p.nickname : '') || '',
     email: (typeof p.email === 'string' ? p.email : '') || '',
     phone: (typeof p.phone === 'string' ? p.phone : '') || '',
-    dateOfBirth: /^\d{4}-\d{2}-\d{2}$/.test(dob) ? dob : '',
+    dateOfBirth: isValidISODate(dob) ? dob : '',
     appLanguage: (typeof p.appLanguage === 'string' ? p.appLanguage : '') || 'en',
   }
 }
@@ -120,7 +122,7 @@ export function ProfileTab({ onClose }: { onClose?: () => void }) {
       className="space-y-6"
     >
       <div className="space-y-4">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <FieldRow>
           <NameField
             scope="given"
             label={t('firstName')}
@@ -135,9 +137,6 @@ export function ProfileTab({ onClose }: { onClose?: () => void }) {
             onChange={(v) => setField('lastName', v)}
             required
           />
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <NameField
             scope="nickname"
             label={t('nickname')}
@@ -150,21 +149,19 @@ export function ProfileTab({ onClose }: { onClose?: () => void }) {
             onChange={(v) => setField('phone', v)}
             required
           />
-        </div>
-
-        <EmailField
-          label={t('email')}
-          value={form.email}
-          onChange={(v) => setField('email', v)}
-          required
-        />
-
-        <BirthdayField
-          label={t('dateOfBirth')}
-          value={form.dateOfBirth || null}
-          onChange={(v) => setField('dateOfBirth', v ?? '')}
-          required
-        />
+          <EmailField
+            label={t('email')}
+            value={form.email}
+            onChange={(v) => setField('email', v)}
+            required
+          />
+          <BirthdayField
+            label={t('dateOfBirth')}
+            value={form.dateOfBirth || null}
+            onChange={(v) => setField('dateOfBirth', v ?? '')}
+            required
+          />
+        </FieldRow>
 
         <LanguageField
           label={t('appLanguage')}

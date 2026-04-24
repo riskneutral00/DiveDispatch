@@ -50,7 +50,6 @@ export { SaveButton } from "./save-button";
 export { BottomActionBar } from "./bottom-action-bar";
 export { ItemCard } from "./item-card";
 export { EntityCardList } from "./entity-card-list";
-export { AddEntityButton } from "./add-entity-button";
 export { FormSectionHeader } from "./form-section-header";
 export { FlagEmoji } from "./flag-emoji";
 export { AppToaster } from "./app-toaster";

@@ -5,7 +5,8 @@ import { useTranslations } from 'next-intl'
 import { useQuery } from 'convex/react'
 import { api } from '@/lib/convex-generated'
 import { useWizardPreferences } from '@/lib/hooks/use-wizard-preferences'
-import { Button, Checkbox, SimpleSelect, ErrorAlert } from '@/components/ui'
+import { Button, Checkbox, SimpleSelect, ErrorAlert, FieldRow } from '@/components/ui'
+import { CardTitle } from '@/components/ui/card-title'
 import { DateField } from '@/components/ui/date-field'
 import { DayRow } from './day-row'
 import { ResourceStep } from './resource-step'
@@ -143,9 +144,10 @@ function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minSta
     <div
       className="flex flex-col gap-2 p-3 rounded-theme glass-container"
     >
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-        <div className="min-w-0">
+      <div className="flex items-end gap-2">
+        <FieldRow className="flex-1" density="compact">
           <SimpleSelect
+            className="field-md"
             label={tItin('activity')}
             value={entry.activityCode}
             onChange={handleCourseChange}
@@ -157,41 +159,33 @@ function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minSta
             ]}
             placeholder={tItin('selectActivity')}
           />
-        </div>
-
-        <div className="min-w-0 reading-plane rounded-theme p-2">
           <DateField
+            className="field-md min-w-0 reading-plane rounded-theme p-2"
             label={tCommon('startDate')}
             value={entry.dates[0] ?? null}
             min={minStartDate}
             onChange={(v) => handleStartDateChange(v ?? '')}
             data-testid="course-start-date"
           />
-        </div>
-
-        <div className="min-w-0 reading-plane rounded-theme p-2">
-          <div className="flex gap-1 items-end">
-            <div className="flex-1">
-              <DateField
-                label={tCommon('endDate')}
-                value={entry.dates[1] ?? entry.dates[0] ?? null}
-                min={entry.dates[0]}
-                onChange={(v) => handleEndDateChange(v ?? '')}
-              />
-            </div>
-            {canRemove && (
-              <Button
-                variant="destructive-ghost"
-                size="sm"
-                type="button"
-                onClick={() => dispatch({ type: 'REMOVE_COURSE_ENTRY', customerId, entryId: entry.id })}
-                aria-label={tItin('removeCourseAriaLabel')}
-              >
-                <Trash2 size={16} />
-              </Button>
-            )}
-          </div>
-        </div>
+          <DateField
+            className="field-md min-w-0 reading-plane rounded-theme p-2"
+            label={tCommon('endDate')}
+            value={entry.dates[1] ?? entry.dates[0] ?? null}
+            min={entry.dates[0]}
+            onChange={(v) => handleEndDateChange(v ?? '')}
+          />
+        </FieldRow>
+        {canRemove && (
+          <Button
+            variant="destructive-ghost"
+            size="sm"
+            type="button"
+            onClick={() => dispatch({ type: 'REMOVE_COURSE_ENTRY', customerId, entryId: entry.id })}
+            aria-label={tItin('removeCourseAriaLabel')}
+          >
+            <Trash2 size={16} />
+          </Button>
+        )}
       </div>
     </div>
   )
@@ -585,11 +579,9 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
       {(sameForAll ? customers.slice(0, 1) : customers).map((customer) => (
         <div key={customer.id}>
           <div className="flex items-center justify-between mb-2">
-            <h3
-              className="text-body font-semibold text-primary font-heading"
-            >
+            <CardTitle as="h3" size="sm">
               {sameForAll && customers.length > 1 ? tItin('allCustomers') : customer.name}
-            </h3>
+            </CardTitle>
             {sameForAll && customers.length > 1 && (
               <span className="text-label text-secondary">
                 <Copy size={10} className="inline mr-1" />
@@ -656,11 +648,9 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
       {days.length > 0 && allCourseCodes.length > 0 && (
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
-            <h3
-              className="text-body font-semibold text-primary font-heading"
-            >
+            <CardTitle as="h3" size="sm">
               {tItin('scheduleDays', { count: days.length })}
-            </h3>
+            </CardTitle>
             <Button variant="secondary" size="sm" onClick={handleRebuild}>
               <RotateCw size={12} />
               {tItin('rebuild')}

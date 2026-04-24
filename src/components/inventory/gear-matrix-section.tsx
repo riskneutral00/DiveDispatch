@@ -165,7 +165,7 @@ export function ManufacturerMatrixSection({
             value={manufacturer}
             onChange={setManufacturer}
             options={availableManufacturers}
-            className="field-lg"
+            className="field-md"
           />
           {gearType === 'fins' && (
             <SimpleSelect
@@ -216,7 +216,7 @@ export function ManufacturerMatrixSection({
               </div>
             )}
 
-            <div className={isMask ? 'grid grid-cols-1 sm:grid-cols-4 md:grid-cols-6 gap-3' : 'grid grid-cols-1 sm:grid-cols-3 md:grid-cols-6 gap-3'}>
+            <FieldRow density="compact">
               {columns.map((col) => (
                 <NumberPicker
                   key={col}
@@ -227,7 +227,7 @@ export function ManufacturerMatrixSection({
                   onChange={(v) => handleCellChange(col, v)}
                 />
               ))}
-            </div>
+            </FieldRow>
           </>
         )}
 

@@ -8,6 +8,7 @@ import { LocationPicker, type LocationValue } from '@/components/profiles/locati
 import { Input } from '@/components/ui/input'
 import { EmailField } from '@/components/ui/email-field'
 import { PhoneField } from '@/components/ui/phone-field'
+import { FieldRow } from '@/components/ui/field-row'
 import type { ClerkRole } from '@/lib/constants/roles'
 import { useOrganizerRoleApi } from '@/lib/hooks/use-organizer-role-api'
 import { getOrganizerRoleFlags } from '@/lib/constants/organizer-wizard-config'
@@ -29,6 +30,49 @@ function mergeInheritedDefaults(
     ...INITIAL_CONTACT_FORM,
     ...contactFromProfile(inheritance),
   }
+}
+
+interface OrganizerContactFieldsProps {
+  form: ContactFormState
+  setField: <K extends keyof ContactFormState>(key: K, value: ContactFormState[K]) => void
+  errors: Partial<Record<keyof ContactFormState, string>>
+}
+
+function OrganizerContactFields({ form, setField, errors }: OrganizerContactFieldsProps) {
+  const t = useTranslations('common')
+  return (
+    <div className="space-y-4" data-testid="wizard-content">
+      <Input
+        label={t('businessName')}
+        value={form.name}
+        onChange={(e) => setField('name', e.target.value)}
+        required
+        error={errors.name}
+      />
+      <LocationPicker
+        label={t('location')}
+        value={form.location as LocationValue | null}
+        onChange={(loc) => setField('location', loc)}
+        error={errors.location}
+      />
+      <FieldRow>
+        <EmailField
+          label={t('contactEmail')}
+          value={form.email}
+          onChange={(v) => setField('email', v)}
+          required
+          error={errors.email}
+        />
+        <PhoneField
+          label={t('contactPhone')}
+          value={form.phone}
+          onChange={(v) => setField('phone', v)}
+          required
+          error={errors.phone}
+        />
+      </FieldRow>
+    </div>
+  )
 }
 
 interface OrganizerBasicStepProps {
@@ -120,37 +164,7 @@ function VenueBasicStep({ onSaved, onBack }: { onSaved: () => void; onBack?: () 
       loading={saving}
       disabled={!isValid}
     >
-      <div className="space-y-4" data-testid="wizard-content">
-        <Input
-          label={t('businessName')}
-          value={form.name}
-          onChange={(e) => setField('name', e.target.value)}
-          required
-          error={errors.name}
-        />
-        <LocationPicker
-          label={t('location')}
-          value={form.location as LocationValue | null}
-          onChange={(loc) => setField('location', loc)}
-          error={errors.location}
-        />
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <EmailField
-            label={t('contactEmail')}
-            value={form.email}
-            onChange={(v) => setField('email', v)}
-            required
-            error={errors.email}
-          />
-          <PhoneField
-            label={t('contactPhone')}
-            value={form.phone}
-            onChange={(v) => setField('phone', v)}
-            required
-            error={errors.phone}
-          />
-        </div>
-      </div>
+      <OrganizerContactFields form={form} setField={setField} errors={errors} />
     </OrganizerStepCard>
   )
 }
@@ -228,37 +242,7 @@ function BasicStepInner({ role, mutations, onSaved, onBack }: BasicStepInnerProp
       loading={saving}
       disabled={!isValid}
     >
-      <div className="space-y-4" data-testid="wizard-content">
-        <Input
-          label={t('businessName')}
-          value={form.name}
-          onChange={(e) => setField('name', e.target.value)}
-          required
-          error={errors.name}
-        />
-        <LocationPicker
-          label={t('location')}
-          value={form.location as LocationValue | null}
-          onChange={(loc) => setField('location', loc)}
-          error={errors.location}
-        />
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <EmailField
-            label={t('contactEmail')}
-            value={form.email}
-            onChange={(v) => setField('email', v)}
-            required
-            error={errors.email}
-          />
-          <PhoneField
-            label={t('contactPhone')}
-            value={form.phone}
-            onChange={(v) => setField('phone', v)}
-            required
-            error={errors.phone}
-          />
-        </div>
-      </div>
+      <OrganizerContactFields form={form} setField={setField} errors={errors} />
     </OrganizerStepCard>
   )
 }

@@ -4,6 +4,8 @@ import React, { useEffect, useId, useRef } from "react";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { IconButton } from "@/components/ui/icon-button";
+import { Button } from "@/components/ui/button";
+import type { ButtonSize } from "@/lib/constants/button-sizes";
 import { INTERACTION_DEFAULTS } from "@/lib/constants/interaction-config";
 
 interface DialogProps {
@@ -190,5 +192,59 @@ export function Dialog({
         </div>
       </div>
     </dialog>
+  );
+}
+
+interface DialogFooterProps {
+  primaryLabel: string;
+  onPrimary: () => void | Promise<void>;
+  primaryVariant?: "primary" | "destructive";
+  primaryDisabled?: boolean;
+  primaryLoading?: boolean;
+  primaryType?: "button" | "submit";
+  secondaryLabel?: string;
+  onSecondary?: () => void;
+  secondaryDisabled?: boolean;
+  size?: ButtonSize;
+  className?: string;
+}
+
+export function DialogFooter({
+  primaryLabel,
+  onPrimary,
+  primaryVariant = "primary",
+  primaryDisabled,
+  primaryLoading,
+  primaryType = "button",
+  secondaryLabel,
+  onSecondary,
+  secondaryDisabled,
+  size = "md",
+  className,
+}: DialogFooterProps) {
+  return (
+    <div className={cn("flex justify-end gap-3 mt-1", className)}>
+      {onSecondary && (
+        <Button
+          type="button"
+          variant="secondary"
+          size={size}
+          onClick={onSecondary}
+          disabled={secondaryDisabled ?? primaryLoading}
+        >
+          {secondaryLabel}
+        </Button>
+      )}
+      <Button
+        type={primaryType}
+        variant={primaryVariant}
+        size={size}
+        onClick={onPrimary}
+        disabled={primaryDisabled}
+        loading={primaryLoading}
+      >
+        {primaryLabel}
+      </Button>
+    </div>
   );
 }

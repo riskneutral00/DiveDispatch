@@ -11,7 +11,7 @@ import {
   X,
 } from "lucide-react";
 import { ROLE_BY_KEY, type RoleKey } from "@/lib/constants/roles";
-import { Card, Button, ErrorAlert, CardTitle } from "@/components/ui";
+import { Card, Button, ErrorAlert, CardTitle, IconButton } from "@/components/ui";
 import { SendPortalLink } from "./send-portal-link";
 import { parseConvexError } from "@/lib/utils/convex-error";
 import { WizardProgress } from "./wizard-progress";
@@ -395,17 +395,14 @@ export function BookingWizard({
                 ? t("editingTitle", { ref: bookingRef })
                 : t("newBookingTitle")}
             </h1>
-            <Button
+            <IconButton
               variant="ghost"
-              size="sm"
-              type="button"
               onClick={() => void handleCancel()}
               disabled={state.submitting}
-              className="rounded-full" /* design-ok: circular dismiss button */
               aria-label={t("cancelAriaLabel")}
             >
               <X size={16} />
-            </Button>
+            </IconButton>
           </div>
           {bookingRef && (
             <p className="text-label font-mono mt-1 text-secondary">

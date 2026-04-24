@@ -101,13 +101,13 @@ export function VesselCalendar({ data, onRangeChange, className }: VesselCalenda
                 key={`${vessel.unitId}-${weekIdx}`}
                 className="grid grid-cols-[120px_repeat(7,1fr)] gap-px"
               >
-                <div className="flex items-center gap-1.5 pr-2 min-h-[32px] sticky left-0 z-10 glass-surface" /* design-ok */>
+                <div className="flex items-center gap-1.5 pr-2 min-h-[32px] sticky left-0 z-10 glass-surface" /* design-ok: vessel-row label cell, fixed 32px row height paired with calendar cells */>
                   {weekIdx === 0 && (
                     <>
                       <span className="text-label font-medium text-primary truncate">
                         {vessel.name}
                       </span>
-                      <span className="text-[10px] text-secondary shrink-0"> {/* design-ok */}
+                      <span className="text-[10px] text-secondary shrink-0"> {/* design-ok: dense vessel-type subtitle inside row label */}
                         {vessel.boatType.replace('_', ' ')}
                       </span>
                     </>

@@ -52,7 +52,7 @@ describe('QuickBookRail', () => {
 
       expect(getByRole('button', { name: 'DSD' })).not.toBeDisabled()
       expect(getByRole('button', { name: 'OWC' })).not.toBeDisabled()
-      expect(getByRole('button', { name: '+ Booking' })).not.toBeDisabled()
+      expect(getByRole('button', { name: 'Create booking' })).not.toBeDisabled()
     })
 
     it('calls onSelect when a course pill is clicked', async () => {
@@ -67,7 +67,7 @@ describe('QuickBookRail', () => {
       const onSelect = vi.fn()
       const { getByRole } = render(<QuickBookRail onSelect={onSelect} />)
 
-      await userEvent.click(getByRole('button', { name: '+ Booking' }))
+      await userEvent.click(getByRole('button', { name: 'Create booking' }))
       expect(onSelect).toHaveBeenCalledWith([])
     })
   })
@@ -87,7 +87,7 @@ describe('QuickBookRail', () => {
 
       expect(getByRole('button', { name: 'DSD' })).toBeDisabled()
       expect(getByRole('button', { name: 'OWC' })).toBeDisabled()
-      expect(getByRole('button', { name: '+ Booking' })).toBeDisabled()
+      expect(getByRole('button', { name: 'Create booking' })).toBeDisabled()
     })
 
     it('does NOT call onSelect when disabled buttons are clicked', async () => {
@@ -95,7 +95,7 @@ describe('QuickBookRail', () => {
       const { getByRole } = render(<QuickBookRail onSelect={onSelect} />)
 
       await userEvent.click(getByRole('button', { name: /DSD/i }))
-      await userEvent.click(getByRole('button', { name: /\+ Booking/i }))
+      await userEvent.click(getByRole('button', { name: /create booking/i }))
       expect(onSelect).not.toHaveBeenCalled()
     })
 
@@ -116,7 +116,7 @@ describe('QuickBookRail', () => {
       const onSelect = vi.fn()
       const { getByRole } = render(<QuickBookRail onSelect={onSelect} />)
 
-      expect(getByRole('button', { name: /\+ Booking/i })).toBeDisabled()
+      expect(getByRole('button', { name: /create booking/i })).toBeDisabled()
     })
   })
 

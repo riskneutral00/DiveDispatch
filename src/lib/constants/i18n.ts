@@ -1,4 +1,8 @@
-import { parsePhoneNumberFromString, type CountryCode } from 'libphonenumber-js'
+import {
+  getCountryCallingCode,
+  parsePhoneNumberFromString,
+  type CountryCode,
+} from 'libphonenumber-js'
 import { COUNTRIES } from './countries'
 import { SUPPORTED_LOCALES, type SupportedLocale } from './locales'
 import { ALL_LANGUAGES, type LanguageCode } from './dive-languages'
@@ -30,6 +34,40 @@ export function normalizePhone(
   if (!input) return null
   const parsed = parsePhoneNumberFromString(input, defaultCountry)
   return parsed?.isValid() ? parsed.format('E.164') : null
+}
+
+export function normalizePhoneFromSelectedCountry(
+  typedInput: string,
+  selectedCountry?: CountryCode,
+): string | null {
+  if (!typedInput) return null
+  if (!selectedCountry) return normalizePhone(typedInput)
+
+  const compactInput = typedInput.trim()
+  if (!compactInput) return null
+
+  const digitsOnly = compactInput.replace(/\D/g, '')
+  if (!digitsOnly) return null
+
+  const parsedDirect = parsePhoneNumberFromString(compactInput, selectedCountry)
+  if (parsedDirect?.isValid()) return parsedDirect.format('E.164')
+
+  let nationalDigits = digitsOnly
+  try {
+    const callingCode = getCountryCallingCode(selectedCountry)
+    if (nationalDigits.startsWith(callingCode)) {
+      nationalDigits = nationalDigits.slice(callingCode.length)
+    }
+  } catch {
+    return null
+  }
+
+  if (!nationalDigits) return null
+  const parsedFromNational = parsePhoneNumberFromString(
+    nationalDigits,
+    selectedCountry,
+  )
+  return parsedFromNational?.isValid() ? parsedFromNational.format('E.164') : null
 }
 
 export function isValidLocale(code: unknown): code is SupportedLocale {

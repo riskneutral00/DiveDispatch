@@ -17,6 +17,7 @@ interface ResourceOrExternalFieldProps {
   onSetExternal: (isExternal: boolean) => void
   onExternalNameChange: (name: string) => void
   placeholder?: string
+  className?: string
 }
 
 export function ResourceOrExternalField({
@@ -29,10 +30,11 @@ export function ResourceOrExternalField({
   onSetExternal,
   onExternalNameChange,
   placeholder,
+  className,
 }: ResourceOrExternalFieldProps) {
   if (isExternal) {
     return (
-      <div className="flex flex-col gap-1">
+      <div className={`flex flex-col gap-1${className ? ` ${className}` : ''}`}>
         <Input
           label={`${label} (external)`}
           value={externalName}
@@ -52,7 +54,7 @@ export function ResourceOrExternalField({
   ]
 
   return (
-    <div className="flex flex-col gap-1">
+    <div className={`flex flex-col gap-1${className ? ` ${className}` : ''}`}>
       <SimpleSelect
         label={label}
         value={selectedId}

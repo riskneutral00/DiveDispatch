@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import { Select } from './select'
+import { InstructorPicker } from './instructor-picker'
 
 const meta = {
-  component: Select,
-} satisfies Meta<typeof Select>
+  component: InstructorPicker,
+} satisfies Meta<typeof InstructorPicker>
 export default meta
 type Story = StoryObj<typeof meta>
 
@@ -19,12 +19,11 @@ export const Default: Story = {
   render: () => {
     const [value, setValue] = useState('')
     return (
-      <Select
+      <InstructorPicker
         label="Instructor"
         value={value}
         onChange={setValue}
         options={sampleOptions}
-        placeholder="Select instructor..."
       />
     )
   },
@@ -35,7 +34,7 @@ export const WithSelection: Story = {
   render: () => {
     const [value, setValue] = useState('instructor-1')
     return (
-      <Select
+      <InstructorPicker
         label="Instructor"
         value={value}
         onChange={setValue}
@@ -50,7 +49,7 @@ export const WithError: Story = {
   render: () => {
     const [value, setValue] = useState('')
     return (
-      <Select
+      <InstructorPicker
         label="Instructor"
         value={value}
         onChange={setValue}
@@ -67,7 +66,7 @@ export const WithHelperText: Story = {
   render: () => {
     const [value, setValue] = useState('')
     return (
-      <Select
+      <InstructorPicker
         label="Boat"
         value={value}
         onChange={setValue}

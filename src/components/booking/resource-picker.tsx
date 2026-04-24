@@ -107,7 +107,7 @@ export function ResourcePicker({
         </div>
       ) : (
         <div className="relative">
-          {/* design-ok */}<button
+          {/* design-ok: ARIA combobox trigger (role=combobox, aria-expanded, aria-controls) */}<button
             type="button"
             onClick={() => setIsOpen((o) => !o)}
             className="w-full text-left px-3 py-2.5 text-body rounded-theme flex items-center justify-between gap-2 transition-opacity duration-theme hover:opacity-90"
@@ -258,8 +258,8 @@ function PickerRow({
   unavailableLabel?: string
   onSelect: () => void
 }) {
-  return ( /* design-ok */
-    <button
+  return (
+    <button /* design-ok: ARIA listbox option inside resource picker */
       type="button"
       onClick={onSelect}
       disabled={isUnavailable}

@@ -316,7 +316,7 @@ function GearSizeRow({
               style={{ border: '1px solid var(--color-primary)' }}
               autoFocus
             />
-            {/* design-ok */}<button
+            <button /* design-ok: inline confirm action inside size-override editor */
               onClick={() => {
                 if (editValue.trim()) onOverride(editValue.trim())
                 setEditing(false)
@@ -330,7 +330,7 @@ function GearSizeRow({
             >
               ✓
             </button>
-            {/* design-ok */}<button
+            <button /* design-ok: inline cancel action inside size-override editor */
               onClick={() => {
                 setEditing(false)
                 setEditValue('')
@@ -344,7 +344,7 @@ function GearSizeRow({
 
         {!editing && (
           <div className="flex gap-1">
-            {/* design-ok */}<button
+            <button /* design-ok: inline edit-size icon trigger inside row */
               onClick={() => {
                 setEditValue(isManualOverride ? overrideSize : '')
                 setEditing(true)
@@ -355,7 +355,7 @@ function GearSizeRow({
               ✏
             </button>
             {isManualOverride && (<>
-              {/* design-ok */}<button
+              <button /* design-ok: inline clear-override icon trigger inside row */
                 onClick={onClearOverride}
                 className={`text-label text-secondary ${TOUCH_TARGET_CLASS} flex items-center justify-center`}
                 title="Clear override"
@@ -454,7 +454,7 @@ export function DiverEquipmentWidget({ visibleRange }: DiverEquipmentWidgetProps
           {data.bookings.map((b) => {
             const isActive = b.bookingId === activeId
             return (
-              <button /* design-ok */
+              <button /* design-ok: booking-tab pill inside multi-booking switcher, behaves like Tabs primitive but with custom pill chrome */
                 key={b.bookingId}
                 onClick={() => setSelectedBookingId(b.bookingId)}
                 className={`px-3 py-1 rounded-full text-label font-medium border transition-all duration-theme ${TOUCH_TARGET_CLASS}`}

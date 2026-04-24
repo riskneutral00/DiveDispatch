@@ -11,7 +11,6 @@ import { PILL_BASE as PILL_BASE_SHELL } from '@/lib/constants/pill-shell'
 
 export const PILL_BASE = PILL_BASE_SHELL
 
-/** At-rest surface — see `.quick-book-pill` in globals-surfaces.css (+ Booking matches course pills) */
 export const QUICK_BOOK_PILL_CLASS = 'quick-book-pill'
 
 export const DISABLED_OVERLAY: React.CSSProperties = { opacity: 0.4, cursor: 'not-allowed' }
@@ -31,7 +30,7 @@ export function QuickBookRail({ onSelect, dragEnabled }: QuickBookRailProps) {
   const canBook = !isLoading && onboardingStatus?.percentage === 100
 
   return (
-    <div className="flex flex-wrap items-center justify-start gap-1.5">
+    <div className="flex flex-wrap items-center justify-start gap-1 sm:gap-1.5">
       {COURSE_TEMPLATES.map((template) => {
         if (dragEnabled) {
           const pill = (
@@ -79,7 +78,7 @@ export function QuickBookRail({ onSelect, dragEnabled }: QuickBookRailProps) {
       })}
 
       {canBook ? (
-        <span className="inline-flex ml-auto">
+        <span className="inline-flex sm:ml-auto">
           {dragEnabled ? (
             <DraggablePill
               template={PLUS_TEMPLATE}
@@ -89,22 +88,26 @@ export function QuickBookRail({ onSelect, dragEnabled }: QuickBookRailProps) {
           ) : (
             <button /* design-ok: same stack as course pills */
               type="button"
-              className={`${PILL_BASE} glass-surface glass-surface-elevated ${QUICK_BOOK_PILL_CLASS} cursor-pointer`}
+              aria-label="Create booking"
+              className={`${PILL_BASE} max-sm:px-2 glass-surface glass-surface-elevated ${QUICK_BOOK_PILL_CLASS} cursor-pointer`}
               onClick={() => onSelect([] as CourseCode[])}
             >
-              + Booking
+              <span className="sm:hidden">+B</span>
+              <span className="hidden sm:inline">+ Booking</span>
             </button>
           )}
         </span>
       ) : (
-        <Tooltip label={TOOLTIP_LABEL} className="hidden md:inline-flex ml-auto">
+        <Tooltip label={TOOLTIP_LABEL} className="sm:ml-auto">
           <button /* design-ok: same stack as course pills */
             type="button"
             disabled
-            className={`${PILL_BASE} glass-surface glass-surface-elevated ${QUICK_BOOK_PILL_CLASS}`}
+            aria-label="Create booking"
+            className={`${PILL_BASE} max-sm:px-2 glass-surface glass-surface-elevated ${QUICK_BOOK_PILL_CLASS}`}
             style={DISABLED_OVERLAY}
           >
-            + Booking
+            <span className="sm:hidden">+B</span>
+            <span className="hidden sm:inline">+ Booking</span>
           </button>
         </Tooltip>
       )}

@@ -59,7 +59,7 @@ export function SessionTimeline({ sessions }: SessionTimelineProps) {
                   key={s._id}
                   className="relative pl-3"
                 >
-                  <span
+                  <span /* design-ok: --color-primary not wired in @theme inline */
                     className="absolute left-[-9px] top-2 w-3 h-3 rounded-full border-2 bg-glass-bg"
                     style={{ borderColor: 'var(--color-primary)' }}
                   />

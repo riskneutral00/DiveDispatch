@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils/cn";
 import { FieldError } from "@/components/ui/field-shell";
 import { RequiredAsterisk } from "@/components/ui/required-asterisk";
 import { useFloatingLabel } from "@/lib/hooks/use-floating-label";
+import { resolveFieldWidth } from "@/lib/utils/field-width";
 
 interface TextareaProps
   extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
@@ -28,7 +29,7 @@ export function Textarea({
   const { floated } = useFloatingLabel({ value: props.value as string | undefined, focused, required });
 
   return (
-    <div className={cn("relative", className?.includes('field-') || className?.includes('w-') ? '' : 'w-full', className)}>
+    <div className={cn("relative", resolveFieldWidth('field-xl', className))}>
       <textarea
         {...props}
         id={id}
