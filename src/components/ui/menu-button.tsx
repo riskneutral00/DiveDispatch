@@ -1,6 +1,6 @@
 'use client'
 
-import type { ButtonHTMLAttributes, ReactNode } from 'react'
+import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react'
 import { cn } from '@/lib/utils/cn'
 import { MENU_BUTTON_SIZE_MAP, type MenuButtonSize } from '@/lib/constants/button-sizes'
 
@@ -25,19 +25,23 @@ const VARIANT_MAP: Record<MenuButtonVariant, { base: string; active: string }> =
   },
 }
 
-export function MenuButton({
-  active = false,
-  size = 'md',
-  variant = 'flush',
-  children,
-  className,
-  type = 'button',
-  ...rest
-}: MenuButtonProps) {
+export const MenuButton = forwardRef<HTMLButtonElement, MenuButtonProps>(function MenuButton(
+  {
+    active = false,
+    size = 'md',
+    variant = 'flush',
+    children,
+    className,
+    type = 'button',
+    ...rest
+  },
+  ref,
+) {
   const shape = VARIANT_MAP[variant]
 
   return (
     <button
+      ref={ref}
       type={type}
       className={cn(
         'inline-flex items-center gap-2 font-medium cursor-pointer',
@@ -63,4 +67,4 @@ export function MenuButton({
       {children}
     </button>
   )
-}
+})

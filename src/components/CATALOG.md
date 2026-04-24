@@ -118,6 +118,12 @@ Governance: `.claude/rules/existing-components-first.md` + `.claude/rules/dry-fi
 | `Tooltip` | `@/components/ui/tooltip` | Hover/focus tooltip. |
 | `AppToaster` | `@/components/ui/app-toaster` | Root toast host (mounted once in providers). |
 
+## Navigation
+
+| Component | Import | Purpose |
+|---|---|---|
+| `Tabs` | `@/components/ui/tabs` | Canonical tablist container. Owns `activeTab` + `onChange` wiring, keyboard nav (ArrowLeft/Right with focus + active swap), `scrollIntoView` for active tab on mobile, and variant-driven trigger rendering (`underline` → `TabButton`, `pill` → `MenuButton`). Two input modes: `tabs: TabItem[]` (flat) or `groups: TabItem[][]` (multiple tab groups with a divider between them — e.g. profile-overlay static-tabs vs. role-tabs). Use for any multi-tab surface. |
+
 ## Progress
 
 | Component | Import | Purpose |
