@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery } from 'convex/react'
 import { useState, useEffect } from 'react'
+import { useTranslations } from 'next-intl'
 import { api } from '@/lib/convex-generated'
 import { InlineError, NumberPicker } from '@/components/ui'
 import { LoadingCard } from '@/components/ui/loading-card'
@@ -46,6 +47,7 @@ interface LanguagesStepInnerProps {
 }
 
 function LanguagesStepInner({ role, roleApi, onSaved, onBack }: LanguagesStepInnerProps) {
+  const tCommon = useTranslations('common')
   const existing = useQuery(roleApi.mine)
   const me = useQuery(api.users.me)
   const update = useMutation(roleApi.update)
@@ -139,7 +141,8 @@ function LanguagesStepInner({ role, roleApi, onSaved, onBack }: LanguagesStepInn
           <div className="flex flex-wrap gap-4 w-full">
             <div className="flex flex-col gap-4 min-w-0">
               <LanguageField
-                variant="customer"
+                label={tCommon('customerLanguages')}
+                required
                 value={focusedLanguages}
                 onChange={setFocusedLanguages}
                 className="field-md"
@@ -190,7 +193,8 @@ function LanguagesStepInner({ role, roleApi, onSaved, onBack }: LanguagesStepInn
         ) : (
           <div className="flex flex-wrap gap-4 w-full">
             <LanguageField
-              variant="customer"
+              label={tCommon('customerLanguages')}
+              required
               value={focusedLanguages}
               onChange={setFocusedLanguages}
               className="field-md"

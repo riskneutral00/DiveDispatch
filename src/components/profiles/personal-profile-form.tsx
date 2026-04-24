@@ -1,27 +1,14 @@
 'use client'
 
-import { useQuery } from 'convex/react'
-import { api } from '@/lib/convex-generated'
-import { type LocationValue } from '@/components/profiles/location-picker-lazy'
+import { useTranslations } from 'next-intl'
 import { ProfileAgencyInfo } from '@/components/profiles/profile-agency-info'
-import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
 import { LanguageField } from '@/components/ui/language-field'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
-import { SectionDivider } from '@/components/ui/section-divider'
-import {
-  INITIAL_ACCESS_CONTROL,
-  accessFromProfile,
-  accessToPayload,
-  type AccessControlState,
-} from '@/components/profiles/access-control-section'
+import { BusinessContactSection } from '@/components/profiles/business-contact-section'
 import {
   type PersonalContactFormState,
-  INITIAL_PERSONAL_CONTACT_FORM,
   INITIAL_TEACHING_LANGUAGES,
   buildParentContactDefaults,
-  personalContactFromProfile,
-  personalContactToPayload,
-  defaultFromMe,
   languagesFromProfile,
   languagesToPayload,
   type BaseProfileSectionProps,
@@ -41,17 +28,6 @@ export type PersonalCredential = z.infer<typeof instructorCredentialSchema>
 
 export type { PersonalContactFormState }
 
-export type PersonalMergedContactFormState = PersonalContactFormState & { // dry-ok
-  teachingLanguages: Language[]
-  access: AccessControlState
-}
-
-export const INITIAL_PERSONAL_MERGED_CONTACT: PersonalMergedContactFormState = {
-  ...INITIAL_PERSONAL_CONTACT_FORM,
-  ...INITIAL_TEACHING_LANGUAGES,
-  access: INITIAL_ACCESS_CONTROL,
-}
-
 export type PersonalLanguagesFormState = { teachingLanguages: Language[] }
 
 export const INITIAL_LANGUAGES_FORM = INITIAL_TEACHING_LANGUAGES
@@ -65,22 +41,6 @@ export function languagesFromProfilePersonal(p: Record<string, unknown>): { teac
 export function languagesToPayloadPersonal(f: { teachingLanguages: Language[] }): Record<string, unknown> {
   return {
     teachingLanguages: languagesToPayload(f.teachingLanguages),
-  }
-}
-
-function mergedPersonalFromProfile(p: Record<string, unknown>): PersonalMergedContactFormState {
-  return {
-    ...personalContactFromProfile(p),
-    ...languagesFromProfilePersonal(p),
-    access: accessFromProfile(p),
-  }
-}
-
-function mergedPersonalToPayload(f: PersonalMergedContactFormState): Record<string, unknown> {
-  return {
-    ...personalContactToPayload(f),
-    ...languagesToPayloadPersonal(f),
-    ...accessToPayload(f.access),
   }
 }
 
@@ -117,104 +77,27 @@ export function credentialsToPayload(f: PersonalCredentialsFormState): Record<st
   }
 }
 
-export type PersonalContactSectionProps = BaseProfileSectionProps
-
-export type PersonalCredentialsSectionProps = Pick<BaseProfileSectionProps, 'profile' | 'me' | 'create' | 'update'> & {
-  onClose?: () => void
-}
-
-export function PersonalContactSection({
-  profile,
-  me,
-  create,
-  update,
-  onClose,
-}: PersonalContactSectionProps) {
-  const inheritance = useQuery(api.users.inheritedContactDefaults, { excludeRole: 'Instructor' })
-
-  const inheritedDefaults: PersonalMergedContactFormState = inheritance
-    ? {
-        ...INITIAL_PERSONAL_MERGED_CONTACT,
-        ...personalContactFromProfile(inheritance as unknown as Record<string, unknown>),
-      }
-    : INITIAL_PERSONAL_MERGED_CONTACT
-
-  const createOverride = (payload: Record<string, unknown>) =>
-    create({ ...payload, credential: [] })
-
-  const {
-    form,
-    setField,
-    errors,
-    footerErrorMessage,
-    saving,
-    saved,
-    isDirty,
-    isValid,
-    loading,
-    isUpdate,
-    handleSubmit,
-    resetToBaseline,
-  } = useProfileForm({
-    profile: inheritance === undefined ? undefined : profile,
-    me,
-    schema: personalContactMergedSchema,
-    defaults: inheritedDefaults,
-    fromProfile: mergedPersonalFromProfile,
-    fromMe: (u, defaults) => ({
-      ...defaultFromMe(u, defaults),
-      email: defaults.email || ((u.email as string) ?? ''),
-      location: defaults.location ?? null,
-    }),
-    toPayload: mergedPersonalToPayload,
-    create: createOverride,
-    update,
-  })
-
-  const onLocationChange = (loc: LocationValue | null) => setField('location', loc)
-
+export function PersonalContactSection(props: BaseProfileSectionProps) {
+  const tCommon = useTranslations('common')
   return (
-    <ProfileFormShell
-      loading={loading}
-      onSubmit={handleSubmit}
-      onCancel={() => {
-        resetToBaseline()
-        onClose?.()
+    <BusinessContactSection
+      {...props}
+      schema={personalContactMergedSchema}
+      inheritFromOtherRoles="Instructor"
+      createOverride={(payload) => props.create({ ...payload, credential: [] })}
+      extras={{
+        defaults: { teachingLanguages: [] },
+        fromProfile: (p) => languagesFromProfilePersonal(p) as Record<string, unknown>,
+        toPayload: (f) => languagesToPayloadPersonal({ teachingLanguages: (f.teachingLanguages as Language[]) ?? [] }),
+        render: ({ form, setField }) => (
+          <LanguageField
+            label={tCommon('teachingLanguages')}
+            value={(form.teachingLanguages as Language[]) ?? []}
+            onChange={(langs) => setField('teachingLanguages', langs)}
+          />
+        ),
       }}
-      footerErrorMessage={footerErrorMessage}
-      saving={saving}
-      saved={saved}
-      isDirty={isDirty}
-      isUpdate={isUpdate}
-      disableSaveWhenInvalid
-      isValid={isValid}
-      className="space-y-6"
-    >
-      <div className="space-y-4">
-        <ProfileBasicInfo
-          locationValue={form.location}
-          onLocationChange={onLocationChange}
-          locationError={errors.location}
-          locationRequired
-          emailValue={form.email}
-          onEmailChange={(val) => setField('email', val)}
-          emailError={errors.email}
-          emailRequired
-          phoneValue={form.phone}
-          onPhoneChange={(val) => setField('phone', val)}
-          phoneError={errors.phone}
-          phoneRequired
-        />
-
-        <SectionDivider variant="soft" />
-
-        <LanguageField
-          variant="teaching"
-          value={form.teachingLanguages}
-          onChange={(langs) => setField('teachingLanguages', langs)}
-        />
-      </div>
-    </ProfileFormShell>
+    />
   )
 }
 
@@ -224,7 +107,7 @@ export function PersonalCredentialsSection({
   create,
   update,
   onClose,
-}: PersonalCredentialsSectionProps) {
+}: BaseProfileSectionProps) {
   const initialDefaults = getInitialCredentialsForm()
 
   const createOverride = (payload: Record<string, unknown>) => {
@@ -287,40 +170,3 @@ export function PersonalCredentialsSection({
 }
 
 export type InstructorProfileSection = PersonalSection
-
-export function PersonalProfileForm({
-  section,
-  profile,
-  me,
-  create,
-  update,
-  onClose,
-}: BaseProfileSectionProps & {
-  section?: PersonalSection
-}) {
-  if (section === 'credentials')
-    return (
-      <PersonalCredentialsSection
-        profile={profile}
-        me={me}
-        create={create}
-        update={update}
-        onClose={onClose}
-      />
-    )
-  return (
-    <PersonalContactSection
-      profile={profile}
-      me={me}
-      create={create}
-      update={update}
-      onClose={onClose}
-    />
-  )
-}
-
-export function InstructorProfileForm(
-  props: BaseProfileSectionProps & { section?: InstructorProfileSection },
-) {
-  return <PersonalProfileForm {...props} />
-}

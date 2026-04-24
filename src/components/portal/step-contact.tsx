@@ -81,6 +81,7 @@ interface StepContactProps {
 
 export function StepContact({ token, onComplete, bookingStartDate }: StepContactProps) {
   const t = useTranslations('portal')
+  const tCommon = useTranslations('common')
   const tErrors = useTranslations('errors')
   const [form, setFormState] = useState<CustomerContactData>(defaultForm())
   const [ageError, setAgeError] = useState<string | null>(null)
@@ -358,6 +359,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
               value={form.dateOfBirth || null}
               onChange={(v) => setField('dateOfBirth', v ?? '')}
               error={errors.dateOfBirth}
+              className="field-md"
             />
             <div aria-live="polite">
               {ageError && (
@@ -390,7 +392,8 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
       <Card padding="md">
         <FormSectionHeader label={t('sectionLanguages')} />
         <LanguageField
-          variant="customer"
+          label={tCommon('customerLanguages')}
+          required
           value={form.languages}
           onChange={(v) => setField('languages', v)}
         />
@@ -425,6 +428,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
               value={form.passportExpirationDate || null}
               onChange={(v) => setField('passportExpirationDate', v ?? '')}
               error={errors.passportExpirationDate}
+              className="field-md"
             />
             {passportExpiringSoon && !errors.passportExpirationDate && (
               <ErrorAlert variant="warning" iconSize={16} className="mt-2">

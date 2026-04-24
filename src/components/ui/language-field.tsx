@@ -5,37 +5,35 @@ import { FieldShell } from "@/components/ui/field-shell";
 import { cn } from "@/lib/utils/cn";
 import type { Language } from "@/lib/types/language";
 
-type LanguageVariant = "app" | "customer" | "teaching";
-
-const VARIANT_CONFIG: Record<LanguageVariant, { label: string; max: number }> =
-  {
-    app: { label: "App Language", max: 1 },
-    customer: { label: "Customer Languages", max: 4 },
-    teaching: { label: "Teaching Languages", max: 4 },
-  };
-
 interface LanguageFieldProps {
-  variant: LanguageVariant;
+  label: string;
   value: Language[];
   onChange: (languages: Language[]) => void;
+  id?: string;
+  max?: number;
+  required?: boolean;
+  error?: string;
   disabled?: boolean;
   className?: string;
 }
 
 export function LanguageField({
-  variant,
+  label,
   value,
   onChange,
+  id = "language-field",
+  max = 4,
+  required,
+  error,
   disabled = false,
   className,
 }: LanguageFieldProps) {
-  const { label, max } = VARIANT_CONFIG[variant];
-
   return (
     <FieldShell
-      id={`language-${variant}`}
+      id={id}
       label={label}
-      required
+      required={required}
+      error={error}
       className={cn("flex flex-col items-center gap-1.5 w-full", className)}
     >
       <div className="reading-plane rounded-theme p-2 w-auto">

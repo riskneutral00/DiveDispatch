@@ -1,18 +1,12 @@
 'use client'
 
 import { Plus } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { ProfileAgencyInfo } from '@/components/profiles/profile-agency-info'
 import { LanguageField } from '@/components/ui/language-field'
-import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
 import { Button } from '@/components/ui/button'
-import { SectionDivider } from '@/components/ui/section-divider'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
-import {
-  INITIAL_ACCESS_CONTROL,
-  accessFromProfile,
-  accessToPayload,
-  type AccessControlState,
-} from '@/components/profiles/access-control-section'
+import { BusinessContactSection } from '@/components/profiles/business-contact-section'
 import { diveCenterAffiliationsSchema, diveCenterContactMergedSchema } from '@/lib/schemas/profile-shared'
 import {
   type ContactFormState as DiveCenterContactFormState,
@@ -24,7 +18,6 @@ import {
   languagesFromProfile,
   languagesToPayload,
   type BaseProfileSectionProps,
-  type ContactFormState,
 } from '@/lib/profile-form'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 import type { Language } from '@/lib/types/language'
@@ -35,26 +28,6 @@ type DiveCenterSectionProps = BaseProfileSectionProps
 
 export type { DiveCenterContactFormState }
 export { INITIAL_CONTACT_FORM, contactFromProfile, contactToPayload }
-
-export type DiveCenterMergedContactFormState = ContactFormState & { // dry-ok
-  customerLanguages: Language[]
-  access: AccessControlState
-}
-
-export const INITIAL_DC_MERGED_CONTACT: DiveCenterMergedContactFormState = {
-  ...INITIAL_CONTACT_FORM,
-  ...INITIAL_CUSTOMER_LANGUAGES,
-  access: INITIAL_ACCESS_CONTROL,
-}
-
-const diveCenterFromMe = (
-  u: Record<string, unknown>,
-  defaults: DiveCenterMergedContactFormState,
-): DiveCenterMergedContactFormState => ({
-  ...defaults,
-  email: (u.email as string) ?? '',
-  phone: (u.phone as string) ?? '',
-})
 
 export type DiveCenterLanguagesFormState = {
   customerLanguages: Language[]
@@ -75,92 +48,26 @@ export function languagesToPayloadDC(f: DiveCenterLanguagesFormState): Record<st
 }
 
 export function DiveCenterContactSection(props: DiveCenterSectionProps) {
-  const { profile, me, create, update, onSaved, onClose } = props
-
-  const createOverride = (payload: Record<string, unknown>) =>
-    create({ ...payload, associations: [] })
-
-  const {
-    form,
-    setField,
-    errors,
-    footerErrorMessage,
-    saving,
-    saved,
-    isDirty,
-    isValid,
-    loading,
-    isUpdate,
-    handleSubmit,
-    resetToBaseline,
-  } = useProfileForm({
-    profile,
-    me,
-    schema: diveCenterContactMergedSchema,
-    defaults: INITIAL_DC_MERGED_CONTACT,
-    fromProfile: (p) => ({
-      ...contactFromProfile(p),
-      ...languagesFromProfileDC(p),
-      access: accessFromProfile(p),
-    }),
-    fromMe: diveCenterFromMe,
-    toPayload: (f) => ({
-      ...contactToPayload(f),
-      ...languagesToPayloadDC(f),
-      ...accessToPayload(f.access),
-    }),
-    create: createOverride,
-    update,
-    onSaved,
-  })
-
+  const tCommon = useTranslations('common')
   return (
-    <ProfileFormShell
-      loading={loading}
-      onSubmit={handleSubmit}
-      onCancel={() => {
-        resetToBaseline()
-        onClose?.()
+    <BusinessContactSection
+      {...props}
+      nameLabel="Business Name"
+      schema={diveCenterContactMergedSchema}
+      createOverride={(payload) => props.create({ ...payload, associations: [] })}
+      extras={{
+        defaults: { customerLanguages: [] },
+        fromProfile: (p) => languagesFromProfileDC(p) as Record<string, unknown>,
+        toPayload: (f) => languagesToPayloadDC({ customerLanguages: (f.customerLanguages as Language[]) ?? [] }),
+        render: ({ form, setField }) => (
+          <LanguageField
+            label={tCommon('customerLanguages')}
+            value={(form.customerLanguages as Language[]) ?? []}
+            onChange={(langs) => setField('customerLanguages', langs)}
+          />
+        ),
       }}
-      footerErrorMessage={footerErrorMessage}
-      saving={saving}
-      saved={saved}
-      isDirty={isDirty}
-      isUpdate={isUpdate}
-      disableSaveWhenInvalid
-      isValid={isValid}
-      className="space-y-6"
-    >
-      <div className="space-y-4">
-        <ProfileBasicInfo
-          nameValue={form.name}
-          onNameChange={(val) => setField('name', val)}
-          nameError={errors.name}
-          nameLabel="Business Name"
-          nameRequired
-          locationValue={form.location}
-          onLocationChange={(loc) => setField('location', loc)}
-          locationError={errors.location}
-          locationRequired
-          emailValue={form.email}
-          onEmailChange={(val) => setField('email', val)}
-          emailError={errors.email}
-          emailRequired
-          phoneValue={form.phone}
-          onPhoneChange={(val) => setField('phone', val)}
-          phoneError={errors.phone}
-          phoneRequired
-        />
-
-        <SectionDivider variant="soft" />
-
-        <LanguageField
-          variant="customer"
-          value={form.customerLanguages}
-          onChange={(langs) => setField('customerLanguages', langs)}
-        />
-      </div>
-    </ProfileFormShell>
+    />
   )
 }
 
@@ -282,18 +189,3 @@ export function DiveCenterAffiliationsSection({ profile: existing, me, create, u
   )
 }
 
-export function DiveCenterProfileForm({
-  section,
-  profile,
-  me,
-  create,
-  update,
-  onSaved,
-  onClose,
-}: DiveCenterSectionProps & { section?: DiveCenterProfileSection }) {
-  if (section === 'associations')
-    return <DiveCenterAffiliationsSection profile={profile} me={me} create={create} update={update} onClose={onClose} />
-  return (
-    <DiveCenterContactSection profile={profile} me={me} create={create} update={update} onSaved={onSaved} onClose={onClose} />
-  )
-}

@@ -167,7 +167,9 @@ export function ProfileTab({ onClose }: { onClose?: () => void }) {
         />
 
         <LanguageField
-          variant="app"
+          label={t('appLanguage')}
+          max={1}
+          required
           value={selectedLocale}
           onChange={(langs) => {
             if (langs[0]) setField('appLanguage', langs[0].code)

@@ -75,6 +75,8 @@
     "month": "Month",
     "day": "Day",
     "appLanguage": "App Language",
+    "customerLanguages": "Customer Languages",
+    "teachingLanguages": "Teaching Languages",
     "country": "Country",
     "nationality": "Nationality",
     "phoneInvalid": "Invalid phone number",
@@ -86,7 +88,9 @@
     "birthdayTooYoung": "Must be at least {min} years old",
     "birthdayTooOld": "Year must be {min} or later",
     "countrySelectPlaceholder": "Select country",
-    "countrySearch": "Search countries"
+    "countrySearch": "Search countries",
+    "addVenue": "Add venue",
+    "editVenue": "Edit venue"
   },
   "errors": {
     "unexpected": "Something went wrong. Try again.",
@@ -135,9 +139,9 @@
     "roles": "Roles",
     "account": "Account",
     "userMenu": "User menu",
+    "profileProgress": "Profile {percentage}% complete",
     "addRoleTitle": "Add a Role",
-    "addRoleDescription": "Select a new role to add to your account.",
-    "startProfile": "Start your {role} profile"
+    "addRoleDescription": "Select a new role to add to your account."
   },
   "auth": {
     "signUp": "Sign Up",

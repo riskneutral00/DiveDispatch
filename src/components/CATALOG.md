@@ -43,7 +43,7 @@ Governance: `.claude/rules/existing-components-first.md` + `.claude/rules/dry-fi
 | `CountryField` | `@/components/ui/country-field` | Country picker. |
 | `BirthdayField` | `@/components/ui/birthday-field` | Three-select DOB. Stores ISO string. |
 | `DateField` | `@/components/ui/date-field` | Raw `<input type="date">`. |
-| `LanguageField` | `@/components/ui/language-field` | Single-language picker. |
+| `LanguageField` | `@/components/ui/language-field` | Language picker with FieldShell (label + required + error). Takes `label: string` (translated) + `max?: number` (default 4). For single-language app-locale selection, pass `max={1}`. Aligns with every other field primitive — label ownership is internal. |
 
 ## Field scaffolding
 

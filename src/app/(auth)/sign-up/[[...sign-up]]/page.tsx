@@ -162,7 +162,9 @@ export default function SignUpPage() {
         </div>
         <div className="w-full mb-6">
           <LanguageField
-            variant="app"
+            label={t('appLanguage')}
+            max={1}
+            required
             value={selectedLocale}
             onChange={(langs) => {
               if (langs[0]) changeAppLanguage(langs[0].code)
