@@ -734,7 +734,7 @@ function GearItemCard({ kind, gearType, recentManufacturers, initial, onCommit, 
             ...canonicalManufacturers,
             ...recentManufacturers.filter((m) => m && !canonicalManufacturers.includes(m)),
           ]}
-          className="field-select-long"
+          className="field-lg"
         />
         {needsSize && (sizeOptions.length > 0 ? (
           <SimpleSelect
@@ -742,14 +742,14 @@ function GearItemCard({ kind, gearType, recentManufacturers, initial, onCommit, 
             value={size}
             onChange={setSize}
             options={sizeOptions}
-            className="field-select-short"
+            className="field-sm"
           />
         ) : (
           <Input
             label={tBooking('size')}
             value={size}
             onChange={(e) => setSize(e.target.value)}
-            className="field-select-short"
+            className="field-sm"
           />
         ))}
         <NumberPicker
@@ -758,7 +758,7 @@ function GearItemCard({ kind, gearType, recentManufacturers, initial, onCommit, 
           max={500}
           value={totalUnits}
           onChange={(v) => { if (v !== undefined) setTotalUnits(v) }}
-          className="field-number"
+          className="field-xs"
         />
       </div>
       {saveError && <InlineError className="mt-2">{saveError}</InlineError>}

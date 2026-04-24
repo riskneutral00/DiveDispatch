@@ -6,95 +6,45 @@
    ──────────────────────────────────────────────────────────────────────────── */
 
 @layer utilities {
-  .field-number {
+  .field-xs {
     grid-column: span 2;
   }
-  .field-select-short {
+  .field-sm {
     grid-column: span 2;
   }
-  .field-name {
+  .field-md {
     grid-column: span 3;
   }
-  .field-phone {
-    grid-column: span 3;
-  }
-  .field-text-short {
-    grid-column: span 3;
-  }
-  .field-date {
-    grid-column: span 3;
-  }
-  .field-email {
+  .field-lg {
     grid-column: span 6;
   }
-  .field-select-long {
-    grid-column: span 6;
-  }
-  .field-location {
-    grid-column: span 6;
-  }
-  .field-text-long {
+  .field-xl {
     grid-column: span 6;
   }
 
   @media (min-width: 640px) {
-    .field-number,
-    .field-select-short,
-    .field-name,
-    .field-phone,
-    .field-text-short,
-    .field-date,
-    .field-email,
-    .field-select-long,
-    .field-location,
-    .field-text-long {
+    .field-xs,
+    .field-sm,
+    .field-md,
+    .field-lg,
+    .field-xl {
       grid-column: auto;
     }
 
-    .field-number {
+    .field-xs {
       width: 80px;
     }
-    .field-select-short {
+    .field-sm {
       width: 112px;
     }
-    .field-name {
+    .field-md {
       width: 176px;
     }
-    .field-phone {
-      width: 176px;
-    }
-    .field-text-short {
-      width: 176px;
-    }
-    .field-date {
-      width: 176px;
-    }
-    .field-email {
+    .field-lg {
       width: 256px;
     }
-    .field-select-long {
-      width: 256px;
-    }
-    .field-location {
-      width: 256px;
-    }
-    .field-text-long {
+    .field-xl {
       width: 100%;
-    }
-  }
-
-  /* Portal + profile responsive field grid (mobile: 6-col; sm+: flex wrap) */
-  .form-grid-responsive {
-    display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-    column-gap: 0.75rem;
-    row-gap: 1rem;
-  }
-  @media (min-width: 640px) {
-    .form-grid-responsive {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1rem;
     }
   }
 

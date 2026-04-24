@@ -1,14 +1,14 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { useQuery } from 'convex/react'
 import { api } from '@/lib/convex-generated'
-import { Dialog } from '@/components/ui/dialog'
+import { Dialog, DialogFooter } from '@/components/ui/dialog'
 import { NameField } from '@/components/ui/name-field'
 import { NumberPicker } from '@/components/ui/number-picker'
 import { SimpleSelect } from '@/components/ui/simple-select'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Button } from '@/components/ui/button'
 import { FieldLabel } from '@/components/ui/field-shell'
 import { LocationPicker, type LocationValue } from '@/components/profiles/location-picker-lazy'
 import {
@@ -64,6 +64,7 @@ interface VenueEditDialogProps {
 }
 
 export function VenueEditDialog({ open, onClose, mode, initialValue, onSubmit }: VenueEditDialogProps) {
+  const t = useTranslations('common')
   const [form, setForm] = useState<VenueEditValue>(initialValue ?? EMPTY_VENUE_EDIT)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -102,7 +103,7 @@ export function VenueEditDialog({ open, onClose, mode, initialValue, onSubmit }:
     <Dialog
       open={open}
       onClose={onClose}
-      title={mode === 'create' ? 'Add venue' : 'Edit venue'}
+      title={mode === 'create' ? t('addVenue') : t('editVenue')}
       size="lg"
     >
       <div className="space-y-4">
@@ -136,7 +137,7 @@ export function VenueEditDialog({ open, onClose, mode, initialValue, onSubmit }:
             step={0.5}
             decimals={1}
             required={capabilitiesRequired}
-            className="field-number"
+            className="field-xs"
           />
           <NumberPicker
             label="Max Capacity"
@@ -145,7 +146,7 @@ export function VenueEditDialog({ open, onClose, mode, initialValue, onSubmit }:
             min={1}
             max={range.maxCapacity}
             required={capabilitiesRequired}
-            className="field-number"
+            className="field-xs"
           />
         </div>
         {showConfinedToggle && (
@@ -170,20 +171,16 @@ export function VenueEditDialog({ open, onClose, mode, initialValue, onSubmit }:
 
         {error && <div className="text-destructive text-body">{error}</div>}
 
-        <div className="flex gap-3 justify-end pt-2">
-          <Button type="button" variant="secondary" onClick={onClose} disabled={saving}>
-            Cancel
-          </Button>
-          <Button
-            type="button"
-            variant="primary"
-            onClick={handleSubmit}
-            disabled={!canSubmit || saving}
-            loading={saving}
-          >
-            {mode === 'create' ? 'Add venue' : 'Save'}
-          </Button>
-        </div>
+        <DialogFooter
+          className="pt-2"
+          primaryLabel={mode === 'create' ? t('addVenue') : t('save')}
+          onPrimary={handleSubmit}
+          primaryDisabled={!canSubmit || saving}
+          primaryLoading={saving}
+          secondaryLabel={t('cancel')}
+          onSecondary={onClose}
+          secondaryDisabled={saving}
+        />
       </div>
     </Dialog>
   )

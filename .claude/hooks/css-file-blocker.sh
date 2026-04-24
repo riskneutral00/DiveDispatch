@@ -5,9 +5,10 @@
 INPUT=$(cat)
 FILE_PATH=$(echo "$INPUT" | grep -o '"file_path"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/.*"file_path"[[:space:]]*:[[:space:]]*"//;s/"$//')
 
-# Whitelist: globals.css is the only allowed CSS file
+# Whitelist: globals.css + globals-utilities.css (imported by globals.css for @layer utilities)
 case "$FILE_PATH" in
   */src/app/globals.css|*/globals.css) exit 0 ;;
+  */src/app/globals-utilities.css|*/globals-utilities.css) exit 0 ;;
 esac
 
 # Block any other CSS-family file

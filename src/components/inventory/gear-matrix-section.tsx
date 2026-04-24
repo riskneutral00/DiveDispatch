@@ -164,7 +164,7 @@ export function ManufacturerMatrixSection({
             value={manufacturer}
             onChange={setManufacturer}
             options={availableManufacturers}
-            className="field-select-long"
+            className="field-lg"
           />
           {gearType === 'fins' && (
             <SimpleSelect
@@ -175,7 +175,7 @@ export function ManufacturerMatrixSection({
                 value: s,
                 label: tBooking(`sizeSystem${s.toUpperCase() as 'EU' | 'US' | 'CM' | 'LETTER'}`),
               }))}
-              className="field-select-short"
+              className="field-sm"
             />
           )}
         </div>
@@ -189,7 +189,7 @@ export function ManufacturerMatrixSection({
                 max={20}
                 value={fillValue}
                 onChange={(v) => { if (v !== undefined) setFillValue(v) }}
-                className="field-number"
+                className="field-xs"
               />
               <Button
                 type="button"
@@ -209,7 +209,7 @@ export function ManufacturerMatrixSection({
                   max={500}
                   value={cells[PLANO_KEY] ?? 0}
                   onChange={(v) => handleCellChange(PLANO_KEY, v)}
-                  className="field-number"
+                  className="field-xs"
                 />
                 <p className="text-body text-secondary">{tBooking('prescriptionStrength')}</p>
               </div>

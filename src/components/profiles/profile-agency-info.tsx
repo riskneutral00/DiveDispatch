@@ -134,7 +134,7 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
             value={String((item as AgencyRow).number ?? "")}
             onChange={(e) => handleUpdate(idx, { number: e.target.value })}
             required
-            className="field-text-short"
+            className="field-md"
           />
         </div>
 
@@ -204,7 +204,7 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
           placeholder="Select agency…"
           error={errors[`associations.${idx}.agency`]}
           required
-          className="field-select-short"
+          className="field-sm"
         />
         <Input
           label="Agency Member ID"
@@ -212,7 +212,7 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
           onChange={(e) => handleUpdate(idx, { number: e.target.value })}
           error={errors[`associations.${idx}.number`]}
           required
-          className="field-text-short"
+          className="field-md"
         />
       </div>
     );
@@ -240,7 +240,7 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
             placeholder="Select agency…"
             error={errors[`credential.${idx}.agency`]}
             required
-            className="field-select-short"
+            className="field-sm"
           />
           <SimpleSelect
             label="Level"
@@ -251,7 +251,7 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
             error={errors[`credential.${idx}.level`]}
             required
             disabled={!selectedAgency}
-            className="field-select-short"
+            className="field-sm"
           />
           <Input
             label="Agency ID"
@@ -259,7 +259,7 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
             value={String((item as AgencyRow).agencyID ?? "")}
             onChange={(e) => handleUpdate(idx, { agencyID: e.target.value })}
             error={errors[`credential.${idx}.agencyID`]}
-            className="field-text-short"
+            className="field-md"
             required
             disabled={!selectedAgency || !selectedLevel}
           />

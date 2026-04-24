@@ -28,7 +28,7 @@ describe("field primitives", () => {
     const { container } = render(
       <>
         <Input label="Input" className="w-40" />
-        <Textarea label="Textarea" className="field-text-long" />
+        <Textarea label="Textarea" className="field-xl" />
         <SimpleSelect
           label="Select"
           className="col-span-3"
@@ -42,7 +42,7 @@ describe("field primitives", () => {
     const wrappers = Array.from(container.children) as HTMLElement[];
     expect(wrappers[0].className).toContain("w-40");
     expect(wrappers[0].className).not.toContain("w-full");
-    expect(wrappers[1].className).toContain("field-text-long");
+    expect(wrappers[1].className).toContain("field-xl");
     expect(wrappers[1].className).not.toContain("w-full");
     expect(wrappers[2].className).toContain("col-span-3");
     expect(wrappers[2].className).not.toContain("w-full");
