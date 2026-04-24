@@ -18,7 +18,7 @@ import {
 } from '@/lib/constants/gear-sizing'
 import { PLANO_KEY, diopterCellKey } from '@/lib/constants/diopters'
 import { GEAR_REQUIRED_FIELDS, isGearItemComplete } from '@/lib/constants/gear-required-fields'
-import { MenuButton } from '@/components/ui/menu-button'
+import { Tabs, type TabItem } from '@/components/ui/tabs'
 import { ItemCard } from '@/components/ui/item-card'
 import { SimpleSelect } from '@/components/ui/simple-select'
 import { Input } from '@/components/ui/input'
@@ -363,30 +363,25 @@ export function ConnectedEquipmentGear() {
 
   return (
     <div className="space-y-4">
-      <nav
-        className="flex gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        role="tablist"
-        aria-label={tBooking('gearTypes')}
-      >
-        {GEAR_TYPES.map((gt) => (
-          <MenuButton
-            key={gt}
-            role="tab"
-            aria-selected={activeGearType === gt}
-            active={activeGearType === gt}
-            variant="pill"
-            size="sm"
-            onClick={() => setActiveGearType(gt)}
-          >
-            {GEAR_TYPE_LABELS[gt]}
-            {tabStatus[gt] === 'complete' ? (
-              <Check size={12} className="text-success" aria-hidden />
-            ) : (
-              <RequiredAsterisk />
-            )}
-          </MenuButton>
-        ))}
-      </nav>
+      <Tabs
+        variant="pill"
+        ariaLabel={tBooking('gearTypes')}
+        activeTab={activeGearType}
+        onChange={(id) => setActiveGearType(id as GearType)}
+        tabs={GEAR_TYPES.map<TabItem>((gt) => ({
+          id: gt,
+          label: (
+            <>
+              {GEAR_TYPE_LABELS[gt]}
+              {tabStatus[gt] === 'complete' ? (
+                <Check size={12} className="text-success" aria-hidden />
+              ) : (
+                <RequiredAsterisk />
+              )}
+            </>
+          ),
+        }))}
+      />
 
       {isMatrix ? (
         <MatrixView
