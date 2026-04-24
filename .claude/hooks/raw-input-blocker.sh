@@ -33,22 +33,22 @@ esac
 CLEAN=$(grep -vE 'design-ok|comments-ok' "$FILE_PATH" 2>/dev/null)
 
 if echo "$CLEAN" | grep -qE '<input[^>]*type=["'\'']tel["'\'']'; then
-  echo '{"decision":"block","reason":"Raw <input type=\"tel\"> detected. Use PhoneField from @/components/ui/phone-field. See .claude/rules/form-field-consistency.md. Add {/* design-ok */} on the line to suppress."}'
+  echo '{"decision":"block","reason":"Raw <input type=\"tel\"> detected. Use PhoneField from @/components/ui/phone-field. See .claude/rules/form-field-consistency.md. Add {/* design-ok: <reason> */} on the same line — colon-prefixed justification required."}'
   exit 0
 fi
 
 if echo "$CLEAN" | grep -qE '<input[^>]*type=["'\'']email["'\'']'; then
-  echo '{"decision":"block","reason":"Raw <input type=\"email\"> detected. Use EmailField from @/components/ui/email-field. See .claude/rules/form-field-consistency.md. Add {/* design-ok */} on the line to suppress."}'
+  echo '{"decision":"block","reason":"Raw <input type=\"email\"> detected. Use EmailField from @/components/ui/email-field. See .claude/rules/form-field-consistency.md. Add {/* design-ok: <reason> */} on the same line — colon-prefixed justification required."}'
   exit 0
 fi
 
 if echo "$CLEAN" | grep -qE '<input[^>]*type=["'\'']date["'\'']'; then
-  echo '{"decision":"block","reason":"Raw <input type=\"date\"> detected. Use DateField or BirthdayField from @/components/ui/. See .claude/rules/form-field-consistency.md. Add {/* design-ok */} on the line to suppress."}'
+  echo '{"decision":"block","reason":"Raw <input type=\"date\"> detected. Use DateField or BirthdayField from @/components/ui/. See .claude/rules/form-field-consistency.md. Add {/* design-ok: <reason> */} on the same line — colon-prefixed justification required."}'
   exit 0
 fi
 
 if echo "$CLEAN" | grep -qE '(dobMonth|dobDay|dobYear|birthMonth|birthDay|birthYear)'; then
-  echo '{"decision":"block","reason":"Three-select DOB pattern detected (dobMonth/Day/Year). Use BirthdayField from @/components/ui/birthday-field and store dateOfBirth as a single ISO string. Add // design-ok on the line to suppress if intentional."}'
+  echo '{"decision":"block","reason":"Three-select DOB pattern detected (dobMonth/Day/Year). Use BirthdayField from @/components/ui/birthday-field and store dateOfBirth as a single ISO string. If intentional, add // design-ok: <reason> on the same line — colon-prefixed justification required."}'
   exit 0
 fi
 

@@ -14,11 +14,11 @@ case "$FILE_PATH" in *.test.*|*.spec.*|*.stories.*) exit 0 ;; esac
 CLEAN=$(grep -vE '^\s*//' "$FILE_PATH" 2>/dev/null | grep -v 'design-ok')
 
 if echo "$CLEAN" | grep -E 'overflow-y-(auto|scroll)' | grep -qvE 'overflow-x-(hidden|clip)'; then
-  echo "[Hook] overflow-y-auto/scroll without overflow-x-hidden detected. Pair them to prevent horizontal content leak on all screen sizes. Add {/* design-ok */} to suppress for intentional horizontal scroll containers."
+  echo "[Hook] overflow-y-auto/scroll without overflow-x-hidden detected. Pair them to prevent horizontal content leak on all screen sizes. For intentional horizontal scroll containers, add {/* design-ok: <reason> */} on the same line — colon-prefixed justification required."
 fi
 
 if echo "$CLEAN" | grep -qE '100vw'; then
-  echo '{"decision":"block","reason":"100vw detected — includes scrollbar width, always wider than viewport content area. Use 100% instead. Add {/* design-ok */} to suppress."}'
+  echo '{"decision":"block","reason":"100vw detected — includes scrollbar width, always wider than viewport content area. Use 100% instead. Add {/* design-ok: <reason> */} on the same line — colon-prefixed justification required."}'
   exit 0
 fi
 

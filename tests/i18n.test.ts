@@ -5,6 +5,7 @@ import {
   isValidLocale,
   isValidLanguageCode,
   normalizePhone,
+  normalizePhoneFromSelectedCountry,
   normalizeChineseScript,
   detectDefaultCountryFromLocale,
 } from '../src/lib/constants/i18n'
@@ -85,6 +86,11 @@ describe('src i18n — phone E.164', () => {
 
   it('normalizePhone accepts local format with defaultCountry', () => {
     expect(normalizePhone('0812345678', 'TH')).toBe('+66812345678')
+  })
+
+  it('normalizePhoneFromSelectedCountry strips duplicated calling code', () => {
+    expect(normalizePhoneFromSelectedCountry('66812345678', 'TH')).toBe('+66812345678')
+    expect(normalizePhoneFromSelectedCountry('14155551234', 'US')).toBe('+14155551234')
   })
 })
 

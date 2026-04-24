@@ -48,6 +48,10 @@ const eslintConfig = defineConfig([
       "dd-design/no-hardcoded-radius": "error",
       "dd-design/no-unprefixed-multicol": "error",
       "dd-design/no-tokenizable-inline-style": "warn",
+      "dd-design/no-raw-button": "error",
+      "dd-design/no-raw-label": "error",
+      "dd-design/no-raw-dialog": "error",
+      "dd-design/no-raw-anchor-internal": "error",
     },
   },
   // Profile form DRY enforcement — force barrel imports, prevent bypassing shared components

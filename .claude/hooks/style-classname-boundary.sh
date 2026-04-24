@@ -54,7 +54,7 @@ if echo "$CLEAN" | grep -E 'style=' | grep -qE "fontSize:\s*['\"]var\(--font-siz
 fi
 
 if [ -n "$VIOLATIONS" ]; then
-  echo "{\"decision\":\"block\",\"reason\":\"Style↔className boundary violations in $(basename "$FILE_PATH"): ${VIOLATIONS}Use Tailwind utilities from @theme inline instead of inline style with CSS variables. Variant Records (Record<Variant, CSSProperties>) are exempt. Add {/* design-ok */} to suppress legitimate exceptions.\"}"
+  echo "{\"decision\":\"block\",\"reason\":\"Style↔className boundary violations in $(basename "$FILE_PATH"): ${VIOLATIONS}Use Tailwind utilities from @theme inline instead of inline style with CSS variables. Variant Records (Record<Variant, CSSProperties>) are exempt. Add {/* design-ok: <reason> */} on the same line — colon-prefixed justification required.\"}"
   exit 0
 fi
 

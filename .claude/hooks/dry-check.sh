@@ -107,8 +107,8 @@ fi
 
 # Section label drift — tracking-wider should be tracking-wide (matches FormSectionHeader)
 if grep -qE "tracking-wider" "$FILE_PATH" 2>/dev/null; then
-  if ! grep -q "design-ok" "$FILE_PATH" 2>/dev/null; then
-    DUPES="${DUPES}tracking-wider (should be tracking-wide per FormSectionHeader), "
+  if ! grep -qE "design-ok:\s*\S" "$FILE_PATH" 2>/dev/null; then
+    DUPES="${DUPES}tracking-wider (should be tracking-wide per FormSectionHeader; or add {/* design-ok: <reason> */} with a colon-prefixed justification), "
   fi
 fi
 

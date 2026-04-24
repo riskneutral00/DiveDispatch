@@ -32,7 +32,7 @@ CLEAN=$(grep -vE '^\s*//' "$FILE_PATH" 2>/dev/null | grep -v 'design-ok')
 PALETTES="red|blue|green|gray|slate|zinc|neutral|stone|amber|yellow|orange|purple|pink|indigo|violet|teal|cyan|emerald|lime|rose|fuchsia|sky"
 if echo "$CLEAN" | grep -qE "\b(bg|text|border|ring|from|to|via)-(${PALETTES})-[0-9]+"; then
   MATCH=$(echo "$CLEAN" | grep -oE "\b(bg|text|border|ring|from|to|via)-(${PALETTES})-[0-9]+" | head -1)
-  echo "{\"decision\":\"block\",\"reason\":\"Hardcoded Tailwind palette color '${MATCH}' detected. Use semantic CSS variable classes instead (bg-primary, text-secondary, border-[var(--color-*)], etc.). See design-system/MASTER.md Color Palette section. → Run /ui-fix on this file to fix design compliance. Add {/* design-ok */} or // design-ok to suppress.\"}"
+  echo "{\"decision\":\"block\",\"reason\":\"Hardcoded Tailwind palette color '${MATCH}' detected. Use semantic CSS variable classes instead (bg-primary, text-secondary, border-[var(--color-*)], etc.). See design-system/MASTER.md Color Palette section. → Run /ui-fix on this file to fix design compliance. Add {/* design-ok: <reason> */} on the same line — colon-prefixed justification required.\"}"
   exit 0
 fi
 
@@ -51,7 +51,7 @@ case "$FILE_PATH" in
   */components/ui/*) ;; # ui/ is where the components are defined — skip
   *)
     if echo "$CLEAN" | grep -qE '<(input|select|textarea)\b'; then
-      echo '{"decision":"block","reason":"Bare HTML <input>/<select>/<textarea> detected outside src/components/ui/. Use the Input, Select, or Textarea component from @/components/ui instead. Add {/* design-ok */} or // design-ok to suppress for compound pickers."}'
+      echo '{"decision":"block","reason":"Bare HTML <input>/<select>/<textarea> detected outside src/components/ui/. Use the Input, Select, or Textarea component from @/components/ui instead. For compound pickers, add {/* design-ok: <reason> */} on the same line — colon-prefixed justification required."}'
       exit 0
     fi
     ;;
@@ -66,7 +66,7 @@ WARNINGS=""
 # 3. Hardcoded border-radius — BLOCKING (promoted from warning)
 if echo "$CLEAN" | grep -qE "\brounded-(sm|md|lg|xl|2xl|3xl|none)\b"; then
   MATCH=$(echo "$CLEAN" | grep -oE "\brounded-(sm|md|lg|xl|2xl|3xl|none)\b" | head -1)
-  echo "{\"decision\":\"block\",\"reason\":\"Hardcoded radius '${MATCH}' detected. Use rounded-theme (containers) or rounded-[var(--border-radius-button)] (buttons/inputs). rounded-full is OK for pills/avatars. Add {/* design-ok */} to suppress.\"}"
+  echo "{\"decision\":\"block\",\"reason\":\"Hardcoded radius '${MATCH}' detected. Use rounded-theme (containers) or rounded-[var(--border-radius-button)] (buttons/inputs). rounded-full is OK for pills/avatars. Add {/* design-ok: <reason> */} on the same line — colon-prefixed justification required.\"}"
   exit 0
 fi
 
@@ -86,21 +86,21 @@ fi
 # 4. Hardcoded z-index (raw numbers instead of CSS variable scale) — BLOCKING
 if echo "$CLEAN" | grep -qE "\bz-[0-9]+\b"; then
   MATCH=$(echo "$CLEAN" | grep -oE "\bz-[0-9]+\b" | head -1)
-  echo "{\"decision\":\"block\",\"reason\":\"Hardcoded z-index '${MATCH}' detected. Use z-[var(--z-sticky)], z-[var(--z-dropdown)], z-[var(--z-modal)], etc. Add {/* design-ok */} to suppress for debug/prototyping.\"}"
+  echo "{\"decision\":\"block\",\"reason\":\"Hardcoded z-index '${MATCH}' detected. Use z-[var(--z-sticky)], z-[var(--z-dropdown)], z-[var(--z-modal)], etc. For debug/prototyping, add {/* design-ok: <reason> */} on the same line — colon-prefixed justification required.\"}"
   exit 0
 fi
 
 # 5. Unprefixed multi-column grid (mobile should be single column)
 # Remove all responsive-prefixed grid-cols, then check if bare multi-col remains
 if echo "$CLEAN" | sed -E 's/(sm|md|lg|xl):grid-cols-[0-9]+//g' | grep -qE 'grid-cols-[2-9]'; then
-  echo '{"decision":"block","reason":"Unprefixed grid-cols-N detected — mobile baseline must be grid-cols-1. Add sm: or md: prefix for multi-column layouts. Add {/* design-ok */} to suppress for calendar grids."}'
+  echo '{"decision":"block","reason":"Unprefixed grid-cols-N detected — mobile baseline must be grid-cols-1. Add sm: or md: prefix for multi-column layouts. For calendar grids, add {/* design-ok: <reason> */} on the same line — colon-prefixed justification required."}'
   exit 0
 fi
 
 # 6. Undersized touch targets — BLOCKING
 # Raw <button> with small height classes and no min-h-[44px]
 if echo "$CLEAN" | grep -E '<button\b' | grep -vE 'min-h-\[4[4-9]' | grep -qE "\b(h-6|h-7|h-8|w-6|w-7|w-8)\b"; then
-  echo '{"decision":"block","reason":"Interactive <button> with h-6/h-7/h-8 detected — minimum touch target is 44px (min-h-[44px] min-w-[44px]). See design-system/MASTER.md Mobile-First Sizing. Add {/* design-ok */} to suppress."}'
+  echo '{"decision":"block","reason":"Interactive <button> with h-6/h-7/h-8 detected — minimum touch target is 44px (min-h-[44px] min-w-[44px]). See design-system/MASTER.md Mobile-First Sizing. Add {/* design-ok: <reason> */} on the same line — colon-prefixed justification required."}'
   exit 0
 fi
 
@@ -108,13 +108,13 @@ fi
 # gap-0.5, gap-2.5, gap-5 are almost always wrong per MASTER.md spacing ladder
 if echo "$CLEAN" | grep -qE "\bgap-(0\.5|2\.5|5)\b"; then
   MATCH=$(echo "$CLEAN" | grep -oE "\bgap-(0\.5|2\.5|5)\b" | head -1)
-  echo "{\"decision\":\"block\",\"reason\":\"Off-ladder spacing '${MATCH}' detected. Use the nearest ladder value: gap-1, gap-1.5, gap-2, gap-3, gap-4, gap-6, gap-8. See design-system/MASTER.md Spacing Scale. Add {/* design-ok */} to suppress.\"}"
+  echo "{\"decision\":\"block\",\"reason\":\"Off-ladder spacing '${MATCH}' detected. Use the nearest ladder value: gap-1, gap-1.5, gap-2, gap-3, gap-4, gap-6, gap-8. See design-system/MASTER.md Spacing Scale. Add {/* design-ok: <reason> */} on the same line — colon-prefixed justification required.\"}"
   exit 0
 fi
 
 # 8. Non-standard hover patterns (brightness/scale) — BLOCKING
 if echo "$CLEAN" | grep -qE 'hover:brightness|hover:scale'; then
-  echo '{"decision":"block","reason":"Non-standard hover pattern (brightness/scale) detected. Use glass-btn-* classes (glow lift) or transition-opacity hover:opacity-70 (fade). See MASTER.md Hover Behavior. Add {/* design-ok */} to suppress."}'
+  echo '{"decision":"block","reason":"Non-standard hover pattern (brightness/scale) detected. Use glass-btn-* classes (glow lift) or transition-opacity hover:opacity-70 (fade). See MASTER.md Hover Behavior. Add {/* design-ok: <reason> */} on the same line — colon-prefixed justification required."}'
   exit 0
 fi
 
@@ -129,7 +129,7 @@ fi
 if [ -n "$WARNINGS" ]; then
   echo "[Hook] Design token + mobile-first warnings:"
   echo "  ${WARNINGS}"
-  echo "  Add {/* design-ok */} to suppress legitimate exceptions."
+  echo "  Add {/* design-ok: <reason> */} on the same line — colon-prefixed justification required."
 fi
 
 exit 0

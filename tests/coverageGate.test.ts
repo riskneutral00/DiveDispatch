@@ -63,7 +63,6 @@ async function seedDCProfile(ctx: SeedCtx, userId: Id<'users'>, slug: string) {
   // Profile + settings layer on users table
   await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
   await seedDiveCenterProfile(ctx, userId, { email: `${slug}@test.com` })
-  // customerLanguages is a DiveCenter ROLE_REQUIRED field
   const dc = await findProfileByUser(ctx, userId, 'diveCenters')
   if (dc) await ctx.db.patch(dc._id, { customerLanguages: ['en'] })
   await seedBookingTemplate(ctx, { ownerId: slug, activityType: ['DSD'] })

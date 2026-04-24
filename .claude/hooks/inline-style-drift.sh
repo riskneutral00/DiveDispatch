@@ -80,7 +80,7 @@ case "$FILE_PATH" in
 esac
 
 if [ -n "$WARNINGS" ]; then
-  echo "{\"decision\":\"block\",\"reason\":\"Inline typography styles in $(basename "$FILE_PATH"): ${WARNINGS} Use semantic type tokens from design-system/MASTER.md. Add {/* design-ok */} or // design-ok to suppress legitimate exceptions.\"}"
+  echo "{\"decision\":\"block\",\"reason\":\"Inline typography styles in $(basename "$FILE_PATH"): ${WARNINGS} Use semantic type tokens from design-system/MASTER.md. Add {/* design-ok: <reason> */} on the same line — colon-prefixed justification required.\"}"
   exit 0
 fi
 

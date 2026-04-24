@@ -7,7 +7,7 @@
             "type": "command",
             "command": "bash .claude/hooks/teammate-idle.sh",
             "timeout": 10,
-            "statusMessage": "Checking teammate status\u2026"
+            "statusMessage": "Checking teammate status…"
           }
         ]
       }
@@ -19,7 +19,7 @@
             "type": "command",
             "command": "bash .claude/hooks/login-slug-resolver.sh",
             "timeout": 15,
-            "statusMessage": "Checking for login request\u2026"
+            "statusMessage": "Checking for login request…"
           }
         ]
       }
@@ -32,43 +32,49 @@
             "type": "command",
             "command": "bash .claude/hooks/gate-on-commit.sh",
             "timeout": 10,
-            "statusMessage": "Checking gate status\u2026"
+            "statusMessage": "Checking gate status…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/commit-message-gate.sh",
             "timeout": 5,
-            "statusMessage": "Checking commit message\u2026"
+            "statusMessage": "Checking commit message…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/tsc-pre-commit.sh",
             "timeout": 30,
-            "statusMessage": "Type-checking staged files\u2026"
+            "statusMessage": "Type-checking staged files…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/test-colocation-check.sh",
             "timeout": 5,
-            "statusMessage": "Checking test co-location\u2026"
+            "statusMessage": "Checking test co-location…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/dependency-audit.sh",
             "timeout": 15,
-            "statusMessage": "Auditing npm dependencies\u2026"
+            "statusMessage": "Auditing npm dependencies…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/i18n-pre-commit.sh",
             "timeout": 15,
-            "statusMessage": "Verifying i18n key parity\u2026"
+            "statusMessage": "Verifying i18n key parity…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/canonical-pre-commit.sh",
             "timeout": 30,
-            "statusMessage": "Validating canonical.json\u2026"
+            "statusMessage": "Validating canonical.json…"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/checkpoint-commit-blocker.sh",
+            "timeout": 5,
+            "statusMessage": "Checking for checkpoint-style commit on main…"
           }
         ]
       },
@@ -79,37 +85,37 @@
             "type": "command",
             "command": "bash .claude/hooks/middleware-guard.sh",
             "timeout": 5,
-            "statusMessage": "Checking file path\u2026"
+            "statusMessage": "Checking file path…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/scripts-guard.sh",
             "timeout": 5,
-            "statusMessage": "Checking infrastructure scripts\u2026"
+            "statusMessage": "Checking infrastructure scripts…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/spec-guard.sh",
             "timeout": 5,
-            "statusMessage": "Checking ticket write authorization\u2026"
+            "statusMessage": "Checking ticket write authorization…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/css-file-blocker.sh",
             "timeout": 5,
-            "statusMessage": "Checking CSS file creation\u2026"
+            "statusMessage": "Checking CSS file creation…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/app-component-blocker.sh",
             "timeout": 5,
-            "statusMessage": "Checking app/ component placement\u2026"
+            "statusMessage": "Checking app/ component placement…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/frontmatter-guard.sh",
             "timeout": 3,
-            "statusMessage": "Checking vault frontmatter\u2026"
+            "statusMessage": "Checking vault frontmatter…"
           }
         ]
       },
@@ -120,31 +126,31 @@
             "type": "command",
             "command": "bash .claude/hooks/middleware-guard.sh",
             "timeout": 5,
-            "statusMessage": "Checking file path\u2026"
+            "statusMessage": "Checking file path…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/scripts-guard.sh",
             "timeout": 5,
-            "statusMessage": "Checking infrastructure scripts\u2026"
+            "statusMessage": "Checking infrastructure scripts…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/spec-guard.sh",
             "timeout": 5,
-            "statusMessage": "Checking ticket write authorization\u2026"
+            "statusMessage": "Checking ticket write authorization…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/css-file-blocker.sh",
             "timeout": 5,
-            "statusMessage": "Checking CSS file creation\u2026"
+            "statusMessage": "Checking CSS file creation…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/frontmatter-guard.sh",
             "timeout": 3,
-            "statusMessage": "Checking vault frontmatter\u2026"
+            "statusMessage": "Checking vault frontmatter…"
           }
         ]
       }
@@ -157,13 +163,13 @@
             "type": "command",
             "command": "bash .claude/hooks/skill-usage-logger.sh",
             "timeout": 5,
-            "statusMessage": "Logging skill usage\u2026"
+            "statusMessage": "Logging skill usage…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/turbopack-cache-clean.sh",
             "timeout": 5,
-            "statusMessage": "Clearing Turbopack cache\u2026"
+            "statusMessage": "Clearing Turbopack cache…"
           }
         ]
       },
@@ -174,7 +180,7 @@
             "type": "command",
             "command": "bash .claude/hooks/session-touched-tracker.sh",
             "timeout": 5,
-            "statusMessage": "Tracking session file changes\u2026"
+            "statusMessage": "Tracking session file changes…"
           }
         ]
       },
@@ -185,67 +191,67 @@
             "type": "command",
             "command": "bash .claude/hooks/design-validation-reminder.sh",
             "timeout": 5,
-            "statusMessage": "Checking design files\u2026"
+            "statusMessage": "Checking design files…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/schema-preflight.sh",
             "timeout": 5,
-            "statusMessage": "Checking schema changes\u2026"
+            "statusMessage": "Checking schema changes…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/dependency-direction.sh",
             "timeout": 5,
-            "statusMessage": "Checking dependency direction\u2026"
+            "statusMessage": "Checking dependency direction…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/provider-nesting.sh",
             "timeout": 5,
-            "statusMessage": "Checking provider order\u2026"
+            "statusMessage": "Checking provider order…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/tsc-post-edit.sh",
             "timeout": 30,
-            "statusMessage": "Type-checking edited file\u2026"
+            "statusMessage": "Type-checking edited file…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/n-plus-one-guard.sh",
             "timeout": 5,
-            "statusMessage": "Checking for N+1 patterns\u2026"
+            "statusMessage": "Checking for N+1 patterns…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/unbounded-query-guard.sh",
             "timeout": 5,
-            "statusMessage": "Checking query bounds\u2026"
+            "statusMessage": "Checking query bounds…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/skeleton-stale-reminder.sh",
             "timeout": 5,
-            "statusMessage": "Checking skeleton freshness\u2026"
+            "statusMessage": "Checking skeleton freshness…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/dry-check.sh",
             "timeout": 5,
-            "statusMessage": "Checking for DRY violations\u2026"
+            "statusMessage": "Checking for DRY violations…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/glass-enforcement.sh",
             "timeout": 5,
-            "statusMessage": "Checking glass system compliance\u2026"
+            "statusMessage": "Checking glass system compliance…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/design-token-enforcement.sh",
             "timeout": 5,
-            "statusMessage": "Checking design tokens + mobile-first\u2026"
+            "statusMessage": "Checking design tokens + mobile-first…"
           },
           {
             "type": "command",
@@ -255,117 +261,123 @@
           },
           {
             "type": "command",
+            "command": "bash .claude/hooks/field-width-required.sh",
+            "timeout": 5,
+            "statusMessage": "Checking field-* width tokens inside FieldRow…"
+          },
+          {
+            "type": "command",
             "command": "bash .claude/hooks/type-scale-enforcement.sh",
             "timeout": 5,
-            "statusMessage": "Checking type scale tokens\u2026"
+            "statusMessage": "Checking type scale tokens…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/route-component-enforcement.sh",
             "timeout": 5,
-            "statusMessage": "Checking route page components\u2026"
+            "statusMessage": "Checking route page components…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/inline-style-drift.sh",
             "timeout": 5,
-            "statusMessage": "Checking inline style drift\u2026"
+            "statusMessage": "Checking inline style drift…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/date-formatter-guard.sh",
             "timeout": 5,
-            "statusMessage": "Checking date formatter duplication\u2026"
+            "statusMessage": "Checking date formatter duplication…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/raw-input-blocker.sh",
             "timeout": 5,
-            "statusMessage": "Checking raw <input> primitives\u2026"
+            "statusMessage": "Checking raw <input> primitives…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/dialog-title-i18n.sh",
             "timeout": 5,
-            "statusMessage": "Checking dialog i18n\u2026"
+            "statusMessage": "Checking dialog i18n…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/local-type-alias-guard.sh",
             "timeout": 5,
-            "statusMessage": "Checking local type alias drift\u2026"
+            "statusMessage": "Checking local type alias drift…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/style-classname-boundary.sh",
             "timeout": 5,
-            "statusMessage": "Checking style\u2194className boundary\u2026"
+            "statusMessage": "Checking style↔className boundary…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/i18n-guard.sh",
             "timeout": 5,
-            "statusMessage": "Checking i18n patterns\u2026"
+            "statusMessage": "Checking i18n patterns…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/fsm-status-guard.sh",
             "timeout": 5,
-            "statusMessage": "Checking FSM status transitions\u2026"
+            "statusMessage": "Checking FSM status transitions…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/auth-gateway-guard.sh",
             "timeout": 5,
-            "statusMessage": "Checking auth gateway usage\u2026"
+            "statusMessage": "Checking auth gateway usage…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/by-userid-role-table-guard.sh",
             "timeout": 5,
-            "statusMessage": "Checking role-table by_userId regressions\u2026"
+            "statusMessage": "Checking role-table by_userId regressions…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/org-id-required-insert.sh",
             "timeout": 5,
-            "statusMessage": "Checking role-table organizationId\u2026"
+            "statusMessage": "Checking role-table organizationId…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/error-shape-guard.sh",
             "timeout": 5,
-            "statusMessage": "Checking ConvexError shape\u2026"
+            "statusMessage": "Checking ConvexError shape…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/convex-error-guard.sh",
             "timeout": 5,
-            "statusMessage": "Checking structured errors\u2026"
+            "statusMessage": "Checking structured errors…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/empty-catch-guard.sh",
             "timeout": 5,
-            "statusMessage": "Checking empty catch blocks\u2026"
+            "statusMessage": "Checking empty catch blocks…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/playwright-wait-guard.sh",
             "timeout": 5,
-            "statusMessage": "Checking Playwright wait patterns\u2026"
+            "statusMessage": "Checking Playwright wait patterns…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/weak-assertion-guard.sh",
             "timeout": 5,
-            "statusMessage": "Checking test assertion strength\u2026"
+            "statusMessage": "Checking test assertion strength…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/error-i18n-sync.sh",
             "timeout": 5,
-            "statusMessage": "Checking ErrorCode \u2194 i18n sync\u2026"
+            "statusMessage": "Checking ErrorCode ↔ i18n sync…"
           },
           {
             "type": "command",
@@ -377,97 +389,109 @@
             "type": "command",
             "command": "bash .claude/hooks/mobile-viewport-check.sh",
             "timeout": 10,
-            "statusMessage": "Checking mobile-first viewport contract\u2026"
+            "statusMessage": "Checking mobile-first viewport contract…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/overflow-scroll-guard.sh",
             "timeout": 5,
-            "statusMessage": "Checking intrinsic containment\u2026"
+            "statusMessage": "Checking intrinsic containment…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/console-ban-convex.sh",
             "timeout": 5,
-            "statusMessage": "Checking structured logging\u2026"
+            "statusMessage": "Checking structured logging…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/error-boundary-reporting.sh",
             "timeout": 5,
-            "statusMessage": "Checking error reporting\u2026"
+            "statusMessage": "Checking error reporting…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/route-error-boundary.sh",
             "timeout": 5,
-            "statusMessage": "Checking error boundary coverage\u2026"
+            "statusMessage": "Checking error boundary coverage…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/rate-limit-guard.sh",
             "timeout": 5,
-            "statusMessage": "Checking rate limiting\u2026"
+            "statusMessage": "Checking rate limiting…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/raw-button-blocker.sh",
             "timeout": 5,
-            "statusMessage": "Checking raw button usage\u2026"
+            "statusMessage": "Checking raw button usage…"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/design-ok-justification.sh",
+            "timeout": 5,
+            "statusMessage": "Checking design-ok justification…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/raw-primitive-guard.sh",
             "timeout": 5,
-            "statusMessage": "Checking raw <select>/<textarea>/<label>/<dialog> usage\u2026"
+            "statusMessage": "Checking raw <select>/<textarea>/<label>/<dialog> usage…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/primitive-asterisk-guard.sh",
             "timeout": 5,
-            "statusMessage": "Checking required-asterisk primitive usage\u2026"
+            "statusMessage": "Checking required-asterisk primitive usage…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/touch-target-literal.sh",
             "timeout": 5,
-            "statusMessage": "Checking touch-target literals\u2026"
+            "statusMessage": "Checking touch-target literals…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/throw-error-i18n.sh",
             "timeout": 5,
-            "statusMessage": "Checking throw Error i18n\u2026"
+            "statusMessage": "Checking throw Error i18n…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/spacing-ladder-guard.sh",
             "timeout": 5,
-            "statusMessage": "Checking spacing ladder\u2026"
+            "statusMessage": "Checking spacing ladder…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/empty-state-i18n.sh",
             "timeout": 5,
-            "statusMessage": "Checking EmptyState i18n\u2026"
+            "statusMessage": "Checking EmptyState i18n…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/anyctx-guard.sh",
             "timeout": 5,
-            "statusMessage": "Checking for AnyCtx / as any\u2026"
+            "statusMessage": "Checking for AnyCtx / as any…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/tdd-guard.sh",
             "timeout": 5,
-            "statusMessage": "Checking TDD \u2014 sibling test exists\u2026"
+            "statusMessage": "Checking TDD — sibling test exists…"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/vi-mock-convex-react-blocker.sh",
             "timeout": 5,
-            "statusMessage": "Checking for vi.mock('convex/react')\u2026"
+            "statusMessage": "Checking for vi.mock('convex/react')…"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/convex-input-validator-guard.sh",
+            "timeout": 5,
+            "statusMessage": "Checking i18n validator wiring…"
           }
         ]
       }
@@ -479,7 +503,7 @@
             "type": "command",
             "command": "bash .claude/hooks/precompact-archive.sh",
             "timeout": 10,
-            "statusMessage": "Archiving context before compaction\u2026"
+            "statusMessage": "Archiving context before compaction…"
           }
         ]
       }

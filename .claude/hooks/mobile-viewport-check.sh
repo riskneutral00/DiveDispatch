@@ -35,7 +35,7 @@ while IFS= read -r line; do
       UNPREFIXED_VAL=$(echo "$UNPREFIXED" | grep -oE '[0-9]+$')
       PREFIXED_VAL=$(echo "$PREFIXED" | grep -oE '[0-9]+$')
       if [ "$UNPREFIXED_VAL" -gt "$PREFIXED_VAL" ] 2>/dev/null; then
-        echo "{\"decision\":\"block\",\"reason\":\"Spacing inversion '${UNPREFIXED}' > '${PREFIXED}' — mobile must be ≤ desktop. See .claude/rules/spacing-tokens.md. Add {/* design-ok */} to suppress.\"}"
+        echo "{\"decision\":\"block\",\"reason\":\"Spacing inversion '${UNPREFIXED}' > '${PREFIXED}' — mobile must be ≤ desktop. See .claude/rules/spacing-tokens.md. Add {/* design-ok: <reason> */} on the same line — colon-prefixed justification required.\"}"
         exit 0
       fi
     fi
@@ -75,7 +75,7 @@ fi
 if [ -n "$WARNINGS" ]; then
   echo "[Hook] Mobile viewport contract warnings:"
   echo "  ${WARNINGS}"
-  echo "  Add {/* design-ok */} to suppress legitimate exceptions."
+  echo "  Add {/* design-ok: <reason> */} on the same line — colon-prefixed justification required."
 fi
 
 exit 0

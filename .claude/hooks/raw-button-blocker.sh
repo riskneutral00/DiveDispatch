@@ -17,7 +17,7 @@ esac
 CLEAN=$(grep -vE '^\s*//' "$FILE_PATH" 2>/dev/null | grep -v 'design-ok')
 
 if echo "$CLEAN" | grep -qE '<button\b'; then
-  echo '{"decision":"block","reason":"Raw <button> detected outside ui/. Use Button, IconButton, or MenuButton from @/components/ui. Add {/* design-ok */} for compound control internals (pickers, ARIA widgets, DnD handles)."}'
+  echo '{"decision":"block","reason":"Raw <button> detected outside ui/. Use Button, IconButton, or MenuButton from @/components/ui. For compound control internals (pickers, ARIA widgets, DnD handles), add {/* design-ok: <reason> */} on the same line as the <button — colon-prefixed justification required."}'
   exit 0
 fi
 

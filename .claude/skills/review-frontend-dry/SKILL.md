@@ -41,8 +41,24 @@ Run each check and collect findings with `{severity, file, line, summary, fix}`:
 **E. Dialog chrome i18n leaks (CRITICAL)**
 - Grep changed `.tsx` files for `<Dialog` / `<ConfirmActionDialog` usages where `title=` / `description=` is a string literal rather than `t(...)`.
 
-**F. Three-copies-equal-extract (MEDIUM)**
-- For each helper function defined locally in the changed set, grep the rest of the codebase for functions with the same name. If it exists in 3+ files, flag as extraction candidate.
+**F. Two-copies-equal-extract (MEDIUM at 2, HIGH at 3+)**
+- For each helper function defined locally in the changed set, grep the rest of the codebase for functions with the same name. **2 copies → MEDIUM** (consolidate now); **3+ → HIGH** (overdue). Threshold lowered from 3+ to 2+ per `.claude/rules/existing-components-first.md` "Three-signal test" signal 2.
+
+**G. Hand-rolled dialog footer (HIGH)**
+- Grep changed `.tsx` files outside `src/components/ui/` and outside `confirm-dialog.tsx` for `<div className="...flex...justify-end..."` containing 2+ adjacent `<Button` elements.
+- Canonical: `DialogFooter` from `@/components/ui/dialog`. Already structurally enforced by `catalog.test.ts`; this check provides earlier feedback at gate time with an explicit fix recommendation.
+
+**H. Hand-rolled card-title heading (HIGH)**
+- Grep changed `.tsx` files outside `src/components/ui/` for `<h2|<h3` whose className contains `text-card-title` or `font-heading`.
+- Canonical: `CardTitle` from `@/components/ui/card-title` — `size="md"` (default) for `text-card-title`, `size="sm"` for `text-body font-heading`. Structurally enforced by `catalog.test.ts`; this check provides earlier feedback.
+
+**I. Customer-contact cluster duplication (MEDIUM at 2, HIGH at 3+)**
+- Across changed files (and one hop of importers), find files matching ALL of: imports `NameField`, imports `ButtonGroup`, imports (`PhoneField` OR `EmailField`), imports `LanguageField`, AND is OUTSIDE `src/components/profiles/` AND is NOT `src/components/booking/customer-contact-fields.tsx`.
+- 2 callsites → MEDIUM ("consider routing to `CustomerContactFields`"); 3+ → HIGH ("route to `CustomerContactFields` from `@/components/booking/customer-contact-fields`").
+
+**J. Bare `design-ok` (MEDIUM)**
+- Grep changed `.tsx` and `.ts` files outside `src/components/ui/` for `design-ok` not followed by a colon and a non-whitespace reason token.
+- Canonical: `{/* design-ok: <reason> */}`. Structurally enforced at edit time by `design-ok-justification.sh`; this check catches files that bypassed the hook (e.g., authored outside Claude).
 
 ## Phase 3: Report
 

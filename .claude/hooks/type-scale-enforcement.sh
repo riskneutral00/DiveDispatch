@@ -30,14 +30,14 @@ CLEAN=$(grep -vE '^\s*//' "$FILE_PATH" 2>/dev/null | grep -v 'design-ok')
 # 1. text-sm → text-body (both 14px, but text-body is token-backed)
 if echo "$CLEAN" | grep -qE '\btext-sm\b'; then
   COUNT=$(echo "$CLEAN" | grep -oE '\btext-sm\b' | wc -l | tr -d ' ')
-  echo "{\"decision\":\"block\",\"reason\":\"text-sm (${COUNT}x) detected. Use text-body (token-backed 14px). Skins can change the body font size via --font-size-body. Add {/* design-ok */} to suppress.\"}"
+  echo "{\"decision\":\"block\",\"reason\":\"text-sm (${COUNT}x) detected. Use text-body (token-backed 14px). Skins can change the body font size via --font-size-body. Add {/* design-ok: <reason> */} on the same line — colon-prefixed justification required.\"}"
   exit 0
 fi
 
 # 2. text-xs → text-label (both 12px, token-backed)
 if echo "$CLEAN" | grep -qE '\btext-xs\b'; then
   COUNT=$(echo "$CLEAN" | grep -oE '\btext-xs\b' | wc -l | tr -d ' ')
-  echo "{\"decision\":\"block\",\"reason\":\"text-xs (${COUNT}x) detected. Use text-label (token-backed 12px). Skins can change the label font size via --font-size-label. Add {/* design-ok */} to suppress.\"}"
+  echo "{\"decision\":\"block\",\"reason\":\"text-xs (${COUNT}x) detected. Use text-label (token-backed 12px). Skins can change the label font size via --font-size-label. Add {/* design-ok: <reason> */} on the same line — colon-prefixed justification required.\"}"
   exit 0
 fi
 
@@ -69,7 +69,7 @@ if [ -n "$WARNINGS" ]; then
   echo "[Hook] Type scale enforcement warnings:"
   echo "  ${WARNINGS}"
   echo "  Token scale: text-section-header (11px) / text-label (12px) / text-body (14px) / text-card-title (16px) / text-page-title (28px)"
-  echo "  Add {/* design-ok */} to suppress legitimate exceptions."
+  echo "  Add {/* design-ok: <reason> */} on the same line — colon-prefixed justification required."
 fi
 
 exit 0
