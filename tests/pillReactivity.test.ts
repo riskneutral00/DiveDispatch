@@ -51,7 +51,8 @@ describe('pill reactivity — Equipment role gearInventory transition', () => {
       { role: 'Equipment' },
     )
     expect(before.percentage).toBeLessThan(100)
-    expect(before.incomplete).toContain('gearInventory')
+    expect(before.incomplete).toContain('gear:regulator')
+    expect(before.incomplete).not.toContain('gear:wetsuit')
 
     await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
       api.equipmentInventory.addItem,
@@ -63,15 +64,7 @@ describe('pill reactivity — Equipment role gearInventory transition', () => {
       { role: 'Equipment' },
     )
 
-    expect({
-      before_incomplete: before.incomplete,
-      after_incomplete: after.incomplete,
-      before_percentage: before.percentage,
-      after_percentage: after.percentage,
-    }).toMatchObject({
-      after_percentage: 100,
-    })
-    expect(after.incomplete).not.toContain('gearInventory')
+    expect(after.incomplete).not.toContain('gear:regulator')
     expect(after.percentage).toBe(100)
   })
 })

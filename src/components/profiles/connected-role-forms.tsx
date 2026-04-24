@@ -1,19 +1,14 @@
 'use client'
-// comments-ok
 
-import { type ComponentType } from 'react'
 import { useMutation, useQuery } from 'convex/react'
 import { api } from '@/lib/convex-generated'
 
-import { AgentProfileForm } from '@/components/profiles/agent-profile-form'
-import { DiveCenterProfileForm } from '@/components/profiles/dive-center-profile-form'
-import { InstructorProfileForm } from '@/components/profiles/personal-profile-form'
-import { BoatProfileForm } from '@/components/profiles/boat-profile-form'
-import { CompressorProfileForm } from '@/components/profiles/compressor-profile-form'
-import { EquipmentProfileForm } from '@/components/profiles/equipment-profile-form'
-import { VenueProfileForm } from '@/components/profiles/venue-profile-form'
+import {
+  ROLE_SECTION_REGISTRY,
+  type ProfileSectionComponent,
+} from '@/components/profiles/role-section-registry'
 
-import type { RoleKey } from '@/lib/constants/roles'
+import type { RoleKey, ProfileSectionId } from '@/lib/constants/roles'
 
 function asLooseMut<T>(
   fn: (args: T) => Promise<unknown>,
@@ -21,62 +16,45 @@ function asLooseMut<T>(
   return (p) => fn(p as T)
 }
 
-interface RoleFormConfig {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Convex FunctionReference generics are opaque at this abstraction level // comments-ok
-  apiModule: { mine: any; create: any; update: any }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Profile form prop shapes vary per role; type safety is at the form level // comments-ok
-  Component: ComponentType<any>
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Convex FunctionReference generics are opaque at this abstraction level // comments-ok
+type RoleApiModule = { mine: any; create: any; update: any }
+
+const ROLE_API_MODULES: Partial<Record<RoleKey, RoleApiModule>> = {
+  'dive-center': api.diveCenters,
+  instructor:    api.diveStaff,
+  boat:          api.boats,
+  compressor:    api.compressors,
+  equipment:     api.equipment,
+  venue:         api.venues,
+  agent:         api.agents,
 }
 
-const ROLE_FORM_CONFIGS: Partial<Record<RoleKey, RoleFormConfig>> = {
-  'dive-center': { apiModule: api.diveCenters, Component: DiveCenterProfileForm },
-  instructor:    { apiModule: api.diveStaff,    Component: InstructorProfileForm },
-  boat:          { apiModule: api.boats,        Component: BoatProfileForm },
-  compressor:    { apiModule: api.compressors,  Component: CompressorProfileForm },
-  equipment:     { apiModule: api.equipment,    Component: EquipmentProfileForm },
-  venue:         { apiModule: api.venues,       Component: VenueProfileForm },
-  agent:         { apiModule: api.agents,       Component: AgentProfileForm },
-}
-
-function StandardConnectedForm({ section, config, onClose }: { section?: string; config: RoleFormConfig; onClose?: () => void }) {
-  const { apiModule, Component } = config
+function StandardConnectedForm({
+  apiModule,
+  Section,
+  onClose,
+}: {
+  apiModule: RoleApiModule
+  Section: ProfileSectionComponent
+  onClose?: () => void
+}) {
   const profile = useQuery(apiModule.mine)
   const me = useQuery(api.users.me)
-  const prefs = useQuery(api.stakeholderPreferences.mine)
   const create = useMutation(apiModule.create)
   const update = useMutation(apiModule.update)
-  const updateProfile = useMutation(api.users.updateProfile)
   return (
-    <Component
-      section={section}
+    <Section
       profile={profile}
       me={me}
       create={asLooseMut(create)}
       update={asLooseMut(update)}
-      updateProfile={asLooseMut(updateProfile)}
       onClose={onClose}
-      preferredOperatorSlug={prefs?.preferredOperatorSlug ?? null}
     />
   )
 }
 
-type RoleProfileRegistryEntry = {
-  renderFull: (section: string | undefined, onClose?: () => void) => React.ReactNode
-}
-
-const ROLE_PROFILE_REGISTRY: Partial<Record<RoleKey, RoleProfileRegistryEntry>> = Object.fromEntries(
-  Object.entries(ROLE_FORM_CONFIGS).map(([key, config]) => [
-    key,
-    {
-      renderFull: (section: string | undefined, onClose?: () => void) => (
-        <StandardConnectedForm section={section} config={config} onClose={onClose} />
-      ),
-    },
-  ]),
-)
-
 export function hasConnectedForm(roleKey: RoleKey): boolean {
-  return roleKey in ROLE_PROFILE_REGISTRY
+  return roleKey in ROLE_SECTION_REGISTRY && roleKey in ROLE_API_MODULES
 }
 
 export function RoleProfileForm({
@@ -88,6 +66,19 @@ export function RoleProfileForm({
   section?: string
   onClose?: () => void
 }) {
-  const entry = ROLE_PROFILE_REGISTRY[roleSlug]
-  return entry ? <>{entry.renderFull(section, onClose)}</> : null
+  const apiModule = ROLE_API_MODULES[roleSlug]
+  const sections = ROLE_SECTION_REGISTRY[roleSlug]
+  if (!apiModule || !sections) return null
+
+  const sectionKey = (section ?? Object.keys(sections)[0]) as ProfileSectionId
+  const Section = sections[sectionKey]
+  if (!Section) return null
+
+  return (
+    <StandardConnectedForm
+      apiModule={apiModule}
+      Section={Section}
+      onClose={onClose}
+    />
+  )
 }

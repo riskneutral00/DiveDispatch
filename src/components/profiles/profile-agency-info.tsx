@@ -10,8 +10,8 @@ import { CheckboxGroup } from "@/components/ui/checkbox-group";
 import { FieldLabel } from "@/components/ui/field-shell";
 import { Input } from "@/components/ui/input";
 import { SimpleSelect } from "@/components/ui/simple-select";
+import { FieldRow } from "@/components/ui/field-row";
 import { ItemCard } from "@/components/ui/item-card";
-import { Select } from "@/components/ui/select";
 import { useStableKeys } from "@/lib/hooks/use-stable-keys";
 import {
   AGENCIES,
@@ -113,8 +113,8 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
     const agencyPrefix = AGENCIES[item.agency as keyof typeof AGENCIES];
     return (
       <div className="flex flex-col gap-4 items-start">
-        <div className="flex flex-wrap gap-2">
-          <Select
+        <FieldRow>
+          <SimpleSelect
             label="Agency"
             value={String((item as AgencyRow).agency ?? "")}
             onChange={(v) => handleUpdate(idx, { agency: v })}
@@ -123,11 +123,11 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
                 code === item.agency ||
                 !items.some((a, i) => i !== idx && a.agency === code),
             ).map((code) => ({
-              id: code,
+              value: code,
               label: AGENCIES[code as keyof typeof AGENCIES].name,
             }))}
-            placeholder="Select agency"
             required
+            className="field-md"
           />
           <Input
             label="Member Number"
@@ -136,7 +136,7 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
             required
             className="field-md"
           />
-        </div>
+        </FieldRow>
 
         <div className="">
           <FieldLabel required className="mb-2">
@@ -201,7 +201,6 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
           value={String((item as AgencyRow).agency ?? "")}
           onChange={(v) => handleUpdate(idx, { agency: v })}
           options={DIVE_AGENCIES}
-          placeholder="Select agency…"
           error={errors[`associations.${idx}.agency`]}
           required
           className="field-sm"
@@ -237,7 +236,6 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
             value={selectedAgency}
             onChange={(v) => handleUpdate(idx, { agency: v })}
             options={DIVE_AGENCIES}
-            placeholder="Select agency…"
             error={errors[`credential.${idx}.agency`]}
             required
             className="field-sm"
@@ -247,7 +245,6 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
             value={selectedLevel}
             onChange={(v) => handleUpdate(idx, { level: v })}
             options={levelOptions}
-            placeholder="Select level…"
             error={errors[`credential.${idx}.level`]}
             required
             disabled={!selectedAgency}

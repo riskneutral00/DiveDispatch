@@ -32,47 +32,47 @@ beforeEach(() => {
   vi.clearAllMocks()
 })
 
-describe('TopNav — pill reactivity via denorm short-circuit (W3-B)', () => {
+describe('TopNav — unified pill indicator (no banner)', () => {
   const handler = vi.fn()
 
-  it('hides ProfileCompletionPill when roleComplete=true even if profileCompletion still says <100', () => {
-    const { queryByText } = render(
+  it('hides pill when roleComplete=true even if profileCompletion still says <100', () => {
+    const { queryByRole } = render(
       <TopNav
         onOpenOverlay={handler}
-        profileCompletion={{ percentage: 75, incomplete: ['gearInventory'], kind: 'partial' }}
+        profileCompletion={{ percentage: 75, incomplete: ['gear:wetsuit'], kind: 'partial' }}
         roleComplete
         roleSlug="equipment"
       />,
     )
-    expect(queryByText('Complete profile')).not.toBeInTheDocument()
+    expect(queryByRole('button', { name: /Profile \d+% complete/ })).not.toBeInTheDocument()
   })
 
-  it('hides ProfileStartBanner when roleComplete=true even if profileCompletion.kind is not_started', () => {
-    const { container } = render(
+  it('shows pill at low percentage with kind: not_started (no separate banner anymore)', () => {
+    const { getByRole } = render(
       <TopNav
         onOpenOverlay={handler}
-        profileCompletion={{ percentage: 0, incomplete: [], kind: 'not_started' }}
-        roleComplete
-        roleSlug="equipment"
-      />,
-    )
-    expect(container.textContent ?? '').not.toMatch(/start profile/i)
-  })
-
-  it('shows ProfileCompletionPill when roleComplete=false and profileCompletion.percentage < 100', () => {
-    const { getByText } = render(
-      <TopNav
-        onOpenOverlay={handler}
-        profileCompletion={{ percentage: 75, incomplete: ['gearInventory'], kind: 'partial' }}
+        profileCompletion={{ percentage: 46, incomplete: ['name', 'address'], kind: 'not_started' }}
         roleComplete={false}
         roleSlug="equipment"
       />,
     )
-    expect(getByText('Complete profile')).toBeInTheDocument()
+    expect(getByRole('button', { name: /Profile \d+% complete/ })).toBeInTheDocument()
   })
 
-  it('hides ProfileCompletionPill when roleComplete=false and percentage >= 100 (existing behaviour)', () => {
-    const { queryByText } = render(
+  it('shows pill when roleComplete=false and percentage < 100', () => {
+    const { getByRole } = render(
+      <TopNav
+        onOpenOverlay={handler}
+        profileCompletion={{ percentage: 75, incomplete: ['gear:wetsuit'], kind: 'partial' }}
+        roleComplete={false}
+        roleSlug="equipment"
+      />,
+    )
+    expect(getByRole('button', { name: /Profile \d+% complete/ })).toBeInTheDocument()
+  })
+
+  it('hides pill when percentage >= 100 regardless of roleComplete (existing behaviour)', () => {
+    const { queryByRole } = render(
       <TopNav
         onOpenOverlay={handler}
         profileCompletion={{ percentage: 100, incomplete: [], kind: 'complete' }}
@@ -80,6 +80,6 @@ describe('TopNav — pill reactivity via denorm short-circuit (W3-B)', () => {
         roleSlug="equipment"
       />,
     )
-    expect(queryByText('Complete profile')).not.toBeInTheDocument()
+    expect(queryByRole('button', { name: /Profile \d+% complete/ })).not.toBeInTheDocument()
   })
 })

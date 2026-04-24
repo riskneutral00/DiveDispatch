@@ -60,7 +60,6 @@ export function ProfileBasicInfo({
           onChange={onNameChange}
           error={nameError}
           required={nameRequired}
-          className="field-md"
         />
       )}
       <LocationPicker
@@ -69,7 +68,7 @@ export function ProfileBasicInfo({
         onChange={onLocationChange}
         error={locationError}
         required={locationRequired}
-        className="field-lg"
+        className="field-md"
       />
       <PhoneField
         label="Phone"
@@ -77,7 +76,6 @@ export function ProfileBasicInfo({
         onChange={onPhoneChange}
         error={phoneError}
         required={phoneRequired}
-        className="field-md"
       />
       {onEmailChange !== undefined && (
         <EmailField
@@ -86,7 +84,6 @@ export function ProfileBasicInfo({
           onChange={onEmailChange}
           error={emailError}
           required={emailRequired}
-          className="field-lg"
         />
       )}
       {children}

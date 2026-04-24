@@ -6,9 +6,7 @@ import { type BaseProfileSectionProps } from '@/lib/profile-form'
 
 export type EquipmentProfileSection = 'contact'
 
-type EquipmentSectionProps = BaseProfileSectionProps
-
-export function EquipmentContactSection(props: EquipmentSectionProps) {
+export function EquipmentContactSection(props: BaseProfileSectionProps) {
   return (
     <BusinessContactSection
       {...props}
@@ -19,13 +17,3 @@ export function EquipmentContactSection(props: EquipmentSectionProps) {
   )
 }
 
-export function EquipmentProfileForm({
-  profile,
-  me,
-  create,
-  update,
-  onSaved,
-  onClose,
-}: EquipmentSectionProps & { section?: EquipmentProfileSection }) {
-  return <EquipmentContactSection profile={profile} me={me} create={create} update={update} onSaved={onSaved} onClose={onClose} />
-}

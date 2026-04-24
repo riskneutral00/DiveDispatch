@@ -1,11 +1,11 @@
-import { ROLE_BY_KEY, type RoleKey } from './roles'
+import { ROLE_BY_KEY, type RoleKey, type ProfileSectionId } from './roles'
 
 export interface ProfileConfig {
   label: string
-  tabs: { id: string; label: string }[] | null
+  tabs: { id: ProfileSectionId; label: string }[] | null
 }
 
-export const OVERLAY_ONLY_SECTIONS = new Set(['booking', 'resources', 'gear'])
+export const OVERLAY_ONLY_SECTIONS: Set<ProfileSectionId> = new Set(['booking', 'resources', 'gear'])
 
 export const PROFILE_REGISTRY: Record<string, ProfileConfig> = Object.fromEntries(
   Object.entries(ROLE_BY_KEY).map(([key, role]) => [

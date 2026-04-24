@@ -5,15 +5,12 @@ import {
   agentAssociationsSchema,
 } from '@/lib/schemas/profile-shared'
 import {
-  contactFromProfile,
-  contactToPayload,
   associationsFromProfile,
   associationsToPayload,
-  INITIAL_CONTACT_FORM,
   INITIAL_LANGUAGES_FORM,
   INITIAL_ASSOCIATIONS_FORM,
 } from '../agent-profile-form'
-import type { AgentContactFormState, AgentAssociationsFormState } from '../agent-profile-form'
+import type { AgentAssociationsFormState } from '../agent-profile-form'
 
 const VALID_LOCATION = {
   address: { city: 'Koh Tao', country: 'TH' },
@@ -87,78 +84,6 @@ describe('agentAssociationsSchema', () => {
   })
 })
 
-describe('contactFromProfile', () => {
-  it('extracts name, location, email, and phone', () => {
-    const profile = {
-      name: 'Scuba Bob Agency',
-      address: { city: 'Koh Tao', country: 'TH' },
-      lat: 10.1,
-      lng: 99.8,
-      email: 'bob@scubabob.com',
-      phone: '+66812345678',
-    }
-    const form = contactFromProfile(profile)
-    expect(form.name).toBe('Scuba Bob Agency')
-    expect(form.email).toBe('bob@scubabob.com')
-    expect(form.phone).toBe('+66812345678')
-    expect(form.location?.address.city).toBe('Koh Tao')
-    expect(form.location?.address.country).toBe('TH')
-  })
-
-  it('does not include associations; customerLanguages default to empty until merged with me', () => {
-    const profile = {
-      name: 'Agent',
-      address: { city: 'BKK', country: 'TH' },
-      lat: 13.7,
-      lng: 100.5,
-      email: 'a@b.com',
-      phone: '+6611111111',
-      associations: [{ agency: 'PADI', number: 'X' }],
-      customerLanguages: ['en'],
-    }
-    const form = contactFromProfile(profile)
-    expect(form).not.toHaveProperty('associations')
-    expect(form.customerLanguages).toEqual([])
-  })
-})
-
-describe('contactToPayload', () => {
-  it('produces expected shape with location fields flattened', () => {
-    const form: AgentContactFormState = {
-      name: 'Scuba Bob Agency',
-      location: { address: { city: 'Koh Tao', country: 'TH' }, lat: 10.1, lng: 99.8 },
-      email: 'bob@scubabob.com',
-      phone: '+66812345678',
-      customerLanguages: [{ code: 'en', label: 'English' }],
-      access: { mode: 'open', isAllowed: [], notAllowed: [] },
-    }
-    const payload = contactToPayload(form)
-    expect(payload.name).toBe('Scuba Bob Agency')
-    expect(payload.address).toEqual({ city: 'Koh Tao', country: 'TH' })
-    expect(payload.lat).toBe(10.1)
-    expect(payload.lng).toBe(99.8)
-
-    expect(payload.email).toBe('bob@scubabob.com')
-    expect(payload.phone).toBe('+66812345678')
-    expect(payload).not.toHaveProperty('defaultReferral')
-    expect(payload).not.toHaveProperty('placeName')
-  })
-
-  it('does not include customerLanguages or associations', () => {
-    const form: AgentContactFormState = {
-      name: 'Agent',
-      location: { address: { city: 'BKK', country: 'TH' }, lat: 13.7, lng: 100.5 },
-      email: 'a@b.com',
-      phone: '+6611111111',
-      customerLanguages: [{ code: 'en', label: 'English' }],
-      access: { mode: 'open', isAllowed: [], notAllowed: [] },
-    }
-    const payload = contactToPayload(form)
-    expect(payload).not.toHaveProperty('associations')
-    expect(payload).not.toHaveProperty('customerLanguages')
-  })
-})
-
 describe('associationsFromProfile', () => {
   it('maps associations array from profile correctly', () => {
     const profile = {
@@ -214,15 +139,6 @@ describe('associationsToPayload', () => {
     const assocs = payload.associations as Array<Record<string, unknown>>
     expect(assocs[0]).not.toHaveProperty('_key')
     expect(assocs[0]).toEqual({ agency: 'PADI', number: 'ABC' })
-  })
-})
-
-describe('INITIAL_CONTACT_FORM', () => {
-  it('has empty string defaults', () => {
-    expect(INITIAL_CONTACT_FORM.name).toBe('')
-    expect(INITIAL_CONTACT_FORM.email).toBe('')
-    expect(INITIAL_CONTACT_FORM.phone).toBe('')
-    expect(INITIAL_CONTACT_FORM.location).toBeNull()
   })
 })
 

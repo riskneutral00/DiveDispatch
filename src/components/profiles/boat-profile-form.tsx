@@ -6,7 +6,7 @@ import { BusinessContactSection } from '@/components/profiles/business-contact-s
 import { FormSectionHeader } from '@/components/ui/form-section-header'
 import { DayToggleGroup } from '@/components/ui/day-toggle-group'
 import { Button } from '@/components/ui/button'
-import { FormGrid, FormField } from '@/components/ui/form-grid'
+import { FieldRow } from '@/components/ui/field-row'
 import { Input } from '@/components/ui/input'
 import { NumberPicker } from '@/components/ui/number-picker'
 import { SimpleSelect } from '@/components/ui/simple-select'
@@ -24,8 +24,6 @@ import { BoatType, BOAT_TYPE_OPTIONS } from '@/lib/constants/boat-types'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 
 export type BoatProfileSection = 'contact' | 'fleet'
-
-type BoatSectionProps = BaseProfileSectionProps
 
 interface RouteState {
   diveSite: string
@@ -49,7 +47,7 @@ export function emptyRoute(): RouteState {
   return { diveSite: '', daysOfWeek: [] }
 }
 
-export function BoatContactSection(props: BoatSectionProps) {
+export function BoatContactSection(props: BaseProfileSectionProps) {
   return (
     <BusinessContactSection
       {...props}
@@ -98,7 +96,7 @@ export function boatFleetToPayload(f: BoatFleetFormState): Record<string, unknow
   }
 }
 
-export function BoatFleetSection({ profile: existing, me, create, update, onClose }: BoatSectionProps) {
+export function BoatFleetSection({ profile: existing, me, create, update, onClose }: BaseProfileSectionProps) {
   const createOverride = (payload: Record<string, unknown>) =>
     create({ ...buildParentContactDefaults(me), ...payload })
 
@@ -217,53 +215,53 @@ function FleetEntryCard({ vessel, fleetIdx: fi, errors, canRemove, onUpdate, onR
         </span>
       </div>
 
-      <FormGrid className="mb-5">
-        <FormField size="lg">
-          <Input label="Boat Name" required value={vessel.boatName} onChange={(e) => onUpdate({ boatName: e.target.value })} error={errors[`fleet.${fi}.boatName`]} />
-        </FormField>
-        <FormField size="lg">
-          <SimpleSelect
-            label="Boat Type"
-            required
-            value={vessel.boatType}
-            onChange={(v) => onUpdate({ boatType: v as BoatType })}
-            options={BOAT_TYPE_OPTIONS}
-            placeholder="Select type…"
-            error={errors[`fleet.${fi}.boatType`]}
-          />
-        </FormField>
-        <FormField size="lg">
-          <NumberPicker
-            label="Max Passengers"
-            required
-            min={1}
-            max={100}
-            value={vessel.maxPax || undefined}
-            onChange={(v) => onUpdate({ maxPax: v ?? 0 })}
-            error={errors[`fleet.${fi}.maxPax`]}
-          />
-        </FormField>
-        <FormField size="lg">
-          <NumberPicker
-            label="Min Passengers"
-            min={1}
-            max={100}
-            value={vessel.minPax}
-            onChange={(v) => onUpdate({ minPax: v })}
-            error={errors[`fleet.${fi}.minPax`]}
-          />
-        </FormField>
-        <FormField size="full">
-          <NumberPicker
-            label="Cutoff Hours"
-            min={0}
-            max={168}
-            value={vessel.cutoffHours}
-            onChange={(v) => onUpdate({ cutoffHours: v })}
-            error={errors[`fleet.${fi}.cutoffHours`]}
-          />
-        </FormField>
-      </FormGrid>
+      <FieldRow className="mb-5">
+        <Input
+          className="field-md"
+          label="Boat Name"
+          required
+          value={vessel.boatName}
+          onChange={(e) => onUpdate({ boatName: e.target.value })}
+          error={errors[`fleet.${fi}.boatName`]}
+        />
+        <SimpleSelect
+          className="field-md"
+          label="Boat Type"
+          required
+          value={vessel.boatType}
+          onChange={(v) => onUpdate({ boatType: v as BoatType })}
+          options={BOAT_TYPE_OPTIONS}
+          error={errors[`fleet.${fi}.boatType`]}
+        />
+        <NumberPicker
+          className="field-md"
+          label="Max Passengers"
+          required
+          min={1}
+          max={100}
+          value={vessel.maxPax || undefined}
+          onChange={(v) => onUpdate({ maxPax: v ?? 0 })}
+          error={errors[`fleet.${fi}.maxPax`]}
+        />
+        <NumberPicker
+          className="field-md"
+          label="Min Passengers"
+          min={1}
+          max={100}
+          value={vessel.minPax}
+          onChange={(v) => onUpdate({ minPax: v })}
+          error={errors[`fleet.${fi}.minPax`]}
+        />
+        <NumberPicker
+          className="field-md"
+          label="Cutoff Hours"
+          min={0}
+          max={168}
+          value={vessel.cutoffHours}
+          onChange={(v) => onUpdate({ cutoffHours: v })}
+          error={errors[`fleet.${fi}.cutoffHours`]}
+        />
+      </FieldRow>
 
       <div>
         <FormSectionHeader
@@ -318,15 +316,3 @@ function RouteRow({ route, fleetIdx: fi, routeIdx: ri, errors, onUpdate, onRemov
   )
 }
 
-export function BoatProfileForm({
-  section,
-  profile,
-  me,
-  create,
-  update,
-  onSaved,
-}: BoatSectionProps & { section?: BoatProfileSection }) {
-  if (section === 'fleet')
-    return <BoatFleetSection profile={profile} me={me} create={create} update={update} />
-  return <BoatContactSection profile={profile} me={me} create={create} update={update} onSaved={onSaved} />
-}

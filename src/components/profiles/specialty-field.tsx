@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { PillToggleGroup } from "@/components/ui/pill-toggle";
+import { PillToggle, PillToggleGroup } from "@/components/ui/pill-toggle";
 import { FieldLabel } from "@/components/ui/field-shell";
 import {
   AGENCIES,
@@ -237,7 +237,7 @@ export function SpecialtyField({
         <span className="opacity-70">
           {value.length} / {requiredCount}
         </span>{" "}
-        {/* design-ok */}
+        {/* design-ok: file-level escape for measurement-pass hidden mirror below */}
       </FieldLabel>
 
       <div
@@ -279,12 +279,13 @@ export function SpecialtyField({
         {toggleable.map(({ code, label }, i) => {
           if (i >= overflowStart) return null;
           return (
-            <SpecialtyPill
+            <PillToggle
               key={code}
               label={label}
               checked={value.includes(code)}
               disabled={disabled || (!value.includes(code) && atMax)}
-              onToggle={() => toggle(code)}
+              onChange={() => toggle(code)}
+              dense
             />
           );
         })}
@@ -296,12 +297,13 @@ export function SpecialtyField({
             overflowItems={
               <>
                 {overflowPills.map(({ code, label }) => (
-                  <SpecialtyPill
+                  <PillToggle
                     key={code}
                     label={label}
                     checked={value.includes(code)}
                     disabled={disabled || (!value.includes(code) && atMax)}
-                    onToggle={() => toggle(code)}
+                    onChange={() => toggle(code)}
+                    dense
                   />
                 ))}
               </>
@@ -312,46 +314,6 @@ export function SpecialtyField({
         )}
       </div>
     </div>
-  );
-}
-
-interface SpecialtyPillProps {
-  label: string;
-  checked: boolean;
-  disabled?: boolean;
-  onToggle: () => void;
-}
-
-function SpecialtyPill({
-  label,
-  checked,
-  disabled,
-  onToggle,
-}: SpecialtyPillProps) {
-  return (
-    <label /* design-ok: clickable surface wrapping sr-only toggle inside compound pill picker */
-      className={`inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-full text-label font-medium transition-all duration-theme ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}
-      style={{
-        background: checked
-          ? "var(--color-primary)"
-          : "var(--color-surface-elevated)",
-        color: checked
-          ? "var(--color-text-on-primary)"
-          : "var(--color-text-primary)",
-        border: `1px solid ${checked ? "var(--color-primary)" : "var(--color-glass-border)"}`,
-        opacity: disabled && !checked ? 0.7 : 1,
-      }}
-      aria-disabled={disabled || undefined}
-    >
-      <input /* design-ok: sr-only toggle inside compound pill picker */
-        type="checkbox"
-        className="sr-only"
-        checked={checked}
-        disabled={disabled}
-        onChange={onToggle}
-      />
-      {label}
-    </label>
   );
 }
 

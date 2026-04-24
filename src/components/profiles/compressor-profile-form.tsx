@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
 import { CheckboxGroup } from '@/components/ui/checkbox-group'
 import { NumberPicker } from '@/components/ui/number-picker'
+import { FieldRow } from '@/components/ui/field-row'
 import {
   contactSchema,
   compressorGasMixesSchema,
@@ -27,9 +28,7 @@ import {
 
 export type CompressorProfileSection = 'contact' | 'gas-mixes'
 
-type CompressorSectionProps = BaseProfileSectionProps
-
-export function CompressorContactSection(props: CompressorSectionProps) {
+export function CompressorContactSection(props: BaseProfileSectionProps) {
   return (
     <BusinessContactSection
       {...props}
@@ -69,7 +68,7 @@ export function compressorGasMixesToPayload(f: CompressorGasMixesFormState): Rec
   return payload
 }
 
-export function CompressorGasMixesSection({ profile: existing, me, create, update, onClose }: CompressorSectionProps) {
+export function CompressorGasMixesSection({ profile: existing, me, create, update, onClose }: BaseProfileSectionProps) {
   const createOverride = (payload: Record<string, unknown>) =>
     create({ ...buildParentContactDefaults(me), ...payload })
 
@@ -127,8 +126,9 @@ export function CompressorGasMixesSection({ profile: existing, me, create, updat
           <div className="hidden sm:block" aria-hidden />
           <div className="flex flex-col gap-1.5">
             <span className="text-label text-secondary">O2% range</span>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <FieldRow density="compact">
               <NumberPicker
+                className="field-sm"
                 label="Min"
                 value={form.nitroxMin}
                 onChange={(v) => setField('nitroxMin', v)}
@@ -138,6 +138,7 @@ export function CompressorGasMixesSection({ profile: existing, me, create, updat
                 error={errors.nitroxMin}
               />
               <NumberPicker
+                className="field-sm"
                 label="Max"
                 value={form.nitroxMax}
                 onChange={(v) => setField('nitroxMax', v)}
@@ -146,7 +147,7 @@ export function CompressorGasMixesSection({ profile: existing, me, create, updat
                 suffix="%"
                 error={errors.nitroxMax}
               />
-            </div>
+            </FieldRow>
           </div>
         </div>
       </Card>
@@ -154,16 +155,3 @@ export function CompressorGasMixesSection({ profile: existing, me, create, updat
   )
 }
 
-export function CompressorProfileForm({
-  section,
-  profile,
-  me,
-  create,
-  update,
-  onSaved,
-  onClose,
-}: CompressorSectionProps & { section?: CompressorProfileSection }) {
-  if (section === 'gas-mixes')
-    return <CompressorGasMixesSection profile={profile} me={me} create={create} update={update} onClose={onClose} />
-  return <CompressorContactSection profile={profile} me={me} create={create} update={update} onSaved={onSaved} onClose={onClose} />
-}

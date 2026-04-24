@@ -207,7 +207,7 @@ function SortableInstructorCard({
     >
       <div className="flex items-start gap-1 mb-1">
         <span className="text-label font-bold w-5 text-center shrink-0 text-secondary">{index + 1}</span>
-        {/* design-ok */}<button
+        <button /* design-ok: DnD handle requires raw button for drag listeners */
           ref={handleRef}
           type="button"
           className="shrink-0 cursor-grab active:cursor-grabbing text-secondary hover:text-primary transition-colors duration-theme"
@@ -424,7 +424,7 @@ export function PreferredInstructorList(props: ListProps) {
             }
           }}
         >
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4"> {/* design-ok */}
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4"> {/* design-ok: preferred-instructor card grid, mobile baseline 2-col is intentional density for drag-reorder UX */}
             {slugs.map((slug, index) => (
               <SortableInstructorCard
                 key={slug}

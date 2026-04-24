@@ -137,7 +137,6 @@ export function VenueEditDialog({ open, onClose, mode, initialValue, onSubmit }:
             step={0.5}
             decimals={1}
             required={capabilitiesRequired}
-            className="field-xs"
           />
           <NumberPicker
             label="Max Capacity"
@@ -146,7 +145,6 @@ export function VenueEditDialog({ open, onClose, mode, initialValue, onSubmit }:
             min={1}
             max={range.maxCapacity}
             required={capabilitiesRequired}
-            className="field-xs"
           />
         </div>
         {showConfinedToggle && (

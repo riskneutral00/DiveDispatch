@@ -13,13 +13,9 @@ import {
   type ContactFormState,
 } from '@/lib/profile-form'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
+import type { BaseProfileSectionProps } from '@/lib/profile-form'
 
-interface VenueContactSectionProps {
-  onSaved?: () => void
-  onClose?: () => void
-}
-
-export function VenueContactSection({ onSaved, onClose }: VenueContactSectionProps) {
+export function VenueContactSection({ onSaved, onClose }: BaseProfileSectionProps) {
   const org = useQuery(api.organizations.mine)
   const me = useQuery(api.users.me)
   const inheritance = useQuery(api.users.inheritedContactDefaults, { excludeRole: 'Venue' })
