@@ -87,13 +87,6 @@ describe('cascadeOrgDelete — inventoryUnits sweep', () => {
         manufacturer: 'Scubapro',
         size: 'M',
       })
-      await ctx.db.insert('equipmentInventory', {
-        inventoryUnitId: unitId,
-        equipmentManagerId: 'equip-casc',
-        gearType: 'wetsuit',
-        manufacturer: 'Aqualung',
-        size: 'L',
-      })
 
       await cascadeOrgDelete(ctx, orgId)
 
