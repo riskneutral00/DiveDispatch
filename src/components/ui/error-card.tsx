@@ -2,13 +2,20 @@ import type { LucideIcon } from 'lucide-react'
 import { Card } from './card'
 import { CardTitle } from './card-title'
 
+type ErrorCardSize = 'sm' | 'md'
+
 interface ErrorCardProps {
   icon: LucideIcon
   iconColor?: string
   title: string
   message: string
   action?: React.ReactNode
-  minHeight?: string
+  size?: ErrorCardSize
+}
+
+const sizeMap: Record<ErrorCardSize, string> = {
+  sm: 'min-h-[60vh]',
+  md: 'min-h-screen',
 }
 
 export function ErrorCard({
@@ -17,10 +24,10 @@ export function ErrorCard({
   title,
   message,
   action,
-  minHeight = 'min-h-screen',
+  size = 'md',
 }: ErrorCardProps) {
   return (
-    <div className={`flex items-center justify-center ${minHeight} px-4`}>
+    <div className={`flex items-center justify-center ${sizeMap[size]} px-4`}>
       <Card centered className="max-w-md w-full" padding="lg">
         <div className="mb-4 flex justify-center">
           <Icon size={40} style={{ color: iconColor }} />

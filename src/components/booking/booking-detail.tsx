@@ -52,7 +52,7 @@ export function BookingDetail({ bookingId }: BookingDetailProps) {
         href="/dashboard"
         linkText="Back to Dashboard"
         message="Booking not found or you don't have access."
-        minHeight="min-h-screen"
+        size="md"
       />
     )
   }

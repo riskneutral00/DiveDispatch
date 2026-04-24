@@ -1,7 +1,9 @@
 'use client'
 
+import { useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { RouteErrorPage } from '@/components/layout/route-error-page'
+import { reportError } from '@/lib/error-reporting'
 
 export default function DashboardError({
   error,
@@ -12,14 +14,16 @@ export default function DashboardError({
 }) {
   const t = useTranslations('common')
 
+  useEffect(() => {
+    reportError(error, { boundary: 'Dashboard Error' })
+  }, [error])
+
   return (
     <RouteErrorPage
-      error={error}
       reset={reset}
-      logLabel="Dashboard Error"
       title={t('error')}
       message={t('errorRetry')}
-      minHeight="min-h-[60vh]"
+      size="sm"
     />
   )
 }

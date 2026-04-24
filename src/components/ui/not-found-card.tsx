@@ -7,14 +7,14 @@ interface NotFoundCardProps {
   href: string
   linkText: string
   message?: string
-  minHeight?: string
+  size?: 'sm' | 'md'
 }
 
 export function NotFoundCard({
   href,
   linkText,
   message,
-  minHeight = 'min-h-[60vh]',
+  size = 'sm',
 }: NotFoundCardProps) {
   const tErrors = useTranslations('errors')
 
@@ -24,7 +24,7 @@ export function NotFoundCard({
       iconColor="var(--color-text-secondary)"
       title={tErrors('pageNotFound')}
       message={message ?? tErrors('pageNotFoundMessage')}
-      minHeight={minHeight}
+      size={size}
       action={
         <Link
           href={href}
