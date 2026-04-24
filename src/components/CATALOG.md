@@ -252,3 +252,13 @@ Three signals must all be true:
 Raw `<button>`, `<input>`, `<select>`, `<textarea>`, `<label>`, `<dialog>`, `<a href>` outside `src/components/ui/` is a code smell. If genuinely needed (compound-control internals, DnD handles, sr-only toggles), add `{/* design-ok: <reason> */}` on the line — bare `design-ok` without a reason is blocked.
 
 When a visual pattern repeats via className (colors, radii, overflow, animation), it is a **missing variant**, not a styling choice. Add a variant to the component — don't duplicate the className.
+
+## Primitives at or below threshold — monitor, don't extract
+
+These patterns exist in feature code but haven't crossed the 2-callsite extraction threshold. Extract immediately on a third appearance; do not wait for a fourth.
+
+| Pattern | Current callsites | Notes |
+|---|---|---|
+| Accordion / Disclosure | `src/components/booking/boat-manifest-widget.tsx`, `src/components/profiles/location-picker.tsx` | Two semantically-distant uses (manifest group vs. autocomplete dropdown). Extract when a third collapsible section appears. |
+| Popover (anchored content) | `src/components/booking/booking-calendar.tsx` | One true Popover among hand-rolled files; other "popover-shaped" surfaces were reclassified as Combobox (`resource-picker`) or Banner (`offline-indicator`). `src/components/layout/top-nav.tsx` + `src/components/notifications/notification-bell.tsx` use `react-aria-components.Popover` instead — do not conflate. Extract when a 2nd non-react-aria Popover surface appears. |
+| DropdownMenu (keyed menu) | `src/components/dev/dev-switcher.tsx` | One true DropdownMenu among hand-rolled files. Same `react-aria` caveat as Popover above. Extract on a 2nd non-react-aria keyed menu. |
