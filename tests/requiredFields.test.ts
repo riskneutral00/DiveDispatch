@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest'
 import {
   PROFILE_REQUIRED,
   SETTINGS_REQUIRED,
-  ROLE_REQUIRED,
 } from '../convex/lib/requiredFields'
+import { ROLE_SPECS } from '../convex/lib/completeness/roleSpecs'
 import { ROLES } from '../src/lib/constants/roles'
 
 describe('PROFILE_REQUIRED', () => {
@@ -25,104 +25,26 @@ describe('SETTINGS_REQUIRED', () => {
   })
 })
 
-describe('ROLE_REQUIRED', () => {
-  it('defines required fields for DiveCenter', () => {
-    const fields = ROLE_REQUIRED['DiveCenter']
-    expect(fields).toBeDefined()
-    expect(fields).toContain('name')
-    expect(fields).toContain('address')
+describe('ROLE_SPECS ↔ ROLES alignment', () => {
+  it('every ROLE_SPECS key is a valid ROLES clerkRole', () => {
+    const clerkRoles = new Set<string>(ROLES.map((r) => r.clerkRole))
+    for (const key of Object.keys(ROLE_SPECS)) {
+      expect(clerkRoles.has(key), `ROLE_SPECS key "${key}" is not a valid clerkRole`).toBe(true)
+    }
   })
 
-  it('defines required fields for Instructor', () => {
-    const fields = ROLE_REQUIRED['Instructor']
-    expect(fields).toContain('credential')
-    expect(fields).toContain('teachingLanguages')
-  })
-
-  it('DiveCenter requires customerLanguages', () => {
-    expect(ROLE_REQUIRED['DiveCenter']).toContain('customerLanguages')
-  })
-
-  it('Boat requires fleet and diveSite', () => {
-    const fields = ROLE_REQUIRED['Boat']
-    expect(fields).toContain('fleet')
-    expect(fields).toContain('diveSite')
-  })
-
-  it('Agent requires name, address, associations, customerLanguages', () => {
-    const fields = ROLE_REQUIRED['Agent']
-    expect(fields).toContain('name')
-    expect(fields).toContain('address')
-    expect(fields).toContain('associations')
-    expect(fields).toContain('customerLanguages')
-  })
-
-  it('every role has name and address at minimum', () => {
-    for (const [, fields] of Object.entries(ROLE_REQUIRED)) {
-      expect(fields).toContain('name')
-      expect(fields).toContain('address')
+  it('every ROLES clerkRole has a ROLE_SPECS entry with ≥1 evaluator', () => {
+    for (const role of ROLES) {
+      const evaluators = ROLE_SPECS[role.clerkRole]
+      expect(evaluators, `ROLE_SPECS missing entry for "${role.clerkRole}"`).toBeDefined()
+      expect(
+        evaluators.length,
+        `ROLE_SPECS["${role.clerkRole}"] has zero evaluators`,
+      ).toBeGreaterThan(0)
     }
   })
 
   it('returns undefined for unknown role (no crash)', () => {
-    expect(ROLE_REQUIRED['FakeRole']).toBeUndefined()
-  })
-
-  it('no role has duplicate required fields', () => {
-    for (const [role, fields] of Object.entries(ROLE_REQUIRED)) {
-      expect(new Set(fields).size, `${role} has duplicate fields`).toBe(fields.length)
-    }
-  })
-
-  it('all field names are non-empty strings', () => {
-    for (const [role, fields] of Object.entries(ROLE_REQUIRED)) {
-      for (const field of fields) {
-        expect(field.length, `${role} has empty field`).toBeGreaterThan(0)
-      }
-    }
-  })
-
-  it('Equipment requires gearInventory; Venue requires name, address, subtype', () => {
-    expect(ROLE_REQUIRED.Equipment).toEqual(['name', 'address', 'gearInventory'])
-    expect(ROLE_REQUIRED.Venue).toEqual(['name', 'address', 'subtype'])
-  })
-
-  it('Compressor requires gasMixes (happy-path P0-18 gate)', () => {
-    expect(ROLE_REQUIRED.Compressor).toEqual(['name', 'address', 'gasMixes'])
-  })
-
-  it('Instructor requires teachingLanguages (happy-path P0-20 gate)', () => {
-    expect(ROLE_REQUIRED.Instructor).toContain('teachingLanguages')
-  })
-
-  it('Venue has required fields defined', () => {
-    const fields = ROLE_REQUIRED['Venue']
-    expect(fields).toContain('name')
-    expect(fields).toContain('address')
-    expect(fields).toContain('subtype')
-  })
-
-  it('Venue required fields are exactly the spec list (maxCapacity is optional)', () => {
-    expect(ROLE_REQUIRED['Venue']).toEqual(['name', 'address', 'subtype'])
-  })
-})
-
-// ── ROLE_REQUIRED ↔ ROLES alignment ───────────────────────────────────────────
-
-describe('ROLE_REQUIRED ↔ ROLES alignment', () => {
-  it('every ROLE_REQUIRED key is a valid ROLES clerkRole', () => {
-    const clerkRoles = new Set<string>(ROLES.map((r) => r.clerkRole))
-    for (const key of Object.keys(ROLE_REQUIRED)) {
-      expect(clerkRoles.has(key), `ROLE_REQUIRED key "${key}" is not a valid clerkRole`).toBe(true)
-    }
-  })
-
-  it('Instructor role has ROLE_REQUIRED entry', () => {
-    expect(ROLE_REQUIRED.Instructor).toBeDefined()
-  })
-
-  it('organizer roles (DiveCenter, Agent) both have ROLE_REQUIRED entries', () => {
-    expect(ROLE_REQUIRED.DiveCenter).toBeDefined()
-    expect(ROLE_REQUIRED.Agent).toBeDefined()
+    expect(ROLE_SPECS['FakeRole']).toBeUndefined()
   })
 })

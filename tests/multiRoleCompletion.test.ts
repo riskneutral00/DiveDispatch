@@ -47,7 +47,6 @@ async function seedCompleteDC(ctx: SeedCtx, slug: string) {
     email: 'dc@test.com',
     associations: [{ agency: 'PADI', number: '12345' }],
   })
-  // customerLanguages is a DiveCenter ROLE_REQUIRED field
   const dc = await findProfileByUser(ctx, userId, 'diveCenters')
   if (dc) await ctx.db.patch(dc._id, { customerLanguages: ['en'] })
   return userId
