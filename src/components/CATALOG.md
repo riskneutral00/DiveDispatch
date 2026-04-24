@@ -25,9 +25,8 @@ Governance: `.claude/rules/existing-components-first.md` + `.claude/rules/dry-fi
 |---|---|---|
 | `Input` | `@/components/ui/input` | Raw `<input type="text\|number\|password\|search">`. Supports floating label, error, helper, leading/trailing icons. |
 | `Textarea` | `@/components/ui/textarea` | Raw `<textarea>`. |
-| `SimpleSelect` | `@/components/ui/simple-select` | Raw `<select>` when options are a flat list. |
+| `SimpleSelect` | `@/components/ui/simple-select` | **The default for every dropdown.** Wraps native `<select>` — the OS draws the listbox, so opacity / positioning / shadow / z-index come for free. Any flat list of `{value, label}` options goes here. |
 | `NumberPicker` | `@/components/ui/number-picker` | Numeric dropdown — SimpleSelect with auto-generated options from min/max/step. Use for any bounded numeric field (ranges, counts, percentages, depths, passengers, days). Matches BirthdayField's dropdown pattern for app-wide consistency. |
-| `Select` | `@/components/ui/select` | Rich select with search, custom rendering, keyboard nav. |
 | `Checkbox` | `@/components/ui/checkbox` | Raw `<input type="checkbox">`. |
 | `CheckboxGroup` | `@/components/ui/checkbox-group` | Multiple checkboxes sharing a label. |
 | `DayPicker` | `@/components/ui/day-picker` | Single-date calendar picker. |
@@ -63,7 +62,6 @@ Governance: `.claude/rules/existing-components-first.md` + `.claude/rules/dry-fi
 |---|---|---|
 | `FormShell` | `@/components/ui/form-shell` | Generic form wrapper. |
 | `FormFooter` | `@/components/ui/form-footer` | Submit/Cancel row. |
-| `FormGrid` / `FormField` | `@/components/ui/form-grid` | Responsive field grid with span sizing. |
 | `FormSectionHeader` | `@/components/ui/form-section-header` | Labelled section divider with optional action. |
 | `WizardStepShell` | `@/components/ui/wizard-step-shell` | Wizard step container (title, description, content). |
 | `BottomActionBar` | `@/components/ui/bottom-action-bar` | Fixed mobile bottom action bar (primary Save on mobile). |
@@ -88,7 +86,12 @@ Governance: `.claude/rules/existing-components-first.md` + `.claude/rules/dry-fi
 | `Badge` | `@/components/ui/badge` | Generic status pill. Variants: default, success, warning, destructive, info, muted. |
 | `StatusBadge` | `@/components/ui/status-badge` | Semantic status badge wired to booking/reservation/bag states. |
 | `ColorBadge` | `@/components/ui/color-badge` | Color swatch badge. |
-| `FlagEmoji` | `@/components/ui/flag-emoji` | Country flag emoji. Also exports `countryCodeToEmoji`. |
+
+## Display helpers
+
+| Component | Import | Purpose |
+|---|---|---|
+| `FlagEmoji` | `@/components/ui/flag-emoji` | Country flag emoji render helper. Also exports `countryCodeToEmoji` (ISO-2 → emoji lookup). Not a badge — a display utility. |
 
 ## Feedback — errors, empty, loading
 
@@ -102,7 +105,7 @@ Governance: `.claude/rules/existing-components-first.md` + `.claude/rules/dry-fi
 | `Spinner` | `@/components/ui/spinner` | Small loading spinner. |
 | `FullPageSpinner` | `@/components/ui/full-page-spinner` | Full-viewport loading state. |
 | `LoadingState` | `@/components/ui/loading-state` | Section-level loading skeleton frame. |
-| `LoadingCard` | `@/components/ui/loading-card` | Card-shaped loading skeleton. |
+| `LoadingCard` | `@/components/ui/loading-card` | `LoadingState` preset for card scope (callsite alias for `<LoadingState scope="card" variant={variant} message={message} />`). Preferred over calling `LoadingState` directly when the intent is "card-shaped skeleton" — same pattern as `SaveButton`/`AddEntityButton`/`FullPageSpinner` preset wrappers. |
 | `Skeleton` | `@/components/ui/skeleton` | Raw skeleton primitive (rect / circle). |
 
 ## Overlays
@@ -135,6 +138,7 @@ Governance: `.claude/rules/existing-components-first.md` + `.claude/rules/dry-fi
 | Component | Import | Purpose |
 |---|---|---|
 | `CustomerContactFields` | `@/components/booking/customer-contact-fields` | One customer's name + contact-method toggle (email/whatsapp/line) + language selector. Used by the booking wizard (`customer-step`) and the add-customer dialog. Takes labels via a `labels` prop; props cover variance (nameRequired, contactRequired, onRemove, hint). |
+| `InstructorPicker` | `@/components/booking/instructor-picker` | Custom listbox for booking's instructor selection. Renders language flags, "Full match / Partial" badges, and collapsible tier sections (Preferred & matching / Matching / Preferred / All). **Do not reuse for generic selects — use `SimpleSelect` instead.** Its listbox carries the gold-standard floating-surface recipe (`glass-elevated glass-overlay-blur bg-surface-elevated border border-glass-border rounded-[var(--border-radius)] shadow-xl`). New custom listboxes anywhere else in the app must justify why SimpleSelect can't work. |
 
 ---
 
@@ -151,7 +155,7 @@ Role-agnostic building blocks for stakeholder profile forms (`PatternLibrary/one
 | `ProfileBasicInfo` | `@/components/profiles/profile-basic-info` | Name + location + email + phone inputs. Used by every role's contact section. |
 | `ProfileAgencyInfo` | `@/components/profiles/profile-agency-info` | Agency/certification info block (generic over row type). |
 | `ProfileOverlay` | `@/components/profiles/profile-overlay` | Full-screen profile editor overlay. |
-| `ProfileCompletionPill` | `@/components/profiles/profile-completion-pill` | % completion badge that opens the overlay. Rendered in TopNav whenever `profileCompletion.percentage < 100` (hidden at 100%). Single top-nav indicator; there is no separate "start" banner. |
+| `ProfileCompletionPill` | `@/components/profiles/profile-completion-pill` | RadialProgress ring (no chrome, no label) that opens the profile overlay on the first incomplete tab. Rendered in TopNav whenever `profileCompletion.percentage < 100` (hidden at 100%). Single top-nav indicator; there is no separate "start" banner. |
 | `AccessControlSection` | `@/components/profiles/access-control-section` | allow/not-allow controls. Exports `accessFromProfile`, `accessToPayload`, `INITIAL_ACCESS_CONTROL`. |
 | `VenueCapabilitiesSection` | `@/components/profiles/venue-capabilities-section` | Multi-venue list editor. Uses `EntityCardList` + `VenueEditDialog` for Add/Edit. Each card shows read-only summary of one venue row with an Edit button. |
 | `VenueContactSection` | `@/components/profiles/venue-contact-section` | Venue Contact sub-tab. Reads/writes the operator's `organizations` row (business name, email, phone, address) — NOT venue rows. Multi-venue operators have a single business identity; individual venues are edited in Capabilities. |
@@ -160,7 +164,7 @@ Role-agnostic building blocks for stakeholder profile forms (`PatternLibrary/one
 | `LanguagePicker` | `@/components/profiles/language-picker` | Multi-language selection with flag pills. |
 | `SpecialtyField` | `@/components/profiles/specialty-field` | Specialty picker for instructors/dive-masters. |
 | `LanguageFlags` | `@/components/profiles/language-flags` | Flag-only display. Exports `languageFlagText`. |
-| `PreferredInstructorList` / `PreferredVenueList` / `PreferredBoatList` / `PreferredEquipmentList` / `PreferredCompressorList` | `@/components/profiles/preferred-list` | Role-specific "preferred" editor lists. |
+| `PreferredList` (presets: `PreferredInstructorList` / `PreferredVenueList` / `PreferredBoatList` / `PreferredEquipmentList` / `PreferredCompressorList`) | `@/components/profiles/preferred-list` | One parameterized "preferred" editor list — five named exports share a single implementation. Import the role-specific preset at the callsite; under the hood it's one file. |
 | `RoleProfileForm` | `@/components/profiles/connected-role-forms` | Dynamic dispatcher. Reads `ROLE_SECTION_REGISTRY`, wires Convex queries/mutations via `ROLE_API_MODULES`, passes canonical `BaseProfileSectionProps` to the registered section. Use `hasConnectedForm(roleKey)` to check availability. |
 | `ROLE_SECTION_REGISTRY` | `@/components/profiles/role-section-registry` | `Record<RoleKey, Partial<Record<sectionId, ComponentType<BaseProfileSectionProps>>>>`. Adding a new role section = export section component from its `*-profile-form.tsx`, register it here. Covered by `tests/profileSectionRegistry.test.ts` (every non-overlay `profileTabs` id must have a registered component). |
 | `BusinessContactSection` | `@/components/profiles/business-contact-section` | Canonical Contact tab for every role. Props: `nameLabel` (omit for Instructor-style no-name forms), `schema`, `inheritFromOtherRoles?`, `createOverride?`, `afterSuccessfulSave?`, `extras?` (defaults + fromProfile + toPayload + render prop for role-specific add-ons like `LanguageField`). DiveCenter/Instructor/Boat/Equipment/Compressor all delegate to this — never hand-roll another contact form. |
