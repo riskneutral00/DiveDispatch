@@ -33,11 +33,12 @@ const STATIC_TAB_IDS: { id: ProfileOverlayTab; labelKey: 'profile' | 'roles' }[]
   { id: 'roles', labelKey: 'roles' },
 ]
 
-export function ProfileOverlay({ open, onClose, initialTab = 'profile', initialSection, roleSlug: _roleSlug, slug: _slug }: ProfileOverlayProps) {
+export function ProfileOverlay({ open, onClose, initialTab = 'profile', initialSection, roleSlug, slug: _slug }: ProfileOverlayProps) {
   const tNav = useTranslations('nav')
   const [activeTab, setActiveTab] = useState<string>(initialTab)
   const [roleProfileSection, setRoleProfileSection] = useState<string>(initialSection ?? '')
   const userRoles = useQuery(api.userRoles.myRoles)
+  const activeClerkRole = ROLE_BY_KEY[roleSlug]?.clerkRole
 
   const roleConfigs = Array.from(
     new Map(
@@ -140,7 +141,12 @@ export function ProfileOverlay({ open, onClose, initialTab = 'profile', initialS
         >
           <DashboardPageFrame className="px-4 pt-2 pb-28 md:pb-6 md:px-6">
             {activeTab === 'profile' && <ProfileTab onClose={onClose} />}
-            {activeTab === 'roles' && <ManageRolesConnected onNavigateToRole={(roleKey) => setActiveTab(`role:${roleKey}`)} />}
+            {activeTab === 'roles' && (
+              <ManageRolesConnected
+                onNavigateToRole={(roleKey) => setActiveTab(`role:${roleKey}`)}
+                activeClerkRole={activeClerkRole}
+              />
+            )}
             {activeRoleKey && roleSectionTabs && roleSectionTabs.length > 0 && (
               <div className="max-w-2xl mx-auto">
                 <ProfileSectionTabBar

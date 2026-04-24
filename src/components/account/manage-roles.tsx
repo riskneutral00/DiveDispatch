@@ -25,6 +25,7 @@ interface ManageRolesProps {
   onAddRole: () => void;
   onDeleteRole: (roleId: Id<"userRoles">) => Promise<void>;
   bookingCounts: Record<string, number>;
+  activeClerkRole?: ClerkRole;
 }
 
 export function ManageRoles({
@@ -33,6 +34,7 @@ export function ManageRoles({
   onAddRole,
   onDeleteRole,
   bookingCounts,
+  activeClerkRole,
 }: ManageRolesProps) {
   const primaryRoleStr =
     roles.length > 0 ? deriveDefaultRole(roles.map((r) => r.role)) : null;
@@ -73,7 +75,14 @@ export function ManageRoles({
           if (!config) return null;
 
           const blockingCount = bookingCounts[entry._id] ?? 0;
-          const isBlocked = blockingCount > 0;
+          const isBlockedByBookings = blockingCount > 0;
+          const isActiveRole = entry.role === activeClerkRole;
+          const isBlocked = isBlockedByBookings || isActiveRole;
+          const blockedReason = isActiveRole
+            ? "Cannot delete the role you are currently using. Switch to another role first."
+            : isBlockedByBookings
+              ? `Cannot delete — ${blockingCount} active ${blockingCount === 1 ? "booking" : "bookings"} use this role's resources.`
+              : null;
           const isConfirming = confirmingId === entry._id;
           const isDeleting = deletingId === entry._id;
           const isPrimary = entry.role === primaryRoleStr && roles.length > 1;
@@ -127,7 +136,7 @@ export function ManageRoles({
                     opacity: isBlocked ? 1 : 0,
                   }}
                 >
-                  {`Cannot delete — ${blockingCount} active ${blockingCount === 1 ? "booking" : "bookings"} use this role's resources.`}
+                  {blockedReason}
                 </div>
               )}
 

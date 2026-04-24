@@ -17,9 +17,10 @@ import { ErrorCode } from '@/lib/errors'
 
 interface ManageRolesConnectedProps {
   onNavigateToRole?: (roleKey: string) => void
+  activeClerkRole?: ClerkRole
 }
 
-export function ManageRolesConnected({ onNavigateToRole }: ManageRolesConnectedProps = {}) {
+export function ManageRolesConnected({ onNavigateToRole, activeClerkRole }: ManageRolesConnectedProps = {}) {
   const tErr = useTranslations('errors')
   const tCommon = useTranslations('common')
   const tBooking = useTranslations('booking')
@@ -124,6 +125,7 @@ export function ManageRolesConnected({ onNavigateToRole }: ManageRolesConnectedP
         }}
         onDeleteRole={handleDeleteRole}
         bookingCounts={bookingCounts}
+        activeClerkRole={activeClerkRole}
       />
       <AddRoleModal
         open={modalOpen}
