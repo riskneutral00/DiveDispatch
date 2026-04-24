@@ -11,6 +11,7 @@ import { usePortalStep } from '@/lib/hooks/use-portal-step'
 import { usePortalSafety } from '@/lib/hooks/use-portal-safety'
 import { Spinner } from '@/components/ui/spinner'
 import { PortalStepShell } from '@/components/portal/portal-step-shell'
+import { FieldRow } from '@/components/ui/field-row'
 
 const BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
 
@@ -111,9 +112,10 @@ export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
           </p>
         </div>
 
-        <div className="space-y-5">
+        <FieldRow>
           <SimpleSelect
             label={t('bloodType')}
+            className="field-sm"
             value={form.bloodType}
             onChange={(v) => setField('bloodType', v)}
             options={BLOOD_TYPES}
@@ -127,6 +129,7 @@ export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
             placeholder={t('placeholderAllergiesSafety')}
             rows={DEFAULT_TEXTAREA_ROWS}
             maxLength={500}
+            className="field-xl"
           />
 
           <Textarea
@@ -136,6 +139,7 @@ export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
             placeholder={t('placeholderMedications')}
             rows={DEFAULT_TEXTAREA_ROWS}
             maxLength={500}
+            className="field-xl"
           />
 
           <Input
@@ -144,8 +148,9 @@ export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
             placeholder={t('placeholderInsurance')}
             value={form.insurancePolicyNumber}
             onChange={(e) => setField('insurancePolicyNumber', e.target.value)}
+            className="field-md"
           />
-        </div>
+        </FieldRow>
       </Card>
     </PortalStepShell>
   )

@@ -16,6 +16,7 @@ import { NON_AGENCY_DISCLOSURE, LIABILITY_RELEASE_TEXT } from '@/lib/constants/w
 import { usePortalStep } from '@/lib/hooks/use-portal-step'
 import { isSignatureValid } from '@/lib/utils/signature-coverage'
 import { PortalStepShell } from '@/components/portal/portal-step-shell'
+import { FieldRow } from '@/components/ui/field-row'
 
 export type WaiverData = {
   acknowledged: boolean
@@ -234,16 +235,19 @@ export function StepWaiver({
           )}
 
           {hasInsurance === 'yes' && (
-            <Input
-              label={tPortal('policyNumber')}
-              value={insurancePolicyNumber}
-              onChange={(e) => {
-                setInsurancePolicyNumber(e.target.value)
-                if (e.target.value.trim()) clearError('insurancePolicyNumber')
-              }}
-              placeholder={tPortal('placeholderInsurance')}
-              error={errors.insurancePolicyNumber}
-            />
+            <FieldRow>
+              <Input
+                label={tPortal('policyNumber')}
+                value={insurancePolicyNumber}
+                onChange={(e) => {
+                  setInsurancePolicyNumber(e.target.value)
+                  if (e.target.value.trim()) clearError('insurancePolicyNumber')
+                }}
+                placeholder={tPortal('placeholderInsurance')}
+                error={errors.insurancePolicyNumber}
+                className="field-md"
+              />
+            </FieldRow>
           )}
         </div>
       </Card>
@@ -268,6 +272,7 @@ export function StepWaiver({
             onChange={(v) => setDate(v ?? '')}
             error={errors.date}
             max={todayLocal()}
+            className="field-md"
           />
         </div>
       </Card>
@@ -291,6 +296,7 @@ export function StepWaiver({
               }}
               placeholder={tPortal('placeholderLegalName')}
               error={errors.guardianName}
+              className="field-md"
             />
 
             <SignaturePad

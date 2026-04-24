@@ -2,6 +2,7 @@ import { NameField } from '@/components/ui/name-field'
 import { EmailField } from '@/components/ui/email-field'
 import { PhoneField } from '@/components/ui/phone-field'
 import { LocationPicker, type LocationValue } from '@/components/profiles/location-picker-lazy'
+import { FieldRow } from '@/components/ui/field-row'
 
 interface ProfileBasicInfoProps {
   nameLabel?: string
@@ -50,7 +51,7 @@ export function ProfileBasicInfo({
   children,
 }: ProfileBasicInfoProps) {
   return (
-    <div className="grid grid-cols-6 gap-x-3 gap-y-4 sm:flex sm:flex-wrap sm:gap-4 w-full"> {/* design-ok */}
+    <FieldRow className="w-full">
       {onNameChange !== undefined && (
         <NameField
           scope="organization"
@@ -59,7 +60,7 @@ export function ProfileBasicInfo({
           onChange={onNameChange}
           error={nameError}
           required={nameRequired}
-          className="field-name"
+          className="field-md"
         />
       )}
       <LocationPicker
@@ -68,7 +69,7 @@ export function ProfileBasicInfo({
         onChange={onLocationChange}
         error={locationError}
         required={locationRequired}
-        className="field-location"
+        className="field-lg"
       />
       <PhoneField
         label="Phone"
@@ -76,7 +77,7 @@ export function ProfileBasicInfo({
         onChange={onPhoneChange}
         error={phoneError}
         required={phoneRequired}
-        className="field-phone"
+        className="field-md"
       />
       {onEmailChange !== undefined && (
         <EmailField
@@ -85,10 +86,10 @@ export function ProfileBasicInfo({
           onChange={onEmailChange}
           error={emailError}
           required={emailRequired}
-          className="field-email"
+          className="field-lg"
         />
       )}
       {children}
-    </div>
+    </FieldRow>
   )
 }

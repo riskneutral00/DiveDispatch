@@ -1,7 +1,7 @@
 'use client'
 
 import { X, Anchor, Waves, Droplets, AlertTriangle } from 'lucide-react'
-import { Card, Input, Select, SimpleSelect, IconButton, ActionLink } from '@/components/ui'
+import { Card, Input, Select, SimpleSelect, IconButton, ActionLink, FieldRow } from '@/components/ui'
 import type { DayConfig, WizardAction, DiveSlot } from '@/lib/booking/wizard-state'
 import type { DiveSlotDef } from '@/lib/booking/generate-days'
 import { buildDiveSequence } from '@/lib/booking/generate-days'
@@ -152,20 +152,22 @@ export function DayRow({
         )}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+      <FieldRow label="Day schedule" className="mb-3">
         <Input
           label="Start time"
           type="time"
           value={day.startTime}
           onChange={(e) => dispatch({ type: 'UPDATE_DAY', dayIndex, patch: { startTime: e.target.value } })}
+          className="field-md"
         />
         <Input
           label="End time"
           type="time"
           value={day.endTime}
           onChange={(e) => dispatch({ type: 'UPDATE_DAY', dayIndex, patch: { endTime: e.target.value } })}
+          className="field-md"
         />
-      </div>
+      </FieldRow>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3 items-end">
         <div className="flex flex-col gap-1">
@@ -177,6 +179,7 @@ export function DayRow({
                 onChange={(e) =>
                   dispatch({ type: 'UPDATE_DAY', dayIndex, patch: { externalInstructorName: e.target.value } })
                 }
+                className="field-lg"
               />
               <ActionLink
                 onClick={() => {
@@ -190,6 +193,7 @@ export function DayRow({
           ) : (
             <Select
               label="Instructor"
+              className="field-lg"
               data-testid="instructor-select"
               value={day.instructorSlug ?? ''}
               onChange={(v) => {
@@ -264,6 +268,7 @@ export function DayRow({
                 onChange={(e) =>
                   dispatch({ type: 'UPDATE_DAY', dayIndex, patch: { externalDiveMasterName: e.target.value } })
                 }
+                className="field-lg"
               />
               <ActionLink
                 onClick={() => {
@@ -289,6 +294,7 @@ export function DayRow({
                 })),
               ]}
               placeholder="None"
+              className="field-lg"
             />
           )}
         </div>
@@ -375,6 +381,7 @@ export function DayRow({
                           ...resourceOpts.map((opt) => ({ value: opt.id, label: opt.label })),
                         ]}
                         placeholder={`Select ${VENUE_LABELS[currentVenue].toLowerCase()}…`}
+                        className="field-md"
                       />
                     </div>
                   </div>

@@ -17,6 +17,7 @@ import { DEFAULT_TEXTAREA_ROWS } from '@/lib/constants/form-config'
 import { SimpleSelect } from '@/components/ui/simple-select'
 import { Textarea } from '@/components/ui/textarea'
 import { LanguageField } from '@/components/ui/language-field'
+import { FieldRow } from '@/components/ui/field-row'
 import { toISODateString } from '@/lib/utils/date'
 import { makeCustomerContactSchema, useFormValidation } from '@/lib/validation'
 import type { CustomerContactData } from '@/lib/validation'
@@ -307,7 +308,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
 
       <Card padding="md">
         <FormSectionHeader label={t('sectionPersonalDetails')} />
-        <div className="grid grid-cols-6 gap-x-3 gap-y-4 sm:flex sm:flex-wrap sm:gap-4"> {/* design-ok */}
+        <FieldRow>
           <NameField
             scope="given"
             label={t('legalFirstName')}
@@ -315,7 +316,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             value={form.legalFirstName}
             onChange={(v) => setField('legalFirstName', v)}
             error={errors.legalFirstName}
-            className="field-name"
+            className="field-md"
           />
           <NameField
             scope="family"
@@ -324,7 +325,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             value={form.legalLastName}
             onChange={(v) => setField('legalLastName', v)}
             error={errors.legalLastName}
-            className="field-name"
+            className="field-md"
           />
           <NameField
             scope="nickname"
@@ -333,7 +334,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             value={form.preferredName ?? ''}
             onChange={(v) => setField('preferredName', v)}
             error={errors.preferredName}
-            className="field-text-short"
+            className="field-md"
           />
           <PhoneField
             label={t('phone')}
@@ -341,7 +342,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             onChange={(v) => setField('phone', v)}
             error={errors.phone}
             helperText={t('helperCountryCode')}
-            className="field-phone"
+            className="field-md"
           />
           <EmailField
             label={t('email')}
@@ -349,9 +350,9 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             value={form.email}
             onChange={(v) => setField('email', v)}
             error={errors.email}
-            className="field-email"
+            className="field-lg"
           />
-          <div className="field-date">
+          <div className="field-md">
             <BirthdayField
               label={t('dateOfBirth')}
               value={form.dateOfBirth || null}
@@ -372,7 +373,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             options={['M', 'F', 'Other']}
             error={errors.gender}
             required
-            className="field-select-short"
+            className="field-sm"
           />
           <CountryField
             label={t('nationality')}
@@ -381,9 +382,9 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             placeholder={t('placeholderSelect')}
             error={errors.nationality}
             required
-            className="field-select-long"
+            className="field-lg"
           />
-        </div>
+        </FieldRow>
       </Card>
 
       <Card padding="md">
@@ -400,14 +401,14 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
 
       <Card padding="md">
         <FormSectionHeader label={t('sectionPassport')} />
-        <div className="grid grid-cols-6 gap-x-3 gap-y-4 sm:flex sm:flex-wrap sm:gap-4"> {/* design-ok */}
+        <FieldRow>
           <Input
             label={t('passportNumber')}
             placeholder={t('placeholderPassportNum')}
             value={form.passportNumber}
             onChange={(e) => setField('passportNumber', e.target.value)}
             error={errors.passportNumber}
-            className="field-text-short"
+            className="field-md"
           />
           <CountryField
             label={t('issuingCountry')}
@@ -416,9 +417,9 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             placeholder={t('placeholderSelect')}
             error={errors.passportIssuingCountry}
             required
-            className="field-select-long"
+            className="field-lg"
           />
-          <div className="field-date">
+          <div className="field-md">
             <DateField
               label={t('expiryDate')}
               value={form.passportExpirationDate || null}
@@ -431,12 +432,12 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
               </ErrorAlert>
             )}
           </div>
-        </div>
+        </FieldRow>
       </Card>
 
       <Card padding="md">
         <FormSectionHeader label={t('sectionEmergency')} />
-        <div className="grid grid-cols-6 gap-x-3 gap-y-4 sm:flex sm:flex-wrap sm:gap-4"> {/* design-ok */}
+        <FieldRow>
           <NameField
             scope="given"
             label={t('fullName')}
@@ -444,7 +445,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             value={form.emergencyContactName}
             onChange={(v) => setField('emergencyContactName', v)}
             error={errors.emergencyContactName}
-            className="field-name"
+            className="field-md"
           />
           <PhoneField
             label={t('phone')}
@@ -452,7 +453,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             onChange={(v) => setField('emergencyContactPhone', v)}
             error={errors.emergencyContactPhone}
             helperText={t('helperCountryCode')}
-            className="field-phone"
+            className="field-md"
           />
           <Input
             label={t('relationship')}
@@ -460,15 +461,15 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             value={form.emergencyContactRelation}
             onChange={(e) => setField('emergencyContactRelation', e.target.value)}
             error={errors.emergencyContactRelation}
-            className="field-text-short"
+            className="field-md"
           />
-        </div>
+        </FieldRow>
       </Card>
 
       {requiresCert && (
         <Card padding="md">
           <FormSectionHeader label={t('sectionCertification')} />
-          <div className="grid grid-cols-6 gap-x-3 gap-y-4 sm:flex sm:flex-wrap sm:gap-4"> {/* design-ok */}
+          <FieldRow>
             <SimpleSelect
               label={t('certifyingAgency')}
               value={form.agency ?? ''}
@@ -477,17 +478,17 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
               placeholder={t('placeholderSelect')}
               error={errors.agency}
               required
-              className="field-select-short"
+              className="field-sm"
             />
             <Input
               label={t('diverID')}
-              className="field-text-short"
+              className="field-md"
               placeholder={t('placeholderDiverID')}
               value={form.agencyID ?? ''}
               onChange={(e) => setField('agencyID', e.target.value)}
               error={errors.agencyID}
             />
-          </div>
+          </FieldRow>
         </Card>
       )}
 
@@ -499,6 +500,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
           placeholder={t('placeholderAllergies')}
           value={form.allergies ?? ''}
           onChange={(e) => setField('allergies', e.target.value)}
+          className="field-xl"
         />
       </Card>
 

@@ -249,6 +249,12 @@
           },
           {
             "type": "command",
+            "command": "bash .claude/hooks/field-row-literal-guard.sh",
+            "timeout": 5,
+            "statusMessage": "Checking FieldRow literal ownership…"
+          },
+          {
+            "type": "command",
             "command": "bash .claude/hooks/type-scale-enforcement.sh",
             "timeout": 5,
             "statusMessage": "Checking type scale tokens\u2026"

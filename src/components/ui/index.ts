@@ -4,6 +4,7 @@ export type { IconButtonProps } from "./icon-button";
 export { FullPageSpinner } from "./full-page-spinner";
 export { FieldLabel, FieldError, FieldShell } from "./field-shell";
 export { RequiredAsterisk } from "./required-asterisk";
+export { FieldRow } from "./field-row";
 export { Button } from "./button";
 export { ButtonGroup } from "./button-group";
 export type { ButtonGroupOption } from "./button-group";

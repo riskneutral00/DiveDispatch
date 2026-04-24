@@ -55,6 +55,7 @@ Governance: `.claude/rules/existing-components-first.md` + `.claude/rules/dry-fi
 | `FieldError` | `@/components/ui/field-shell` | Accessible error slot keyed to field id. |
 | `MetaField` | `@/components/ui/meta-field` | Read-only label/value display. |
 | `RequiredAsterisk` | `@/components/ui/required-asterisk` | The `*` glyph. Don't hand-roll; `FieldLabel` consumes it via `required`. |
+| `FieldRow` | `@/components/ui/field-row` | The single canonical row-of-fields parent. Unlabeled: `<FieldRow>` renders a responsive 6-col mobile / flex-wrap `items-end` desktop row. Labeled: `<FieldRow label="..." required error="...">` adds `<fieldset>`/`<legend>`/`RequiredAsterisk` with `role="group"` + `aria-describedby` to an error `<p role="alert">`. Caller supplies translated `label` + `error` strings. Children use `field-xs/sm/md/lg/xl/checkbox` tokens for width. `className` lands on the outer wrapper only — in unlabeled mode the outer wrapper IS the inner grid, so callsite Tailwind overrides (e.g. `sm:gap-3`) work; in labeled mode `className` goes on the fieldset. |
 
 ## Form containers
 

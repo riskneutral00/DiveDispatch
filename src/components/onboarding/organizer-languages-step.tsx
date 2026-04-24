@@ -16,6 +16,7 @@ import type { ClerkRole } from '@/lib/constants/roles'
 import { useOrganizerRoleApi } from '@/lib/hooks/use-organizer-role-api'
 import { getOrganizerRoleFlags } from '@/lib/constants/organizer-wizard-config'
 import { OrganizerStepCard } from './organizer-step-card'
+import { FieldRow } from '@/components/ui/field-row'
 
 interface OrganizerLanguagesStepProps {
   role: ClerkRole
@@ -141,6 +142,7 @@ function LanguagesStepInner({ role, roleApi, onSaved, onBack }: LanguagesStepInn
                 variant="customer"
                 value={focusedLanguages}
                 onChange={setFocusedLanguages}
+                className="field-md"
               />
               <div>
                 <p className="text-body font-medium mb-1 text-secondary">
@@ -149,13 +151,14 @@ function LanguagesStepInner({ role, roleApi, onSaved, onBack }: LanguagesStepInn
                 <p className="text-label mb-3 text-secondary">
                   Used when creating bookings.
                 </p>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <FieldRow>
                   <NumberPicker
                     label="OW Days"
                     min={1}
                     max={MAX_COURSE_DAYS}
                     value={owDays === '' ? undefined : Number(owDays)}
                     onChange={(v) => setOwDays(v === undefined ? '' : String(v))}
+                    className="field-xs"
                   />
                   <NumberPicker
                     label="AOW Days"
@@ -163,6 +166,7 @@ function LanguagesStepInner({ role, roleApi, onSaved, onBack }: LanguagesStepInn
                     max={MAX_COURSE_DAYS}
                     value={aowDays === '' ? undefined : Number(aowDays)}
                     onChange={(v) => setAowDays(v === undefined ? '' : String(v))}
+                    className="field-xs"
                   />
                   <NumberPicker
                     label="Adv. Days"
@@ -170,8 +174,9 @@ function LanguagesStepInner({ role, roleApi, onSaved, onBack }: LanguagesStepInn
                     max={MAX_COURSE_DAYS}
                     value={oaDays === '' ? undefined : Number(oaDays)}
                     onChange={(v) => setOaDays(v === undefined ? '' : String(v))}
+                    className="field-xs"
                   />
-                </div>
+                </FieldRow>
               </div>
             </div>
             <div className="min-w-0">
@@ -188,6 +193,7 @@ function LanguagesStepInner({ role, roleApi, onSaved, onBack }: LanguagesStepInn
               variant="customer"
               value={focusedLanguages}
               onChange={setFocusedLanguages}
+              className="field-md"
             />
           </div>
         )}

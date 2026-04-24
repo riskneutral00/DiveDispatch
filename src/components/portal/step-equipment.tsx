@@ -13,6 +13,7 @@ import { Textarea } from '../ui/textarea'
 import { DEFAULT_TEXTAREA_ROWS } from '@/lib/constants/form-config'
 import { GEAR_TYPES, GEAR_TYPE_LABELS } from '@/lib/constants/gear-sizing'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
+import { FieldRow } from '@/components/ui/field-row'
 
 import type { HeightUnit, WeightUnit, ShoeSizeUnit } from '@/lib/utils/unit-conversion'
 import { toHeightCm, toWeightKg, toShoeSizeNum } from '@/lib/utils/unit-conversion'
@@ -257,8 +258,8 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
       <Card padding="md">
         <FormSectionHeader label={t('sectionBodyMeasurements')} note={t('bodyMeasurementsNote')} />
 
-        <div className="space-y-4">
-          <fieldset className="border-none p-0 m-0">
+        <FieldRow>
+          <fieldset className="field-lg border-none p-0 m-0">
             <legend className="sr-only">Height</legend>
             <FieldLabel className="block mb-1.5">{t('height')}</FieldLabel>
             <div className="flex gap-2 items-center">
@@ -283,7 +284,7 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
             </div>
           </fieldset>
 
-          <fieldset className="border-none p-0 m-0">
+          <fieldset className="field-lg border-none p-0 m-0">
             <legend className="sr-only">Weight</legend>
             <FieldLabel className="block mb-1.5">{t('weight')}</FieldLabel>
             <div className="flex gap-2 items-center">
@@ -308,7 +309,7 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
             </div>
           </fieldset>
 
-          <fieldset className="border-none p-0 m-0">
+          <fieldset className="field-lg border-none p-0 m-0">
             <legend className="sr-only">Shoe Size</legend>
             <FieldLabel className="block mb-1.5">{t('shoeSize')}</FieldLabel>
             <div className="flex gap-2 items-center">
@@ -332,7 +333,7 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
               />
             </div>
           </fieldset>
-        </div>
+        </FieldRow>
       </Card>
 
       <Card padding="md">
@@ -356,6 +357,7 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
               onChange={(e) => setPrescriptionDetails(e.target.value)}
               rows={DEFAULT_TEXTAREA_ROWS}
               error={displayErrors.prescriptionStrength}
+              className="field-xl"
             />
           </div>
         )}
@@ -409,6 +411,7 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
               value={maskPrescription}
               onChange={(e) => setMaskPrescription(e.target.value)}
               helperText={t('helperMaskPrescription')}
+              className="field-md"
             />
           </div>
         )}

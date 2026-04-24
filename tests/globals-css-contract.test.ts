@@ -28,7 +28,6 @@ const REQUIRED_SUBSTRINGS: { label: string; needle: string }[] = [
     label: "slab ink includes surface-reading-card",
     needle: ":is(.glass-ink, .glass-slab, .surface-reading-card)",
   },
-  { label: ".form-grid-responsive", needle: ".form-grid-responsive" },
   { label: ".text-float-label", needle: ".text-float-label" },
   { label: ".accent-primary", needle: ".accent-primary" },
   { label: ".caret-accent", needle: ".caret-accent" },
