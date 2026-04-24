@@ -2,6 +2,7 @@
 
 import { LanguagePicker } from "@/components/profiles/language-picker";
 import { FieldShell } from "@/components/ui/field-shell";
+import { cn } from "@/lib/utils/cn";
 import type { Language } from "@/lib/types/language";
 
 type LanguageVariant = "app" | "customer" | "teaching";
@@ -18,6 +19,7 @@ interface LanguageFieldProps {
   value: Language[];
   onChange: (languages: Language[]) => void;
   disabled?: boolean;
+  className?: string;
 }
 
 export function LanguageField({
@@ -25,6 +27,7 @@ export function LanguageField({
   value,
   onChange,
   disabled = false,
+  className,
 }: LanguageFieldProps) {
   const { label, max } = VARIANT_CONFIG[variant];
 
@@ -33,7 +36,7 @@ export function LanguageField({
       id={`language-${variant}`}
       label={label}
       required
-      className="flex flex-col items-center gap-1.5 w-full"
+      className={cn("flex flex-col items-center gap-1.5 w-full", className)}
     >
       <div className="reading-plane rounded-theme p-2 w-auto">
         <LanguagePicker

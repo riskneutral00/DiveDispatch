@@ -3,8 +3,10 @@ import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { FieldRow } from '../field-row'
 
-const CANONICAL_LITERAL =
+const DEFAULT_LITERAL =
   'grid grid-cols-6 gap-x-3 gap-y-4 sm:flex sm:flex-wrap sm:items-end sm:gap-4'
+const COMPACT_LITERAL =
+  'grid grid-cols-6 gap-x-3 gap-y-4 sm:flex sm:flex-wrap sm:items-end sm:gap-3'
 
 describe('FieldRow', () => {
   describe('unlabeled mode (no label prop)', () => {
@@ -27,7 +29,7 @@ describe('FieldRow', () => {
       expect(container.querySelector('legend')).toBeNull()
     })
 
-    it('outer wrapper is a div with the canonical literal including sm:items-end', () => {
+    it('outer wrapper is a div with the default canonical literal including sm:items-end', () => {
       const { container } = render(
         <FieldRow>
           <span>x</span>
@@ -35,7 +37,7 @@ describe('FieldRow', () => {
       )
       const outer = container.firstElementChild as HTMLElement
       expect(outer.tagName).toBe('DIV')
-      for (const cls of CANONICAL_LITERAL.split(' ')) {
+      for (const cls of DEFAULT_LITERAL.split(' ')) {
         expect(outer.className).toContain(cls)
       }
     })
@@ -51,7 +53,7 @@ describe('FieldRow', () => {
       expect(outer.className).toContain('custom-unlabeled')
     })
 
-    it('allows callsite className to override baked classes via tailwind-merge (gear-matrix gap case)', () => {
+    it('allows callsite className to override baked classes via tailwind-merge', () => {
       const { container } = render(
         <FieldRow className="sm:gap-3">
           <span>x</span>
@@ -60,6 +62,55 @@ describe('FieldRow', () => {
       const outer = container.firstElementChild as HTMLElement
       expect(outer.className).toContain('sm:gap-3')
       expect(outer.className).not.toContain('sm:gap-4')
+    })
+
+    it('allows callsite innerClassName to override baked classes via tailwind-merge', () => {
+      const { container } = render(
+        <FieldRow innerClassName="sm:gap-6">
+          <span>x</span>
+        </FieldRow>,
+      )
+      const outer = container.firstElementChild as HTMLElement
+      expect(outer.className).toContain('sm:gap-6')
+      expect(outer.className).not.toContain('sm:gap-4')
+    })
+
+    it('innerClassName wins over className for conflicting classes (last merge wins)', () => {
+      const { container } = render(
+        <FieldRow className="sm:gap-3" innerClassName="sm:gap-6">
+          <span>x</span>
+        </FieldRow>,
+      )
+      const outer = container.firstElementChild as HTMLElement
+      expect(outer.className).toContain('sm:gap-6')
+      expect(outer.className).not.toContain('sm:gap-3')
+      expect(outer.className).not.toContain('sm:gap-4')
+    })
+
+    it('density="compact" swaps sm:gap-4 for sm:gap-3', () => {
+      const { container } = render(
+        <FieldRow density="compact">
+          <span>x</span>
+        </FieldRow>,
+      )
+      const outer = container.firstElementChild as HTMLElement
+      for (const cls of COMPACT_LITERAL.split(' ')) {
+        expect(outer.className).toContain(cls)
+      }
+      expect(outer.className).not.toContain('sm:gap-4')
+    })
+
+    it('density="default" explicit matches the default baked literal', () => {
+      const { container } = render(
+        <FieldRow density="default">
+          <span>x</span>
+        </FieldRow>,
+      )
+      const outer = container.firstElementChild as HTMLElement
+      for (const cls of DEFAULT_LITERAL.split(' ')) {
+        expect(outer.className).toContain(cls)
+      }
+      expect(outer.className).not.toContain('sm:gap-3')
     })
   })
 
@@ -109,7 +160,7 @@ describe('FieldRow', () => {
       expect(asterisk).toBeNull()
     })
 
-    it('inner grid uses the canonical literal (including sm:items-end)', () => {
+    it('inner grid uses the default canonical literal (including sm:items-end)', () => {
       render(
         <FieldRow label="G">
           <span data-testid="child">x</span>
@@ -117,7 +168,7 @@ describe('FieldRow', () => {
       )
       const child = screen.getByTestId('child')
       const innerGrid = child.parentElement as HTMLElement
-      for (const cls of CANONICAL_LITERAL.split(' ')) {
+      for (const cls of DEFAULT_LITERAL.split(' ')) {
         expect(innerGrid.className).toContain(cls)
       }
     })
@@ -134,6 +185,36 @@ describe('FieldRow', () => {
       const innerGrid = fieldset.querySelector('div') as HTMLElement
       expect(innerGrid.className).not.toContain('mt-6')
       expect(innerGrid.className).not.toContain('outer-only')
+    })
+
+    it('innerClassName lands on the inner grid, not the fieldset', () => {
+      const { container } = render(
+        <FieldRow label="G" innerClassName="sm:gap-6 inner-only">
+          <span>x</span>
+        </FieldRow>,
+      )
+      const fieldset = container.querySelector('fieldset') as HTMLElement
+      expect(fieldset.className).not.toContain('sm:gap-6')
+      expect(fieldset.className).not.toContain('inner-only')
+      const innerGrid = fieldset.querySelector('div') as HTMLElement
+      expect(innerGrid.className).toContain('sm:gap-6')
+      expect(innerGrid.className).toContain('inner-only')
+      expect(innerGrid.className).not.toContain('sm:gap-4')
+    })
+
+    it('density="compact" applies compact literal to inner grid in labeled mode', () => {
+      const { container } = render(
+        <FieldRow label="G" density="compact">
+          <span data-testid="child">x</span>
+        </FieldRow>,
+      )
+      const innerGrid = screen.getByTestId('child').parentElement as HTMLElement
+      for (const cls of COMPACT_LITERAL.split(' ')) {
+        expect(innerGrid.className).toContain(cls)
+      }
+      expect(innerGrid.className).not.toContain('sm:gap-4')
+      const fieldset = container.querySelector('fieldset') as HTMLElement
+      expect(fieldset.className).not.toContain('sm:gap-3')
     })
 
     it('does not set aria-invalid on the fieldset', () => {
