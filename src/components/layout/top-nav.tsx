@@ -10,8 +10,7 @@ import { ROLE_BY_CLERK_ROLE, type ClerkRole, type RoleKey } from '@/lib/constant
 import { ICON_BUTTON_SIZE } from '@/lib/constants/button-sizes'
 import { useCurrentUser } from '@/lib/hooks/use-current-user'
 import { firstIncompleteTab } from '@/lib/utils/first-incomplete-tab'
-import { ProfileCompletionPill } from '../profiles/profile-completion-pill'
-import { ProfileStartBanner } from '../profiles/profile-start-banner'
+import { ProfileCompletionBadge } from '../profiles/profile-completion-badge'
 import type { ProfileOverlayTab } from '../profiles/profile-overlay'
 import { NotificationBell } from '../notifications/notification-bell'
 import { ThemeSwitcher } from './theme-switcher'
@@ -59,17 +58,8 @@ export function TopNav({ onOpenOverlay, profileCompletion, roleComplete, roleSlu
 
   return (
     <div className="sticky top-0 z-[var(--z-sticky)] flex items-center justify-end gap-2 px-4 py-2 bg-surface-elevated glass-divider">
-      {!roleComplete && profileCompletion && profileCompletion.kind === 'not_started' && (
-        <ProfileStartBanner
-          roleSlug={roleSlug}
-          onOpenOverlay={() => {
-            const { tab, section } = firstIncompleteTab(roleSlug, profileCompletion.incomplete)
-            onOpenOverlay(tab, section)
-          }}
-        />
-      )}
-      {!roleComplete && profileCompletion && profileCompletion.kind !== 'not_started' && profileCompletion.percentage < 100 && (
-        <ProfileCompletionPill
+      {!roleComplete && profileCompletion && profileCompletion.percentage < 100 && (
+        <ProfileCompletionBadge
           percentage={profileCompletion.percentage}
           onOpenOverlay={() => {
             const { tab, section } = firstIncompleteTab(roleSlug, profileCompletion.incomplete)
