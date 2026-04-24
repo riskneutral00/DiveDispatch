@@ -40,9 +40,10 @@ const CONTAINER_BY_VARIANT: Record<TabsVariant, string> = {
 
 export function Tabs(props: TabsProps) {
   const { activeTab, onChange, variant = 'underline', ariaLabel, className } = props
-  const groups: TabItem[][] = 'groups' in props && props.groups !== undefined
+  const rawGroups: TabItem[][] = 'groups' in props && props.groups !== undefined
     ? props.groups
     : [props.tabs ?? []]
+  const groups = rawGroups.filter((g) => g.length > 0)
   const flatTabs = groups.flat()
 
   const tablistRef = useRef<HTMLDivElement>(null)

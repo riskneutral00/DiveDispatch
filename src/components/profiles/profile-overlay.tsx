@@ -3,14 +3,14 @@
 import { useState } from 'react'
 import { useQuery } from 'convex/react'
 import { useTranslations } from 'next-intl'
-import { Dialog, MenuButton } from '@/components/ui'
+import { Dialog, Tabs, type TabItem } from '@/components/ui'
 import { ROLE_BY_CLERK_ROLE, type ClerkRole, type RoleKey } from '@/lib/constants/roles'
 import type { ProfileOverlayTab } from '@/lib/utils/first-incomplete-tab'
 import { api } from '@/lib/convex-generated'
 import { ProfileTab } from '@/components/account/profile-tab'
 import { ProfileSectionTabBar } from '@/components/account/profile-section-tab-bar'
 import { OVERLAY_ONLY_SECTIONS } from '@/lib/constants/profile-registry'
-import { ROLE_BY_KEY } from '@/lib/constants/roles'
+import { ROLE_BY_KEY, type ProfileSectionId } from '@/lib/constants/roles'
 import { RoleProfileForm } from '@/components/profiles/connected-role-forms'
 import { ManageRolesConnected } from '@/components/account/manage-roles-connected'
 import { DashboardPageFrame } from '@/components/layout/dashboard-page-frame'
@@ -88,7 +88,7 @@ export function ProfileOverlay({ open, onClose, initialTab = 'profile', initialS
   function renderRoleContent() {
     if (!activeRoleKey) return null
 
-    if (activeSection && OVERLAY_ONLY_SECTIONS.has(activeSection)) {
+    if (activeSection && OVERLAY_ONLY_SECTIONS.has(activeSection as ProfileSectionId)) {
       if (activeSection === 'gear') {
         return <ConnectedEquipmentGear />
       }
@@ -110,48 +110,29 @@ export function ProfileOverlay({ open, onClose, initialTab = 'profile', initialS
     <Dialog open={open} onClose={onClose} title={tNav('account')} fullScreen melt>
       <div className="flex flex-col h-full">
 
-        <div
-          className="flex gap-1 px-4 py-2 md:px-6 flex-shrink-0 border-b border-glass-border overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-          role="tablist"
-        >
-          {visibleStaticTabs.map((tab) => (
-              <MenuButton
-                key={tab.id}
-                role="tab"
-                aria-selected={activeTab === tab.id}
-                active={activeTab === tab.id}
-                variant="pill"
-                onClick={() => setActiveTab(tab.id)}
-              >
-                {tNav(tab.labelKey)}
-              </MenuButton>
-          ))}
-
-          {roleConfigs.length > 0 && (
-            <>
-              <div
-                className="w-px mx-1 self-stretch flex-shrink-0 bg-glass-border"
-              />
-              {roleConfigs.map((role) => (
-                  <MenuButton
-                    key={role.key}
-                    role="tab"
-                    aria-selected={activeTab === `role:${role.key}`}
-                    active={activeTab === `role:${role.key}`}
-                    variant="pill"
-                    size="sm"
-                    onClick={() => {
-                      setActiveTab(`role:${role.key}`)
-                      const first = ROLE_BY_KEY[role.key]?.profileTabs?.[0]?.id ?? ''
-                      setRoleProfileSection(first)
-                    }}
-                  >
-                    {role.label}
-                  </MenuButton>
-              ))}
-            </>
-          )}
-        </div>
+        <Tabs
+          variant="pill"
+          className="px-4 py-2 md:px-6 flex-shrink-0 border-b border-glass-border"
+          activeTab={activeTab}
+          onChange={(id) => {
+            setActiveTab(id)
+            if (id.startsWith('role:')) {
+              const key = id.slice(5) as RoleKey
+              const first = ROLE_BY_KEY[key]?.profileTabs?.[0]?.id ?? ''
+              setRoleProfileSection(first)
+            }
+          }}
+          groups={[
+            visibleStaticTabs.map<TabItem>((tab) => ({
+              id: tab.id,
+              label: tNav(tab.labelKey),
+            })),
+            roleConfigs.map<TabItem>((role) => ({
+              id: `role:${role.key}`,
+              label: role.label,
+            })),
+          ]}
+        />
 
         <div
           className="flex-1 overflow-y-auto overflow-x-hidden"
