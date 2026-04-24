@@ -1,7 +1,14 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { ageInYears, isAdult, MIN_SIGNUP_AGE_YEARS } from '../../convex/lib/age'
 
 describe('ageInYears', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-04-16'))
+  })
+  afterEach(() => {
+    vi.useRealTimers()
+  })
   const now = new Date('2026-04-16')
 
   it('25-year-old → 25', () => {
@@ -30,6 +37,13 @@ describe('ageInYears', () => {
 })
 
 describe('isAdult', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-04-16'))
+  })
+  afterEach(() => {
+    vi.useRealTimers()
+  })
   const now = new Date('2026-04-16')
 
   it('exactly 18 today → true', () => {

@@ -380,7 +380,7 @@ describe('organizations.deleteFromWebhook', () => {
   })
 })
 
-describe('organizations.getBySlug / getById', () => {
+describe('organizations.getBySlug', () => {
   it('returns the organization by slug', async () => {
     const t = makeT()
     const clerkOrgId = makeClerkOrgId('slug-lookup')
@@ -410,38 +410,6 @@ describe('organizations.getBySlug / getById', () => {
     const result = await t
       .withIdentity({ tokenIdentifier: 'clerk|slug-reader' })
       .query(api.organizations.getBySlug, { slug: 'does-not-exist' })
-    expect(result).toBeNull()
-  })
-
-  it('returns the organization by id', async () => {
-    const t = makeT()
-    const clerkOrgId = makeClerkOrgId('id-lookup')
-
-    const id = await t.mutation(internal.organizations.upsertFromWebhook, {
-      clerkOrgId,
-      name: 'Id Test',
-      slug: 'id-test',
-      svixId: makeSvixId(),
-    })
-
-    const result = await t
-      .withIdentity({ tokenIdentifier: 'clerk|id-reader' })
-      .query(api.organizations.getById, { id })
-    expect(result?.name).toBe('Id Test')
-  })
-
-  it('getById returns null for unauthenticated caller', async () => {
-    const t = makeT()
-    const clerkOrgId = makeClerkOrgId('id-unauth')
-
-    const id = await t.mutation(internal.organizations.upsertFromWebhook, {
-      clerkOrgId,
-      name: 'Unauth',
-      slug: 'unauth',
-      svixId: makeSvixId(),
-    })
-
-    const result = await t.query(api.organizations.getById, { id })
     expect(result).toBeNull()
   })
 })

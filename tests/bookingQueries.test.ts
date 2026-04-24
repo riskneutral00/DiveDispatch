@@ -865,7 +865,7 @@ describe('myDashboard', () => {
 
 
 describe('listByStatus — activeRole validation', () => {
-  it('rejects with ROLE_NOT_HELD when caller claims a role they do not hold', async () => {
+  it('rejects with ROLE_NOT_HELD when caller claims an operator role they do not hold', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
       await seedTestUser(ctx, 'dc-role-gate')
@@ -874,6 +874,18 @@ describe('listByStatus — activeRole validation', () => {
     await expect(
       t.withIdentity({ tokenIdentifier: 'clerk|dc-role-gate' })
         .query(api.bookings.listByStatus, { activeRole: 'Agent', status: 'Draft' }),
+    ).rejects.toThrow(/ROLE_NOT_HELD/)
+  })
+
+  it('rejects with ROLE_NOT_HELD when caller claims a resource role they do not hold', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => {
+      await seedTestUser(ctx, 'dc-resource-gate')
+    })
+
+    await expect(
+      t.withIdentity({ tokenIdentifier: 'clerk|dc-resource-gate' })
+        .query(api.bookings.listByStatus, { activeRole: 'Boat', status: 'Draft' }),
     ).rejects.toThrow(/ROLE_NOT_HELD/)
   })
 })

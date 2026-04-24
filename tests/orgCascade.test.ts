@@ -64,4 +64,51 @@ describe('cascadeOrgDelete — inventoryUnits sweep', () => {
       expect(remaining).toHaveLength(0)
     })
   })
+
+  it('deletes equipmentInventory rows for Equipment owners when the org is deleted', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => {
+      const userId = await seedUser(ctx, { role: 'Equipment', slug: 'equip-casc' })
+      const orgId = await getOrCreateTestOrg(ctx, userId, 'equip-casc')
+
+      const unitId = await ctx.db.insert('inventoryUnits', {
+        resourceType: 'Equipment',
+        resourceId: 'equip-casc',
+        displayName: 'Equipment bag',
+        capacityModel: 'Pooled',
+        totalUnits: 1,
+        ownerId: 'equip-casc',
+        ownerType: 'Equipment',
+      })
+      await ctx.db.insert('equipmentInventory', {
+        inventoryUnitId: unitId,
+        equipmentManagerId: 'equip-casc',
+        gearType: 'mask',
+        manufacturer: 'Scubapro',
+        size: 'M',
+      })
+      await ctx.db.insert('equipmentInventory', {
+        inventoryUnitId: unitId,
+        equipmentManagerId: 'equip-casc',
+        gearType: 'wetsuit',
+        manufacturer: 'Aqualung',
+        size: 'L',
+      })
+
+      await cascadeOrgDelete(ctx, orgId)
+
+      const remainingUnits = await ctx.db
+        .query('inventoryUnits')
+        .withIndex('by_ownerId_ownerType', (q) =>
+          q.eq('ownerId', 'equip-casc').eq('ownerType', 'Equipment'),
+        )
+        .collect()
+      const remainingInventory = await ctx.db
+        .query('equipmentInventory')
+        .withIndex('by_equipmentManagerId', (q) => q.eq('equipmentManagerId', 'equip-casc'))
+        .collect()
+      expect(remainingUnits).toHaveLength(0)
+      expect(remainingInventory).toHaveLength(0)
+    })
+  })
 })

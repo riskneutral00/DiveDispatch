@@ -93,21 +93,12 @@ export const deleteFromWebhook = internalMutation({
 export const getBySlug = query({
   args: { slug: v.string() },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity()
+    const identity = await ctx.auth.getUserIdentity() // auth-ok: sign-up flow at src/app/(auth)/sign-up/page.tsx:66 runs before users row exists
     if (!identity) return null
     return await ctx.db
       .query('organizations')
       .withIndex('by_slug', (q) => q.eq('slug', args.slug))
       .unique()
-  },
-})
-
-export const getById = query({
-  args: { id: v.id('organizations') },
-  handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity()
-    if (!identity) return null
-    return await ctx.db.get(args.id)
   },
 })
 

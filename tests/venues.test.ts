@@ -16,7 +16,7 @@
 import { describe, it, expect } from 'vitest'
 import { api } from '../convex/_generated/api'
 import type { Doc, Id } from '../convex/_generated/dataModel'
-import { seedUser, getOrCreateTestOrg, type SeedCtx } from './fixtures'
+import { seedUser, seedStakeholderPreferences, getOrCreateTestOrg, type SeedCtx } from './fixtures'
 import { makeT, orgIdentityFor } from './helpers/convex-helpers'
 
 async function seedVenueUser(ctx: SeedCtx, slug: string) {
@@ -30,6 +30,7 @@ async function seedVenueUser(ctx: SeedCtx, slug: string) {
     role: 'Venue',
   })
   await getOrCreateTestOrg(ctx, userId, slug)
+  await seedStakeholderPreferences(ctx, slug, { stakeholderType: 'Venue', acceptanceMode: 'Auto' })
   return userId
 }
 

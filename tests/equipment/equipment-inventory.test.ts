@@ -425,7 +425,9 @@ describe('equipmentInventory', () => {
         checkProfileCompleteness(ctx, { _id: userId }, 'Equipment'),
       )
 
-      expect(status.incomplete).toContain('gearInventory')
+      expect(status.incomplete).toEqual(expect.arrayContaining([
+        'gear:wetsuit', 'gear:bcd', 'gear:fins', 'gear:mask', 'gear:regulator',
+      ]))
       expect(status.percentage).toBeLessThan(100)
     })
   })

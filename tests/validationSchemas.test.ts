@@ -51,7 +51,7 @@ describe('makeCustomerContactSchema', () => {
     passportIssuingCountry: 'US',
     passportExpirationDate: '2030-01-01',
     emergencyContactName: 'Bob',
-    emergencyContactPhone: '+1234567890',
+    emergencyContactPhone: '+12025550100',
     emergencyContactRelation: 'Spouse',
     languages: [{ code: 'en-GB', label: 'English' }],
   }

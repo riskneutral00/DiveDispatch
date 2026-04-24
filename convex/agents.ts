@@ -15,6 +15,7 @@ export const create = mutation({
     ...BUSINESS_NAME_CREATE_FIELD,
     ...ACCESS_CONTROL_FIELDS,
     associations: v.array(associationValidator),
+    customerLanguages: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) =>
     profileCreate(ctx, args, 'agents', 'Agent', {
@@ -28,6 +29,7 @@ export const update = mutation({
     ...BUSINESS_NAME_UPDATE_FIELD,
     ...ACCESS_CONTROL_FIELDS,
     associations: v.optional(v.array(associationValidator)),
+    customerLanguages: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => profileUpdate(ctx, args, 'agents', 'Agent'),
 })

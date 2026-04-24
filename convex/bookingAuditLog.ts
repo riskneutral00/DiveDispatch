@@ -1,6 +1,5 @@
 import { v } from 'convex/values'
 import { query } from './_generated/server'
-import type { QueryCtx } from './_generated/server'
 import { requireAuth, requireOwnerOrResourceAccess } from './lib/auth'
 
 export type { AuditAction, AuditActorType, LogBookingChangeArgs } from './lib/auditLog'
@@ -9,7 +8,7 @@ export { logBookingChange } from './lib/auditLog'
 export const getAuditLog = query({
   args: { bookingId: v.id('bookings') },
   handler: async (ctx, args) => {
-    const { user } = await requireAuth(ctx)
+    const { user } = await requireAuth(ctx) // auth-ok: QueryCtx — authorize() is MutationCtx-only; query path uses requireAuth + requireOwnerOrResourceAccess (same ownership check authorize() wraps for 'booking:read')
     await requireOwnerOrResourceAccess(ctx, user, args.bookingId)
 
     return ctx.db
