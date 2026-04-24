@@ -63,6 +63,40 @@ fi
 
 Store `DIFF_HASH` for the entire gate run — it's reused in the sentinel write.
 
+### Step 0a-bis — Compute SIZE
+
+Compute one **SIZE** classification from the current scoped diff. Both `/gate` and `/vault` use the same taxonomy; each computes independently from the live diff (not `touched.txt` count, which is historical session state — a file edited then reverted is still in it). Persist `size` in the sentinel JSON for diagnostic / audit purposes; it does **not** override `/vault`'s independent recomputation.
+
+```bash
+if [ "$SCOPE_MODE" = "scoped" ]; then
+  SCOPED_PATHS=$(xargs -a "$TOUCHED" 2>/dev/null || true)
+  CHANGED_PATHS=$( (
+    git diff --name-only -- $SCOPED_PATHS
+    git diff --cached --name-only -- $SCOPED_PATHS
+    git ls-files --others --exclude-standard | $SCOPE_FILTER
+  ) | sort -u )
+else
+  CHANGED_PATHS=$( (
+    git diff --name-only
+    git diff --cached --name-only
+    git ls-files --others --exclude-standard
+  ) | sort -u )
+fi
+
+FILES=$(printf '%s\n' "$CHANGED_PATHS" | grep -c .)
+
+if   [ "$SCOPE_MODE" = "all" ]; then SIZE="FULL"
+elif [ "$FILES" -le 3  ];      then SIZE="TRIVIAL"
+elif [ "$FILES" -le 8  ];      then SIZE="LIGHT"
+elif [ "$FILES" -le 20 ];      then SIZE="STANDARD"
+else                                SIZE="FULL"
+fi
+```
+
+`SIZE` informs the verdict-length short-circuit in Phase 6 and the heavy-housekeeping skip rule below. It does **not** change which review skills are dispatched — a 3-file frontend diff still gets `review-frontend-dry`. Smaller-scope optimizations (per-skill `--diff-scope` parameter, scoped vitest) are deliberately out of scope for this iteration.
+
+**Heavy housekeeping skip for TRIVIAL.** When `SIZE = TRIVIAL`, do not introduce any heavy work via `/gate` that `/vault` is explicitly avoiding (e.g. OpenSpace evolution, full-narrative formatting beyond the short verdict). The verdict format itself is the only TRIVIAL-specific behavior in this skill.
+
 ### Step 0b — Full short-circuit
 
 Read `$SENTINEL` if it exists (`.patrol-ran-<id>` in scoped mode, `.patrol-ran` in `--all` mode). If **all three** conditions are true:
@@ -328,6 +362,26 @@ Ready for /vault: {YES or NO}
 - **NO-GO** → Any CRITICAL or HIGH finding from any dispatched skill OR tests fail. Verdict = `BLOCKED` (pending Phase 7 resolution).
 - **GO** → No CRITICAL or HIGH findings. Verdict = `CLEAN` or `CLEAN_UNREVIEWED` (if unreviewed merges exist).
 
+### Verdict-length short-circuit (TRIVIAL + CLEAN + zero findings)
+
+When **all three** are true:
+- `SIZE = TRIVIAL`
+- verdict is `CLEAN` (no `CLEAN_UNREVIEWED` — no unreviewed merges)
+- zero CRITICAL **and** zero HIGH **and** zero MEDIUM **and** zero LOW findings across all dispatched and cached skills
+- no INVARIANT CHECK, TEST GAP, or QUEUE WARNING entries
+
+…replace the full banner with a one-line verdict:
+
+```
+Gate — CLEAN. {N} file(s), {bucket}. No findings. Ready for /vault: YES.
+```
+
+Where `{bucket}` is the single bucket name (e.g. `frontend`) when only one bucket has files, or `mixed` otherwise.
+
+If `/gate` was invoked from `/vault`, still emit the resume line (`Gate complete (verdict: CLEAN). Resuming /vault Job 0.`) on the next line. The short verdict + resume line replace the full banner block entirely.
+
+In all other cases (any finding of any severity, any non-CLEAN verdict, any size > TRIVIAL), use the full banner above.
+
 **If GO** → skip to Write Sentinel.
 **If NO-GO** → pass the aggregated CRITICAL + HIGH + MEDIUM + LOW findings to `/escalate` in a single call (source: `gate`, reviewers: list of skills that fired). `/escalate` writes CRITICAL/HIGH tickets with `status: in_progress` + `started_at` (audit paper trail; MEDIUM/LOW → vault log, no ticket). Record each ticket's `DD-N` → finding mapping for Phase 7 close-tracking. Then fall through to Phase 7 (Same-Session Fix Loop).
 
@@ -545,7 +599,9 @@ Write the sentinel as JSON with these fields:
   },
   "scopeMode": "{scoped|all}",
   "sessionId": "{SID — empty string when scopeMode=all}",
-  "touchedFileCount": {N — count of files in touched.txt at gate time; 0 when scopeMode=all}
+  "touchedFileCount": {N — count of files in touched.txt at gate time; 0 when scopeMode=all},
+  "size": "{TRIVIAL|LIGHT|STANDARD|FULL — from Step 0a-bis; informational, /vault recomputes}",
+  "changedFileCount": {N — count of files in CHANGED_PATHS at gate time; what SIZE was computed from}
 }
 ```
 

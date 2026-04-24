@@ -11,6 +11,78 @@ Run this before ending a session. No questions, no prompts — just execute all 
 
 ---
 
+## Right-sizing (drives every Job's behavior)
+
+Scoped `/vault` runs need to *feel* lighter than `--all` runs, not just filter inputs identically. A 3-file fix should not produce 600 lines of vault content. The mechanism: compute one **SIZE** classification from the current scoped diff, then drive every Job through the table below.
+
+### Size taxonomy
+
+Compute SIZE once, immediately after Scope Resolution and before Pre-flight. Use the **current diff**, not `touched.txt` count — `touched.txt` is the historical session-state list (a file edited then reverted is still in it). `--all` always routes to FULL.
+
+```bash
+if [ "$SCOPE_MODE" = "scoped" ]; then
+  SCOPED_PATHS=$(xargs -a "$TOUCHED" 2>/dev/null || true)
+  CHANGED_PATHS=$( (
+    git diff --name-only -- $SCOPED_PATHS
+    git diff --cached --name-only -- $SCOPED_PATHS
+    git ls-files --others --exclude-standard | $SCOPE_FILTER
+  ) | sort -u )
+else
+  CHANGED_PATHS=$( (
+    git diff --name-only
+    git diff --cached --name-only
+    git ls-files --others --exclude-standard
+  ) | sort -u )
+fi
+
+FILES=$(printf '%s\n' "$CHANGED_PATHS" | grep -c .)
+
+if   [ "$SCOPE_MODE" = "all" ]; then SIZE="FULL"
+elif [ "$FILES" -le 3  ];      then SIZE="TRIVIAL"
+elif [ "$FILES" -le 8  ];      then SIZE="LIGHT"
+elif [ "$FILES" -le 20 ];      then SIZE="STANDARD"
+else                                SIZE="FULL"
+fi
+```
+
+`/gate` independently computes its own SIZE and persists it in the sentinel JSON for audit. `/vault` recomputes here — both skills are authoritative for their own behavior.
+
+### Per-Job behavior by size
+
+| Job | TRIVIAL (≤3) | LIGHT (4–8) | STANDARD (9–20) | FULL (`--all` or 20+) |
+|---|---|---|---|---|
+| Pre-flight `/gate` | yes | yes | yes | yes |
+| Job 0 Untracked triage | run | run | run | run |
+| Job 1 Session file | **skip unless trigger fires** ¹ | 10-line cap, `## What` + `## Next` only | 30-line cap, full template | full current behavior |
+| Job 1 Failure scan | **diff-caused only** ² | diff-caused only | all session failures | all |
+| Job 1.1 24h summary | trigger check | trigger check | trigger check | trigger check |
+| Job 1.2 Pattern file | **DELETED** ³ | DELETED | DELETED | DELETED |
+| Job 1.5 Skeleton update | only if launch-checklist state changed | only if changed | only if changed | always check |
+| Job 2 Tickets + mirror | only if `.tickets/` changed | only if `.tickets/` changed | run | run |
+| Job 3 Active-thread file | append one bullet to current state; no rotation | append one bullet; no rotation | rotate current → previous, then write new current | rotate |
+| Job 3 `MEMORY.md` description | skip unless NEXT changed | only if NEXT or milestone changed | full update | full update |
+| Job 4 Smart-batch commit | run | run | run | run |
+| Job 4.5 OpenSpace evolution | **skip** | skip | run | run |
+| Job 5 Post-spec cleanup | run if `.post-spec/` exists | same | same | same |
+| Job 6 Compile (entity creation) | concept-only gate ⁴ | concept-only gate | concept-only gate | concept-only gate |
+| Job 7 Lint | run | run | run | run |
+
+**¹ Session-file trigger.** Write only when **any** of:
+- `/gate` surfaced ≥1 CRITICAL or HIGH finding (audit trail)
+- the diff introduced a new concept that Job 6 will compile into an entity (the session file is the raw source)
+- `SIZE ≥ STANDARD`
+- the change is a schema or data-shape migration
+
+Otherwise skip. Commit message + plan file + log entry are sufficient narrative for small fixes.
+
+**² Diff-caused failure scan.** Replace any broader scan instruction with: *Did this session's diff cause the failure?* If yes, log to `raw/Failures/`. Pre-existing flakes surfaced by `/gate`, agent hallucinations on code outside the diff, and tool crashes that would have happened regardless do **not** belong in the session's failure log. They may justify tickets; they don't justify failure entries.
+
+**³ Pattern file removed.** Nothing in the workflow consumes `.claude/patterns/*.md`. `/distill` reads `raw/Failures/*.md`. Lesson candidates have a real home in `wiki/Architecture/Lessons.md` with `status: draft`. Do **not** delete historical `.claude/patterns/*.md` files — just stop writing new ones.
+
+**⁴ Concept-only gate (Job 6).** Before creating an entity, ask: *Is this a concept (load-bearing distinction, invariant, reusable pattern a future Claude with no context would benefit from) or a task (what this session did)?* Only concepts become entities. Tasks stay in session artifacts (if Job 1 fired) or stay out of the vault.
+
+---
+
 ## Scope Resolution (runs before everything)
 
 Matt's workflow overlaps multiple concurrent sessions. Default is **scoped** — `/vault` only commits files this session touched. Pass `--all` to commit the entire working tree (the legacy behavior).
@@ -38,6 +110,10 @@ fi
 ```
 
 **Untouched dirty files are left alone.** They remain in the working tree for whichever session owns them. Job 0 triage, Job 4 commit, and sentinel cleanup all respect `$SCOPE_FILTER`. `/gate` invocations (pre-flight and resume) propagate `--all` when that mode is active.
+
+### Compute SIZE now (drives every Job below)
+
+Run the SIZE classification block from the **Right-sizing** section above. The resulting `SIZE` variable (`TRIVIAL` / `LIGHT` / `STANDARD` / `FULL`) is the authoritative input for every per-Job behavior decision in this skill. If `/gate` ran first and wrote a sentinel, its `size` field is informational only — `/vault` recomputes here because the diff may have changed between gate and vault runs.
 
 ---
 
@@ -167,8 +243,14 @@ Vault path: `~/Desktop/RiskNeutral/Vaults/RiskNeutral/`
    | Risk Neutral strategy/vision | `RiskNeutral/Strategy/*.md` (update) |
    | Founder insight/background | `RiskNeutral/Founder/Matt.md` (update) |
 
-2. **Failure scan** — Review the conversation for anything that went wrong: bugs hit, wrong approaches taken, tools that misbehaved, regressions introduced, time wasted on dead ends. If any failures occurred, write structured entries to `DiveDispatch/Failures/YYYY-MM-DD.md` (append, one `##` section per failure, following `.template.md` format). If no failures this session, skip — don't write an empty file.
-3. Session file is always written (overwrite). **Do NOT read it first.**
+2. **Failure scan — diff-caused only.** Ask: *Did this session's diff cause the failure?* If yes, write a structured entry to `DiveDispatch/Failures/YYYY-MM-DD.md` (append, one `##` section per failure, following `.template.md` format). If the failure was a pre-existing flaky test surfaced by `/gate`, an agent hallucination on code outside the diff, or a tool crash that would have happened regardless — **do not write an entry**. Those may justify tickets; they don't inflate the session's failure log. Behavior is the same at every SIZE. If no diff-caused failures, skip — don't write an empty file.
+3. **Session file — conditional.** Write only when **any** of:
+   - `/gate` surfaced ≥1 CRITICAL or HIGH finding (audit trail)
+   - the diff introduced a new concept that Job 6 will compile into an entity (the session file is the raw source for that entity)
+   - `SIZE ≥ STANDARD`
+   - the change is a schema or data-shape migration
+
+   Otherwise **skip entirely** — commit message + plan file + log entry are sufficient narrative for small fixes. When written, **overwrite** (do NOT read first). Length budget per SIZE: TRIVIAL skips; LIGHT 10-line cap with `## What` + `## Next` only; STANDARD 30-line cap with full template; FULL full template uncapped.
 4. For observations that append (Lessons, Patterns, Failures): read the tail in Round 1 to check for duplicates and match format.
 5. Fire all vault writes as **parallel Bash calls** in Round 2.
 
@@ -245,36 +327,9 @@ date -u +%Y-%m-%dT%H:%M:%SZ > .last-summary-ts
 
 **Performance:** All reads fold into Round 1. Summary write + timestamp write fold into Round 2. Zero extra rounds.
 
-### Job 1.2: Pattern File
+### Job 1.2: Pattern File — REMOVED
 
-Path: `.claude/patterns/YYYY-MM-DD.md`
-
-Write a structured pattern file capturing session learnings. This is local knowledge (gitignored) — written every session without a trigger check.
-
-1. In Round 2 (parallel with other writes), write the pattern file:
-   ```bash
-   mkdir -p .claude/patterns && cat > .claude/patterns/$(date +%Y-%m-%d).md << 'PATTERN'
-   # Session Patterns: YYYY-MM-DD
-
-   ## What Worked
-   [Approaches, tools, or strategies that were effective this session]
-
-   ## What Failed
-   [Approaches that didn't work, dead ends, or misfires]
-
-   ## Key Decisions
-   [Architecture, product, or implementation decisions made — with rationale]
-
-   ## Lessons Learned
-   [Distilled takeaways for future sessions]
-   PATTERN
-   ```
-
-2. Fill each section from the actual session. If a section has nothing to report, write `- Nothing notable.` — never leave sections empty.
-
-3. This step folds into Round 2 alongside other writes. Zero extra rounds.
-
-**Note:** Pattern files are gitignored — they are local only and never committed. They feed future `/distill` runs but are not surfaced in vault output.
+Pattern files are no longer written by `/vault`. Nothing in the workflow consumes `.claude/patterns/*.md`: `/distill` reads `raw/Failures/*.md`, and lesson candidates have a real home in `wiki/Architecture/Lessons.md` with `status: draft`. Historical pattern files are left in place (gitignored) — just don't write new ones.
 
 ### Job 1.5: Skeleton Update
 
@@ -300,14 +355,15 @@ Source of truth: `.tickets/DD-*.md` files. Vault mirror: `~/Desktop/RiskNeutral/
 ### Job 3: Memory Management
 
 1. Read MEMORY.md + active thread file in Round 1 (parallel with other reads).
-2. Update active thread — it's a **pointer to TODO.md**, only update:
-   - Test baseline numbers
-   - Recent commits list (last 5)
-   - Date stamp
-3. Update MEMORY.md:
-   - Bold **NEXT:** tag with exact next action on active thread line.
-   - Add/remove/merge memory file entries as needed.
-   - Keep under 50 lines.
+2. **Active thread file — size-aware behavior:**
+   - **`SIZE ≤ LIGHT`:** **append one bullet** to the existing Current state under a `### Session addenda` subheading (create the subheading if missing). Do NOT rotate — do NOT demote Current state to Previous state. The bullet records what shipped + the resume pointer in 1–2 sentences.
+   - **`SIZE ≥ STANDARD`:** keep the existing rotation behavior — demote current `## Current state` to `## Previous state`, write a new `## Current state` section.
+   - In all cases, refresh test baseline numbers, recent commits list (last 5), and date stamp.
+3. **MEMORY.md description — size-aware behavior:**
+   - **`SIZE = TRIVIAL`:** **skip unless NEXT changed.** If the active thread's `**NEXT:**` action is unchanged, leave MEMORY.md alone.
+   - **`SIZE = LIGHT`:** update only if NEXT or a milestone changed.
+   - **`SIZE ≥ STANDARD`:** full update — bold `**NEXT:**` tag with the exact next action on the active thread line, add/remove/merge memory file entries as needed.
+   - Always: keep under 50 lines.
 4. New memory files only for info that isn't already captured, will be useful in future sessions, and can't be derived from code/vault.
 5. Write via Write/Edit tools in Round 2 (parallel with other writes).
 
@@ -416,6 +472,8 @@ Nothing to vault.
 
 Run **after** Job 4 (git commit) so skill files are in a clean state.
 
+**Size gate:** if `SIZE` is `TRIVIAL` or `LIGHT`, **skip this job entirely** — small diffs don't produce useful skill-evolution signal, and OpenSpace runs cost 1–2 minutes wall-clock. The usage log is preserved for the next STANDARD/FULL run. Print nothing for this job at small sizes.
+
 1. Check if `.openspace/skill_usage.jsonl` exists and has content:
    ```bash
    [ -s .openspace/skill_usage.jsonl ] && echo "HAS_USAGE" || echo "NO_USAGE"
@@ -494,15 +552,18 @@ Run **after** all other jobs complete. If `.post-spec/` exists, clean up working
 
 After all commits land, run the Karpathy LLM-writes-wiki compile step. This is the whole point of the vault pattern — observations become reusable entity pages automatically.
 
+**Concept-vs-task gate (runs first).** Before creating any entity, ask: *Is this a concept (a load-bearing distinction, invariant, or reusable pattern that a future Claude with no context would benefit from) or a task (what this session did)?* Only concepts become entities. Tasks stay in session artifacts (if Job 1 fired) or stay out of the vault. The compile marker (step 6 below) still fires regardless — it's metadata about the skill running, not vault content.
+
 1. Read today's `log.md` entries (since the last compile marker).
 2. Read `raw/Sessions/YYYY-MM-DD.md` just written in Job 2.
 3. Read `git log --since "YYYY-MM-DD"` (last compile date, or last 24h if none).
 4. **Identify concepts touched.** For each:
+   - Apply the concept-vs-task gate above. If task-only, skip.
    - Look for existing entity in `wiki/Architecture/entities/<concept>.md`.
    - If exists: update with new insight, bump `updated:`, add `[[wiki-links]]` to code paths just modified.
    - If not: create new `wiki/Architecture/entities/<slug>.md` with frontmatter (`type: entity`, `tier: semantic`, `decay: 90d`, `source: /vault`).
 5. If this session touched topics with existing drafts (`status: draft`) in entities/, promote or merge — don't leave drafts rotting.
-6. Append marker to `log.md`: `YYYY-MM-DD HH:MM compile → {n} entities created, {m} updated, {k} drafts promoted`.
+6. Append marker to `log.md`: `YYYY-MM-DD HH:MM compile → {n} entities created, {m} updated, {k} drafts promoted`. Always fire (even when no entities created — `0 created, 0 updated, 0 promoted` is a valid marker).
 
 Do not touch `raw/*` content (immutable after write). Do not delete entries from `log.md`.
 
