@@ -430,22 +430,37 @@ Content must never exceed its container at any viewport width. This is enforced 
 
 ## Field Width Scale
 
-Field widths use CSS Grid column spans on mobile (6-column grid) and fixed px on desktop. Parent containers must use `grid grid-cols-6 gap-4`.
+Three layers own the responsive field-row contract, parent-down:
 
-Field-width classes live in `@layer utilities` in `globals.css`. The `@layer` wrapper is **required** — Tailwind v4 strips custom CSS outside its layer system. Do not remove it.
+**1. `FieldRow`** (`src/components/ui/field-row.tsx`) — the single canonical row-of-fields parent. Never reproduce the grid/flex literal at a callsite; the PostToolUse hook `field-row-literal-guard.sh` blocks it.
 
-| Class | Mobile (grid span) | Desktop (≥640px) |
-|-------|-------------------|-----------------|
-| `.field-number` | span 2 of 6 (≈33%) | 80px |
-| `.field-select-short` | span 2 of 6 (≈33%) | 112px |
-| `.field-name` | span 3 of 6 (50%) | 176px |
-| `.field-phone` | span 3 of 6 (50%) | 176px |
-| `.field-text-short` | span 3 of 6 (50%) | 176px |
-| `.field-date` | span 3 of 6 (50%) | 176px |
-| `.field-email` | span 6 of 6 (100%) | 256px |
-| `.field-select-long` | span 6 of 6 (100%) | 256px |
-| `.field-location` | span 6 of 6 (100%) | 256px |
-| `.field-text-long` | span 6 of 6 (100%) | 100% |
+Two modes:
+- **Unlabeled** `<FieldRow>` renders a `<div>` carrying the canonical literal. The outer IS the inner grid, so `className` and `innerClassName` both land on the same div (tailwind-merge resolves conflicts last-wins).
+- **Labeled** `<FieldRow label="..." required error="...">` wraps the inner grid in `<fieldset>` + `<legend>` + `RequiredAsterisk` with `role="group"` and `aria-describedby` wired to a `<p role="alert">`. In labeled mode, `className` lands on the fieldset and `innerClassName` lands on the inner grid. No `aria-invalid` on the fieldset (inconsistent SR support; `aria-describedby` + `role="alert"` covers the contract).
+
+Two density presets via the `density` prop:
+- `"default"` (default) — `sm:gap-4`. Edit forms, portals, most stakeholder profile sections.
+- `"compact"` — `sm:gap-3`. Dense data layouts (inventory matrices, tables).
+
+Mobile density does not vary: both presets use `grid-cols-6 gap-x-3 gap-y-4` — mobile is already tight and changing it risks overlap with 44px touch targets.
+
+Responsive tuning beyond the mobile/desktop binary (tablet max-width caps, ultra-wide centering) is callsite-owned: pass `innerClassName="md:max-w-[960px] md:mx-auto"` or similar. `FieldRow` does not add per-breakpoint props — shell containers (`FormShell`, `PortalStepShell`, `WizardStepShell`) are where width-cap decisions belong.
+
+**2. `.field-*` width tokens** — caller-applied on each child field via `className`.
+
+| Class | Mobile (grid span) | Desktop (≥640px) | Typical content |
+|-------|---|---|---|
+| `.field-xs` | span 2 of 6 (≈33%) | 80px  | counts, single-digit integers |
+| `.field-sm` | span 2 of 6 (≈33%) | 112px | 2-3 letter codes (M/F, SSI/PADI) |
+| `.field-md` | span 3 of 6 (50%)  | 176px | names, dates, phones, short text |
+| `.field-lg` | span 6 of 6 (100%) | 256px | emails, addresses, long selects |
+| `.field-xl` | span 6 of 6 (100%) | 100%  | textareas, comment fields |
+
+Live in `@layer utilities` inside `globals-utilities.css` (imported by `globals.css`). The `@layer` wrapper is **required** — Tailwind v4 strips custom CSS outside its layer system. Do not remove it.
+
+**3. Form-container shells** (`FormShell`, `PortalStepShell`, `WizardStepShell`) — outermost layer, owns `max-width` and page-level padding. `FieldRow` does not cap outer width.
+
+Enforcement: the canonical literals (default `sm:gap-4` + compact `sm:gap-3`) live only in `field-row.tsx` and are blocked elsewhere by `.claude/hooks/field-row-literal-guard.sh`.
 
 ---
 

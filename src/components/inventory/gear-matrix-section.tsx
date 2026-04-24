@@ -3,6 +3,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
+import { FieldRow } from '@/components/ui/field-row'
 import { NumberPicker } from '@/components/ui/number-picker'
 import { ItemCard } from '@/components/ui/item-card'
 import { SaveButton } from '@/components/ui/save-button'
@@ -158,7 +159,7 @@ export function ManufacturerMatrixSection({
       aria-label={tBooking('removeManufacturer', { manufacturer: manufacturer || tBooking('manufacturer') })}
     >
       <div className="space-y-3">
-        <div className="flex flex-wrap items-end gap-3">
+        <FieldRow density="compact">
           <SimpleSelect
             label={tBooking('manufacturer')}
             value={manufacturer}
@@ -178,7 +179,7 @@ export function ManufacturerMatrixSection({
               className="field-sm"
             />
           )}
-        </div>
+        </FieldRow>
 
         {columns.length > 0 && (
           <>

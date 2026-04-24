@@ -55,7 +55,7 @@ Governance: `.claude/rules/existing-components-first.md` + `.claude/rules/dry-fi
 | `FieldError` | `@/components/ui/field-shell` | Accessible error slot keyed to field id. |
 | `MetaField` | `@/components/ui/meta-field` | Read-only label/value display. |
 | `RequiredAsterisk` | `@/components/ui/required-asterisk` | The `*` glyph. Don't hand-roll; `FieldLabel` consumes it via `required`. |
-| `FieldRow` | `@/components/ui/field-row` | The single canonical row-of-fields parent. Unlabeled: `<FieldRow>` renders a responsive 6-col mobile / flex-wrap `items-end` desktop row. Labeled: `<FieldRow label="..." required error="...">` adds `<fieldset>`/`<legend>`/`RequiredAsterisk` with `role="group"` + `aria-describedby` to an error `<p role="alert">`. Caller supplies translated `label` + `error` strings. Children use `field-xs/sm/md/lg/xl/checkbox` tokens for width. `className` lands on the outer wrapper only — in unlabeled mode the outer wrapper IS the inner grid, so callsite Tailwind overrides (e.g. `sm:gap-3`) work; in labeled mode `className` goes on the fieldset. |
+| `FieldRow` | `@/components/ui/field-row` | The single canonical row-of-fields parent. Unlabeled: `<FieldRow>` renders a responsive 6-col mobile / flex-wrap `items-end` desktop row. Labeled: `<FieldRow label="..." required error="...">` adds `<fieldset>`/`<legend>`/`RequiredAsterisk` with `role="group"` + `aria-describedby` to an error `<p role="alert">`. Caller supplies translated `label` + `error` strings. Children use `field-xs/sm/md/lg/xl` tokens for width. Props: `className` (outer wrapper — fieldset in labeled, div in unlabeled), `innerClassName` (inner grid in both modes — use for gap/responsive overrides), `density` (`'default'` or `'compact'`; maps to `sm:gap-4` or `sm:gap-3` — use `'compact'` for dense data layouts like inventory). |
 
 ## Form containers
 
@@ -110,6 +110,7 @@ Governance: `.claude/rules/existing-components-first.md` + `.claude/rules/dry-fi
 | Component | Import | Purpose |
 |---|---|---|
 | `Dialog` | `@/components/ui/dialog` | Modal dialog. `title` + `description` props MUST be `t(...)` calls (`dialog-title-i18n.sh` hook). |
+| `DialogFooter` | `@/components/ui/dialog` | Canonical right-aligned action row for any `Dialog`. Supports single-button (omit `onSecondary`) or Cancel+Save. Use this instead of hand-rolling `<div className="flex gap-2 justify-end">`. |
 | `ConfirmActionDialog` | `@/components/ui/confirm-dialog` | Confirmation dialog with destructive/primary variant. |
 | `Tooltip` | `@/components/ui/tooltip` | Hover/focus tooltip. |
 | `AppToaster` | `@/components/ui/app-toaster` | Root toast host (mounted once in providers). |
@@ -129,6 +130,14 @@ Governance: `.claude/rules/existing-components-first.md` + `.claude/rules/dry-fi
 
 ---
 
+## Booking compositions
+
+| Component | Import | Purpose |
+|---|---|---|
+| `CustomerContactFields` | `@/components/booking/customer-contact-fields` | One customer's name + contact-method toggle (email/whatsapp/line) + language selector. Used by the booking wizard (`customer-step`) and the add-customer dialog. Takes labels via a `labels` prop; props cover variance (nameRequired, contactRequired, onRemove, hint). |
+
+---
+
 ## Profile compositions
 
 Role-agnostic building blocks for stakeholder profile forms (`PatternLibrary/one-component-all-roles`).
@@ -142,9 +151,7 @@ Role-agnostic building blocks for stakeholder profile forms (`PatternLibrary/one
 | `ProfileBasicInfo` | `@/components/profiles/profile-basic-info` | Name + location + email + phone inputs. Used by every role's contact section. |
 | `ProfileAgencyInfo` | `@/components/profiles/profile-agency-info` | Agency/certification info block (generic over row type). |
 | `ProfileOverlay` | `@/components/profiles/profile-overlay` | Full-screen profile editor overlay. |
-| `ProfileCompletionPill` | `@/components/profiles/profile-completion-pill` | % completion badge that opens the overlay (kind: 'partial'). |
-| `ProfileStartBanner` | `@/components/profiles/profile-start-banner` | "Start your X profile" destructive-tone banner when role-table row is missing (kind: 'not_started'). |
-| `BusinessContactSection` | `@/components/profiles/business-contact-section` | Contact fields for business roles (name, location, email, phone). |
+| `ProfileCompletionPill` | `@/components/profiles/profile-completion-pill` | % completion badge that opens the overlay. Rendered in TopNav whenever `profileCompletion.percentage < 100` (hidden at 100%). Single top-nav indicator; there is no separate "start" banner. |
 | `AccessControlSection` | `@/components/profiles/access-control-section` | allow/not-allow controls. Exports `accessFromProfile`, `accessToPayload`, `INITIAL_ACCESS_CONTROL`. |
 | `VenueCapabilitiesSection` | `@/components/profiles/venue-capabilities-section` | Multi-venue list editor. Uses `EntityCardList` + `VenueEditDialog` for Add/Edit. Each card shows read-only summary of one venue row with an Edit button. |
 | `VenueContactSection` | `@/components/profiles/venue-contact-section` | Venue Contact sub-tab. Reads/writes the operator's `organizations` row (business name, email, phone, address) — NOT venue rows. Multi-venue operators have a single business identity; individual venues are edited in Capabilities. |
@@ -154,7 +161,9 @@ Role-agnostic building blocks for stakeholder profile forms (`PatternLibrary/one
 | `SpecialtyField` | `@/components/profiles/specialty-field` | Specialty picker for instructors/dive-masters. |
 | `LanguageFlags` | `@/components/profiles/language-flags` | Flag-only display. Exports `languageFlagText`. |
 | `PreferredInstructorList` / `PreferredVenueList` / `PreferredBoatList` / `PreferredEquipmentList` / `PreferredCompressorList` | `@/components/profiles/preferred-list` | Role-specific "preferred" editor lists. |
-| `RoleProfileForm` | `@/components/profiles/connected-role-forms` | Dynamic dispatcher for role → profile form. Use `hasConnectedForm(roleKey)` to check availability. |
+| `RoleProfileForm` | `@/components/profiles/connected-role-forms` | Dynamic dispatcher. Reads `ROLE_SECTION_REGISTRY`, wires Convex queries/mutations via `ROLE_API_MODULES`, passes canonical `BaseProfileSectionProps` to the registered section. Use `hasConnectedForm(roleKey)` to check availability. |
+| `ROLE_SECTION_REGISTRY` | `@/components/profiles/role-section-registry` | `Record<RoleKey, Partial<Record<sectionId, ComponentType<BaseProfileSectionProps>>>>`. Adding a new role section = export section component from its `*-profile-form.tsx`, register it here. Covered by `tests/profileSectionRegistry.test.ts` (every non-overlay `profileTabs` id must have a registered component). |
+| `BusinessContactSection` | `@/components/profiles/business-contact-section` | Canonical Contact tab for every role. Props: `nameLabel` (omit for Instructor-style no-name forms), `schema`, `inheritFromOtherRoles?`, `createOverride?`, `afterSuccessfulSave?`, `extras?` (defaults + fromProfile + toPayload + render prop for role-specific add-ons like `LanguageField`). DiveCenter/Instructor/Boat/Equipment/Compressor all delegate to this — never hand-roll another contact form. |
 | `InstructorCardContent` | `@/components/profiles/instructor-card` | Compact instructor card body. |
 
 ---
@@ -227,9 +236,9 @@ For completeness; Convex code imports these, not the frontend:
 Three signals must all be true:
 
 1. **No existing primitive covers the concept.** Verified via grep of this catalog + `src/components/ui/` + `src/components/profiles/`.
-2. **The pattern appears (or will appear) in 3+ callsites.** One-off layouts don't need extraction.
+2. **The pattern appears (or will appear) in 2+ callsites.** One-off layouts don't need extraction. At 2 semantically-identical callsites, consolidate — don't wait for a third to arrive before extracting (by then all three have diverged).
 3. **The new component lives under `src/components/<feature>/` or `src/components/ui/`.** Never inline in a page/route file.
 
-Raw `<button>`, `<input>`, `<select>`, `<textarea>`, `<label>`, `<dialog>`, `<a href>` outside `src/components/ui/` is a code smell. If genuinely needed (compound-control internals, DnD handles, sr-only toggles), add `{/* design-ok */}` on the line.
+Raw `<button>`, `<input>`, `<select>`, `<textarea>`, `<label>`, `<dialog>`, `<a href>` outside `src/components/ui/` is a code smell. If genuinely needed (compound-control internals, DnD handles, sr-only toggles), add `{/* design-ok: <reason> */}` on the line — bare `design-ok` without a reason is blocked.
 
 When a visual pattern repeats via className (colors, radii, overflow, animation), it is a **missing variant**, not a styling choice. Add a variant to the component — don't duplicate the className.
