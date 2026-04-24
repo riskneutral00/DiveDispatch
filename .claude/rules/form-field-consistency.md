@@ -1,6 +1,9 @@
 ## FieldLabel is the only label
 Every field label in forms must use `FieldLabel` from `field-shell.tsx`. Never hand-roll `<label>` with inline required asterisks.
 
+## Field primitives own their label
+Every field primitive under `src/components/ui/` (`input.tsx`, `textarea.tsx`, `simple-select.tsx`, `select.tsx`, `number-picker.tsx`, `checkbox.tsx`, `checkbox-group.tsx`, `day-picker.tsx`, `day-toggle-group.tsx`, `phone-field.tsx`, `email-field.tsx`, `name-field.tsx`, `country-field.tsx`, `birthday-field.tsx`, `date-field.tsx`, `language-field.tsx`) takes `label?: string` and renders `FieldLabel` internally via `FieldShell`. Never wrap a single field primitive in an external `FieldShell` at a callsite — if the primitive lacks a label prop, that's the bug; fix the primitive, not the callsite. `FieldShell` is reserved for composite sections that render multiple controls under one legend; for row-of-fields legends use `FieldRow` with its `label` prop instead.
+
 ## Required = `required` prop, not label text
 Required fields get `required` prop on Input/SimpleSelect/FieldShell → FieldLabel renders the asterisk. Never append "(optional)" to labels — absence of asterisk IS the optional signal.
 
