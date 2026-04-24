@@ -43,10 +43,6 @@ Bare `design-ok` is blocked because a justified suppression is reviewable and a 
 
 If a visual pattern repeats via `className` (colors, radii, overflow, animation, spacing beyond layout positioning), it is a **missing variant** on the underlying primitive, not a one-off styling choice. Add a prop or variant to the component — don't duplicate the className across callsites. Three similar `className` strings on the same primitive = extract a variant.
 
-## Profile form shapes
-
-Every `src/components/profiles/*-profile-form.tsx` must extend `BaseProfileSectionProps` from `@/lib/profile-form/types`. No local `type *FormState = ContactFormState & {...}` aliases — that's duplication of a canonical shape. `local-type-alias-guard.sh` enforces this. Grandfathered `// dry-ok` comments are debt slated for the merged-state factory (`@/lib/profile-form/merged-states`, plan Tier 1 F1).
-
 ## Why this matters
 
 Every new primitive or hand-rolled wrapper is a future refactor. Every raw `<button>` or inline `<label>` is a drift opportunity against the design system. The catalog is the contract: if it's not there, it doesn't exist yet — grep first, write second, extract at 2 callsites rather than waiting for 3.
