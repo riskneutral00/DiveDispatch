@@ -486,6 +486,8 @@
     "submittedTitle": "Submitted",
     "completeTitle": "Complete!",
     "addLocation": "Add location…",
+    "locationLabelEdit": "Location: {label}. Click to edit.",
+    "clearLocation": "Clear location",
     "setLocation": "Set Location",
     "dragToSetLocation": "Drag the map to set location…",
     "searchAddress": "Search address…",

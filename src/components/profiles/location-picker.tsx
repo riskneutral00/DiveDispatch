@@ -64,11 +64,7 @@ function LocationPickerTrigger({ value, onOpen, onClear, error, label, required,
                 }
               : {}),
           }}
-          aria-label={
-            value
-              ? `Location: ${label2}. Click to edit.`
-              : 'Add location'
-          }
+          aria-label={value ? t('locationLabelEdit', { label: label2 }) : t('addLocation')}
         >
           {value ? label2 : (label ? ' ' : t('addLocation'))}
         </button>
@@ -80,7 +76,7 @@ function LocationPickerTrigger({ value, onOpen, onClear, error, label, required,
               onClear()
             }}
             className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center justify-center min-w-9 min-h-9 w-9 h-9 rounded-full transition-opacity duration-theme hover:opacity-70 cursor-pointer text-secondary"
-            aria-label="Clear location"
+            aria-label={t('clearLocation')}
           >
             <X size={14} />
           </button>
