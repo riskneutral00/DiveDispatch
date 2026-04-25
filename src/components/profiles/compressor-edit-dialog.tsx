@@ -10,7 +10,7 @@ import { NumberPicker } from '@/components/ui/number-picker'
 import { SimpleSelect } from '@/components/ui/simple-select'
 import { CheckboxGroup } from '@/components/ui/checkbox-group'
 import { FieldRow } from '@/components/ui/field-row'
-import { LocationPicker, type LocationValue } from '@/components/profiles/location-picker-lazy'
+import { LocationPicker, type LocationValue } from '@/components/profiles/location-picker'
 import {
   GAS_MIX_OPTIONS,
   NITROX_MIN_PERCENT,

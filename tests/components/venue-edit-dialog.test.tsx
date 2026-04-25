@@ -17,7 +17,7 @@ vi.mock('convex/react', async (importOriginal) => {
   }
 })
 
-vi.mock('@/components/profiles/location-picker-lazy', () => ({
+vi.mock('@/components/profiles/location-picker', () => ({
   LocationPicker: ({ onChange }: { onChange: (v: unknown) => void }) => (
     <button
       data-testid="location-picker"

@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge'
 import { LoadingCard } from '@/components/ui/loading-card'
 import {
   buildParentContactDefaults,
+  useInheritedContactDefaults,
   type BaseProfileSectionProps,
 } from '@/lib/profile-form'
 import { compressorGasMixesToPayload } from '@/components/profiles/compressor-profile-form'
@@ -71,6 +72,7 @@ export function VenueCapabilitiesSection({ me }: VenueCapabilitiesSectionProps) 
   const createCompressor = useMutation(api.compressors.create)
   const updateCompressor = useMutation(api.compressors.update)
   const removeCompressor = useMutation(api.compressors.remove)
+  const venueInheritedDefaults = useInheritedContactDefaults('Venue', me)
 
   const [dialogState, setDialogState] = useState<
     | { open: false }
@@ -127,8 +129,8 @@ export function VenueCapabilitiesSection({ me }: VenueCapabilitiesSectionProps) 
       placeId: value.location.placeId,
       lat: value.location.lat,
       lng: value.location.lng,
-      email: '',
-      phone: '',
+      email: (venueInheritedDefaults.email as string) || '',
+      phone: (venueInheritedDefaults.phone as string) || '',
       kind: value.kind,
       features: value.features,
       confinedCapable: value.confinedCapable,

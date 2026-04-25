@@ -15,7 +15,7 @@ import {
   type CompressorEditValue,
 } from './compressor-edit-dialog'
 import {
-  buildParentContactDefaults,
+  useInheritedContactDefaults,
   type BaseProfileSectionProps,
 } from '@/lib/profile-form'
 
@@ -26,7 +26,7 @@ export type CompressorProfileSection = 'contact'
 
 type CompressorListSectionProps = BaseProfileSectionProps
 
-export function CompressorContactSection(_props: CompressorListSectionProps) {
+export function CompressorContactSection({ me }: CompressorListSectionProps) {
   const t = useTranslations('common')
   const compressors = useQuery(api.compressors.mine)
   const boatProfile = useQuery(api.boats.mine) as Doc<'boats'> | null | undefined
@@ -34,6 +34,7 @@ export function CompressorContactSection(_props: CompressorListSectionProps) {
   const createCompressor = useMutation(api.compressors.create)
   const updateCompressor = useMutation(api.compressors.update)
   const removeCompressor = useMutation(api.compressors.remove)
+  const inheritedDefaults = useInheritedContactDefaults('Compressor', me)
 
   const [dialogState, setDialogState] = useState<
     | { open: false }
@@ -72,9 +73,8 @@ export function CompressorContactSection(_props: CompressorListSectionProps) {
   }
 
   const handleCreate = async (value: CompressorEditValue) => {
-    const parentDefaults = buildParentContactDefaults(null) as Record<string, unknown>
     const payload: Record<string, unknown> = {
-      ...parentDefaults,
+      ...inheritedDefaults,
       name: value.name,
       location: value.location,
       gasMixes: value.gasMixes,

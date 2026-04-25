@@ -25,6 +25,8 @@ import { LanguagePicker, type Language } from '@/components/profiles/language-pi
 import { InstructorCardContent } from '@/components/profiles/instructor-card'
 import { ALL_LANGUAGES } from '@/lib/constants/dive-languages'
 
+// query-budget-ok: 6 subscriptions; planned migration to preferred.listContext (Phase 2D of zesty-creek perf plan)
+
 function defaultCandidateRender(entry: DirectoryEntry, badge: ReactNode) {
   return (
     <>

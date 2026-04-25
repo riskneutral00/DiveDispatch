@@ -8,7 +8,7 @@ import { NumberPicker } from '@/components/ui/number-picker'
 import { SimpleSelect } from '@/components/ui/simple-select'
 import { Checkbox } from '@/components/ui/checkbox'
 import { CheckboxGroup } from '@/components/ui/checkbox-group'
-import { LocationPicker, type LocationValue } from '@/components/profiles/location-picker-lazy'
+import { LocationPicker, type LocationValue } from '@/components/profiles/location-picker'
 import { CompressorGasMixFields } from '@/components/profiles/compressor-gas-mix-fields'
 import {
   AccessControlSection,

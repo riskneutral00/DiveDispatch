@@ -51,6 +51,9 @@ const { API_REFS } = vi.hoisted(() => ({
     directory: {
       listByRole: { _tag: 'directory.listByRole' },
     },
+    users: {
+      inheritedContactDefaults: { _tag: 'users.inheritedContactDefaults' },
+    },
   },
 }))
 
@@ -83,7 +86,7 @@ vi.mock('convex/react', async (importOriginal) => {
   }
 })
 
-vi.mock('@/components/profiles/location-picker-lazy', () => ({
+vi.mock('@/components/profiles/location-picker', () => ({
   LocationPicker: ({
     value,
     onChange,

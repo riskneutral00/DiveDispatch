@@ -5,7 +5,7 @@ import { api } from '@/lib/convex-generated'
 import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import { LoadingCard } from '@/components/ui/loading-card'
-import { type LocationValue } from '@/components/profiles/location-picker-lazy'
+import { type LocationValue } from '@/components/profiles/location-picker'
 import { contactSchema } from '@/lib/schemas/profile-shared'
 import {
   INITIAL_CONTACT_FORM,

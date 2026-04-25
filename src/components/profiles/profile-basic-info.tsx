@@ -1,7 +1,7 @@
 import { NameField } from '@/components/ui/name-field'
 import { EmailField } from '@/components/ui/email-field'
 import { PhoneField } from '@/components/ui/phone-field'
-import { LocationPicker, type LocationValue } from '@/components/profiles/location-picker-lazy'
+import { LocationPicker, type LocationValue } from '@/components/profiles/location-picker'
 import { FieldRow } from '@/components/ui/field-row'
 
 interface ProfileBasicInfoProps {

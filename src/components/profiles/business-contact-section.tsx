@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react'
 import { useQuery } from 'convex/react'
 import { api } from '@/lib/convex-generated'
-import { type LocationValue } from '@/components/profiles/location-picker-lazy'
+import { type LocationValue } from '@/components/profiles/location-picker'
 import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import { SectionDivider } from '@/components/ui/section-divider'

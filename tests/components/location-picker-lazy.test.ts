@@ -3,65 +3,86 @@ import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'fs'
 import { resolve } from 'path'
 
-/**
- * DD-224: Verify LocationPicker is lazy-loaded via next/dynamic.
- *
- * The Google Maps SDK (~200KB) should only load when the location picker
- * modal opens, not eagerly on every page that imports LocationPicker.
- */
-
-const LAZY_WRAPPER = readFileSync(
-  resolve(__dirname, '../../src/components/profiles/location-picker-lazy.tsx'),
+const PICKER = readFileSync(
+  resolve(__dirname, '../../src/components/profiles/location-picker.tsx'),
+  'utf-8',
+)
+const MODAL = readFileSync(
+  resolve(__dirname, '../../src/components/profiles/location-picker-modal.tsx'),
   'utf-8',
 )
 
-describe('DD-224: LocationPicker lazy wrapper', () => {
-  it('imports next/dynamic', () => {
-    expect(LAZY_WRAPPER).toMatch(/import\s+dynamic\s+from\s+['"]next\/dynamic['"]/)
+describe('DD-224: LocationPicker trigger boundary', () => {
+  it('location-picker.tsx imports next/dynamic', () => {
+    expect(PICKER).toMatch(/import\s+dynamic\s+from\s+['"]next\/dynamic['"]/)
   })
 
-  it('wraps LocationPicker with dynamic() and ssr: false', () => {
-    const dynamicBlock = LAZY_WRAPPER.match(
-      /dynamic\([\s\S]*?['"]\.\/location-picker['"][\s\S]*?ssr:\s*false/m,
+  it('location-picker.tsx lazy-loads the modal with ssr: false', () => {
+    const dynamicBlock = PICKER.match(
+      /dynamic\([\s\S]*?['"]\.\/location-picker-modal['"][\s\S]*?ssr:\s*false/m,
     )
     expect(dynamicBlock).not.toBeNull()
   })
 
-  it('shows Spinner as loading fallback', () => {
-    expect(LAZY_WRAPPER).toMatch(/loading:\s*\(\)\s*=>\s*<Spinner\s*\/>/)
+  it('location-picker.tsx uses loading: () => null (no spinner flash)', () => {
+    expect(PICKER).toMatch(/loading:\s*\(\)\s*=>\s*null/)
   })
 
-  it('re-exports LocationValue type', () => {
-    expect(LAZY_WRAPPER).toMatch(/export\s+.*type\s+.*LocationValue/)
+  it('location-picker.tsx exports the LocationValue type', () => {
+    expect(PICKER).toMatch(/export\s+type\s+LocationValue/)
+  })
+
+  it('location-picker.tsx does NOT import the Maps SDK', () => {
+    expect(PICKER).not.toMatch(/@vis\.gl\/react-google-maps/)
+  })
+
+  it('location-picker.tsx does NOT import places autocomplete', () => {
+    expect(PICKER).not.toMatch(/use-places-autocomplete/)
+  })
+
+  it('location-picker.tsx does NOT import i18n-iso-countries', () => {
+    expect(PICKER).not.toMatch(/i18n-iso-countries/)
   })
 })
 
-/**
- * DD-224: Verify all consumer files import from the lazy wrapper,
- * not directly from location-picker.tsx.
- */
+describe('DD-224: LocationPicker modal owns the heavy imports', () => {
+  it('modal imports the Maps SDK', () => {
+    expect(MODAL).toMatch(/@vis\.gl\/react-google-maps/)
+  })
+
+  it('modal imports places autocomplete', () => {
+    expect(MODAL).toMatch(/use-places-autocomplete/)
+  })
+
+  it('modal imports i18n-iso-countries', () => {
+    expect(MODAL).toMatch(/i18n-iso-countries/)
+  })
+
+  it('modal exports LocationPickerModal', () => {
+    expect(MODAL).toMatch(/export\s+function\s+LocationPickerModal/)
+  })
+})
+
 const CONSUMER_FILES = [
   'src/components/profiles/business-contact-section.tsx',
   'src/components/onboarding/organizer-basic-step.tsx',
   'src/components/profiles/profile-basic-info.tsx',
   'src/components/profiles/venue-contact-section.tsx',
+  'src/components/profiles/compressor-edit-dialog.tsx',
+  'src/components/profiles/venue-edit-dialog.tsx',
 ]
 
-describe('DD-224: consumers import from lazy wrapper', () => {
+describe('DD-224: consumers import from location-picker (not -lazy)', () => {
   for (const file of CONSUMER_FILES) {
     const shortName = file.split('/').pop()!
 
-    it(`${shortName} imports from location-picker-lazy`, () => {
-      const source = readFileSync(resolve(__dirname, '../../', file), 'utf-8')
-      // Should NOT import directly from location-picker (without -lazy)
-      const directImport = /from\s+['"]@\/components\/profiles\/location-picker['"]/.test(source)
-      expect(directImport, `${shortName} still imports directly from location-picker`).toBe(false)
-    })
-
-    it(`${shortName} imports from the lazy path`, () => {
+    it(`${shortName} imports from location-picker`, () => {
       const source = readFileSync(resolve(__dirname, '../../', file), 'utf-8')
       const lazyImport = /from\s+['"]@\/components\/profiles\/location-picker-lazy['"]/.test(source)
-      expect(lazyImport, `${shortName} should import from location-picker-lazy`).toBe(true)
+      expect(lazyImport, `${shortName} still imports from the deleted -lazy path`).toBe(false)
+
+      const directImport = /from\s+['"]@\/components\/profiles\/location-picker['"]/.test(source)
+      expect(directImport, `${shortName} should import from location-picker`).toBe(true)
     })
   }
 })
