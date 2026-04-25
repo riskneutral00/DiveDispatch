@@ -3,7 +3,7 @@ import { internalMutation, mutation, query } from './_generated/server'
 import type { Id } from './_generated/dataModel'
 import { checkIdempotency } from './lib/idempotency'
 import { requireOrgAdmin } from './lib/activeOrg'
-import { authorize } from './lib/auth'
+import { authorize, getAuthUser } from './lib/auth'
 import { ErrorCode } from './lib/errorCodes'
 import { addressStructuredValidator } from './shared/addressValidator'
 import { assertCountryCode } from './lib/i18nValidators'
@@ -171,12 +171,7 @@ export const updateBusinessMetadata = mutation({
 export const mine = query({
   args: {},
   handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity()
-    if (!identity) return null
-    const user = await ctx.db
-      .query('users')
-      .withIndex('by_tokenIdentifier', (q) => q.eq('tokenIdentifier', identity.tokenIdentifier))
-      .unique()
+    const user = await getAuthUser(ctx)
     if (!user?.organizationId) return null
     return await ctx.db.get(user.organizationId)
   },

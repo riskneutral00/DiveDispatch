@@ -72,20 +72,6 @@ export async function getAuthUser(ctx: DbCtx): Promise<Doc<'users'> | null> {
     .unique()
 }
 
-export function assertCallerIsUser(
-  caller: { slug: string },
-  subjectUserId: string,
-  reason?: string,
-): void {
-  if (subjectUserId !== caller.slug) {
-    throw new ConvexError(
-      reason
-        ? { code: ErrorCode.FORBIDDEN, reason }
-        : { code: ErrorCode.FORBIDDEN },
-    )
-  }
-}
-
 export async function requireOwnerOrResourceAccess(
   ctx: QueryCtx,
   user: { slug: string },
