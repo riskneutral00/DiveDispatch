@@ -80,7 +80,7 @@ export const ROLES: RoleConfig[] = [
     tableName: 'diveCenters',
     description: 'Manage dive bookings, assign resources, and coordinate trips for customers.',
     profileTabs: [
-      { id: 'contact', label: 'Contact', fields: ['name', 'address', 'customerLanguages'] },
+      { id: 'contact', label: 'Contact', fields: ['name', 'email', 'phone', 'address', 'customerLanguages'] },
       { id: 'associations', label: 'Affiliations', fields: ['associations'] },
       { id: 'resources', label: 'Preferences', fields: ['preferredInstructor', 'preferredEquipment', 'preferredVenue', 'preferredBoat', 'preferredCompressor'] },
       { id: 'booking', label: 'Booking', fields: ['acceptanceMode'] },
@@ -101,7 +101,7 @@ export const ROLES: RoleConfig[] = [
     tableName: 'agents',
     description: 'Book dives on behalf of customers and earn commission from dive operators.',
     profileTabs: [
-      { id: 'contact', label: 'Contact', fields: ['name', 'address', 'customerLanguages'] },
+      { id: 'contact', label: 'Contact', fields: ['name', 'email', 'phone', 'address', 'customerLanguages'] },
       { id: 'associations', label: 'Affiliations', fields: ['associations'] },
       { id: 'resources', label: 'Preferences', fields: ['preferredInstructor', 'preferredEquipment', 'preferredVenue', 'preferredBoat', 'preferredCompressor'] },
       { id: 'booking', label: 'Booking', fields: ['acceptanceMode'] },
@@ -122,7 +122,7 @@ export const ROLES: RoleConfig[] = [
     tableName: 'diveStaff',
     description: 'Dive professionals — Divemaster through Course Director. Lead courses, guide dives, and assist at operator-organized trips.',
     profileTabs: [
-      { id: 'contact', label: 'Contact', fields: ['name', 'address'] },
+      { id: 'contact', label: 'Contact', fields: ['name', 'email', 'phone', 'address'] },
       { id: 'credentials', label: 'Credentials', fields: ['credential', 'teachingLanguages'] },
       { id: 'booking', label: 'Booking' },
     ],
@@ -142,7 +142,7 @@ export const ROLES: RoleConfig[] = [
     tableName: 'boats',
     description: 'Provide vessel transport and surface support for dive operations.',
     profileTabs: [
-      { id: 'contact', label: 'Contact', fields: ['name', 'address'] },
+      { id: 'contact', label: 'Contact', fields: ['name', 'email', 'phone', 'address'] },
       { id: 'fleet', label: 'Fleet', fields: ['fleet', 'routeVenues'] },
       { id: 'booking', label: 'Booking' },
     ],
@@ -162,7 +162,7 @@ export const ROLES: RoleConfig[] = [
     tableName: 'equipment',
     description: 'Supply rental gear and manage inventory across dive bookings.',
     profileTabs: [
-      { id: 'contact', label: 'Contact', fields: ['name', 'address'] },
+      { id: 'contact', label: 'Contact', fields: ['name', 'email', 'phone', 'address'] },
       { id: 'gear', label: 'Gear', fields: ['gear:wetsuit', 'gear:bcd', 'gear:fins', 'gear:mask', 'gear:regulator'] },
       { id: 'booking', label: 'Booking' },
     ],
@@ -182,7 +182,7 @@ export const ROLES: RoleConfig[] = [
     tableName: 'compressors',
     description: 'Supply and track tank fills and gas blending for dive operations.',
     profileTabs: [
-      { id: 'contact', label: 'Contact', fields: ['name', 'address', 'gasMixes'] },
+      { id: 'contact', label: 'Contact', fields: ['name', 'email', 'phone', 'address', 'location', 'gasMixes'] },
       { id: 'booking', label: 'Booking' },
     ],
   },
@@ -201,7 +201,7 @@ export const ROLES: RoleConfig[] = [
     tableName: 'venues',
     description: 'Provide a place where diving happens — pool, shore, reef, lake, river, quarry, or other.',
     profileTabs: [
-      { id: 'contact', label: 'Contact', fields: ['name', 'address'] },
+      { id: 'contact', label: 'Contact', fields: ['name', 'email', 'phone', 'address'] },
       { id: 'capabilities', label: 'Capabilities', fields: ['kind', 'maxDepth', 'maxCapacity', 'confinedCapable'] },
       { id: 'booking', label: 'Booking', fields: ['acceptanceMode'] },
     ],

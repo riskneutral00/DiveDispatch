@@ -16,6 +16,7 @@ export {
 } from './location'
 
 export { buildParentContactDefaults } from './create-override'
+export { useInheritedContactDefaults } from './inherited-defaults'
 
 export type { Language } from '@/lib/types/language'
 export {

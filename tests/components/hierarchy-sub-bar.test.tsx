@@ -67,8 +67,8 @@ describe('HierarchySubBar', () => {
     const links = screen.getAllByRole('link')
     expect(links.map((l) => l.getAttribute('aria-label'))).toEqual([
       'Dive Center',
-      'Boat',
       'Venue',
+      'Boat',
       'Equipment',
     ])
   })
@@ -93,10 +93,10 @@ describe('HierarchySubBar', () => {
     expect(screen.getByLabelText('Boat')).toBeInTheDocument()
   })
 
-  it('orders roles by createdAt within each group (append order)', () => {
+  it('orders roles by precedence within each group', () => {
     mockRoles = [
-      R('Equipment', 500, 'e'),
-      R('DiveCenter', 100, 'a'),
+      R('Equipment', 100, 'e'),
+      R('DiveCenter', 500, 'a'),
       R('Boat', 300, 'c'),
     ]
 

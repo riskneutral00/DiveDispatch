@@ -40,7 +40,7 @@ vi.mock('@/lib/hooks/use-organizer-role-api', () => ({
   },
 }))
 
-vi.mock('@/components/profiles/location-picker-lazy', () => ({
+vi.mock('@/components/profiles/location-picker', () => ({
   LocationPicker: ({ onChange, label }: { onChange: (v: unknown) => void; label?: string }) => (
     <button
       aria-label={label ?? 'Location'}

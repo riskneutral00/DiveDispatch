@@ -33,8 +33,7 @@ vi.mock('@/lib/hooks/use-organizer-role-api', () => ({
   },
 }))
 
-// Stub lazy LocationPicker (has its own Convex deps)
-vi.mock('@/components/profiles/location-picker-lazy', () => ({
+vi.mock('@/components/profiles/location-picker', () => ({
   LocationPicker: ({ onChange }: { onChange: (v: unknown) => void }) => (
     <button data-testid="location-picker" onClick={() => onChange({ placeName: 'Phuket', country: 'TH', lat: 7.88, lng: 98.39 })}>
       Pick Location

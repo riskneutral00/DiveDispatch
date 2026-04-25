@@ -34,6 +34,7 @@ import type { BookingPreFill } from '@/lib/booking/wizard-state'
 
 type OperatorType = 'DiveCenter' | 'Agent'
 
+// query-budget-ok: 5 subscriptions; planned migration to dashboard.shellContext (Phase 2C of zesty-creek perf plan)
 export function DashboardContent({ roleSlug, slug }: { roleSlug: string; slug: string }) {
   const roleConfig = ROLE_BY_KEY[roleSlug as RoleKey]
 

@@ -5,6 +5,7 @@ import { useQuery } from 'convex/react'
 import type { Doc } from '@/lib/convex-generated'
 import { api } from '@/lib/convex-generated'
 import { ROLE_BY_CLERK_ROLE, type ClerkRole, type RoleKey } from '@/lib/constants/roles'
+import { ROLE_PRECEDENCE } from '@/lib/utils/role'
 import { Tooltip } from '@/components/ui'
 import { DASHBOARD_CONTENT_GUTTER_X } from '@/lib/constants/dashboard-layout'
 import { PILL_BASE } from '@/lib/constants/pill-shell'
@@ -12,10 +13,11 @@ import { cn } from '@/lib/utils/cn'
 
 type UserRoleDoc = Doc<'userRoles'>
 
-function sortByGrantOrder(rows: UserRoleDoc[]): UserRoleDoc[] {
+function sortByPrecedence(rows: UserRoleDoc[]): UserRoleDoc[] {
   return [...rows].sort((a, b) => {
-    const d = a.createdAt - b.createdAt
-    if (d !== 0) return d
+    const pa = ROLE_PRECEDENCE[a.role] ?? Infinity
+    const pb = ROLE_PRECEDENCE[b.role] ?? Infinity
+    if (pa !== pb) return pa - pb
     return a._id < b._id ? -1 : a._id > b._id ? 1 : 0
   })
 }
@@ -39,8 +41,8 @@ export function HierarchySubBar({ slug, roleSlug }: HierarchySubBarProps) {
     else resources.push(row)
   }
 
-  const sortedOps = sortByGrantOrder(operators)
-  const sortedRes = sortByGrantOrder(resources)
+  const sortedOps = sortByPrecedence(operators)
+  const sortedRes = sortByPrecedence(resources)
   const showDivider = sortedOps.length > 0 && sortedRes.length > 0
 
   const segments: Array<{ kind: 'link'; doc: UserRoleDoc } | { kind: 'divider' }> = []

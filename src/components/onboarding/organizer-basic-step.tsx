@@ -4,7 +4,7 @@ import { useMutation, useQuery } from 'convex/react'
 import { useTranslations } from 'next-intl'
 import { api } from '@/lib/convex-generated'
 import { LoadingCard } from '@/components/ui/loading-card'
-import { LocationPicker, type LocationValue } from '@/components/profiles/location-picker-lazy'
+import { LocationPicker, type LocationValue } from '@/components/profiles/location-picker'
 import { Input } from '@/components/ui/input'
 import { EmailField } from '@/components/ui/email-field'
 import { PhoneField } from '@/components/ui/phone-field'
@@ -21,6 +21,8 @@ import {
 } from '@/lib/profile-form'
 import { contactSchema } from '@/lib/schemas/profile-shared'
 import { OrganizerStepCard } from './organizer-step-card'
+
+// query-budget-ok: 5 subscriptions; planned migration to organizer.basicStepContext (Phase 2D of zesty-creek perf plan)
 
 function mergeInheritedDefaults(
   inheritance: Record<string, unknown> | null,

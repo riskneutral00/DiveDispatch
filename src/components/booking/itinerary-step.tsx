@@ -193,6 +193,7 @@ function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minSta
 
 import { filterByAvailability, enrichOptionsWithCapacity } from '@/lib/booking/availability-filter'
 
+// query-budget-ok: 11 subscriptions; planned migration to itinerary.wizardContext (Phase 2A of zesty-creek perf plan)
 export function ItineraryStep({ state, dispatch, isEditMode = false }: ItineraryStepProps) {
   const tItin = useTranslations('booking.itinerary')
   const tCommon = useTranslations('common')

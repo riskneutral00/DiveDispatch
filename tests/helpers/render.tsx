@@ -15,6 +15,7 @@ const stubTheme: ThemeContextValue = {
   setMode: () => {},
   selectTheme: () => {},
   isLoading: false,
+  savedSkins: [],
 }
 
 function AllProviders({ children }: { children: ReactNode }) {

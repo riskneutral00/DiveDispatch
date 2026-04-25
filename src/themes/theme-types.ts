@@ -107,10 +107,18 @@ export interface ThemeConfig {
 
 export type ThemeMode = "light" | "dark";
 
+export interface SavedSkin {
+  _id: string;
+  name: string;
+  slug: string;
+  appearance: "dark" | "light" | undefined;
+}
+
 export interface ThemeContextValue {
   theme: ThemeConfig;
   mode: ThemeMode;
   setMode: (mode: ThemeMode) => void;
   selectTheme: (themeId: string) => void;
   isLoading: boolean;
+  savedSkins: SavedSkin[];
 }
