@@ -70,7 +70,6 @@ async function seedFullDc(ctx: SeedCtx, slug: string) {
   await seedUser(ctx, { slug: instrSlug, tokenIdentifier: `clerk|${instrSlug}`, role: 'Instructor', email: `${instrSlug}@t.com`, name: 'I', firstName: 'I', lastName: 'T' })
   await seedUser(ctx, { slug: equipSlug, tokenIdentifier: `clerk|${equipSlug}`, role: 'Equipment', email: `${equipSlug}@t.com`, name: 'E', firstName: 'E', lastName: 'T' })
   const vUserId = await seedUser(ctx, { slug: venueSlug, tokenIdentifier: `clerk|${venueSlug}`, role: 'Venue', email: `${venueSlug}@t.com`, name: 'V', firstName: 'V', lastName: 'T' })
-  await seedVenue(ctx, { userId: vUserId, name: 'Venue', hasCompressor: false, subtype: 'pool' })
   await seedUser(ctx, { slug: compSlug, tokenIdentifier: `clerk|${compSlug}`, role: 'Compressor', email: `${compSlug}@t.com`, name: 'C', firstName: 'C', lastName: 'T' })
 
   return userId

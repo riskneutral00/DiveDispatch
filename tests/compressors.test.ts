@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { api } from '../convex/_generated/api'
 import type { Doc, Id } from '../convex/_generated/dataModel'
-import { seedUser as _seedUser, getOrCreateTestOrg, type SeedCtx } from './fixtures'
+import { seedUser as _seedUser, getOrCreateTestOrg, seedBoatProfile, seedVenue, seedBooking, seedBookingResource, seedSession, seedReservation, seedInventoryUnit, type SeedCtx } from './fixtures'
 import { makeT, orgIdentityFor } from './helpers/convex-helpers'
 
 async function seedUser(ctx: SeedCtx, slug: string, role: 'Compressor' | 'DiveCenter' = 'Compressor') {
@@ -10,22 +10,9 @@ async function seedUser(ctx: SeedCtx, slug: string, role: 'Compressor' | 'DiveCe
   return userId
 }
 
-async function seedCompressorProfile(ctx: SeedCtx, userId: Awaited<ReturnType<typeof seedUser>>) {
-  const organizationId = await getOrCreateTestOrg(ctx, userId, 'Test Compressor')
-  return ctx.db.insert('compressors', {
-    organizationId,
-    name: 'Test Compressor',
-    address: { city: 'Koh Tao', country: 'TH' },
-    lat: 10.09,
-    lng: 99.84,
-    email: 'compressor@test.com',
-    phone: '+66123456789',
-    verified: true,
-  })
-}
-
 const VALID_ARGS = {
   name: 'Sairee Compressor',
+  location: 'fixed' as const,
   address: { city: 'Koh Tao', country: 'TH' },
   lat: 10.09,
   lng: 99.84,
@@ -47,159 +34,31 @@ describe('compressors.create', () => {
     ).rejects.toThrow(/FORBIDDEN/)
   })
 
-  it('creates compressor profile', async () => {
+  it('creates compressor with slug and location', async () => {
     const t = makeT()
-    let userId: Awaited<ReturnType<typeof seedUser>> | undefined
-    await t.run(async (ctx) => { userId = await seedUser(ctx, 'comp-owner') })
+    await t.run(async (ctx) => { await seedUser(ctx, 'comp-owner') })
 
     const compId = await t.withIdentity(orgIdentityFor('comp-owner'))
       .mutation(api.compressors.create, VALID_ARGS)
 
-    expect(typeof compId).toBe('string')
     await t.run(async (ctx) => {
       const comp = await ctx.db.get(compId as Id<'compressors'>) as Doc<'compressors'> | null
       expect(comp).not.toBeNull()
       expect(comp!.name).toBe('Sairee Compressor')
-      expect(comp!.organizationId).toBeDefined()
+      expect(comp!.location).toBe('fixed')
+      expect(comp!.slug).toBe('sairee-compressor')
       expect(comp!.verified).toBe(false)
     })
   })
 
-  it('returns existing ID on duplicate create', async () => {
+  it('allows multiple compressors per org with distinct slugs', async () => {
     const t = makeT()
-    await t.run(async (ctx) => { await seedUser(ctx, 'dup-comp') })
-    const identity = orgIdentityFor('dup-comp')
+    await t.run(async (ctx) => { await seedUser(ctx, 'multi-comp') })
+    const identity = orgIdentityFor('multi-comp')
 
     const id1 = await t.withIdentity(identity).mutation(api.compressors.create, VALID_ARGS)
     const id2 = await t.withIdentity(identity).mutation(api.compressors.create, { ...VALID_ARGS, name: 'Other' })
-    expect(id1).toBe(id2)
-  })
-})
-
-describe('compressors.update', () => {
-  it('rejects unauthenticated callers', async () => {
-    const t = makeT()
-    await expect(t.mutation(api.compressors.update, { name: 'New' })).rejects.toThrow(/UNAUTHENTICATED/)
-  })
-
-  it('rejects when no profile exists', async () => {
-    const t = makeT()
-    await t.run(async (ctx) => { await seedUser(ctx, 'no-comp') })
-    await expect(
-      t.withIdentity(orgIdentityFor('no-comp')).mutation(api.compressors.update, { name: 'New' }),
-    ).rejects.toThrow(/NOT_FOUND/)
-  })
-
-  it('updates compressor fields', async () => {
-    const t = makeT()
-    let compId: Awaited<ReturnType<typeof seedCompressorProfile>> | undefined
-    await t.run(async (ctx) => {
-      const userId = await seedUser(ctx, 'upd-comp')
-      compId = await seedCompressorProfile(ctx, userId)
-    })
-
-    await t.withIdentity(orgIdentityFor('upd-comp'))
-      .mutation(api.compressors.update, { name: 'Updated Compressor' })
-
-    await t.run(async (ctx) => {
-      const comp = await ctx.db.get(compId!) as Doc<'compressors'> | null
-      expect(comp!.name).toBe('Updated Compressor')
-      expect(comp!.email).toBe('compressor@test.com')
-    })
-  })
-})
-
-describe('directory.listByRole — Compressor picker gate', () => {
-  it('excludes compressors with undefined gasMixes', async () => {
-    const t = makeT()
-    await t.run(async (ctx) => {
-      await seedUser(ctx, 'caller-comp', 'DiveCenter')
-      const u1 = await seedUser(ctx, 'comp-undef', 'Compressor')
-      const organizationId = await getOrCreateTestOrg(ctx, u1, 'Undef')
-      await ctx.db.insert('compressors', {
-        organizationId,
-        name: 'Undef', address: { city: 'Chalong', country: 'TH' },
-        lat: 7.82, lng: 98.36, email: 'u@t.com', phone: '+66000',
-        verified: true,
-      })
-    })
-
-    const result = await t.withIdentity(orgIdentityFor('caller-comp'))
-      .query(api.directory.listByRole, { role: 'Compressor' })
-    expect(result).toHaveLength(0)
-  })
-
-  it('excludes compressors with empty gasMixes array', async () => {
-    const t = makeT()
-    await t.run(async (ctx) => {
-      await seedUser(ctx, 'caller-comp2', 'DiveCenter')
-      const u1 = await seedUser(ctx, 'comp-empty', 'Compressor')
-      const organizationId = await getOrCreateTestOrg(ctx, u1, 'Empty')
-      await ctx.db.insert('compressors', {
-        organizationId,
-        name: 'Empty', address: { city: 'Chalong', country: 'TH' },
-        lat: 7.82, lng: 98.36, email: 'e@t.com', phone: '+66000',
-        gasMixes: [],
-        verified: true,
-      })
-    })
-
-    const result = await t.withIdentity(orgIdentityFor('caller-comp2'))
-      .query(api.directory.listByRole, { role: 'Compressor' })
-    expect(result).toHaveLength(0)
-  })
-
-  it('includes compressors with at least one gasMix', async () => {
-    const t = makeT()
-    await t.run(async (ctx) => {
-      await seedUser(ctx, 'caller-comp3', 'DiveCenter')
-      const u1 = await seedUser(ctx, 'comp-ok', 'Compressor')
-      const organizationId = await getOrCreateTestOrg(ctx, u1, 'Air Shop')
-      await ctx.db.insert('compressors', {
-        organizationId,
-        name: 'Air Shop', address: { city: 'Chalong', country: 'TH' },
-        lat: 7.82, lng: 98.36, email: 'a@t.com', phone: '+66000',
-        gasMixes: ['air'],
-        verified: true,
-      })
-      const row = await ctx.db
-        .query('userRoles')
-        .withIndex('by_userId_role', (q) => q.eq('userId', u1).eq('role', 'Compressor'))
-        .unique()
-      if (row) await ctx.db.patch(row._id, { profileComplete: true })
-    })
-
-    const result = await t.withIdentity(orgIdentityFor('caller-comp3'))
-      .query(api.directory.listByRole, { role: 'Compressor' })
-    expect(result).toHaveLength(1)
-    expect(result[0].slug).toBe('comp-ok')
-  })
-})
-
-describe('compressors.mine', () => {
-  it('returns null for unauthenticated callers', async () => {
-    const t = makeT()
-    expect(await t.query(api.compressors.mine, {})).toBeNull()
-  })
-
-  it('returns null when no profile exists', async () => {
-    const t = makeT()
-    await t.run(async (ctx) => { await seedUser(ctx, 'no-comp-profile') })
-    expect(
-      await t.withIdentity(orgIdentityFor('no-comp-profile')).query(api.compressors.mine, {}),
-    ).toBeNull()
-  })
-
-  it('returns compressor profile for owner', async () => {
-    const t = makeT()
-    await t.run(async (ctx) => {
-      const userId = await seedUser(ctx, 'my-comp')
-      await seedCompressorProfile(ctx, userId)
-    })
-
-    const result = await t.withIdentity(orgIdentityFor('my-comp')).query(api.compressors.mine, {})
-    expect(result).not.toBeNull()
-    expect(result!.name).toBe('Test Compressor')
+    expect(id1).not.toBe(id2)
   })
 })
 
@@ -252,17 +111,353 @@ describe('compressors nitrox range validation', () => {
         .mutation(api.compressors.create, { ...VALID_ARGS, nitroxMin: 36, nitroxMax: 28 }),
     ).rejects.toThrow(/VALIDATION/)
   })
+})
 
-  it('rejects out-of-range nitrox on update', async () => {
+describe('compressors.update nitrox range validation', () => {
+  it('rejects nitroxMin > nitroxMax on update', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedUser(ctx, 'nitrox-update-inv') })
+    const identity = orgIdentityFor('nitrox-update-inv')
+    const compId = await t.withIdentity(identity).mutation(api.compressors.create, {
+      ...VALID_ARGS,
+      gasMixes: ['air', 'nitrox'],
+      nitroxMin: 28,
+      nitroxMax: 36,
+    })
+    await expect(
+      t.withIdentity(identity).mutation(api.compressors.update, {
+        compressorId: compId as Id<'compressors'>,
+        nitroxMin: 36,
+        nitroxMax: 28,
+      }),
+    ).rejects.toThrow(/VALIDATION/)
+  })
+
+  it('rejects nitroxMax above 40 on update', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedUser(ctx, 'nitrox-update-high') })
+    const identity = orgIdentityFor('nitrox-update-high')
+    const compId = await t.withIdentity(identity).mutation(api.compressors.create, VALID_ARGS)
+    await expect(
+      t.withIdentity(identity).mutation(api.compressors.update, {
+        compressorId: compId as Id<'compressors'>,
+        nitroxMax: 50,
+      }),
+    ).rejects.toThrow(/VALIDATION/)
+  })
+
+  it('accepts a valid update', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedUser(ctx, 'nitrox-update-ok') })
+    const identity = orgIdentityFor('nitrox-update-ok')
+    const compId = await t.withIdentity(identity).mutation(api.compressors.create, VALID_ARGS)
+    await t.withIdentity(identity).mutation(api.compressors.update, {
+      compressorId: compId as Id<'compressors'>,
+      gasMixes: ['air', 'nitrox'],
+      nitroxMin: 24,
+      nitroxMax: 32,
+    })
+    await t.run(async (ctx) => {
+      const comp = await ctx.db.get(compId as Id<'compressors'>) as Doc<'compressors'> | null
+      expect(comp!.nitroxMin).toBe(24)
+      expect(comp!.nitroxMax).toBe(32)
+    })
+  })
+})
+
+describe('compressors.visibleToMe — destination-scoped discovery', () => {
+  it('returns own-org + destination-org compressors for an operator with destinationIds', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
-      const userId = await seedUser(ctx, 'nitrox-upd')
-      await seedCompressorProfile(ctx, userId)
+      const now = Date.now()
+      const areaId = await ctx.db.insert('organizations', {
+        slug: 'south-andaman',
+        name: 'South Andaman',
+        isAreaOrg: true,
+        createdAt: now,
+        updatedAt: now,
+      })
+      await ctx.db.insert('compressors', {
+        organizationId: areaId,
+        slug: 'area-comp',
+        name: 'Area Compressor',
+        location: 'fixed',
+        address: { city: 'Phuket', country: 'TH' },
+        lat: 7.8,
+        lng: 98.3,
+        email: 'area@test.com',
+        phone: '+66110000000',
+        verified: true,
+      })
+      const operatorId = await seedUser(ctx, 'rene-comp-vis')
+      const user = await ctx.db.get(operatorId)
+      if (!user?.organizationId) throw new Error('op org missing')
+      await ctx.db.patch(user.organizationId, { destinationIds: [areaId] })
+      await ctx.db.insert('compressors', {
+        organizationId: user.organizationId,
+        slug: 'rene-comp',
+        name: 'Rene Compressor',
+        location: 'fixed',
+        address: { city: 'Phuket', country: 'TH' },
+        lat: 7.8,
+        lng: 98.3,
+        email: 'rene@test.com',
+        phone: '+66120000000',
+        verified: true,
+      })
+    })
+
+    const results = await t.withIdentity(orgIdentityFor('rene-comp-vis')).query(api.compressors.visibleToMe, {})
+    expect(results.map((c) => c.slug).sort()).toEqual(['area-comp', 'rene-comp'])
+  })
+
+  it('returns own-org compressors only when destinationIds is undefined', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => {
+      const userId = await seedUser(ctx, 'solo-comp-vis')
+      const user = await ctx.db.get(userId)
+      if (!user?.organizationId) throw new Error('op org missing')
+      await ctx.db.insert('compressors', {
+        organizationId: user.organizationId,
+        slug: 'solo-comp',
+        name: 'Solo Compressor',
+        location: 'fixed',
+        address: { city: 'Koh Tao', country: 'TH' },
+        lat: 10,
+        lng: 99,
+        email: 'solo@test.com',
+        phone: '+66130000000',
+        verified: true,
+      })
+    })
+
+    const results = await t.withIdentity(orgIdentityFor('solo-comp-vis')).query(api.compressors.visibleToMe, {})
+    expect(results.map((c) => c.slug)).toEqual(['solo-comp'])
+  })
+
+  it('returns empty array for unauthenticated caller', async () => {
+    const t = makeT()
+    expect(await t.query(api.compressors.visibleToMe, {})).toEqual([])
+  })
+})
+
+describe('compressors.update — location transition clears stale FKs', () => {
+  it('clears boatId when transitioning boat → fixed even if caller omits boatId arg', async () => {
+    const t = makeT()
+    const { compId, identity } = await t.run(async (ctx) => {
+      const userId = await _seedUser(ctx, { tokenIdentifier: `clerk|loc-b2f`, slug: 'loc-b2f', email: 'loc-b2f@test.com', name: 'loc-b2f', firstName: 'Loc', lastName: 'B2F', role: 'Compressor' })
+      const orgId = await getOrCreateTestOrg(ctx, userId, 'loc-b2f')
+      const boatId = await seedBoatProfile(ctx, userId, { organizationId: orgId })
+      const venueId = await seedVenue(ctx, { userId, organizationId: orgId, name: 'Loc Venue' })
+      return { boatId, venueId }
+    }).then((seed) => {
+      const id = orgIdentityFor('loc-b2f')
+      return t.withIdentity(id).mutation(api.compressors.create, {
+        ...VALID_ARGS,
+        name: 'B2F Compressor',
+        location: 'boat',
+        boatId: seed.boatId,
+      }).then((compId) => ({ compId: compId as Id<'compressors'>, identity: id, venueId: seed.venueId }))
+    })
+
+    await t.withIdentity(identity).mutation(api.compressors.update, {
+      compressorId: compId,
+      location: 'fixed',
+    })
+
+    await t.run(async (ctx) => {
+      const comp = await ctx.db.get(compId) as Doc<'compressors'> | null
+      expect(comp).not.toBeNull()
+      expect(comp!.location).toBe('fixed')
+      expect(comp!.boatId).toBeUndefined()
+      expect(comp!.venueId).toBeUndefined()
+    })
+  })
+
+  it('clears venueId when transitioning venue → boat even if caller omits venueId arg', async () => {
+    const t = makeT()
+    const { compId, identity, boatId } = await t.run(async (ctx) => {
+      const userId = await _seedUser(ctx, { tokenIdentifier: `clerk|loc-v2b`, slug: 'loc-v2b', email: 'loc-v2b@test.com', name: 'loc-v2b', firstName: 'Loc', lastName: 'V2B', role: 'Compressor' })
+      const orgId = await getOrCreateTestOrg(ctx, userId, 'loc-v2b')
+      const boatId = await seedBoatProfile(ctx, userId, { organizationId: orgId })
+      const venueId = await seedVenue(ctx, { userId, organizationId: orgId, name: 'Loc Venue' })
+      return { boatId, venueId }
+    }).then((seed) => {
+      const id = orgIdentityFor('loc-v2b')
+      return t.withIdentity(id).mutation(api.compressors.create, {
+        ...VALID_ARGS,
+        name: 'V2B Compressor',
+        location: 'venue',
+        venueId: seed.venueId,
+      }).then((compId) => ({ compId: compId as Id<'compressors'>, identity: id, boatId: seed.boatId }))
+    })
+
+    await t.withIdentity(identity).mutation(api.compressors.update, {
+      compressorId: compId,
+      location: 'boat',
+      boatId,
+    })
+
+    await t.run(async (ctx) => {
+      const comp = await ctx.db.get(compId) as Doc<'compressors'> | null
+      expect(comp!.location).toBe('boat')
+      expect(comp!.boatId).toBe(boatId)
+      expect(comp!.venueId).toBeUndefined()
+    })
+  })
+
+  it('clears boatId when transitioning boat → venue even if caller omits boatId arg', async () => {
+    const t = makeT()
+    const { compId, identity, venueId } = await t.run(async (ctx) => {
+      const userId = await _seedUser(ctx, { tokenIdentifier: `clerk|loc-b2v`, slug: 'loc-b2v', email: 'loc-b2v@test.com', name: 'loc-b2v', firstName: 'Loc', lastName: 'B2V', role: 'Compressor' })
+      const orgId = await getOrCreateTestOrg(ctx, userId, 'loc-b2v')
+      const boatId = await seedBoatProfile(ctx, userId, { organizationId: orgId })
+      const venueId = await seedVenue(ctx, { userId, organizationId: orgId, name: 'Loc Venue' })
+      return { boatId, venueId }
+    }).then((seed) => {
+      const id = orgIdentityFor('loc-b2v')
+      return t.withIdentity(id).mutation(api.compressors.create, {
+        ...VALID_ARGS,
+        name: 'B2V Compressor',
+        location: 'boat',
+        boatId: seed.boatId,
+      }).then((compId) => ({ compId: compId as Id<'compressors'>, identity: id, venueId: seed.venueId }))
+    })
+
+    await t.withIdentity(identity).mutation(api.compressors.update, {
+      compressorId: compId,
+      location: 'venue',
+      venueId,
+    })
+
+    await t.run(async (ctx) => {
+      const comp = await ctx.db.get(compId) as Doc<'compressors'> | null
+      expect(comp!.location).toBe('venue')
+      expect(comp!.venueId).toBe(venueId)
+      expect(comp!.boatId).toBeUndefined()
+    })
+  })
+})
+
+describe('compressors.remove — cascade + active-reservation guard', () => {
+  it('rejects unauthenticated callers', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedUser(ctx, 'rm-anon') })
+    const compId = await t.withIdentity(orgIdentityFor('rm-anon'))
+      .mutation(api.compressors.create, VALID_ARGS)
+    await expect(
+      t.mutation(api.compressors.remove, { compressorId: compId as Id<'compressors'> }),
+    ).rejects.toThrow(/UNAUTHENTICATED/)
+  })
+
+  it('rejects remove of a compressor owned by a different organization', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => {
+      await seedUser(ctx, 'rm-owner')
+      await seedUser(ctx, 'rm-intruder')
+    })
+    const compId = await t.withIdentity(orgIdentityFor('rm-owner'))
+      .mutation(api.compressors.create, VALID_ARGS)
+    await expect(
+      t.withIdentity(orgIdentityFor('rm-intruder'))
+        .mutation(api.compressors.remove, { compressorId: compId as Id<'compressors'> }),
+    ).rejects.toThrow(/FORBIDDEN/)
+  })
+
+  it('deletes compressor when no bookingResources reference it; profileComplete denorm re-computed to false after removal', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedUser(ctx, 'rm-solo') })
+    const identity = orgIdentityFor('rm-solo')
+    const compId = await t.withIdentity(identity).mutation(api.compressors.create, VALID_ARGS) as Id<'compressors'>
+
+    await t.withIdentity(identity).mutation(api.compressors.remove, { compressorId: compId })
+
+    await t.run(async (ctx) => {
+      const comp = await ctx.db.get(compId)
+      expect(comp).toBeNull()
+      const user = await ctx.db
+        .query('users')
+        .withIndex('by_slug', (q) => q.eq('slug', 'rm-solo'))
+        .unique()
+      if (!user) throw new Error('user not found')
+      const role = await ctx.db
+        .query('userRoles')
+        .withIndex('by_userId_role', (q) => q.eq('userId', user._id).eq('role', 'Compressor'))
+        .unique()
+      expect(role?.profileComplete).toBe(false)
+    })
+  })
+
+  it('throws CONFLICT when a bookingResource references the compressor and its booking has an active reservation', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedUser(ctx, 'rm-conflict') })
+    const identity = orgIdentityFor('rm-conflict')
+    const compId = await t.withIdentity(identity).mutation(api.compressors.create, VALID_ARGS) as Id<'compressors'>
+
+    await t.run(async (ctx) => {
+      const comp = await ctx.db.get(compId) as Doc<'compressors'>
+      const unitId = await seedInventoryUnit(ctx, {
+        resourceType: 'Compressor',
+        ownerType: 'Compressor',
+        ownerId: comp.slug,
+        displayName: comp.name,
+        capacityModel: 'Pooled',
+        totalUnits: 1,
+      })
+      const bookingId = await seedBooking(ctx, { ownerId: 'rm-conflict', ownerType: 'DiveCenter' })
+      await seedBookingResource(ctx, bookingId, {
+        resourceType: 'Compressor',
+        resourceId: comp.slug,
+      })
+      const sessionId = await seedSession(ctx, bookingId, unitId)
+      await seedReservation(ctx, bookingId, unitId, sessionId, { status: 'Confirmed' })
     })
 
     await expect(
-      t.withIdentity(orgIdentityFor('nitrox-upd'))
-        .mutation(api.compressors.update, { nitroxMin: 50 }),
-    ).rejects.toThrow(/VALIDATION/)
+      t.withIdentity(identity).mutation(api.compressors.remove, { compressorId: compId }),
+    ).rejects.toThrow(/CONFLICT/)
+
+    await t.run(async (ctx) => {
+      const comp = await ctx.db.get(compId)
+      expect(comp).not.toBeNull()
+    })
+  })
+
+  it('deletes orphan bookingResources when no active reservations exist', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedUser(ctx, 'rm-orphan') })
+    const identity = orgIdentityFor('rm-orphan')
+    const compId = await t.withIdentity(identity).mutation(api.compressors.create, VALID_ARGS) as Id<'compressors'>
+
+    let orphanResourceId: Id<'bookingResources'> | undefined
+    await t.run(async (ctx) => {
+      const comp = await ctx.db.get(compId) as Doc<'compressors'>
+      const unitId = await seedInventoryUnit(ctx, {
+        resourceType: 'Compressor',
+        ownerType: 'Compressor',
+        ownerId: comp.slug,
+        displayName: comp.name,
+        capacityModel: 'Pooled',
+        totalUnits: 1,
+      })
+      const bookingId = await seedBooking(ctx, { ownerId: 'rm-orphan', ownerType: 'DiveCenter' })
+      orphanResourceId = await seedBookingResource(ctx, bookingId, {
+        resourceType: 'Compressor',
+        resourceId: comp.slug,
+      })
+      const sessionId = await seedSession(ctx, bookingId, unitId)
+      await seedReservation(ctx, bookingId, unitId, sessionId, { status: 'Vacated' })
+    })
+
+    await t.withIdentity(identity).mutation(api.compressors.remove, { compressorId: compId })
+
+    await t.run(async (ctx) => {
+      const comp = await ctx.db.get(compId)
+      expect(comp).toBeNull()
+      if (orphanResourceId) {
+        const stillThere = await ctx.db.get(orphanResourceId)
+        expect(stillThere).toBeNull()
+      }
+    })
   })
 })

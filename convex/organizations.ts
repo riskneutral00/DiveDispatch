@@ -3,11 +3,13 @@ import { internalMutation, mutation, query } from './_generated/server'
 import type { Id } from './_generated/dataModel'
 import { checkIdempotency } from './lib/idempotency'
 import { requireOrgAdmin } from './lib/activeOrg'
+import { authorize } from './lib/auth'
 import { ErrorCode } from './lib/errorCodes'
 import { addressStructuredValidator } from './shared/addressValidator'
 import { assertCountryCode } from './lib/i18nValidators'
 import { cascadeOrgDelete } from './lib/orgCascade'
 import { setUserOrganization } from './lib/userOrg'
+import { assertDestinationOrgsValid } from './lib/destinationScope'
 
 export const upsertFromWebhook = internalMutation({
   args: {
@@ -90,11 +92,36 @@ export const deleteFromWebhook = internalMutation({
   },
 })
 
+export const publicBySlug = query({
+  args: { slug: v.string() },
+  returns: v.union(
+    v.null(),
+    v.object({
+      _id: v.id('organizations'),
+      name: v.string(),
+      slug: v.string(),
+      isAreaOrg: v.boolean(),
+    }),
+  ),
+  handler: async (ctx, { slug }) => {
+    const org = await ctx.db
+      .query('organizations')
+      .withIndex('by_slug', (q) => q.eq('slug', slug))
+      .unique()
+    if (!org) return null
+    return {
+      _id: org._id,
+      name: org.name,
+      slug: org.slug,
+      isAreaOrg: org.isAreaOrg ?? false,
+    }
+  },
+})
+
 export const getBySlug = query({
   args: { slug: v.string() },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity() // auth-ok: sign-up flow at src/app/(auth)/sign-up/page.tsx:66 runs before users row exists
-    if (!identity) return null
+    await authorize(ctx, null, 'resource:read', { type: 'resource' })
     return await ctx.db
       .query('organizations')
       .withIndex('by_slug', (q) => q.eq('slug', args.slug))
@@ -111,6 +138,7 @@ export const updateBusinessMetadata = mutation({
     placeId: v.optional(v.string()),
     lat: v.optional(v.number()),
     lng: v.optional(v.number()),
+    destinationIds: v.optional(v.array(v.id('organizations'))),
   },
   handler: async (ctx, args) => {
     const { org } = await requireOrgAdmin(ctx)
@@ -126,6 +154,10 @@ export const updateBusinessMetadata = mutation({
     if (args.placeId !== undefined) patch.placeId = args.placeId
     if (args.lat !== undefined) patch.lat = args.lat
     if (args.lng !== undefined) patch.lng = args.lng
+    if (args.destinationIds !== undefined) {
+      await assertDestinationOrgsValid(ctx, args.destinationIds)
+      patch.destinationIds = args.destinationIds
+    }
 
     if (Object.keys(patch).length === 1) {
       throw new ConvexError({ code: ErrorCode.VALIDATION, reason: 'no_fields_to_update' })

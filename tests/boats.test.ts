@@ -36,8 +36,7 @@ describe('boats.create', () => {
 
   it('creates boat profile for Boat user', async () => {
     const t = makeT()
-    let userId: Awaited<ReturnType<typeof seedUser>> | undefined
-    await t.run(async (ctx) => { userId = await seedUser(ctx, 'boat-owner') })
+    await t.run(async (ctx) => { await seedUser(ctx, 'boat-owner') })
 
     const boatId = await t.withIdentity(orgIdentityFor('boat-owner'))
       .mutation(api.boats.create, VALID_BOAT_ARGS)
@@ -48,41 +47,8 @@ describe('boats.create', () => {
       expect(boat).not.toBeNull()
       expect(boat!.name).toBe('MV Seatran')
       expect(boat!.organizationId).toBeDefined()
-      expect(boat!.hasCompressor).toBe(true) // day_boat → smart default true
       expect(boat!.verified).toBe(false)
       expect(boat!.fleet).toHaveLength(1)
-    })
-  })
-
-  it('derives hasCompressor=false for non-day-boat/liveaboard fleet', async () => {
-    const t = makeT()
-    await t.run(async (ctx) => { await seedUser(ctx, 'speedboat-owner') })
-
-    const boatId = await t.withIdentity(orgIdentityFor('speedboat-owner'))
-      .mutation(api.boats.create, {
-        ...VALID_BOAT_ARGS,
-        fleet: [{ boatName: 'Speedster', maxPax: 8, boatType: 'speedboat' as const }],
-      })
-
-    await t.run(async (ctx) => {
-      const boat = await ctx.db.get(boatId as Id<'boats'>) as Doc<'boats'> | null
-      expect(boat!.hasCompressor).toBe(false)
-    })
-  })
-
-  it('derives hasCompressor=true for liveaboard fleet', async () => {
-    const t = makeT()
-    await t.run(async (ctx) => { await seedUser(ctx, 'liveaboard-owner') })
-
-    const boatId = await t.withIdentity(orgIdentityFor('liveaboard-owner'))
-      .mutation(api.boats.create, {
-        ...VALID_BOAT_ARGS,
-        fleet: [{ boatName: 'MV Explorer', maxPax: 30, boatType: 'liveaboard' as const }],
-      })
-
-    await t.run(async (ctx) => {
-      const boat = await ctx.db.get(boatId as Id<'boats'>) as Doc<'boats'> | null
-      expect(boat!.hasCompressor).toBe(true)
     })
   })
 
@@ -109,48 +75,6 @@ describe('boats.update', () => {
     await expect(
       t.withIdentity(orgIdentityFor('no-profile')).mutation(api.boats.update, { name: 'New' }),
     ).rejects.toThrow(/NOT_FOUND/)
-  })
-
-  it('re-derives hasCompressor when fleet changes', async () => {
-    const t = makeT()
-    let boatId: Awaited<ReturnType<typeof seedBoatProfile>> | undefined
-    await t.run(async (ctx) => {
-      const userId = await seedUser(ctx, 'fleet-change-boat')
-      boatId = await seedBoatProfile(ctx, userId)
-    })
-
-    // Update fleet to include a day_boat → hasCompressor should become true
-    await t.withIdentity(orgIdentityFor('fleet-change-boat'))
-      .mutation(api.boats.update, {
-        fleet: [{ boatName: 'Day Runner', maxPax: 12, boatType: 'day_boat' as const }],
-      })
-
-    await t.run(async (ctx) => {
-      const boat = await ctx.db.get(boatId!) as Doc<'boats'> | null
-      expect(boat!.hasCompressor).toBe(true)
-    })
-  })
-
-  it('allows explicit hasCompressor override on update', async () => {
-    const t = makeT()
-    let boatId: Awaited<ReturnType<typeof seedBoatProfile>> | undefined
-    await t.run(async (ctx) => {
-      const userId = await seedUser(ctx, 'explicit-comp-boat')
-      // Seed with speedboat fleet (no day_boat/liveaboard) and hasCompressor=false
-      boatId = await seedBoatProfile(ctx, userId, {
-        fleet: [{ boatName: 'Speedster', maxPax: 8, boatType: 'speedboat' }],
-        hasCompressor: false,
-      })
-    })
-
-    // Explicitly set hasCompressor=true even without day_boat/liveaboard fleet
-    await t.withIdentity(orgIdentityFor('explicit-comp-boat'))
-      .mutation(api.boats.update, { hasCompressor: true })
-
-    await t.run(async (ctx) => {
-      const boat = await ctx.db.get(boatId!) as Doc<'boats'> | null
-      expect(boat!.hasCompressor).toBe(true)
-    })
   })
 
   it('updates boat profile fields', async () => {
@@ -196,5 +120,78 @@ describe('boats.mine', () => {
     const result = await t.withIdentity(orgIdentityFor('my-boat')).query(api.boats.mine, {})
     expect(result).not.toBeNull()
     expect(result!.name).toBe('Test Boat')
+  })
+})
+
+describe('boats.visibleToMe — destination-scoped discovery', () => {
+  it('returns own-org + destination-org boats for an operator with destinationIds', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => {
+      const now = Date.now()
+      const areaId = await ctx.db.insert('organizations', {
+        slug: 'south-andaman',
+        name: 'South Andaman',
+        isAreaOrg: true,
+        createdAt: now,
+        updatedAt: now,
+      })
+      await ctx.db.insert('boats', {
+        organizationId: areaId,
+        name: 'Area Boat',
+        address: { city: 'Phuket', country: 'TH' },
+        lat: 7.8,
+        lng: 98.3,
+        email: 'area@test.com',
+        phone: '+66110000000',
+        fleet: [],
+        verified: true,
+      })
+      const operatorId = await seedUser(ctx, 'rene-boat-vis')
+      const user = await ctx.db.get(operatorId)
+      if (!user?.organizationId) throw new Error('op org missing')
+      await ctx.db.patch(user.organizationId, { destinationIds: [areaId] })
+      await ctx.db.insert('boats', {
+        organizationId: user.organizationId,
+        name: 'Rene Boat',
+        address: { city: 'Phuket', country: 'TH' },
+        lat: 7.8,
+        lng: 98.3,
+        email: 'rene@test.com',
+        phone: '+66120000000',
+        fleet: [],
+        verified: true,
+      })
+    })
+
+    const results = await t.withIdentity(orgIdentityFor('rene-boat-vis')).query(api.boats.visibleToMe, {})
+    expect(results.map((b) => b.name).sort()).toEqual(['Area Boat', 'Rene Boat'])
+  })
+
+  it('returns own-org boats only when destinationIds is undefined', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => {
+      const userId = await seedUser(ctx, 'solo-boat-vis')
+      const user = await ctx.db.get(userId)
+      if (!user?.organizationId) throw new Error('op org missing')
+      await ctx.db.insert('boats', {
+        organizationId: user.organizationId,
+        name: 'Solo Boat',
+        address: { city: 'Koh Tao', country: 'TH' },
+        lat: 10,
+        lng: 99,
+        email: 'solo@test.com',
+        phone: '+66130000000',
+        fleet: [],
+        verified: true,
+      })
+    })
+
+    const results = await t.withIdentity(orgIdentityFor('solo-boat-vis')).query(api.boats.visibleToMe, {})
+    expect(results.map((b) => b.name)).toEqual(['Solo Boat'])
+  })
+
+  it('returns empty array for unauthenticated caller', async () => {
+    const t = makeT()
+    expect(await t.query(api.boats.visibleToMe, {})).toEqual([])
   })
 })

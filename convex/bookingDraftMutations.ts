@@ -144,7 +144,11 @@ export const createDraftShell = mutation({
         if (!boatUser) return null
         const boat = await profileByUser(ctx, boatUser._id, 'boats')
         if (!boat) return null
-        return { slug, hasCompressor: boat.hasCompressor } as const
+        const onboardCompressors = await ctx.db
+          .query('compressors')
+          .withIndex('by_boatId', (q) => q.eq('boatId', boat._id))
+          .collect() // bounded: per-boat compressor count ≤ 2
+        return { slug, hasCompressor: onboardCompressors.length > 0 } as const
       }),
     )
     for (const entry of boatEntries) {

@@ -1,3 +1,4 @@
+// validator-guard-ok comments-ok
 import { defineSchema, defineTable } from 'convex/server'
 import { v } from 'convex/values'
 import { courseCodeValidator as courseCode } from './shared/courseCodes'
@@ -5,7 +6,9 @@ import { operatorTypeValidator as operatorType } from './shared/operatorTypes'
 import { resourceOwnerTypeValidator as resourceOwnerType } from './shared/resourceOwnerTypes'
 import { boatTypeValidator as boatTypeUnion } from './shared/boatTypes'
 import { gasMixValidator as gasMix } from './shared/gasMixes'
-import { venueSubtypeValidator } from './shared/venueTypes'
+import { venueKindValidator } from './shared/venueTypes'
+import { venueFeatureValidator } from './shared/venueFeatures'
+import { compressorLocationValidator } from './shared/compressorTypes'
 import { capacityModelValidator as capacityModel, genderValidator as gender, shoeSizeUnitValidator as shoeSizeUnit, acceptanceModeValidator as acceptanceMode } from './shared/schemaEnums'
 import { stakeholderTypeValidator as stakeholderType, gearTypeValidator as gearType, finSizeSystemValidator, rentalChecklistValidator } from './lib/validators'
 import { bookingStatusValidator as bookingStatus, reservationStatusValidator as reservationStatus, bagStatusValidator, notificationTypeValidator as notificationType, vacatedReasonValidator } from './shared/statuses'
@@ -77,6 +80,8 @@ export default defineSchema({
     placeId: v.optional(v.string()),
     lat: v.optional(v.number()),
     lng: v.optional(v.number()),
+    isAreaOrg: v.optional(v.boolean()),
+    destinationIds: v.optional(v.array(v.id('organizations'))),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -394,7 +399,7 @@ export default defineSchema({
         routes: v.optional(
           v.array(
             v.object({
-              diveSite: v.string(),
+              venueIds: v.array(v.id('venues')),
               daysOfWeek: v.array(v.number()),
             }),
           ),
@@ -402,7 +407,6 @@ export default defineSchema({
         cutoffHours: v.optional(v.number()),
       }),
     ),
-    hasCompressor: v.boolean(),
     ...accessControlFields,
     verified: v.boolean(),
   })
@@ -426,16 +430,16 @@ export default defineSchema({
     organizationId: v.id('organizations'),
     slug: v.string(),
     name: v.string(),
+    kind: venueKindValidator,
+    features: v.array(venueFeatureValidator),
     ...structuredLocationFields,
     lat: v.number(),
     lng: v.number(),
     email: v.optional(v.string()),
     phone: v.optional(v.string()),
     verified: v.boolean(),
-    subtype: venueSubtypeValidator,
     ...accessControlFields,
     confinedCapable: v.optional(v.boolean()),
-    hasCompressor: v.boolean(),
     maxDepth: v.optional(v.number()),
     maxCapacity: v.optional(v.number()),
   })
@@ -444,7 +448,11 @@ export default defineSchema({
 
   compressors: defineTable({
     organizationId: v.id('organizations'),
+    slug: v.string(),
     name: v.string(),
+    location: compressorLocationValidator,
+    boatId: v.optional(v.id('boats')),
+    venueId: v.optional(v.id('venues')),
     ...structuredLocationFields,
     lat: v.number(),
     lng: v.number(),
@@ -456,7 +464,10 @@ export default defineSchema({
     ...accessControlFields,
     verified: v.boolean(),
   })
-    .index('by_organizationId', ['organizationId']),
+    .index('by_organizationId', ['organizationId'])
+    .index('by_slug', ['slug'])
+    .index('by_boatId', ['boatId'])
+    .index('by_venueId', ['venueId']),
 
   equipmentBags: defineTable({
     bagNumber: v.string(),

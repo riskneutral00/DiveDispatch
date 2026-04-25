@@ -20,6 +20,16 @@ export type GasMixType = 'air' | 'nitrox'
 
 export type SeedAppLanguage = 'en' | 'zh-CN' | 'zh-TW' | 'th' | 'fr' | 'ko'
 
+export type VenueKind = 'pool' | 'dive_site'
+
+export type VenueFeature =
+  | 'reef' | 'wreck' | 'cave' | 'wall'
+  | 'drift' | 'muck' | 'altitude'
+  | 'lake' | 'river' | 'quarry'
+  | 'night' | 'deep'
+
+export type CompressorLocation = 'fixed' | 'boat' | 'venue'
+
 export interface SeedAddress {
   street?: string
   city: string
@@ -40,6 +50,13 @@ export interface SeedUser {
   customerLanguages?: string[]
 }
 
+export interface SeedOrganization {
+  name: string
+  slug: string
+  isAreaOrg?: boolean
+  destinationSlugs?: string[]
+}
+
 interface DiveCenterProfile {
   name: string
   address: SeedAddress
@@ -55,7 +72,9 @@ interface DiveCenterProfile {
     oaDays?: number
     selectedSpecialties?: string[]
   }[]
-  customerLanguages: string[]
+  customerLanguages?: string[]
+  isAllowed?: string[]
+  notAllowed?: string[]
   verified: boolean
 }
 
@@ -72,26 +91,30 @@ interface BoatProfile {
     minPax?: number
     boatType: BoatType
     seatCapacity?: number
-    routes?: { diveSite: string; daysOfWeek: number[] }[]
+    routes?: { venueSlugs: string[]; daysOfWeek: number[] }[]
     cutoffHours?: number
   }[]
-  hasCompressor: boolean
+  isAllowed?: string[]
+  notAllowed?: string[]
   verified: boolean
 }
 
 interface VenueProfile {
+  slug?: string
   name: string
+  kind: VenueKind
+  features: VenueFeature[]
   address: SeedAddress
   lat: number
   lng: number
-  email: string
-  phone: string
+  email?: string
+  phone?: string
   verified: boolean
-  subtype: 'pool' | 'shore' | 'reef' | 'lake' | 'river' | 'quarry' | 'other'
   confinedCapable?: boolean
-  hasCompressor: boolean
   maxDepth?: number
   maxCapacity?: number
+  isAllowed?: string[]
+  notAllowed?: string[]
 }
 
 export interface SeedInventoryLine {
@@ -119,7 +142,11 @@ interface EquipmentProfile {
 }
 
 interface CompressorProfile {
+  slug: string
   name: string
+  location: CompressorLocation
+  boatSlug?: string
+  venueSlug?: string
   address: SeedAddress
   lat: number
   lng: number
@@ -162,17 +189,20 @@ interface InstructorProfile {
     agencyID: string
     specialtyRatings: string[]
   }[]
+  isAllowed?: string[]
+  notAllowed?: string[]
   verified: boolean
 }
 
 export interface SeedStakeholder {
   user: SeedUser
+  organization?: SeedOrganization
   roles?: { role: StakeholderRole }[]
   diveCenter?: DiveCenterProfile
   boat?: BoatProfile
-  venue?: VenueProfile
+  venues?: VenueProfile[]
   equipment?: EquipmentProfile
-  compressor?: CompressorProfile
+  compressors?: CompressorProfile[]
   agent?: AgentProfile
   instructor?: InstructorProfile
 }
@@ -225,10 +255,7 @@ function buildNicoleInventoryOverrides(): SeedInventoryLine[] {
   return lines
 }
 
-const RACHA = 'Racha Noi / Racha Yai'
-const SHARK_KC = 'Shark Point / King Cruiser'
-const PHI_PHI = 'Phi Phi'
-const ALL_DAYS = [1, 2, 3, 4, 5, 6, 0] // Mon-Sun
+const ALL_DAYS = [1, 2, 3, 4, 5, 6, 0]
 
 export const HUG_OCEAN: SeedStakeholder = {
   user: {
@@ -265,24 +292,23 @@ export const HUG_OCEAN: SeedStakeholder = {
         boatName: 'M.V. Hug Ocean',
         maxPax: 50,
         boatType: 'day_boat',
-        routes: [{ diveSite: RACHA, daysOfWeek: ALL_DAYS }],
+        routes: [{ venueSlugs: [], daysOfWeek: ALL_DAYS }],
       },
     ],
-    hasCompressor: true,
     verified: VERIFIED,
   },
-  venue: {
+  venues: [{
+    slug: 'hug-ocean-pool',
     name: 'Hug Ocean',
+    kind: 'pool',
+    features: [],
     ...PHUKET,
     email: 'hug-ocean@divedispatch.dev',
     phone: '+6676381102',
     maxDepth: 3,
     maxCapacity: 15,
     verified: VERIFIED,
-    subtype: 'pool',
-
-    hasCompressor: false,
-  },
+  }],
   equipment: {
     name: 'Hug Ocean',
     ...PHUKET,
@@ -318,18 +344,18 @@ export const NEPTUNE: SeedStakeholder = {
     customerLanguages: ['zh-CN', 'zh-TW', 'en', 'th'],
     verified: VERIFIED,
   },
-  venue: {
+  venues: [{
+    slug: 'neptune-pool',
     name: 'Neptune',
+    kind: 'pool',
+    features: [],
     ...PHUKET,
     email: 'neptune@divedispatch.dev',
     phone: '+6676383002',
     maxDepth: 2.5,
     maxCapacity: 6,
     verified: VERIFIED,
-    subtype: 'pool',
-
-    hasCompressor: false,
-  },
+  }],
   equipment: {
     name: 'Neptune',
     ...PHUKET,
@@ -376,9 +402,9 @@ export const PHUKET_DC: SeedStakeholder = {
         maxPax: 70,
         boatType: 'day_boat',
         routes: [
-          { diveSite: RACHA, daysOfWeek: [1, 4, 6] },
-          { diveSite: SHARK_KC, daysOfWeek: [2] },
-          { diveSite: PHI_PHI, daysOfWeek: [3, 5, 0] },
+          { venueSlugs: [], daysOfWeek: [1, 4, 6] },
+          { venueSlugs: [], daysOfWeek: [2] },
+          { venueSlugs: [], daysOfWeek: [3, 5, 0] },
         ],
       },
       {
@@ -386,13 +412,12 @@ export const PHUKET_DC: SeedStakeholder = {
         maxPax: 90,
         boatType: 'day_boat',
         routes: [
-          { diveSite: RACHA, daysOfWeek: [2, 5, 0] },
-          { diveSite: SHARK_KC, daysOfWeek: [3] },
-          { diveSite: PHI_PHI, daysOfWeek: [1, 4, 6] },
+          { venueSlugs: [], daysOfWeek: [2, 5, 0] },
+          { venueSlugs: [], daysOfWeek: [3] },
+          { venueSlugs: [], daysOfWeek: [1, 4, 6] },
         ],
       },
     ],
-    hasCompressor: true,
     verified: VERIFIED,
   },
   equipment: {
@@ -576,13 +601,12 @@ export const SIROLO: SeedStakeholder = {
         maxPax: 70,
         boatType: 'day_boat',
         routes: [
-          { diveSite: RACHA, daysOfWeek: [1, 2, 5, 6] },
-          { diveSite: SHARK_KC, daysOfWeek: [3] },
-          { diveSite: PHI_PHI, daysOfWeek: [4, 0] },
+          { venueSlugs: [], daysOfWeek: [1, 2, 5, 6] },
+          { venueSlugs: [], daysOfWeek: [3] },
+          { venueSlugs: [], daysOfWeek: [4, 0] },
         ],
       },
     ],
-    hasCompressor: true,
     verified: VERIFIED,
   },
   equipment: {
@@ -873,17 +897,18 @@ export const WATER_PRO: SeedStakeholder = {
   roles: [
     { role: 'Venue' },
   ],
-  venue: {
+  venues: [{
+    slug: 'water-pro',
     name: 'Water Pro',
+    kind: 'pool',
+    features: [],
     ...PHUKET,
     email: 'water-pro@divedispatch.dev',
     phone: '+6676394001',
     maxDepth: 2.5,
     maxCapacity: 25,
     verified: VERIFIED,
-    subtype: 'pool',
-    hasCompressor: false,
-  },
+  }],
 }
 
 export const SHARK_BITES: SeedStakeholder = {
@@ -899,17 +924,18 @@ export const SHARK_BITES: SeedStakeholder = {
   roles: [
     { role: 'Venue' },
   ],
-  venue: {
+  venues: [{
+    slug: 'shark-bites',
     name: 'Shark Bites',
+    kind: 'pool',
+    features: [],
     ...PHUKET,
     email: 'shark-bites@divedispatch.dev',
     phone: '+6676394002',
     maxDepth: 2.5,
     maxCapacity: 8,
     verified: VERIFIED,
-    subtype: 'pool',
-    hasCompressor: false,
-  },
+  }],
 }
 
 export const SCUBA_REVOLUTION: SeedStakeholder = {
@@ -942,41 +968,6 @@ export const UNOWNED_DIVE_SITES: SeedDiveSite[] = [
   { name: 'Kata Beach', slug: 'kata-beach', capacity: 50 },
 ]
 
-export const SEA_FUN_OWNER: SeedStakeholder = {
-  user: {
-    slug: 'mkk9c4',
-    email: 'scuba-market+clerk_test@divedispatch.dev',
-    name: 'Prawit Suksawat',
-    firstName: 'Prawit',
-    lastName: 'Suksawat',
-    appLanguage: 'en',
-    phone: '+6676330345',
-    dateOfBirth: '1975-08-12',
-  },
-  roles: [{ role: 'Compressor' }],
-  compressor: {
-    name: 'Scuba Market',
-    address: {
-      street: '51 Patak Road',
-      city: 'Tambon Karon',
-      state: 'Chang Wat Phuket',
-      country: 'TH',
-      postalCode: '83100',
-    },
-    lat: 7.820196400000013,
-    lng: 98.30618609999999,
-    placeId: 'ChIJoVcYq4klUDARy3hTaTDdFRY',
-    email: 'scuba-market+clerk_test@divedispatch.dev',
-    phone: '+6676330345',
-    gasMixes: ['air', 'nitrox'],
-    nitroxMin: 22,
-    nitroxMax: 40,
-    isAllowed: [],
-    notAllowed: [],
-    verified: false,
-  },
-}
-
 export const RESTORED_SOMBAT: SeedStakeholder = {
   user: {
     slug: 'h0a5zl',
@@ -989,8 +980,10 @@ export const RESTORED_SOMBAT: SeedStakeholder = {
     dateOfBirth: '1982-04-20',
   },
   roles: [{ role: 'Compressor' }],
-  compressor: {
+  compressors: [{
+    slug: 'compressor-shop-chalong-pier',
     name: 'Compressor Shop Chalong Pier',
+    location: 'fixed',
     address: { street: 'Asian Divers, Wiset Rd, Tambon Karon', city: 'Phuket', state: 'Phuket', country: 'TH', postalCode: '83100' },
     lat: 7.8203607,
     lng: 98.3423974,
@@ -1002,7 +995,7 @@ export const RESTORED_SOMBAT: SeedStakeholder = {
     isAllowed: [],
     notAllowed: [],
     verified: false,
-  },
+  }],
 }
 
 export const RESTORED_ALEX: SeedStakeholder = {
@@ -1030,8 +1023,185 @@ export const RESTORED_ALEX: SeedStakeholder = {
   },
 }
 
+export const PHUKET_ADMIN: SeedStakeholder = {
+  user: {
+    slug: 'admin',
+    email: 'admin+clerk_test@divedispatch.dev',
+    name: 'Matt Admin',
+    firstName: 'Matt',
+    lastName: 'Admin',
+    appLanguage: 'en',
+    phone: '+12345678910',
+  },
+  organization: { name: 'South Andaman', slug: 'south-andaman', isAreaOrg: true },
+  roles: [{ role: 'Venue' }],
+  venues: [
+    { slug: 'racha-yai',    name: 'Racha Yai',          kind: 'dive_site', features: [], address: PHUKET_TH_ADDRESS, lat: 7.6018, lng: 98.3633, verified: true },
+    { slug: 'racha-noi',    name: 'Racha Noi',          kind: 'dive_site', features: [], address: PHUKET_TH_ADDRESS, lat: 7.5367, lng: 98.3461, verified: true },
+    { slug: 'ko-bida-nok',  name: 'Ko Bida Nok',        kind: 'dive_site', features: [], address: PHUKET_TH_ADDRESS, lat: 7.6558, lng: 98.7647, verified: true },
+    { slug: 'ko-bida-nai',  name: 'Ko Bida Nai',        kind: 'dive_site', features: [], address: PHUKET_TH_ADDRESS, lat: 7.6631, lng: 98.7686, verified: true },
+    { slug: 'king-cruiser', name: 'King Cruiser Wreck', kind: 'dive_site', features: [], address: PHUKET_TH_ADDRESS, lat: 7.8067, lng: 98.6167, verified: true },
+    { slug: 'shark-point',  name: 'Shark Point',        kind: 'dive_site', features: [], address: PHUKET_TH_ADDRESS, lat: 7.7844, lng: 98.6167, verified: true },
+    { slug: 'kata-beach',   name: 'Kata Beach',         kind: 'dive_site', features: [], address: PHUKET_TH_ADDRESS, lat: 7.8167, lng: 98.2972, verified: true },
+    { slug: 'merlin-beach', name: 'Merlin Beach',       kind: 'dive_site', features: [], address: PHUKET_TH_ADDRESS, lat: 7.9019, lng: 98.2744, verified: true, isAllowed: ['sea-fun-divers'] },
+  ],
+}
+
+export const RENE_SEA_FUN: SeedStakeholder = {
+  user: {
+    slug: 'sea-fun',
+    email: 'rene_balot+clerk_test@seafundivers.com',
+    name: 'Rene Balot',
+    firstName: 'Rene',
+    lastName: 'Balot',
+    appLanguage: 'en',
+    phone: '+12345678910',
+    dateOfBirth: '1977-04-04',
+  },
+  organization: { name: 'Sea Fun Divers', slug: 'sea-fun-divers', destinationSlugs: ['south-andaman'] },
+  roles: [
+    { role: 'DiveCenter' },
+    { role: 'Compressor' },
+    { role: 'Equipment' },
+    { role: 'Boat' },
+    { role: 'Instructor' },
+    { role: 'Venue' },
+  ],
+  diveCenter: {
+    name: 'Sea Fun Divers',
+    address: { street: '29 Soi Karon Nui', city: 'Karon', state: 'Phuket', country: 'TH', postalCode: '83100' },
+    lat: 7.8569,
+    lng: 98.2859,
+    email: 'rene_balot+clerk_test@seafundivers.com',
+    phone: '+6676330345',
+    associations: [{
+      agency: 'PADI',
+      number: 'S-65432',
+      owDays: 3,
+      aowDays: 2,
+      oaDays: 4,
+      selectedSpecialties: ['deep', 'nitrox', 'night', 'wreck'],
+    }],
+    isAllowed: ['sea-fun-divers'],
+    verified: false,
+  },
+  equipment: {
+    name: 'Sea Fun Divers',
+    address: { street: '29 Soi Karon Nui', city: 'Karon', state: 'Phuket', country: 'TH', postalCode: '83100' },
+    lat: 7.8569,
+    lng: 98.2859,
+    email: 'rene_balot+clerk_test@seafundivers.com',
+    phone: '+6676330345',
+    manufacturersByGearType: {
+      wetsuit: ['ScubaPro'],
+      bcd: ['ScubaPro'],
+      regulator: ['ScubaPro'],
+      fins: ['ScubaPro'],
+      mask: ['ScubaPro'],
+    },
+    isAllowed: ['sea-fun-divers'],
+    verified: false,
+  },
+  boat: {
+    name: 'Sea Fun Divers Fleet',
+    address: { street: '29 Soi Karon Nui', city: 'Karon', state: 'Phuket', country: 'TH', postalCode: '83100' },
+    lat: 7.8569,
+    lng: 98.2859,
+    email: 'rene_balot+clerk_test@seafundivers.com',
+    phone: '+6676330345',
+    fleet: [{
+      boatName: 'M.V. Sea Fun Divers',
+      maxPax: 25,
+      boatType: 'day_boat',
+      routes: [
+        { venueSlugs: ['racha-yai', 'racha-noi'],      daysOfWeek: [1, 3, 5] },
+        { venueSlugs: ['ko-bida-nok', 'ko-bida-nai'],  daysOfWeek: [2, 4, 6] },
+        { venueSlugs: ['king-cruiser', 'shark-point'], daysOfWeek: [0] },
+      ],
+    }],
+    isAllowed: ['sea-fun-divers'],
+    verified: false,
+  },
+  instructor: {
+    name: 'Rene Balot',
+    role: 'Instructor',
+    address: { street: '29 Soi Karon Nui', city: 'Karon', state: 'Phuket', country: 'TH', postalCode: '83100' },
+    lat: 7.8569,
+    lng: 98.2859,
+    email: 'rene_balot+clerk_test@seafundivers.com',
+    phone: '+6676330345',
+    credential: [{
+      agency: 'PADI',
+      level: 'MSDT',
+      agencyID: 'I-234567',
+      specialtyRatings: ['deep', 'nitrox', 'night', 'wreck'],
+    }],
+    teachingLanguages: ['en'],
+    isAllowed: ['sea-fun-divers'],
+    verified: false,
+  },
+  venues: [{
+    slug: 'sea-fun-pool',
+    name: 'Sea Fun Pool',
+    kind: 'pool',
+    features: [],
+    address: { street: '29 Soi Karon Nui', city: 'Karon', state: 'Phuket', country: 'TH', postalCode: '83100' },
+    lat: 7.8569,
+    lng: 98.2859,
+    maxDepth: 2.5,
+    maxCapacity: 50,
+    isAllowed: ['sea-fun-divers'],
+    verified: true,
+  }],
+  compressors: [
+    {
+      slug: 'scuba-market',
+      name: 'Scuba Market',
+      location: 'fixed',
+      address: { street: '51 Patak Road', city: 'Tambon Karon', state: 'Chang Wat Phuket', country: 'TH', postalCode: '83100' },
+      lat: 7.820196400000013,
+      lng: 98.30618609999999,
+      placeId: 'ChIJoVcYq4klUDARy3hTaTDdFRY',
+      email: 'rene_balot+clerk_test@seafundivers.com',
+      phone: '+6676330345',
+      gasMixes: ['air', 'nitrox'],
+      nitroxMin: 22,
+      nitroxMax: 40,
+      verified: false,
+    },
+    {
+      slug: 'sea-fun-shop',
+      name: 'Sea Fun Shop Compressor',
+      location: 'fixed',
+      address: { street: '29 Soi Karon Nui', city: 'Karon', state: 'Phuket', country: 'TH', postalCode: '83100' },
+      lat: 7.8569,
+      lng: 98.2859,
+      email: 'rene_balot+clerk_test@seafundivers.com',
+      phone: '+6676330345',
+      gasMixes: ['air'],
+      isAllowed: ['sea-fun-divers'],
+      verified: false,
+    },
+    {
+      slug: 'sea-fun-boat',
+      name: 'M.V. Sea Fun Divers Compressor',
+      location: 'boat',
+      boatSlug: 'sea-fun',
+      address: { street: '29 Soi Karon Nui', city: 'Karon', state: 'Phuket', country: 'TH', postalCode: '83100' },
+      lat: 7.8569,
+      lng: 98.2859,
+      email: 'rene_balot+clerk_test@seafundivers.com',
+      phone: '+6676330345',
+      gasMixes: ['air', 'nitrox'],
+      nitroxMin: 28,
+      nitroxMax: 28,
+      isAllowed: ['sea-fun-divers'],
+      verified: false,
+    },
+  ],
+}
+
 export const PARKED_STAKEHOLDERS: SeedStakeholder[] = [
-  SEA_FUN_OWNER,
   HUG_OCEAN,
   NEPTUNE,
   PHUKET_DC,
@@ -1057,4 +1227,4 @@ export const PARKED_STAKEHOLDERS: SeedStakeholder[] = [
   RESTORED_ALEX,
 ]
 
-export const ALL_STAKEHOLDERS: SeedStakeholder[] = []
+export const ALL_STAKEHOLDERS: SeedStakeholder[] = [PHUKET_ADMIN, RENE_SEA_FUN]

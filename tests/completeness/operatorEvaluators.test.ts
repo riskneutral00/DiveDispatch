@@ -55,7 +55,7 @@ describe('operatorCoverage — preferred-boat compressor lookup', () => {
         updatedAt: Date.now(),
       })
       await ctx.db.patch(boatUserId, { organizationId: boatOrgId })
-      await ctx.db.insert('boats', {
+      const boatId = await ctx.db.insert('boats', {
         organizationId: boatOrgId,
         name: 'Compressor Boat',
         address: { city: 'Koh Tao', country: 'TH' },
@@ -64,7 +64,19 @@ describe('operatorCoverage — preferred-boat compressor lookup', () => {
         email: 'boat@test.com',
         phone: '+66812345679',
         fleet: [{ boatName: 'MV Test', maxPax: 20, boatType: 'day_boat' }],
-        hasCompressor: true,
+        verified: true,
+      })
+      await ctx.db.insert('compressors', {
+        organizationId: boatOrgId,
+        slug: 'boat-cov-mismatch-compressor',
+        name: 'Onboard Compressor',
+        location: 'boat',
+        boatId,
+        address: { city: 'Koh Tao', country: 'TH' },
+        lat: 10.0957,
+        lng: 99.8408,
+        email: 'boat@test.com',
+        phone: '+66812345679',
         verified: true,
       })
 
@@ -89,7 +101,7 @@ describe('operatorCoverage — preferred-boat compressor lookup', () => {
     })
   })
 
-  it('still reports preferredCompressor incomplete when no preferred boat has hasCompressor', async () => {
+  it('still reports preferredCompressor incomplete when no preferred boat has a linked compressor row', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
       const dcUserId = await ctx.db.insert('users', {
@@ -148,7 +160,6 @@ describe('operatorCoverage — preferred-boat compressor lookup', () => {
         email: 'boat@test.com',
         phone: '+66812345679',
         fleet: [{ boatName: 'MV Test', maxPax: 20, boatType: 'day_boat' }],
-        hasCompressor: false,
         verified: true,
       })
 

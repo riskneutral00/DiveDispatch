@@ -15,9 +15,9 @@ import { GEAR_TYPES, type GearType } from '../../shared/gearSizing'
 import { isGearItemComplete } from '../../shared/gearRequiredFields'
 import type { Doc } from '../../_generated/dataModel'
 
-const fleetRoutesHaveDiveSite = (profile: Record<string, unknown>): boolean => {
-  const fleet = profile.fleet as Array<{ routes?: Array<{ diveSite: string }> }> | undefined
-  return !!fleet?.some((f) => f.routes?.some((r) => r.diveSite))
+const fleetRoutesHaveVenues = (profile: Record<string, unknown>): boolean => {
+  const fleet = profile.fleet as Array<{ routes?: Array<{ venueIds?: string[] }> }> | undefined
+  return !!fleet?.some((f) => f.routes?.some((r) => Array.isArray(r.venueIds) && r.venueIds.length > 0))
 }
 
 type EnrichedGearRow = Doc<'equipmentInventory'> & { totalUnits: number }
@@ -67,7 +67,7 @@ export const ROLE_SPECS: Record<string, Evaluator[]> = {
   Boat: [
     scalarString('name'),
     nestedAddress(),
-    nestedPathPredicate({ label: 'diveSite', predicate: fleetRoutesHaveDiveSite }),
+    nestedPathPredicate({ label: 'routeVenues', predicate: fleetRoutesHaveVenues }),
     fleetEvaluator(),
   ],
   Equipment: [
@@ -78,7 +78,7 @@ export const ROLE_SPECS: Record<string, Evaluator[]> = {
   Venue: [
     scalarString('name'),
     nestedAddress(),
-    scalarString('subtype'),
+    scalarString('kind'),
     operatorAcceptanceMode(),
   ],
   Compressor: [

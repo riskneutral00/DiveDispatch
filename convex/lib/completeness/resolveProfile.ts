@@ -14,7 +14,7 @@ export interface ProfileResolution {
 
 type ProfilePicker = (docs: ProfileDoc[]) => ProfileDoc | null
 
-const VENUE_REQUIRED_FIELDS = ['name', 'address', 'subtype'] as const
+const VENUE_REQUIRED_FIELDS = ['name', 'address', 'kind'] as const
 
 function countVenueMissing(venue: ProfileDoc): number {
   let missing = 0
@@ -43,8 +43,38 @@ const VENUE_PICKER: ProfilePicker = (docs) => {
   return best
 }
 
+const COMPRESSOR_REQUIRED_FIELDS = ['name', 'address', 'location'] as const
+
+function countCompressorMissing(c: ProfileDoc): number {
+  let missing = 0
+  for (const f of COMPRESSOR_REQUIRED_FIELDS) {
+    if (f === 'address') {
+      const addr = c.address as { city?: unknown; country?: unknown } | undefined
+      if (!addr || !str(addr.city) || !str(addr.country)) missing += 1
+      continue
+    }
+    if (!str(c[f])) missing += 1
+  }
+  return missing
+}
+
+const COMPRESSOR_PICKER: ProfilePicker = (docs) => {
+  if (docs.length === 0) return null
+  let best = docs[0]
+  let bestMissing = countCompressorMissing(best)
+  for (let i = 1; i < docs.length; i += 1) {
+    const m = countCompressorMissing(docs[i])
+    if (m < bestMissing) {
+      best = docs[i]
+      bestMissing = m
+    }
+  }
+  return best
+}
+
 const PICKERS: Record<string, ProfilePicker> = {
   Venue: VENUE_PICKER,
+  Compressor: COMPRESSOR_PICKER,
 }
 
 export async function resolveRoleProfile(

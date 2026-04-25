@@ -2,14 +2,16 @@ import { ConvexError, v } from 'convex/values'
 import { mutation, query, type MutationCtx } from './_generated/server'
 import { authorize, assertOrgOwnership } from './lib/auth'
 import { getActiveOrg, tryGetActiveOrg } from './lib/activeOrg'
+import { visibleOrgIds } from './lib/destinationScope'
 import { checkHasRole } from './userRoles'
 import { ErrorCode } from './lib/errorCodes'
 import { BASE_PROFILE_CREATE_FIELDS, BASE_PROFILE_UPDATE_FIELDS, ACCESS_CONTROL_FIELDS, BUSINESS_NAME_CREATE_FIELD, BUSINESS_NAME_UPDATE_FIELD } from './lib/validators'
 import {
-  venueSubtypeValidator,
-  type VenueSubtype,
+  venueKindValidator,
+  type VenueKind,
 } from './shared/venueTypes'
-import { assertCapabilitiesPresentForSubtype, assertVenueRange, assertVenueSubtypeConsistent } from './lib/venueValidators'
+import { venueFeatureValidator } from './shared/venueFeatures'
+import { assertVenueRange, assertVenueKindConsistent } from './lib/venueValidators'
 import { assertPhoneE164, assertCountryCode } from './lib/i18nValidators'
 import { cleanupInventoryForOwner } from './lib/inventoryCleanup'
 import { isActiveReservation } from './bookings/_shared'
@@ -39,20 +41,19 @@ export const create = mutation({
     ...ACCESS_CONTROL_FIELDS,
     email: v.optional(v.string()),
     phone: v.optional(v.string()),
-    subtype: venueSubtypeValidator,
+    kind: venueKindValidator,
+    features: v.array(venueFeatureValidator),
     confinedCapable: v.optional(v.boolean()),
-    hasCompressor: v.boolean(),
     maxDepth: v.optional(v.number()),
     maxCapacity: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const { user } = await authorize(ctx, null, 'resource:manage', { type: 'resource' })
 
-    const subtype = args.subtype
+    const kind = args.kind
     const confinedCapable = args.confinedCapable
-    assertVenueSubtypeConsistent(subtype, confinedCapable)
-    assertVenueRange(subtype, args.maxDepth, args.maxCapacity)
-    assertCapabilitiesPresentForSubtype(subtype, args.maxDepth, args.maxCapacity)
+    assertVenueKindConsistent(kind, confinedCapable)
+    assertVenueRange(kind, args.maxDepth, args.maxCapacity)
 
     if (args.phone !== undefined && args.phone !== '') {
       assertPhoneE164(args.phone, 'phone')
@@ -70,13 +71,13 @@ export const create = mutation({
 
     const slug = await mintUniqueVenueSlug(ctx, args.name)
 
-    const { subtype: _ignoredSubtype, confinedCapable: _ignoredConfined, ...rest } = args
+    const { kind: _ignoredKind, confinedCapable: _ignoredConfined, ...rest } = args
 
     const venueId = await ctx.db.insert('venues', {
       ...rest,
       slug,
-      subtype,
-      confinedCapable: subtype === 'shore' || subtype === 'other' ? confinedCapable : undefined,
+      kind,
+      confinedCapable: kind === 'pool' ? true : confinedCapable,
       organizationId: activeOrg._id,
       verified: false,
     })
@@ -104,9 +105,9 @@ export const update = mutation({
     ...BASE_PROFILE_UPDATE_FIELDS,
     ...BUSINESS_NAME_UPDATE_FIELD,
     ...ACCESS_CONTROL_FIELDS,
-    subtype: v.optional(venueSubtypeValidator),
+    kind: v.optional(venueKindValidator),
+    features: v.optional(v.array(venueFeatureValidator)),
     confinedCapable: v.optional(v.boolean()),
-    hasCompressor: v.optional(v.boolean()),
     maxDepth: v.optional(v.number()),
     maxCapacity: v.optional(v.number()),
   },
@@ -126,24 +127,19 @@ export const update = mutation({
       assertCountryCode(args.address.country, 'address.country')
     }
 
-    const { venueId: _vid, subtype, confinedCapable, ...rest } = args
+    const { venueId: _vid, kind, confinedCapable, ...rest } = args
     const patch: Record<string, unknown> = { ...rest }
 
-    const effectiveSubtype: VenueSubtype = subtype ?? (venue.subtype as VenueSubtype)
-    if (subtype !== undefined) {
-      patch.subtype = subtype
+    const effectiveKind: VenueKind = kind ?? (venue.kind as VenueKind)
+    if (kind !== undefined) {
+      patch.kind = kind
     }
     if (confinedCapable !== undefined) {
-      assertVenueSubtypeConsistent(effectiveSubtype, confinedCapable)
-      patch.confinedCapable =
-        effectiveSubtype === 'shore' || effectiveSubtype === 'other' ? confinedCapable : undefined
+      assertVenueKindConsistent(effectiveKind, confinedCapable)
+      patch.confinedCapable = effectiveKind === 'pool' ? true : confinedCapable
     }
 
-    assertVenueRange(effectiveSubtype, args.maxDepth, args.maxCapacity)
-
-    const effectiveMaxDepth = args.maxDepth ?? (venue.maxDepth as number | undefined)
-    const effectiveMaxCapacity = args.maxCapacity ?? (venue.maxCapacity as number | undefined)
-    assertCapabilitiesPresentForSubtype(effectiveSubtype, effectiveMaxDepth, effectiveMaxCapacity)
+    assertVenueRange(effectiveKind, args.maxDepth, args.maxCapacity)
 
     await ctx.db.patch(args.venueId, patch)
 
@@ -219,6 +215,23 @@ export const mine = query({
       .query('venues')
       .withIndex('by_organizationId', (q) => q.eq('organizationId', activeOrg._id))
       .collect() // bounded: per-org venue count, realistic cap ~20
+  },
+})
+
+export const visibleToMe = query({
+  args: {},
+  handler: async (ctx) => {
+    const orgIds = await visibleOrgIds(ctx)
+    if (orgIds.length === 0) return []
+    const results = await Promise.all(
+      orgIds.map((orgId) =>
+        ctx.db
+          .query('venues')
+          .withIndex('by_organizationId', (q) => q.eq('organizationId', orgId))
+          .collect(), // bounded: per-org venue count, realistic cap ~20
+      ),
+    )
+    return results.flat()
   },
 })
 

@@ -13,8 +13,7 @@ describe('cascadeOrgDelete — inventoryUnits sweep', () => {
         organizationId: orgId,
         name: 'Casc Pool', slug: 'casc-pool',
         address: { city: 'Koh Tao', country: 'TH' },
-        lat: 10, lng: 99, subtype: 'pool',
-        hasCompressor: false, verified: true,
+        lat: 10, lng: 99, kind: "pool" as const, features: [] as ('reef' | 'wreck' | 'cave' | 'wall' | 'drift' | 'muck' | 'altitude' | 'lake' | 'river' | 'quarry' | 'night' | 'deep')[], verified: true,
       })
       await ctx.db.insert('inventoryUnits', {
         resourceType: 'Venue',

@@ -7,7 +7,7 @@ import { internal } from './_generated/api'
 import { OPERATOR_ROLE_SET } from './lib/auth'
 import type { OperatorType } from './shared/operatorTypes'
 import { queryDynamicTable, deleteDynamic } from './lib/typedDb'
-import { ALL_STAKEHOLDERS, SeedStakeholder, StakeholderRole, type SeedInventoryLine } from './seedData'
+import { ALL_STAKEHOLDERS, SeedStakeholder, StakeholderRole } from './seedData'
 import { ensureSystemThemesInline } from './lib/ensureSystemThemes'
 import { stakeholderPreferenceIdsToDelete } from './lib/stakeholderPreferencesDedupe'
 import { insertUserRole } from './lib/userRoleHelpers'
@@ -193,22 +193,32 @@ async function insertUser(ctx: MutationCtx, s: SeedStakeholder) {
 
 async function getOrCreateSeedOrg(
   ctx: MutationCtx,
-  userSlug: string,
+  orgSlug: string,
   orgName: string,
+  extras?: { isAreaOrg?: boolean; destinationIds?: Id<'organizations'>[] },
 ): Promise<Id<'organizations'>> {
-  const clerkOrgId = `seed_org_${userSlug}`
+  const clerkOrgId = `seed_org_${orgSlug}`
   const existing = await ctx.db
     .query('organizations')
     .withIndex('by_clerkOrgId', (q) => q.eq('clerkOrgId', clerkOrgId))
     .unique()
-  if (existing) return existing._id
   const now = Date.now()
+  const destinationPatch = extras?.destinationIds && extras.destinationIds.length > 0
+    ? { destinationIds: extras.destinationIds }
+    : {}
+  const areaPatch = extras?.isAreaOrg !== undefined ? { isAreaOrg: extras.isAreaOrg } : {}
+  if (existing) {
+    await ctx.db.patch(existing._id, { name: orgName, slug: orgSlug, updatedAt: now, ...areaPatch, ...destinationPatch })
+    return existing._id
+  }
   return ctx.db.insert('organizations', {
     clerkOrgId,
     name: orgName,
-    slug: userSlug,
+    slug: orgSlug,
     createdAt: now,
     updatedAt: now,
+    ...areaPatch,
+    ...destinationPatch,
   })
 }
 
@@ -218,28 +228,63 @@ export const seedStakeholders = internalMutation({
     const existing = await ctx.db.query('users').first()
     if (existing) return 'Already seeded'
 
+    const venueSlugToId = new Map<string, Id<'venues'>>()
+    const userSlugToBoatId = new Map<string, Id<'boats'>>()
+    const orgSlugToId = new Map<string, Id<'organizations'>>()
+
     for (const s of ALL_STAKEHOLDERS) {
       const userId = await insertUser(ctx, s) // batch-exempt
-      const orgName = s.diveCenter?.name ?? s.boat?.name ?? s.equipment?.name ?? s.compressor?.name ?? s.agent?.name ?? s.venue?.name ?? `Seed Org ${s.user.slug}`
-      const organizationId = await getOrCreateSeedOrg(ctx, s.user.slug, orgName) // batch-exempt
+      const orgSlug = s.organization?.slug ?? s.user.slug
+      const orgName = s.organization?.name
+        ?? s.diveCenter?.name
+        ?? s.boat?.name
+        ?? s.equipment?.name
+        ?? s.compressors?.[0]?.name
+        ?? s.agent?.name
+        ?? s.venues?.[0]?.name
+        ?? `Seed Org ${s.user.slug}`
+      const destinationIds = s.organization?.destinationSlugs
+        ?.map((slug) => orgSlugToId.get(slug))
+        .filter((id): id is Id<'organizations'> => id !== undefined)
+      const organizationId = await getOrCreateSeedOrg(ctx, orgSlug, orgName, { // batch-exempt
+        isAreaOrg: s.organization?.isAreaOrg,
+        destinationIds,
+      })
+      orgSlugToId.set(orgSlug, organizationId)
       await setUserOrganization(ctx, userId, organizationId) // batch-exempt
 
       if (s.diveCenter) {
         await ctx.db.insert('diveCenters', { organizationId, ...s.diveCenter }) // batch-exempt
       }
-      if (s.boat) {
-        await ctx.db.insert('boats', { organizationId, ...s.boat }) // batch-exempt
+      for (const venue of s.venues ?? []) {
+        const slug = venue.slug ?? (venue.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || `venue-${organizationId}`)
+        const { slug: _s, ...venueData } = venue
+        const vid = await ctx.db.insert('venues', { organizationId, slug, ...venueData }) // batch-exempt
+        venueSlugToId.set(slug, vid)
       }
-      if (s.venue) {
-        const venueSlug = s.venue.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || `venue-${organizationId}`
-        await ctx.db.insert('venues', { organizationId, slug: venueSlug, ...s.venue }) // batch-exempt
+      if (s.boat) {
+        const resolvedFleet = s.boat.fleet.map((f) => ({
+          ...f,
+          routes: f.routes?.map((r) => ({
+            daysOfWeek: r.daysOfWeek,
+            venueIds: r.venueSlugs.map((slug) => venueSlugToId.get(slug)).filter((id): id is Id<'venues'> => id !== undefined),
+          })),
+        }))
+        const boatId = await ctx.db.insert('boats', { organizationId, ...s.boat, fleet: resolvedFleet }) // batch-exempt
+        userSlugToBoatId.set(s.user.slug, boatId)
       }
       if (s.equipment) {
         const { inventoryOverrides: _overrides, ...equipmentProfile } = s.equipment
         await ctx.db.insert('equipment', { organizationId, ...equipmentProfile }) // batch-exempt
       }
-      if (s.compressor) {
-        await ctx.db.insert('compressors', { organizationId, ...s.compressor }) // batch-exempt
+      for (const compressor of s.compressors ?? []) {
+        const { boatSlug, venueSlug, ...compressorData } = compressor
+        const boatId = boatSlug ? userSlugToBoatId.get(boatSlug) : undefined
+        const venueId = venueSlug ? venueSlugToId.get(venueSlug) : undefined
+        await ctx.db.insert('compressors', { organizationId, ...compressorData, ...(boatId && { boatId }), ...(venueId && { venueId }) }) // batch-exempt
+      }
+      if (s.instructor) {
+        await ctx.db.insert('diveStaff', { organizationId, ...s.instructor }) // batch-exempt
       }
       if (s.agent) {
         const agentPayload = { organizationId, ...s.agent, customerLanguages: s.user.customerLanguages ?? [] }
@@ -383,26 +428,26 @@ export const seedResourceInventory = internalMutation({
         }
       }
 
-      if (s.venue) {
+      for (const venue of s.venues ?? []) {
         await ctx.db.insert('inventoryUnits', { // batch-exempt
           resourceType: 'Venue',
-          resourceId: s.user.slug,
-          displayName: s.venue.name,
+          resourceId: venue.slug ?? s.user.slug,
+          displayName: venue.name,
           capacityModel: 'Pooled',
-          totalUnits: s.venue.maxCapacity ?? 1,
-          ownerId: s.user.slug,
+          totalUnits: venue.maxCapacity ?? 1,
+          ownerId: venue.slug ?? s.user.slug,
           ownerType: 'Venue',
         })
       }
 
-      if (s.compressor) {
+      for (const compressor of s.compressors ?? []) {
         await ctx.db.insert('inventoryUnits', { // batch-exempt
           resourceType: 'Compressor',
-          resourceId: s.user.slug,
-          displayName: s.compressor.name,
+          resourceId: compressor.slug,
+          displayName: compressor.name,
           capacityModel: 'Pooled',
           totalUnits: 999999,
-          ownerId: s.user.slug,
+          ownerId: compressor.slug,
           ownerType: 'Compressor',
         })
       }
@@ -504,6 +549,9 @@ export const seedStakeholderPreferences = internalMutation({
       'e6eu5z': { // Eva (Agent) — de, fr, nl
         instructors: ['stefan-braun', 'pierre-dubois', 'camille-moreau', 'sophie-laurent', 'hans-weber'],
         boats: ['n7rq5j', 'p5ky3w'], venues: ['z8mv4c'], compressors: ['x4kp2m'], equipment: ['v8sr2p'],
+      },
+      'sea-fun': {
+        instructors: ['sea-fun'],
       },
     }
 

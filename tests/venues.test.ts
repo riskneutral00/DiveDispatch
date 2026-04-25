@@ -39,9 +39,9 @@ const VALID_DIVE_SITE_ARGS = {
   address: { city: 'Koh Tao', country: 'TH' },
   lat: 10.09,
   lng: 99.84,
-  subtype: 'reef' as const,
+  kind: 'dive_site' as const,
+  features: ['reef' as const],
   confinedCapable: false,
-  hasCompressor: false,
   maxCapacity: 20,
 }
 
@@ -50,8 +50,8 @@ const VALID_POOL_ARGS = {
   address: { city: 'Koh Tao', country: 'TH' },
   lat: 10.09,
   lng: 99.84,
-  subtype: 'pool' as const,
-  hasCompressor: false,
+  kind: 'pool' as const,
+  features: [],
   maxCapacity: 15,
   maxDepth: 5,
 }
@@ -61,9 +61,9 @@ const VALID_SHORE_ARGS = {
   address: { city: 'Phuket', country: 'TH' },
   lat: 7.88,
   lng: 98.39,
-  subtype: 'shore' as const,
+  kind: 'dive_site' as const,
+  features: [],
   confinedCapable: true,
-  hasCompressor: false,
   maxCapacity: 10,
 }
 
@@ -117,6 +117,52 @@ describe('venues.create — slug minting + inventoryUnit', () => {
 
     expect(first.slug).toBe('sairee-training-pool')
     expect(second.slug).toBe('sairee-training-pool-2')
+  })
+})
+
+describe('venues.create — assertVenueRange enforcement', () => {
+  it('rejects pool with maxDepth above 60m cap', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedVenueUser(ctx, 'pool-deep') })
+    await expect(
+      t.withIdentity(orgIdentityFor('pool-deep')).mutation(api.venues.create, {
+        ...VALID_POOL_ARGS,
+        maxDepth: 75,
+      }),
+    ).rejects.toThrow(/max_depth_exceeds_kind_cap/)
+  })
+
+  it('rejects pool with maxCapacity above 50 cap', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedVenueUser(ctx, 'pool-big') })
+    await expect(
+      t.withIdentity(orgIdentityFor('pool-big')).mutation(api.venues.create, {
+        ...VALID_POOL_ARGS,
+        maxCapacity: 75,
+      }),
+    ).rejects.toThrow(/max_capacity_exceeds_kind_cap/)
+  })
+
+  it('rejects negative maxDepth', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedVenueUser(ctx, 'neg-depth') })
+    await expect(
+      t.withIdentity(orgIdentityFor('neg-depth')).mutation(api.venues.create, {
+        ...VALID_POOL_ARGS,
+        maxDepth: -3,
+      }),
+    ).rejects.toThrow(/invalid_max_depth/)
+  })
+
+  it('rejects pool with confinedCapable=false', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedVenueUser(ctx, 'pool-noconfined') })
+    await expect(
+      t.withIdentity(orgIdentityFor('pool-noconfined')).mutation(api.venues.create, {
+        ...VALID_POOL_ARGS,
+        confinedCapable: false,
+      }),
+    ).rejects.toThrow(/pool_must_be_confined_capable/)
   })
 })
 
@@ -411,13 +457,95 @@ describe('venues.mine — multi-row return', () => {
 
     const venuesAfter = await t.withIdentity(identity).query(api.venues.mine, {})
     expect(venuesAfter).toHaveLength(2)
-    expect(venuesAfter.map((v) => v.subtype).sort()).toEqual(['pool', 'reef'])
+    expect(venuesAfter.map((v) => v.kind).sort()).toEqual(['dive_site', 'pool'])
   })
 
   it('returns empty array for unauthenticated caller', async () => {
     const t = makeT()
     const venues = await t.query(api.venues.mine, {})
     expect(venues).toEqual([])
+  })
+})
+
+describe('venues.visibleToMe — destination-scoped discovery', () => {
+  it('returns own-org venues plus destination-org venues for an operator with destinationIds', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => {
+      const now = Date.now()
+      const areaOrgId = await ctx.db.insert('organizations', {
+        slug: 'south-andaman',
+        name: 'South Andaman',
+        isAreaOrg: true,
+        createdAt: now,
+        updatedAt: now,
+      })
+      await ctx.db.insert('venues', {
+        organizationId: areaOrgId,
+        slug: 'racha-yai',
+        name: 'Racha Yai',
+        kind: 'dive_site',
+        features: [],
+        address: { city: 'Phuket', country: 'TH' },
+        lat: 7.6018,
+        lng: 98.3633,
+        verified: true,
+      })
+      const operatorId = await seedVenueUser(ctx, 'rene-vis')
+      await ctx.db.patch(operatorId, {})
+      const user = await ctx.db.get(operatorId)
+      const operatorOrgId = user?.organizationId
+      if (!operatorOrgId) throw new Error('operator org missing')
+      await ctx.db.patch(operatorOrgId, { destinationIds: [areaOrgId] })
+      await ctx.db.insert('venues', {
+        organizationId: operatorOrgId,
+        slug: 'sea-fun-pool',
+        name: 'Sea Fun Pool',
+        kind: 'pool',
+        features: [],
+        address: { city: 'Phuket', country: 'TH' },
+        lat: 7.8569,
+        lng: 98.2859,
+        maxDepth: 2.5,
+        maxCapacity: 50,
+        verified: true,
+      })
+    })
+
+    const results = await t.withIdentity(orgIdentityFor('rene-vis')).query(api.venues.visibleToMe, {})
+    const slugs = results.map((v) => v.slug).sort()
+    expect(slugs).toEqual(['racha-yai', 'sea-fun-pool'])
+  })
+
+  it('returns own-org venues only when destinationIds is undefined', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => {
+      const operatorId = await seedVenueUser(ctx, 'solo-vis')
+      const user = await ctx.db.get(operatorId)
+      const operatorOrgId = user?.organizationId
+      if (!operatorOrgId) throw new Error('operator org missing')
+      await ctx.db.insert('venues', {
+        organizationId: operatorOrgId,
+        slug: 'solo-pool',
+        name: 'Solo Pool',
+        kind: 'pool',
+        features: [],
+        address: { city: 'Koh Tao', country: 'TH' },
+        lat: 10,
+        lng: 99,
+        maxDepth: 2,
+        maxCapacity: 10,
+        verified: true,
+      })
+    })
+
+    const results = await t.withIdentity(orgIdentityFor('solo-vis')).query(api.venues.visibleToMe, {})
+    expect(results.map((v) => v.slug)).toEqual(['solo-pool'])
+  })
+
+  it('returns empty array for unauthenticated caller', async () => {
+    const t = makeT()
+    const result = await t.query(api.venues.visibleToMe, {})
+    expect(result).toEqual([])
   })
 })
 

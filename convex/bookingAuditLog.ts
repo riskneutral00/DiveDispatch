@@ -1,6 +1,7 @@
-import { v } from 'convex/values'
+import { ConvexError, v } from 'convex/values'
 import { query } from './_generated/server'
-import { requireAuth, requireOwnerOrResourceAccess } from './lib/auth'
+import { authorize } from './lib/auth'
+import { ErrorCode } from './lib/errorCodes'
 
 export type { AuditAction, AuditActorType, LogBookingChangeArgs } from './lib/auditLog'
 export { logBookingChange } from './lib/auditLog'
@@ -8,8 +9,13 @@ export { logBookingChange } from './lib/auditLog'
 export const getAuditLog = query({
   args: { bookingId: v.id('bookings') },
   handler: async (ctx, args) => {
-    const { user } = await requireAuth(ctx) // auth-ok: QueryCtx; authorize() is MutationCtx-only
-    await requireOwnerOrResourceAccess(ctx, user, args.bookingId)
+    const booking = await ctx.db.get(args.bookingId)
+    if (!booking) throw new ConvexError({ code: ErrorCode.NOT_FOUND, reason: 'booking_not_found' })
+    await authorize(ctx, null, 'booking:read', {
+      type: 'booking',
+      id: args.bookingId,
+      ownerId: booking.ownerId,
+    })
 
     return ctx.db
       .query('bookingAuditLog')

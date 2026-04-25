@@ -79,14 +79,10 @@ const RESOURCE_CONFIGS: Array<{
     updateArgs: { phone: '+66999999999' },
     uniqueField: 'phone',
   },
-  {
-    name: 'compressors',
-    apiModule: api.compressors as CrudApi,
-    role: 'Compressor',
-    createArgs: { name: 'Test Compressor', ...COMMON_LOCATION },
-    updateArgs: { name: 'Updated Compressor' },
-    uniqueField: 'name',
-  },
+  // compressors removed from shared CRUD driver: multi-row model requires
+  // compressorId in update args (not implicit-by-org), and location/slug
+  // semantics differ from the singular profile pattern. Covered directly by
+  // tests/compressors.test.ts.
   {
     name: 'diveCenters',
     apiModule: api.diveCenters as CrudApi,

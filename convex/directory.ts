@@ -4,7 +4,7 @@ import type { DatabaseReader } from './_generated/server'
 import { requireAuth, authorize } from './lib/auth'
 import { requireActiveRole } from './userRoles'
 import { stakeholderTypeValidator, type StakeholderRole } from './lib/validators'
-import type { Doc, Id } from './_generated/dataModel'
+import type { Id } from './_generated/dataModel'
 import { queryDynamicTable } from './lib/typedDb'
 import { ROLE_TABLE_MAP } from './lib/profileHelpers'
 import { isResourceAccessible } from './lib/accessControl'
@@ -29,7 +29,7 @@ export type DirectoryEntry = {
   hasCompressor?: boolean
   gasMixes?: string[]
   inventoryCounts?: Record<string, number>
-  subtype?: string
+  kind?: string
   confinedCapable?: boolean
   maxDepth?: number
   maxCapacity?: number
@@ -51,7 +51,7 @@ type ProfileData = {
   hasCompressor?: boolean
   gasMixes?: string[]
   inventoryCounts?: Record<string, number>
-  subtype?: string
+  kind?: string
   confinedCapable?: boolean
   maxDepth?: number
   maxCapacity?: number
@@ -109,12 +109,21 @@ async function fetchProfile(
         null,
       )
       const boatTypes = [...new Set(fleet.map((b) => b.boatType))]
+      const boatId = p._id as Id<'boats'> | undefined
+      let hasCompressor = false
+      if (boatId) {
+        const onboard = await db
+          .query('compressors')
+          .withIndex('by_boatId', (q) => q.eq('boatId', boatId))
+          .take(1) // bounded: existence check only
+        hasCompressor = onboard.length > 0
+      }
       return {
         ...base,
         boatCapacity: largest?.maxPax,
         boatType: largest?.boatType,
         boatTypes,
-        hasCompressor: p.hasCompressor as boolean | undefined,
+        hasCompressor,
       }
     }
     case 'Equipment': {
@@ -134,15 +143,25 @@ async function fetchProfile(
     }
     case 'Compressor':
       return { ...base, gasMixes: (p.gasMixes ?? []) as string[] }
-    case 'Venue':
+    case 'Venue': {
+      const venueId = p._id as Id<'venues'> | undefined
+      let hasCompressor = false
+      if (venueId) {
+        const onsite = await db
+          .query('compressors')
+          .withIndex('by_venueId', (q) => q.eq('venueId', venueId))
+          .take(1) // bounded: existence check only
+        hasCompressor = onsite.length > 0
+      }
       return {
         ...base,
-        subtype: p.subtype as string,
+        kind: p.kind as string,
         confinedCapable: p.confinedCapable as boolean | undefined,
-        hasCompressor: p.hasCompressor as boolean | undefined,
         maxDepth: p.maxDepth as number | undefined,
         maxCapacity: p.maxCapacity as number | undefined,
+        hasCompressor,
       }
+    }
   }
 }
 
@@ -217,7 +236,7 @@ export const listByRole = query({
             hasCompressor: profile.hasCompressor,
             inventoryCounts: profile.inventoryCounts,
             gasMixes: profile.gasMixes,
-            subtype: profile.subtype,
+            kind: profile.kind,
             confinedCapable: profile.confinedCapable,
             maxDepth: profile.maxDepth,
             maxCapacity: profile.maxCapacity,

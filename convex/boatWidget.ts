@@ -307,54 +307,77 @@ export const getVesselCalendarTrips = query({
 
     const dates = buildDateRange(args.dateRangeStart, args.dateRangeEnd)
 
-    const trips: CalendarBooking[] = []
-
+    const venueIdSet = new Set<Id<'venues'>>()
     for (const vessel of boatProfile.fleet) {
-      const unit = unitMap.get(vessel.boatName)
-
-      for (const date of dates) {
-        const dayOfWeek = new Date(date + 'T00:00:00').getDay()
-        const route = vessel.routes?.find((r) =>
-          r.daysOfWeek.includes(dayOfWeek),
-        )
-        const routeName = route?.diveSite ?? ''
-
-        let bookedPax = 0
-        if (unit) {
-          const sessions = await ctx.db
-            .query('bookingSessions')
-            .withIndex('by_inventoryUnitId_date', (q) =>
-              q.eq('inventoryUnitId', unit._id).eq('date', date),
-            )
-            .collect() // bounded: sessions per unit per date <= time windows
-
-          const bookingIds = [...new Set(sessions.map((s) => s.bookingId))]
-          const bookingDocs = await batchGet(ctx, bookingIds)
-          bookedPax = bookingDocs.reduce(
-            (sum, b) => sum + (b ? b.divers.length : 0),
-            0,
-          )
-        }
-
-        trips.push({
-          _id: `${unit ? String(unit._id) : vessel.boatName}_${date}`,
-          activityType: route ? [route.diveSite] : [],
-          startDate: date,
-          endDate: date,
-          status: 'Upcoming',
-          diverCount: bookedPax,
-          instructorName: undefined,
-          boatName: vessel.boatName,
-          customerName: undefined,
-          operatorName: routeName,
-          reservationStatus: undefined,
-          resources: [],
-          isReferral: false,
-        })
+      for (const route of vessel.routes ?? []) {
+        for (const venueId of route.venueIds) venueIdSet.add(venueId)
       }
     }
+    const venueIds = [...venueIdSet]
+    const venueDocs = await Promise.all(venueIds.map((id) => ctx.db.get(id)))
+    const venueNameMap = new Map<string, string>(
+      venueIds
+        .map((id, i) => [String(id), venueDocs[i]?.name] as const)
+        .filter((entry): entry is readonly [string, string] => typeof entry[1] === 'string'),
+    )
 
-    return trips
+    const vesselTripResults = await Promise.all(
+      boatProfile.fleet.map(async (vessel) => {
+        const unit = unitMap.get(vessel.boatName)
+
+        const perDate = await Promise.all(
+          dates.map(async (date) => {
+            const dayOfWeek = new Date(date + 'T00:00:00').getDay()
+            const route = vessel.routes?.find((r) =>
+              r.daysOfWeek.includes(dayOfWeek),
+            )
+            const routeName = route
+              ? route.venueIds
+                  .map((id) => venueNameMap.get(String(id)))
+                  .filter((n): n is string => typeof n === 'string')
+                  .join(' / ')
+              : ''
+
+            let bookedPax = 0
+            if (unit) {
+              const sessions = await ctx.db
+                .query('bookingSessions')
+                .withIndex('by_inventoryUnitId_date', (q) =>
+                  q.eq('inventoryUnitId', unit._id).eq('date', date),
+                )
+                .collect() // bounded: sessions per unit per date <= time windows
+
+              const bookingIds = [...new Set(sessions.map((s) => s.bookingId))]
+              const bookingDocs = await batchGet(ctx, bookingIds)
+              bookedPax = bookingDocs.reduce(
+                (sum, b) => sum + (b ? b.divers.length : 0),
+                0,
+              )
+            }
+
+            return {
+              _id: `${unit ? String(unit._id) : vessel.boatName}_${date}`,
+              activityType: routeName ? [routeName] : [],
+              startDate: date,
+              endDate: date,
+              status: 'Upcoming',
+              diverCount: bookedPax,
+              instructorName: undefined,
+              boatName: vessel.boatName,
+              customerName: undefined,
+              operatorName: routeName,
+              reservationStatus: undefined,
+              resources: [],
+              isReferral: false,
+            } satisfies CalendarBooking
+          }),
+        )
+
+        return perDate
+      }),
+    )
+
+    return vesselTripResults.flat()
   },
 })
 

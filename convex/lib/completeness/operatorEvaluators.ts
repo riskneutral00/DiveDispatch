@@ -47,15 +47,24 @@ export function operatorCoverage(): Evaluator {
       const orgIds = owners
         .map((o) => o?.organizationId)
         .filter((id): id is NonNullable<typeof id> => id != null)
-      const boats = await Promise.all(
+      const boatsByOrg = await Promise.all(
         orgIds.map((orgId) =>
           ctx.db
             .query('boats')
             .withIndex('by_organizationId', (q) => q.eq('organizationId', orgId))
-            .unique(),
+            .collect(), // bounded: one org's boat profile rows, ~1-2 per org in v0.1
         ),
       )
-      hasCompressor = boats.some((b) => b && (b as { hasCompressor?: boolean }).hasCompressor)
+      const boatIds = boatsByOrg.flat().map((b) => b._id)
+      const compressorLookups = await Promise.all(
+        boatIds.map((boatId) =>
+          ctx.db
+            .query('compressors')
+            .withIndex('by_boatId', (q) => q.eq('boatId', boatId))
+            .collect(), // bounded: compressors per boat, realistic cap ~2
+        ),
+      )
+      hasCompressor = compressorLookups.some((rows) => rows.length > 0)
     }
     if (!hasCompressor) incomplete.push('preferredCompressor')
 

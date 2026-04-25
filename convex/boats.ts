@@ -5,6 +5,7 @@ import {
   profileUpdate,
   profileCreate,
 } from './lib/profileHelpers'
+import { visibleOrgIds } from './lib/destinationScope'
 import { BASE_PROFILE_CREATE_FIELDS, BASE_PROFILE_UPDATE_FIELDS, ACCESS_CONTROL_FIELDS, BUSINESS_NAME_CREATE_FIELD, BUSINESS_NAME_UPDATE_FIELD } from './lib/validators'
 
 const boatTypeValidator = v.union(
@@ -25,7 +26,7 @@ const fleetEntryValidator = v.object({
   routes: v.optional(
     v.array(
       v.object({
-        diveSite: v.string(),
+        venueIds: v.array(v.id('venues')),
         daysOfWeek: v.array(v.number()),
       }),
     ),
@@ -41,11 +42,7 @@ export const create = mutation({
     fleet: v.array(fleetEntryValidator),
   },
   handler: async (ctx, args) => {
-    const hasCompressor = args.fleet.some(
-      (v) => v.boatType === 'day_boat' || v.boatType === 'liveaboard',
-    )
     return profileCreate(ctx, args, 'boats', 'Boat', {
-      hasCompressor,
       verified: false,
     })
   },
@@ -57,23 +54,30 @@ export const update = mutation({
     ...BUSINESS_NAME_UPDATE_FIELD,
     ...ACCESS_CONTROL_FIELDS,
     fleet: v.optional(v.array(fleetEntryValidator)),
-    hasCompressor: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const { hasCompressor, ...rest } = args
-    const extras: Record<string, boolean> = {}
-    if (hasCompressor !== undefined) {
-      extras.hasCompressor = hasCompressor
-    } else if (rest.fleet) {
-      extras.hasCompressor = rest.fleet.some(
-        (v) => v.boatType === 'day_boat' || v.boatType === 'liveaboard',
-      )
-    }
-    return profileUpdate(ctx, { ...rest, ...extras }, 'boats', 'Boat')
+    return profileUpdate(ctx, args, 'boats', 'Boat')
   },
 })
 
 export const mine = query({
   args: {},
   handler: async (ctx) => profileMine(ctx, 'boats'),
+})
+
+export const visibleToMe = query({
+  args: {},
+  handler: async (ctx) => {
+    const orgIds = await visibleOrgIds(ctx)
+    if (orgIds.length === 0) return []
+    const results = await Promise.all(
+      orgIds.map((orgId) =>
+        ctx.db
+          .query('boats')
+          .withIndex('by_organizationId', (q) => q.eq('organizationId', orgId))
+          .collect(), // bounded: per-org boat count, realistic cap ~5
+      ),
+    )
+    return results.flat()
+  },
 })

@@ -361,6 +361,22 @@ describe('audit entries are immutable', () => {
 })
 
 
+describe('getAuditLog unauthenticated', () => {
+  it('throws UNAUTHENTICATED when no identity is present', async () => {
+    const t = makeT()
+
+    const bookingId = await t.run(async (ctx) => {
+      await seedUser(ctx, 'dc-test')
+      return seedBooking(ctx)
+    })
+
+    await expect(
+      t.query(api.bookingAuditLog.getAuditLog, { bookingId }),
+    ).rejects.toMatchObject({ data: expect.stringContaining('UNAUTHENTICATED') })
+  })
+})
+
+
 describe('getAuditLog ownership check (A5)', () => {
   it('throws FORBIDDEN when caller has no ownership or reservation on the booking', async () => {
     const t = makeT()

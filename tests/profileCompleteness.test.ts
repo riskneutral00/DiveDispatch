@@ -135,7 +135,7 @@ describe('checkProfileCompleteness', () => {
   it('Agent with profile but empty agents.customerLanguages marks customerLanguages incomplete', async () => {
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx, { role: 'Agent' })
-      const organizationId = await getOrCreateTestOrg(ctx, userId)
+      await getOrCreateTestOrg(ctx, userId)
       await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
       await seedAgent(ctx, userId, { customerLanguages: [] })
 
@@ -165,7 +165,7 @@ describe('checkProfileCompleteness', () => {
   it('DiveCenter missing operator prefs and coverage fields stays below 100%', async () => {
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx, { role: 'DiveCenter', slug: 'dc-operator-gaps', tokenIdentifier: 'clerk|dc-operator-gaps' })
-      const organizationId = await getOrCreateTestOrg(ctx, userId)
+      await getOrCreateTestOrg(ctx, userId)
       await ctx.db.patch(userId, { phone: '+66000000004', appLanguage: 'en' })
       await seedDiveCenterProfile(ctx, userId)
 
@@ -187,15 +187,28 @@ describe('checkProfileCompleteness', () => {
 // ─── DiveCenter operator — compressor coverage layer ─────────────────────────
 
 describe('checkProfileCompleteness — DiveCenter compressor coverage', () => {
-  it('returns 100% when a preferred boat with hasCompressor=true satisfies compressor requirement', async () => {
+  it('returns 100% when a preferred boat has a linked onboard compressor row', async () => {
     await t.run(async (ctx) => {
       const dcId = await seedUser(ctx, { role: 'DiveCenter', slug: 'dc-boatcomp', tokenIdentifier: 'clerk|dc-boatcomp' })
       await ctx.db.patch(dcId, { phone: '+66000000001' })
       await seedDiveCenterProfile(ctx, dcId)
 
-      const boatId = await seedUser(ctx, { role: 'Boat', slug: 'boat-hascomp', tokenIdentifier: 'clerk|boat-hascomp' })
-      const boatProfileId = await seedBoatProfile(ctx, boatId)
-      await ctx.db.patch(boatProfileId, { hasCompressor: true })
+      const boatUserId = await seedUser(ctx, { role: 'Boat', slug: 'boat-hascomp', tokenIdentifier: 'clerk|boat-hascomp' })
+      const boatRowId = await seedBoatProfile(ctx, boatUserId)
+      const boatRow = await ctx.db.get(boatRowId)
+      await ctx.db.insert('compressors', {
+        organizationId: boatRow!.organizationId,
+        slug: 'boat-hascomp-compressor',
+        name: 'Onboard Compressor',
+        location: 'boat',
+        boatId: boatRowId,
+        address: boatRow!.address,
+        lat: boatRow!.lat,
+        lng: boatRow!.lng,
+        email: boatRow!.email,
+        phone: boatRow!.phone,
+        verified: true,
+      })
 
       await seedStakeholderPreferences(ctx, 'dc-boatcomp', {
         stakeholderType: 'DiveCenter',
@@ -230,14 +243,14 @@ describe('checkProfileCompleteness — DiveCenter compressor coverage', () => {
     })
   })
 
-  it('marks preferredCompressor incomplete when preferred boat has hasCompressor=false and no compressor slug', async () => {
+  it('marks preferredCompressor incomplete when preferred boat has no linked compressor row and no compressor slug', async () => {
     await t.run(async (ctx) => {
       const dcId = await seedUser(ctx, { role: 'DiveCenter', slug: 'dc-nocomp', tokenIdentifier: 'clerk|dc-nocomp' })
       await ctx.db.patch(dcId, { phone: '+66000000003' })
       await seedDiveCenterProfile(ctx, dcId)
 
       const boatId = await seedUser(ctx, { role: 'Boat', slug: 'boat-nocomp', tokenIdentifier: 'clerk|boat-nocomp' })
-      await seedBoatProfile(ctx, boatId, { hasCompressor: false })
+      await seedBoatProfile(ctx, boatId)
 
       await seedStakeholderPreferences(ctx, 'dc-nocomp', {
         stakeholderType: 'DiveCenter',
@@ -260,7 +273,7 @@ describe('checkAllRolesCompleteness', () => {
   it('single role at 100% returns allComplete: true', async () => {
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx, { role: 'Equipment' })
-      const organizationId = await getOrCreateTestOrg(ctx, userId)
+      await getOrCreateTestOrg(ctx, userId)
       await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
       await seedEquipmentProfile(ctx, userId)
       await seedCompleteGearInventory(ctx, TEST_SLUGS.diveCenter)
@@ -306,7 +319,7 @@ describe('getProfileCompletionForRole query', () => {
   it('returns completeness for specified role', async () => {
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx, { role: 'Equipment' })
-      const organizationId = await getOrCreateTestOrg(ctx, userId)
+      await getOrCreateTestOrg(ctx, userId)
       await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
       await seedEquipmentProfile(ctx, userId)
       await seedCompleteGearInventory(ctx, TEST_SLUGS.diveCenter)
@@ -338,7 +351,7 @@ describe('checkProfileCompleteness kind discriminator', () => {
   it('returns kind: not_started when role-table row missing', async () => {
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx, { role: 'Compressor' })
-      const organizationId = await getOrCreateTestOrg(ctx, userId)
+      await getOrCreateTestOrg(ctx, userId)
       await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
       const result = await checkProfileCompleteness(ctx, { _id: userId }, 'Compressor')
       expect(result.kind).toBe('not_started')
@@ -350,7 +363,7 @@ describe('checkProfileCompleteness kind discriminator', () => {
       const userId = await seedUser(ctx, { role: 'Compressor' })
       const orgId = await getOrCreateTestOrg(ctx, userId, 'slug')
       await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
-      await ctx.db.insert('compressors', {
+      await ctx.db.insert('compressors', { slug: 'test-c-' + Math.random().toString(36).slice(2,8), location: 'fixed' as const,
         organizationId: orgId,
         name: 'Partial',
         address: { city: 'Koh Tao', country: 'TH' },
@@ -368,7 +381,7 @@ describe('checkProfileCompleteness kind discriminator', () => {
       const userId = await seedUser(ctx, { role: 'Compressor' })
       const orgId = await getOrCreateTestOrg(ctx, userId, 'slug')
       await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
-      await ctx.db.insert('compressors', {
+      await ctx.db.insert('compressors', { slug: 'test-c-' + Math.random().toString(36).slice(2,8), location: 'fixed' as const,
         organizationId: orgId,
         name: 'Full',
         address: { city: 'Koh Tao', country: 'TH' },
@@ -395,15 +408,13 @@ describe('checkProfileCompleteness — Venue multi-row semantics', () => {
         organizationId: orgId,
         name: 'Pool A', slug: 'pool-a',
         address: { city: 'Koh Tao', country: 'TH' },
-        lat: 10, lng: 99, subtype: 'pool',
-        hasCompressor: false, verified: true,
+        lat: 10, lng: 99, kind: "pool" as const, features: [] as ('reef' | 'wreck' | 'cave' | 'wall' | 'drift' | 'muck' | 'altitude' | 'lake' | 'river' | 'quarry' | 'night' | 'deep')[], verified: true,
       })
       await ctx.db.insert('venues', {
         organizationId: orgId,
         name: 'Pool B', slug: 'pool-b',
         address: { city: 'Koh Tao', country: 'TH' },
-        lat: 10, lng: 99, subtype: 'pool',
-        hasCompressor: false, verified: true,
+        lat: 10, lng: 99, kind: "pool" as const, features: [] as ('reef' | 'wreck' | 'cave' | 'wall' | 'drift' | 'muck' | 'altitude' | 'lake' | 'river' | 'quarry' | 'night' | 'deep')[], verified: true,
       })
 
       const result = await checkProfileCompleteness(ctx, { _id: userId }, 'Venue')
@@ -423,16 +434,14 @@ describe('checkProfileCompleteness — Venue multi-row semantics', () => {
         organizationId: orgId,
         name: 'Incomplete', slug: 'incomplete',
         address: { city: '', country: '' },
-        lat: 10, lng: 99, subtype: 'pool',
-        hasCompressor: false, verified: true,
+        lat: 10, lng: 99, kind: "pool" as const, features: [] as ('reef' | 'wreck' | 'cave' | 'wall' | 'drift' | 'muck' | 'altitude' | 'lake' | 'river' | 'quarry' | 'night' | 'deep')[], verified: true,
       })
       // Second venue: fully complete
       await ctx.db.insert('venues', {
         organizationId: orgId,
         name: 'Good Pool', slug: 'good-pool',
         address: { city: 'Koh Tao', country: 'TH' },
-        lat: 10, lng: 99, subtype: 'pool',
-        hasCompressor: false, verified: true,
+        lat: 10, lng: 99, kind: "pool" as const, features: [] as ('reef' | 'wreck' | 'cave' | 'wall' | 'drift' | 'muck' | 'altitude' | 'lake' | 'river' | 'quarry' | 'night' | 'deep')[], verified: true,
       })
 
       const result = await checkProfileCompleteness(ctx, { _id: userId }, 'Venue')
@@ -450,8 +459,7 @@ describe('checkProfileCompleteness — Venue multi-row semantics', () => {
         organizationId: orgId,
         name: 'Partial', slug: 'partial',
         address: { city: '', country: '' },
-        lat: 10, lng: 99, subtype: 'pool',
-        hasCompressor: false, verified: true,
+        lat: 10, lng: 99, kind: "pool" as const, features: [] as ('reef' | 'wreck' | 'cave' | 'wall' | 'drift' | 'muck' | 'altitude' | 'lake' | 'river' | 'quarry' | 'night' | 'deep')[], verified: true,
       })
 
       const result = await checkProfileCompleteness(ctx, { _id: userId }, 'Venue')

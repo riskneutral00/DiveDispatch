@@ -2,11 +2,11 @@ import { describe, it, expect } from 'vitest'
 import { api } from '../convex/_generated/api'
 import {
   seedUser,
-  seedDiveCenterProfile,
   seedEquipmentProfile,
   seedCompleteGearInventory,
   getOrCreateTestOrg,
-  type SeedCtx, findProfileByUser } from './fixtures'
+  type SeedCtx,
+} from './fixtures'
 import { makeT } from './helpers/convex-helpers'
 
 // ─── Composite helper: 100% Equipment profile (simplest role) ─────────────
@@ -25,30 +25,6 @@ async function seedCompleteEquipment(ctx: SeedCtx, slug: string) {
   await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
   await seedEquipmentProfile(ctx, userId)
   await seedCompleteGearInventory(ctx, slug)
-  return userId
-}
-
-// ─── Composite helper: 100% DiveCenter profile ─────────────────────────────
-
-async function seedCompleteDC(ctx: SeedCtx, slug: string) {
-  const userId = await seedUser(ctx, {
-    slug,
-    tokenIdentifier: `clerk|${slug}`,
-    role: 'DiveCenter',
-    email: `${slug}@test.com`,
-    name: `${slug} Display`,
-    firstName: slug,
-    lastName: 'Test',
-  })
-  // Set profile-layer and settings-layer fields on users table
-  await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
-  await seedDiveCenterProfile(ctx, userId, {
-    name: 'Test DC',
-    email: 'dc@test.com',
-    associations: [{ agency: 'PADI', number: '12345' }],
-  })
-  const dc = await findProfileByUser(ctx, userId, 'diveCenters')
-  if (dc) await ctx.db.patch(dc._id, { customerLanguages: ['en'] })
   return userId
 }
 
@@ -102,6 +78,18 @@ describe('getLowestProfileCompletion', () => {
         organizationId,
         createdAt: Date.now(),
       })
+      const venueId = await ctx.db.insert('venues', {
+        organizationId,
+        slug: 'eq-all-done-venue',
+        name: 'Eq All Done Venue',
+        kind: 'dive_site',
+        features: ['reef'],
+        confinedCapable: false,
+        address: { city: 'Koh Tao', country: 'TH' },
+        lat: 10.09,
+        lng: 99.84,
+        verified: true,
+      })
       await ctx.db.insert('boats', {
         organizationId,
         name: 'Test Boat Biz',
@@ -110,8 +98,7 @@ describe('getLowestProfileCompletion', () => {
         lng: 99.84,
         email: 'boat@test.com',
         phone: '+66111111111',
-        fleet: [{ boatName: 'Dive Boat 1', maxPax: 12, boatType: 'day_boat', routes: [{ diveSite: 'Test Site', daysOfWeek: [1] }] }],
-        hasCompressor: false,
+        fleet: [{ boatName: 'Dive Boat 1', maxPax: 12, boatType: 'day_boat', routes: [{ venueIds: [venueId], daysOfWeek: [1] }] }],
         verified: false,
       })
     })

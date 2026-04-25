@@ -415,7 +415,7 @@ describe('userRoles.deleteRole', () => {
         createdAt: Date.now(),
       })
 
-      await ctx.db.insert('compressors', {
+      await ctx.db.insert('compressors', { slug: 'test-c-' + Math.random().toString(36).slice(2,8), location: 'fixed' as const,
         organizationId: orgId,
         name: 'Scuba Market',
         address: { city: 'Phuket', country: 'TH' },
@@ -445,6 +445,62 @@ describe('userRoles.deleteRole', () => {
         .withIndex('by_organizationId', (q) => q.eq('organizationId', orgId!))
         .unique()
       expect(orphan).toBeNull()
+    })
+  })
+
+  it('deletes inventoryUnits and equipmentInventory rows when Equipment role is deleted', async () => {
+    const t = makeT()
+    let roleId: Id<'userRoles'>
+    let unitId: Id<'inventoryUnits'>
+
+    await t.run(async (ctx) => {
+      const userId = await seedUser(ctx, { skipUserRoles: true })
+      const organizationId = await getOrCreateTestOrg(ctx, userId)
+
+      roleId = await ctx.db.insert('userRoles', {
+        userId,
+        role: 'Equipment',
+        organizationId,
+        createdAt: Date.now(),
+      })
+      await ctx.db.insert('userRoles', {
+        userId,
+        role: 'DiveCenter',
+        organizationId,
+        createdAt: Date.now(),
+      })
+
+      unitId = await seedInventoryUnit(ctx, {
+        ownerId: TEST_SLUGS.diveCenter,
+        ownerType: 'Equipment',
+        resourceType: 'Equipment',
+      })
+      await ctx.db.insert('equipmentInventory', {
+        inventoryUnitId: unitId,
+        equipmentManagerId: TEST_SLUGS.diveCenter,
+        gearType: 'mask',
+        manufacturer: 'Scubapro',
+        size: 'M',
+      })
+    })
+
+    const result = await t
+      .withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter })
+      .mutation(api.userRoles.deleteRole, { roleId: roleId! })
+
+    expect(result).toEqual({ deleted: true })
+
+    await t.run(async (ctx) => {
+      const remainingUnit = await ctx.db.get(unitId!)
+      expect(remainingUnit).toBeNull()
+
+      const remainingInventory = await ctx.db
+        .query('equipmentInventory')
+        .withIndex('by_equipmentManagerId', (q) =>
+          q.eq('equipmentManagerId', TEST_SLUGS.diveCenter),
+        )
+        .collect()
+      expect(remainingInventory).toHaveLength(0)
     })
   })
 
@@ -489,7 +545,7 @@ describe('userRoles.deleteRole', () => {
       roleId = await ctx.db.insert('userRoles', { userId: aliceId, role: 'Compressor', organizationId: orgId, createdAt: Date.now() })
       await ctx.db.insert('userRoles', { userId: bobId, role: 'Compressor', organizationId: orgId, createdAt: Date.now() })
 
-      await ctx.db.insert('compressors', {
+      await ctx.db.insert('compressors', { slug: 'test-c-' + Math.random().toString(36).slice(2,8), location: 'fixed' as const,
         organizationId: orgId,
         name: 'Shared Compressor',
         address: { city: 'Koh Tao', country: 'TH' },

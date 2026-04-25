@@ -1,29 +1,24 @@
 import { ConvexError } from 'convex/values'
-import {
-  CAPABILITIES_REQUIRED_BY_SUBTYPE,
-  RANGE_BY_SUBTYPE,
-  SUBTYPES_WITH_OPTIONAL_CONFINED,
-  type VenueSubtype,
-} from '../shared/venueTypes'
+import { RANGE_BY_KIND, type VenueKind } from '../shared/venueTypes'
 import { ErrorCode } from './errorCodes'
 
 export function assertVenueRange(
-  subtype: VenueSubtype,
+  kind: VenueKind,
   maxDepth?: number,
   maxCapacity?: number,
 ): void {
-  const range = RANGE_BY_SUBTYPE[subtype]
+  const range = RANGE_BY_KIND[kind]
   if (maxDepth !== undefined) {
     if (typeof maxDepth !== 'number' || Number.isNaN(maxDepth) || maxDepth < 0) {
       throw new ConvexError({
         code: ErrorCode.VALIDATION,
-        reason: `invalid_max_depth:${subtype}:${maxDepth}`,
+        reason: `invalid_max_depth:${kind}:${maxDepth}`,
       })
     }
     if (maxDepth > range.maxDepth) {
       throw new ConvexError({
         code: ErrorCode.VALIDATION,
-        reason: `max_depth_exceeds_subtype_cap:${subtype}:${maxDepth}>${range.maxDepth}`,
+        reason: `max_depth_exceeds_kind_cap:${kind}:${maxDepth}>${range.maxDepth}`,
       })
     }
   }
@@ -31,40 +26,26 @@ export function assertVenueRange(
     if (typeof maxCapacity !== 'number' || Number.isNaN(maxCapacity) || maxCapacity < 0) {
       throw new ConvexError({
         code: ErrorCode.VALIDATION,
-        reason: `invalid_max_capacity:${subtype}:${maxCapacity}`,
+        reason: `invalid_max_capacity:${kind}:${maxCapacity}`,
       })
     }
     if (maxCapacity > range.maxCapacity) {
       throw new ConvexError({
         code: ErrorCode.VALIDATION,
-        reason: `max_capacity_exceeds_subtype_cap:${subtype}:${maxCapacity}>${range.maxCapacity}`,
+        reason: `max_capacity_exceeds_kind_cap:${kind}:${maxCapacity}>${range.maxCapacity}`,
       })
     }
   }
 }
 
-export function assertCapabilitiesPresentForSubtype(
-  subtype: VenueSubtype,
-  maxDepth: number | undefined,
-  maxCapacity: number | undefined,
-): void {
-  if (!CAPABILITIES_REQUIRED_BY_SUBTYPE.has(subtype)) return
-  if (maxDepth === undefined || maxCapacity === undefined) {
-    throw new ConvexError({
-      code: ErrorCode.VALIDATION,
-      reason: `capabilities_required_for_subtype:${subtype}`,
-    })
-  }
-}
-
-export function assertVenueSubtypeConsistent(
-  subtype: VenueSubtype,
+export function assertVenueKindConsistent(
+  kind: VenueKind,
   confinedCapable: boolean | undefined,
 ): void {
-  if (confinedCapable === true && !SUBTYPES_WITH_OPTIONAL_CONFINED.has(subtype) && subtype !== 'pool') {
+  if (kind === 'pool' && confinedCapable === false) {
     throw new ConvexError({
       code: ErrorCode.VALIDATION,
-      reason: `confined_capable_invalid_for_subtype:${subtype}`,
+      reason: `pool_must_be_confined_capable`,
     })
   }
 }

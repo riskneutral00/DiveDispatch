@@ -1,6 +1,6 @@
 import type { Doc, Id } from '../../convex/_generated/dataModel'
 import { GEAR_TYPES, type GearType } from '../../convex/shared/gearSizing'
-import { type VenueSubtype } from '../../convex/shared/venueTypes'
+import { type VenueKind } from '../../convex/shared/venueTypes'
 import type { SeedCtx } from './seedUsers'
 import { getOrCreateTestOrg } from './seedUsers'
 
@@ -110,21 +110,19 @@ export async function seedVenue(
     address?: AddressOverride
     lat?: number
     lng?: number
-    subtype?: VenueSubtype
+    kind?: VenueKind
     verified?: boolean
     confinedCapable?: boolean
-    hasCompressor?: boolean
     organizationId?: Id<'organizations'>
   } = {},
 ) {
-  const subtype = overrides.subtype ?? 'pool'
+  const kind = overrides.kind ?? 'pool'
   const organizationId = overrides.organizationId
     ?? (overrides.userId ? await getOrCreateTestOrg(ctx, overrides.userId, overrides.name ?? 'Test Venue') : undefined)
   if (!organizationId) {
     throw new Error('seedVenue requires organizationId or userId')
   }
   const address = resolveAddress(overrides)
-  const isPool = subtype === 'pool'
   const venueName = overrides.name ?? 'Test Venue'
   const venueSlug = venueName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'test-venue'
   return ctx.db.insert('venues', {
@@ -133,10 +131,10 @@ export async function seedVenue(
     address,
     lat: overrides.lat ?? 10.0957,
     lng: overrides.lng ?? 99.8408,
-    subtype,
+    kind,
+    features: [],
     verified: overrides.verified ?? true,
-    ...(isPool ? {} : { confinedCapable: overrides.confinedCapable ?? true }),
-    hasCompressor: overrides.hasCompressor ?? false,
+    ...(kind === 'pool' ? { confinedCapable: true } : { confinedCapable: overrides.confinedCapable ?? true }),
     organizationId,
   })
 }
@@ -226,7 +224,6 @@ export async function seedBoatProfile(
     email?: string
     phone?: string
     fleet?: Array<{ boatName: string; maxPax: number; boatType: 'day_boat' | 'speedboat' | 'longtail' | 'liveaboard' | 'catamaran' | 'rib' }>
-    hasCompressor?: boolean
     verified?: boolean
     organizationId?: Id<'organizations'>
   } = {},
@@ -242,7 +239,6 @@ export async function seedBoatProfile(
     email: overrides.email ?? 'boat@test.com',
     phone: overrides.phone ?? '+66123456789',
     fleet: overrides.fleet ?? [{ boatName: 'MV Test', maxPax: 20, boatType: 'day_boat' }],
-    hasCompressor: overrides.hasCompressor ?? true,
     verified: overrides.verified ?? true,
   })
   await markRoleComplete(ctx, userId, 'Boat')
@@ -277,6 +273,35 @@ export async function seedEquipmentProfile(
   })
   await markRoleComplete(ctx, userId, 'Equipment')
   return id
+}
+
+export async function seedCompressorForBoat(
+  ctx: SeedCtx,
+  args: {
+    organizationId: Id<'organizations'>
+    boatId: Id<'boats'>
+    slug: string
+    name?: string
+    address?: AddressOverride
+    email?: string
+    phone?: string
+    verified?: boolean
+  },
+) {
+  const address = resolveAddress(args)
+  return ctx.db.insert('compressors', {
+    organizationId: args.organizationId,
+    slug: args.slug,
+    name: args.name ?? `${args.slug} Compressor`,
+    location: 'boat',
+    boatId: args.boatId,
+    address,
+    lat: 10.0957,
+    lng: 99.8408,
+    email: args.email ?? `${args.slug}@test.com`,
+    phone: args.phone ?? '+66123456789',
+    verified: args.verified ?? true,
+  })
 }
 
 export async function seedCompleteGearInventory(

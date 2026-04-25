@@ -6,11 +6,8 @@ import { assertRoleReadiness } from '../convex/userRoles'
 import {
   seedUser,
   seedDiveCenterProfile,
-  seedAgent,
   seedInstructorProfile,
   seedDiveMasterProfile,
-  seedBoatProfile,
-  seedEquipmentProfile,
   seedBooking,
   seedBookingTemplate,
   seedStakeholderPreferences,
@@ -89,8 +86,7 @@ async function seedFullDCWithCoverage(ctx: SeedCtx, slug: string) {
   await seedVenue(ctx, {
     userId: venueUserId,
     name: 'Test Pool',
-    hasCompressor: false,
-    subtype: 'pool',
+    kind: 'pool',
   })
   await seedUser(ctx, {
     slug: 'test-compressor',

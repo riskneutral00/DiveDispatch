@@ -41,9 +41,8 @@ describe('schema — venues.organizationId is required', () => {
           address: { city: 'Phuket', country: 'TH' },
           lat: 7.88,
           lng: 98.39,
-          subtype: 'shore',
+          kind: 'dive_site', features: [],
           confinedCapable: true,
-          hasCompressor: false,
           verified: false,
         } as never)
       }),

@@ -157,7 +157,7 @@ function extractOrgPermissions(identity: UserIdentity): string[] | null {
   return null
 }
 
-async function hasAnyOperatorRole(ctx: MutationCtx, userId: Id<'users'>): Promise<boolean> {
+async function hasAnyOperatorRole(ctx: DbCtx, userId: Id<'users'>): Promise<boolean> {
   const roles = await getAllUserRoles(ctx, userId)
   return roles.some((r) => OPERATOR_ROLE_SET.has(r.role))
 }
@@ -176,7 +176,7 @@ export async function getUserBySlug(ctx: DbCtx, slug: string): Promise<Doc<'user
 }
 
 async function hasRole(
-  ctx: MutationCtx,
+  ctx: DbCtx,
   userId: Id<'users'>,
   role: string,
 ): Promise<boolean> {
@@ -190,7 +190,7 @@ async function hasRole(
 }
 
 export async function authorize(
-  ctx: MutationCtx,
+  ctx: DbCtx,
   actor: { user: Doc<'users'>; identity: UserIdentity } | null,
   action: Action,
   resource: AuthResource,

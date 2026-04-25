@@ -218,6 +218,7 @@ describe('users.inheritedContactDefaults', () => {
 
     const payload = {
       name: 'My Compressor Biz',
+      location: 'fixed' as const,
       address: { city: 'Bangkok', country: 'TH' },
       lat: 13.75,
       lng: 100.5,

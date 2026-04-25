@@ -6,6 +6,7 @@ import {
   profileCreate,
 } from './lib/profileHelpers'
 import { getAuthUser } from './lib/auth'
+import { visibleOrgIds } from './lib/destinationScope'
 import { BASE_PROFILE_CREATE_FIELDS, BASE_PROFILE_UPDATE_FIELDS, ACCESS_CONTROL_FIELDS } from './lib/validators'
 import { ErrorCode } from './lib/errorCodes'
 
@@ -63,4 +64,21 @@ export const update = mutation({
 export const mine = query({
   args: {},
   handler: async (ctx) => profileMine(ctx, 'diveStaff'),
+})
+
+export const visibleToMe = query({
+  args: {},
+  handler: async (ctx) => {
+    const orgIds = await visibleOrgIds(ctx)
+    if (orgIds.length === 0) return []
+    const results = await Promise.all(
+      orgIds.map((orgId) =>
+        ctx.db
+          .query('diveStaff')
+          .withIndex('by_organizationId', (q) => q.eq('organizationId', orgId))
+          .collect(), // bounded: per-org instructor count, realistic cap ~20
+      ),
+    )
+    return results.flat()
+  },
 })

@@ -76,8 +76,7 @@ describe('Wave 8 — C3 invariant (multi-role user shares one org)', () => {
     })
     const poolId = await t.withIdentity(identity).mutation(api.venues.create, {
       name: 'Hug Ocean Pool', ...ADDR_ARGS,
-      subtype: 'pool' as const,
-      hasCompressor: false,
+      kind: "pool" as const, features: [],
       maxDepth: 2.5,
       maxCapacity: 5,
     })

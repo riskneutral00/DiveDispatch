@@ -4,7 +4,6 @@ import {
   seedUser,
   seedDiveCenterProfile,
   seedInstructorProfile,
-  seedBoatProfile,
   seedAgent,
   getOrCreateTestOrg,
   type SeedCtx,
@@ -200,9 +199,8 @@ describe('prerequisite gate: Boat — fleet depth', () => {
           boatName: '',
           maxPax: 0,
           boatType: 'day_boat' as const,
-          routes: [{ diveSite: 'Sail Rock', daysOfWeek: [1, 2, 3, 4, 5] }],
+          routes: [{ venueIds: [], daysOfWeek: [1, 2, 3, 4, 5] }],
         }],
-        hasCompressor: false,
         verified: true,
       })
 

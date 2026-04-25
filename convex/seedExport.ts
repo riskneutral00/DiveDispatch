@@ -6,7 +6,7 @@ import { ErrorCode } from './lib/errorCodes'
 import { queryDynamicTable } from './lib/typedDb'
 import { getAllUserRoles } from './lib/userRoleHelpers'
 
-const VENUE_SUBTYPE_FILTER_BY_ROLE: Record<string, (subtype: string) => boolean> = {
+const VENUE_KIND_FILTER_BY_ROLE: Record<string, (kind: string) => boolean> = {
   Venue: () => true,
 }
 
@@ -39,13 +39,13 @@ export const captureBySlug = query({
         if (!table) continue
 
         if (table === 'venues') {
-          const filter = VENUE_SUBTYPE_FILTER_BY_ROLE[r.role]
+          const filter = VENUE_KIND_FILTER_BY_ROLE[r.role]
           if (!filter) continue
           const venues = await ctx.db
             .query('venues')
             .withIndex('by_organizationId', (q) => q.eq('organizationId', organization._id))
             .collect() // bounded: single org owns at most a handful of venues
-          const match = venues.find((v) => filter(v.subtype))
+          const match = venues.find((v) => filter(v.kind))
           if (match) profiles[r.role] = match
           continue
         }

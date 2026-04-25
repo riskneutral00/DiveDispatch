@@ -17,6 +17,7 @@ import {
   seedDiveCenterProfile,
   seedBookingTemplate,
   seedVenue,
+  seedCompressorForBoat,
   getOrCreateTestOrg,
   type SeedCtx, findProfileByUser } from './fixtures'
 
@@ -30,21 +31,20 @@ async function seedUserBySlug(ctx: SeedCtx, slug: string, role: NonNullable<NonN
 async function seedVenueUser(
   ctx: SeedCtx,
   slug: string,
-  caps: { confinedCapable: boolean; hasCompressor: boolean },
+  caps: { confinedCapable: boolean },
 ) {
   const userId = await seedUser(ctx, { tokenIdentifier: `clerk|${slug}`, slug, email: `${slug}@test.com`, name: `${slug} Display`, firstName: slug, lastName: 'Test', role: 'Venue' })
   await seedVenue(ctx, {
     userId,
     name: `${slug} Venue`,
     confinedCapable: caps.confinedCapable,
-    hasCompressor: caps.hasCompressor,
   })
 }
 
 async function seedBoatUser(ctx: SeedCtx, slug: string, hasCompressor: boolean) {
   const userId = await seedUser(ctx, { tokenIdentifier: `clerk|${slug}`, slug, email: `${slug}@test.com`, name: `${slug} Display`, firstName: slug, lastName: 'Test', role: 'Boat' })
   const organizationId = await getOrCreateTestOrg(ctx, userId, `${slug} Boat`)
-  await ctx.db.insert('boats', {
+  const boatId = await ctx.db.insert('boats', {
     organizationId,
     name: `${slug} Boat`,
     address: { city: 'Koh Tao', country: 'TH' },
@@ -53,9 +53,17 @@ async function seedBoatUser(ctx: SeedCtx, slug: string, hasCompressor: boolean) 
     email: `${slug}@test.com`,
     phone: '+66123456789',
     fleet: [],
-    hasCompressor,
     verified: true,
   })
+  if (hasCompressor) {
+    await seedCompressorForBoat(ctx, {
+      organizationId,
+      boatId,
+      slug: `${slug}-compressor`,
+      name: `${slug} Onboard Compressor`,
+      email: `${slug}@test.com`,
+    })
+  }
 }
 
 /** Seed diveCenters profile + bookingTemplates + user fields so profileCompleteness gate passes */
@@ -163,7 +171,6 @@ describe('createDraftShell — coverage gate', () => {
       await seedUserBySlug(ctx, 'comp-1', 'Compressor')
       await seedVenueUser(ctx, 'venue-1', {
         confinedCapable: true,
-        hasCompressor: false,
       })
       await seedStakeholderPreferences(ctx, 'dc-full', {
         preferredInstructorSlugs: ['inst-1'],
@@ -234,7 +241,6 @@ describe('createDraftShell — coverage gate', () => {
       await seedUserBySlug(ctx, 'comp-1', 'Compressor')
       await seedVenueUser(ctx, 'venue-1', {
         confinedCapable: true,
-        hasCompressor: false,
       })
       await seedStakeholderPreferences(ctx, 'dc-nodate', {
         preferredInstructorSlugs: ['inst-1'],

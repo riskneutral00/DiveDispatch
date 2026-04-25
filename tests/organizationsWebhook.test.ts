@@ -392,6 +392,19 @@ describe('organizations.getBySlug', () => {
       svixId: makeSvixId(),
     })
 
+    await t.run(async (ctx) => {
+      await ctx.db.insert('users', {
+        tokenIdentifier: 'clerk|slug-reader',
+        originalTokenIdentifier: 'clerk|slug-reader',
+        slug: 'slug-reader',
+        email: 'reader@test.com',
+        name: 'Reader',
+        firstName: 'Slug',
+        lastName: 'Reader',
+        appLanguage: 'en',
+      })
+    })
+
     const result = await t
       .withIdentity({ tokenIdentifier: 'clerk|slug-reader' })
       .query(api.organizations.getBySlug, { slug: 'slug-test' })
@@ -399,14 +412,29 @@ describe('organizations.getBySlug', () => {
     expect(result?.clerkOrgId).toBe(clerkOrgId)
   })
 
-  it('returns null for unauthenticated caller', async () => {
+  it('throws UNAUTHENTICATED for unauthenticated caller', async () => {
     const t = makeT()
-    const result = await t.query(api.organizations.getBySlug, { slug: 'slug-test' })
-    expect(result).toBeNull()
+    await expectConvexError(
+      t.query(api.organizations.getBySlug, { slug: 'slug-test' }),
+      'UNAUTHENTICATED',
+    )
   })
 
   it('returns null for unknown slug (authenticated)', async () => {
     const t = makeT()
+    await t.run(async (ctx) => {
+      await ctx.db.insert('users', {
+        tokenIdentifier: 'clerk|slug-reader',
+        originalTokenIdentifier: 'clerk|slug-reader',
+        slug: 'slug-reader',
+        email: 'reader@test.com',
+        name: 'Reader',
+        firstName: 'Slug',
+        lastName: 'Reader',
+        appLanguage: 'en',
+      })
+    })
+
     const result = await t
       .withIdentity({ tokenIdentifier: 'clerk|slug-reader' })
       .query(api.organizations.getBySlug, { slug: 'does-not-exist' })
