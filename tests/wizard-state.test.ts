@@ -8,9 +8,11 @@ import {
   canAdvanceFromItinerary,
   serializeDraftState,
   deserializeDraftState,
+  isConfinedVenueType,
   type CustomerData,
   type WizardState,
 } from '../src/lib/booking/wizard-state'
+import { isVenueConfinedCapable } from '../convex/shared/venueTypes'
 import { buildSubmitPayload } from '../src/lib/booking/build-submit-payload'
 import { testDate } from './helpers/dates'
 
@@ -542,6 +544,37 @@ describe('canAdvanceFromItinerary', () => {
     }
     // Should still pass — the empty entry is ignored
     expect(canAdvanceFromItinerary(state)).toBe(true)
+  })
+})
+
+describe('isConfinedVenueType — predicate swap via isVenueConfinedCapable', () => {
+  it('returns true for venueType=pool', () => {
+    expect(isConfinedVenueType('pool')).toBe(true)
+  })
+  it('returns false for venueType=boat', () => {
+    expect(isConfinedVenueType('boat')).toBe(false)
+  })
+  it('returns false for venueType=shore', () => {
+    expect(isConfinedVenueType('shore')).toBe(false)
+  })
+  it('returns false when venueType is undefined', () => {
+    expect(isConfinedVenueType(undefined)).toBe(false)
+  })
+})
+
+describe('isVenueConfinedCapable — shared predicate (confined-water course eligibility)', () => {
+  it('accepts any venue with kind=pool regardless of confinedCapable flag', () => {
+    expect(isVenueConfinedCapable({ kind: 'pool' })).toBe(true)
+    expect(isVenueConfinedCapable({ kind: 'pool', confinedCapable: false })).toBe(true)
+  })
+  it('accepts dive_site with confinedCapable=true', () => {
+    expect(isVenueConfinedCapable({ kind: 'dive_site', confinedCapable: true })).toBe(true)
+  })
+  it('rejects dive_site with confinedCapable=false', () => {
+    expect(isVenueConfinedCapable({ kind: 'dive_site', confinedCapable: false })).toBe(false)
+  })
+  it('rejects dive_site with no confinedCapable flag', () => {
+    expect(isVenueConfinedCapable({ kind: 'dive_site' })).toBe(false)
   })
 })
 

@@ -7,6 +7,15 @@ import {
 } from '@/lib/booking/activity-validation'
 import { isValidPhoneE164 } from '@/lib/constants/i18n'
 import { toISODateString } from '@/lib/utils/date'
+import { isVenueConfinedCapable } from '../../../convex/shared/venueTypes'
+
+export function isConfinedVenueType(vt: 'pool' | 'boat' | 'shore' | undefined): boolean {
+  if (!vt) return false
+  return isVenueConfinedCapable({
+    kind: vt === 'pool' ? 'pool' : 'dive_site',
+    confinedCapable: vt === 'pool',
+  })
+}
 
 const WIZARD_STATE_VERSION = 1
 
@@ -369,7 +378,7 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
         ...state,
         days: state.days.map((d, i) => {
           if (i < action.fromDayIndex || d.venueType !== venueType) return d
-          if (venueType === 'pool') {
+          if (isConfinedVenueType(venueType)) {
             return { ...d, confinedInventoryUnitId: action.unitId, externalConfinedVenueName: sourceDay.externalConfinedVenueName }
           }
           return { ...d, inventoryUnitId: action.unitId, externalVenueName: sourceDay.externalVenueName }

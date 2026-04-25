@@ -36,7 +36,7 @@ async function seedCoverage(ctx: SeedCtx, operatorSlug: string, operatorUserId: 
   await _seedUser(ctx, { tokenIdentifier: 'clerk|instr-cov', slug: 'instr-cov', email: 'i@t.com', name: 'Instr', firstName: 'I', lastName: 'C', role: 'Instructor' })
   await _seedUser(ctx, { tokenIdentifier: 'clerk|em-cov', slug: 'em-cov', email: 'e@t.com', name: 'EM', firstName: 'E', lastName: 'M', role: 'Equipment' })
   const venueUser = await _seedUser(ctx, { tokenIdentifier: 'clerk|venue-cov', slug: 'venue-cov', email: 'v@t.com', name: 'Venue', firstName: 'V', lastName: 'C', role: 'Venue' })
-  await seedVenue(ctx, { userId: venueUser, name: 'Test Venue', placeName: 'Test', country: 'TH', lat: 0, lng: 0, confinedCapable: true, hasCompressor: true })
+  await seedVenue(ctx, { userId: venueUser, name: 'Test Venue', placeName: 'Test', country: 'TH', lat: 0, lng: 0, confinedCapable: true })
   await seedStakeholderPreferences(ctx, operatorSlug, {
     confirmOnAccept: false,
     confirmOnDecline: false,
