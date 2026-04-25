@@ -143,7 +143,7 @@ export const ROLES: RoleConfig[] = [
     description: 'Provide vessel transport and surface support for dive operations.',
     profileTabs: [
       { id: 'contact', label: 'Contact', fields: ['name', 'address'] },
-      { id: 'fleet', label: 'Fleet', fields: ['fleet', 'diveSite'] },
+      { id: 'fleet', label: 'Fleet', fields: ['fleet', 'routeVenues'] },
       { id: 'booking', label: 'Booking' },
     ],
   },
@@ -182,8 +182,7 @@ export const ROLES: RoleConfig[] = [
     tableName: 'compressors',
     description: 'Supply and track tank fills and gas blending for dive operations.',
     profileTabs: [
-      { id: 'contact', label: 'Contact', fields: ['name', 'address'] },
-      { id: 'gas-mixes', label: 'Gas Mixes', fields: ['gasMixes'] },
+      { id: 'contact', label: 'Contact', fields: ['name', 'address', 'gasMixes'] },
       { id: 'booking', label: 'Booking' },
     ],
   },
@@ -203,7 +202,7 @@ export const ROLES: RoleConfig[] = [
     description: 'Provide a place where diving happens — pool, shore, reef, lake, river, quarry, or other.',
     profileTabs: [
       { id: 'contact', label: 'Contact', fields: ['name', 'address'] },
-      { id: 'capabilities', label: 'Capabilities', fields: ['subtype', 'maxDepth', 'maxCapacity', 'confinedCapable'] },
+      { id: 'capabilities', label: 'Capabilities', fields: ['kind', 'maxDepth', 'maxCapacity', 'confinedCapable'] },
       { id: 'booking', label: 'Booking', fields: ['acceptanceMode'] },
     ],
   },

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { useMutation, useQuery } from 'convex/react'
 import type { Id } from '@/lib/convex-generated'
 import { api } from '@/lib/convex-generated'
@@ -8,8 +9,13 @@ import { EntityCardList } from '@/components/ui/entity-card-list'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { LoadingCard } from '@/components/ui/loading-card'
-import type { BaseProfileSectionProps } from '@/lib/profile-form'
-import type { VenueSubtype } from '@/lib/constants/venue-subtypes'
+import {
+  buildParentContactDefaults,
+  type BaseProfileSectionProps,
+} from '@/lib/profile-form'
+import { compressorGasMixesToPayload } from '@/components/profiles/compressor-profile-form'
+import type { GasMix } from '@/lib/constants/gas-mixes'
+import type { VenueKind, VenueFeature } from '@/lib/constants/venue-subtypes'
 import {
   VenueEditDialog,
   EMPTY_VENUE_EDIT,
@@ -17,23 +23,26 @@ import {
 } from './venue-edit-dialog'
 
 export type VenueCapabilitiesFormState = {
-  subtype: VenueSubtype
+  kind: VenueKind
+  features: VenueFeature[]
   confinedCapable?: boolean
   maxDepth: number
   maxCapacity: number
 }
 
 export const INITIAL_VENUE_CAPABILITIES_FORM: VenueCapabilitiesFormState = {
-  subtype: 'pool',
+  kind: 'pool',
+  features: [],
   confinedCapable: false,
   maxDepth: 0,
   maxCapacity: 0,
 }
 
 export function venueCapabilitiesFromProfile(p: Record<string, unknown>): VenueCapabilitiesFormState {
-  const subtype = (p.subtype as VenueSubtype | undefined) ?? 'pool'
+  const kind = (p.kind as VenueKind | undefined) ?? 'pool'
   return {
-    subtype,
+    kind,
+    features: (p.features as VenueFeature[]) ?? [],
     confinedCapable: (p.confinedCapable as boolean) ?? false,
     maxDepth: (p.maxDepth as number) ?? 0,
     maxCapacity: (p.maxCapacity as number) ?? 0,
@@ -42,30 +51,26 @@ export function venueCapabilitiesFromProfile(p: Record<string, unknown>): VenueC
 
 export function venueCapabilitiesToPayload(f: VenueCapabilitiesFormState): Record<string, unknown> {
   return {
-    subtype: f.subtype,
+    kind: f.kind,
+    features: f.features,
     ...(f.maxDepth > 0 ? { maxDepth: f.maxDepth } : {}),
     ...(f.maxCapacity > 0 ? { maxCapacity: f.maxCapacity } : {}),
     ...(f.confinedCapable !== undefined ? { confinedCapable: f.confinedCapable } : {}),
   }
 }
 
-const SUBTYPE_LABELS: Record<VenueSubtype, string> = {
-  pool: 'Pool',
-  shore: 'Shore',
-  reef: 'Reef',
-  lake: 'Lake',
-  river: 'River',
-  quarry: 'Quarry',
-  other: 'Other',
-}
-
 type VenueCapabilitiesSectionProps = BaseProfileSectionProps
 
-export function VenueCapabilitiesSection(_props: VenueCapabilitiesSectionProps) {
+export function VenueCapabilitiesSection({ me }: VenueCapabilitiesSectionProps) {
+  const t = useTranslations('common')
   const venues = useQuery(api.venues.mine)
+  const compressors = useQuery(api.compressors.mine)
   const createVenue = useMutation(api.venues.create)
   const updateVenue = useMutation(api.venues.update)
   const removeVenue = useMutation(api.venues.remove)
+  const createCompressor = useMutation(api.compressors.create)
+  const updateCompressor = useMutation(api.compressors.update)
+  const removeCompressor = useMutation(api.compressors.remove)
 
   const [dialogState, setDialogState] = useState<
     | { open: false }
@@ -77,9 +82,46 @@ export function VenueCapabilitiesSection(_props: VenueCapabilitiesSectionProps) 
     return <LoadingCard />
   }
 
+  const linkedForVenue = (venueId: Id<'venues'>) =>
+    (compressors ?? []).filter((c) => c.location === 'venue' && c.venueId === venueId)
+
+  const reconcileVenueCompressor = async (venueId: Id<'venues'>, value: VenueEditValue) => {
+    const linked = linkedForVenue(venueId)
+    if (linked.length > 1) {
+      throw new Error(t('multipleCompressorsLinkedVenue'))
+    }
+    const existing = linked[0]
+    const gasPayload = compressorGasMixesToPayload({
+      gasMixes: (value.compressorGasMixes ?? []) as GasMix[],
+      nitroxMin: value.compressorNitroxMin,
+      nitroxMax: value.compressorNitroxMax,
+    })
+    if (value.hasCompressorOnSite) {
+      if (existing) {
+        await updateCompressor({
+          compressorId: existing._id,
+          location: 'venue',
+          venueId,
+          ...gasPayload,
+        } as never)
+      } else {
+        const parentDefaults = buildParentContactDefaults(me) as Record<string, unknown>
+        await createCompressor({
+          ...parentDefaults,
+          name: value.name,
+          location: 'venue',
+          venueId,
+          ...gasPayload,
+        } as never)
+      }
+    } else if (existing) {
+      await removeCompressor({ compressorId: existing._id })
+    }
+  }
+
   const handleCreate = async (value: VenueEditValue) => {
     if (!value.location) return
-    await createVenue({
+    const venueId = await createVenue({
       name: value.name,
       address: value.location.address,
       placeId: value.location.placeId,
@@ -87,14 +129,17 @@ export function VenueCapabilitiesSection(_props: VenueCapabilitiesSectionProps) 
       lng: value.location.lng,
       email: '',
       phone: '',
-      subtype: value.subtype,
-      hasCompressor: value.hasCompressor,
+      kind: value.kind,
+      features: value.features,
       confinedCapable: value.confinedCapable,
       maxDepth: value.maxDepth > 0 ? value.maxDepth : undefined,
       maxCapacity: value.maxCapacity > 0 ? value.maxCapacity : undefined,
       isAllowed: value.isAllowed,
       notAllowed: value.notAllowed,
     })
+    if (value.hasCompressorOnSite && venueId) {
+      await reconcileVenueCompressor(venueId, value)
+    }
   }
 
   const handleEdit = async (venueId: Id<'venues'>, value: VenueEditValue) => {
@@ -106,14 +151,15 @@ export function VenueCapabilitiesSection(_props: VenueCapabilitiesSectionProps) 
       placeId: value.location.placeId,
       lat: value.location.lat,
       lng: value.location.lng,
-      subtype: value.subtype,
-      hasCompressor: value.hasCompressor,
+      kind: value.kind,
+      features: value.features,
       confinedCapable: value.confinedCapable,
       maxDepth: value.maxDepth > 0 ? value.maxDepth : undefined,
       maxCapacity: value.maxCapacity > 0 ? value.maxCapacity : undefined,
       isAllowed: value.isAllowed,
       notAllowed: value.notAllowed,
     })
+    await reconcileVenueCompressor(venueId, value)
   }
 
   const handleRemove = async (venueId: Id<'venues'>) => {
@@ -121,13 +167,15 @@ export function VenueCapabilitiesSection(_props: VenueCapabilitiesSectionProps) 
   }
 
   const openEditFor = (venue: (typeof venues)[number]) => {
+    const linked = linkedForVenue(venue._id)
+    const linkedOne = linked.length === 1 ? linked[0] : undefined
     setDialogState({
       open: true,
       mode: 'edit',
       venueId: venue._id,
       initial: {
         name: venue.name,
-        subtype: venue.subtype as VenueSubtype,
+        kind: venue.kind as VenueKind,
         location: {
           address: venue.address,
           placeId: venue.placeId,
@@ -137,9 +185,13 @@ export function VenueCapabilitiesSection(_props: VenueCapabilitiesSectionProps) 
         maxDepth: venue.maxDepth ?? 0,
         maxCapacity: venue.maxCapacity ?? 0,
         confinedCapable: venue.confinedCapable ?? false,
-        hasCompressor: venue.hasCompressor,
+        features: (venue.features ?? []) as VenueFeature[],
         isAllowed: venue.isAllowed ?? [],
         notAllowed: venue.notAllowed ?? [],
+        hasCompressorOnSite: linked.length === 1,
+        compressorGasMixes: (linkedOne?.gasMixes ?? []) as GasMix[],
+        compressorNitroxMin: linkedOne?.nitroxMin,
+        compressorNitroxMax: linkedOne?.nitroxMax,
       },
     })
   }
@@ -147,44 +199,55 @@ export function VenueCapabilitiesSection(_props: VenueCapabilitiesSectionProps) 
   return (
     <>
       <EntityCardList
-        label="Venues"
+        label={t('venues')}
         items={venues}
-        addLabel="Add venue"
-        emptyMessage="No venues yet. Add your first venue to start accepting bookings."
+        addLabel={t('addVenue')}
+        emptyMessage={t('noVenuesYet')}
         onAdd={() => setDialogState({ open: true, mode: 'create' })}
         onRemove={(venue) => void handleRemove(venue._id)}
         itemKey={(venue) => venue._id}
-        removeAriaLabel={(venue) => `Remove ${venue.name}`}
-        renderCard={(venue) => (
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-2">
-              <span className="font-medium text-primary truncate">{venue.name}</span>
-              <Badge variant="muted">{SUBTYPE_LABELS[venue.subtype as VenueSubtype]}</Badge>
-            </div>
-            <div className="text-body-sm text-secondary">
-              {venue.maxDepth ? `${venue.maxDepth} m` : '—'}
-              {' · '}
-              {venue.maxCapacity ? `${venue.maxCapacity} cap` : '—'}
-              {venue.confinedCapable ? ' · Confined' : ''}
-              {venue.hasCompressor ? ' · Compressor' : ''}
-            </div>
-            {venue.address?.city && (
-              <div className="text-body-sm text-secondary truncate">
-                {venue.address.city}
-                {venue.address.country ? `, ${venue.address.country}` : ''}
+        removeAriaLabel={(venue) => t('removeVenue', { name: venue.name })}
+        renderCard={(venue) => {
+          const features = (venue.features ?? []) as VenueFeature[]
+          return (
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <span className="font-medium text-primary truncate">{venue.name}</span>
+                <Badge variant="muted">{t(`venueKinds.${venue.kind as VenueKind}`)}</Badge>
               </div>
-            )}
-            <Button
-              type="button"
-              size="sm"
-              variant="secondary"
-              onClick={() => openEditFor(venue)}
-              className="self-start"
-            >
-              Edit
-            </Button>
-          </div>
-        )}
+              <div className="text-body-sm text-secondary">
+                {venue.maxDepth ? `${venue.maxDepth} m` : '—'}
+                {' · '}
+                {venue.maxCapacity ? `${venue.maxCapacity} cap` : '—'}
+                {venue.confinedCapable ? ' · Confined' : ''}
+              </div>
+              {features.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {features.map((f) => (
+                    <Badge key={f} variant="info" size="sm">
+                      {t(`venueFeatures.${f}`)}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              {venue.address?.city && (
+                <div className="text-body-sm text-secondary truncate">
+                  {venue.address.city}
+                  {venue.address.country ? `, ${venue.address.country}` : ''}
+                </div>
+              )}
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                onClick={() => openEditFor(venue)}
+                className="self-start"
+              >
+                {t('edit')}
+              </Button>
+            </div>
+          )
+        }}
       />
 
       <VenueEditDialog

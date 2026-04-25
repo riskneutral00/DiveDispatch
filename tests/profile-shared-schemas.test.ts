@@ -10,6 +10,7 @@ import {
   personalLanguagesSchema,
   instructorCredentialsSchema,
   diveSiteDetailsSchema,
+  venueCapabilitiesSchema,
 } from '../src/lib/schemas/profile-shared'
 
 const validLocation = {
@@ -283,7 +284,7 @@ describe('diveSiteDetailsSchema', () => {
       diveSiteDetailsSchema.safeParse({
         name: 'Similan Island #9',
         location: validLocation,
-        subtype: 'reef',
+        kind: "dive_site",
       }).success,
     ).toBe(true)
   })
@@ -293,7 +294,7 @@ describe('diveSiteDetailsSchema', () => {
       diveSiteDetailsSchema.safeParse({
         name: 'Similan Island #9',
         location: null,
-        subtype: 'reef',
+        kind: "dive_site",
       }).success,
     ).toBe(false)
   })
@@ -316,5 +317,79 @@ describe('diveSiteDetailsSchema', () => {
         subtype: 'nonsense',
       }).success,
     ).toBe(false)
+  })
+})
+
+describe('venueCapabilitiesSchema', () => {
+  it('accepts a valid pool capability', () => {
+    const result = venueCapabilitiesSchema.safeParse({
+      kind: 'pool',
+      features: [],
+      maxDepth: 5,
+      maxCapacity: 20,
+      confinedCapable: true,
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it('rejects pool maxDepth not in 0.5 m increments', () => {
+    const result = venueCapabilitiesSchema.safeParse({
+      kind: 'pool',
+      features: [],
+      maxDepth: 5.25,
+      maxCapacity: 20,
+    })
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(
+        result.error.issues.some(
+          (i) => i.path[0] === 'maxDepth' && i.message === 'Must be in 0.5 m increments',
+        ),
+      ).toBe(true)
+    }
+  })
+
+  it('rejects non-integer maxCapacity', () => {
+    const result = venueCapabilitiesSchema.safeParse({
+      kind: 'pool',
+      features: [],
+      maxDepth: 5,
+      maxCapacity: 5.5,
+    })
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.error.issues.some((i) => i.path[0] === 'maxCapacity')).toBe(true)
+    }
+  })
+
+  it('accepts pool with confinedCapable=false (schema does not enforce the pool↔confined pairing)', () => {
+    const result = venueCapabilitiesSchema.safeParse({
+      kind: 'pool',
+      features: [],
+      maxDepth: 5,
+      maxCapacity: 20,
+      confinedCapable: false,
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it('accepts dive_site with optional maxDepth only', () => {
+    const result = venueCapabilitiesSchema.safeParse({
+      kind: 'dive_site',
+      features: ['reef'],
+      maxDepth: 40,
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it('rejects a kind not in VENUE_KINDS', () => {
+    const result = venueCapabilitiesSchema.safeParse({
+      kind: 'volcano',
+      features: [],
+    })
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.error.issues.some((i) => i.path[0] === 'kind')).toBe(true)
+    }
   })
 })

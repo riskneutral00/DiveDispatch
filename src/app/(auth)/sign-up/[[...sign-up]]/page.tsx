@@ -63,7 +63,7 @@ export default function SignUpPage() {
   const orgLookupSlug = activeOrg?.slug ?? null
 
   const orgRow = useQuery(
-    api.organizations.getBySlug,
+    api.organizations.publicBySlug,
     orgLookupSlug ? { slug: orgLookupSlug } : 'skip',
   )
 

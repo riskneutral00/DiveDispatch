@@ -19,7 +19,6 @@ vi.mock('@/components/profiles/boat-profile-form', () => ({
 
 vi.mock('@/components/profiles/compressor-profile-form', () => ({
   CompressorContactSection: () => <div data-testid="compressor-contact" />,
-  CompressorGasMixesSection: () => <div data-testid="compressor-gas-mixes" />,
 }))
 
 vi.mock('@/components/profiles/equipment-profile-form', () => ({

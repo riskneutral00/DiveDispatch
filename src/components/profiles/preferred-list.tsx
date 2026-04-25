@@ -526,7 +526,7 @@ export function PreferredInstructorList(props: ListProps) {
 
 
 function VenueBadge({ entry }: { entry: DirectoryEntry }) {
-  const subtype = entry.subtype
+  const subtype = entry.kind
   const label = subtype
     ? subtype.charAt(0).toUpperCase() + subtype.slice(1)
     : null

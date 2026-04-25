@@ -85,15 +85,15 @@ describe('firstIncompleteTab', () => {
     })
   })
 
-  it('routes Compressor gasMixes to gas-mixes tab', () => {
+  it('routes Compressor gasMixes to contact tab', () => {
     expect(firstIncompleteTab('compressor', ['gasMixes'])).toEqual({
       tab: 'role:compressor',
-      section: 'gas-mixes',
+      section: 'contact',
     })
   })
 
-  it('routes Venue subtype to capabilities tab', () => {
-    expect(firstIncompleteTab('venue', ['subtype'])).toEqual({
+  it('routes Venue kind to capabilities tab', () => {
+    expect(firstIncompleteTab('venue', ['kind'])).toEqual({
       tab: 'role:venue',
       section: 'capabilities',
     })

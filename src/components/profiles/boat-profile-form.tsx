@@ -1,17 +1,24 @@
 'use client'
 
+import { useEffect, useRef } from 'react'
+import { useTranslations } from 'next-intl'
 import { Plus } from 'lucide-react'
+import { useMutation, useQuery } from 'convex/react'
+import { api, type Id } from '@/lib/convex-generated'
 import { BusinessContactSection } from '@/components/profiles/business-contact-section'
 
 import { FormSectionHeader } from '@/components/ui/form-section-header'
 import { DayToggleGroup } from '@/components/ui/day-toggle-group'
 import { Button } from '@/components/ui/button'
+import { CheckboxGroup } from '@/components/ui/checkbox-group'
 import { FieldRow } from '@/components/ui/field-row'
 import { Input } from '@/components/ui/input'
 import { NumberPicker } from '@/components/ui/number-picker'
 import { SimpleSelect } from '@/components/ui/simple-select'
 import { ItemCard } from '@/components/ui/item-card'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
+import { compressorGasMixesToPayload } from '@/components/profiles/compressor-profile-form'
+import { CompressorGasMixFields } from '@/components/profiles/compressor-gas-mix-fields'
 import {
   contactSchema,
   boatFleetSchema,
@@ -21,12 +28,13 @@ import {
   type BaseProfileSectionProps,
 } from '@/lib/profile-form'
 import { BoatType, BOAT_TYPE_OPTIONS } from '@/lib/constants/boat-types'
+import { type GasMix } from '@/lib/constants/gas-mixes'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 
 export type BoatProfileSection = 'contact' | 'fleet'
 
 interface RouteState {
-  diveSite: string
+  venueIds: string[]
   daysOfWeek: number[]
 }
 
@@ -37,14 +45,29 @@ interface FleetState {
   boatType: BoatType | ''
   routes: RouteState[]
   cutoffHours: number | undefined
+  hasCompressor?: boolean
+  compressorGasMixes?: GasMix[]
+  compressorNitroxMin?: number
+  compressorNitroxMax?: number
 }
 
 export function emptyFleet(): FleetState {
-  return { boatName: '', maxPax: 0, minPax: undefined, boatType: '', routes: [], cutoffHours: undefined }
+  return {
+    boatName: '',
+    maxPax: 0,
+    minPax: undefined,
+    boatType: '',
+    routes: [],
+    cutoffHours: undefined,
+    hasCompressor: false,
+    compressorGasMixes: [],
+    compressorNitroxMin: undefined,
+    compressorNitroxMax: undefined,
+  }
 }
 
 export function emptyRoute(): RouteState {
-  return { diveSite: '', daysOfWeek: [] }
+  return { venueIds: [], daysOfWeek: [] }
 }
 
 export function BoatContactSection(props: BaseProfileSectionProps) {
@@ -56,6 +79,84 @@ export function BoatContactSection(props: BaseProfileSectionProps) {
       inheritFromOtherRoles="Boat"
     />
   )
+}
+
+type CompressorDoc = {
+  _id: Id<'compressors'>
+  name: string
+  location: 'fixed' | 'boat' | 'venue'
+  boatId?: Id<'boats'>
+  gasMixes?: GasMix[]
+  nitroxMin?: number
+  nitroxMax?: number
+  address?: Record<string, string | undefined>
+  lat?: number
+  lng?: number
+  email?: string
+  phone?: string
+}
+
+interface ReconcileArgs {
+  boatId: Id<'boats'>
+  vessels: FleetState[]
+  existing: CompressorDoc[]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- comments-ok react mutation return type from useMutation has precise generics that can't be narrowed to Record<string, unknown>
+  createCompressor: (args: any) => Promise<unknown>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- comments-ok same as above
+  updateCompressor: (args: any) => Promise<unknown>
+  removeCompressor: (args: { compressorId: Id<'compressors'> }) => Promise<unknown>
+  me: BaseProfileSectionProps['me']
+  formatMultipleCompressorsError: (name: string) => string
+}
+
+async function reconcileCompressors({
+  boatId,
+  vessels,
+  existing,
+  createCompressor,
+  updateCompressor,
+  removeCompressor,
+  me,
+  formatMultipleCompressorsError,
+}: ReconcileArgs): Promise<void> {
+  for (const vessel of vessels) {
+    const key = vessel.boatName.trim().toLowerCase()
+    if (!key) continue
+    const matches = existing.filter((c) => c.name.trim().toLowerCase() === key)
+
+    if (matches.length > 1) {
+      throw new Error(formatMultipleCompressorsError(vessel.boatName))
+    }
+
+    const gasPayload = compressorGasMixesToPayload({
+      gasMixes: vessel.compressorGasMixes ?? [],
+      nitroxMin: vessel.compressorNitroxMin,
+      nitroxMax: vessel.compressorNitroxMax,
+    })
+
+    if (vessel.hasCompressor) {
+      if (matches.length === 0) {
+        const parentDefaults = buildParentContactDefaults(me) as Record<string, unknown>
+        await createCompressor({
+          ...parentDefaults,
+          name: vessel.boatName,
+          location: 'boat',
+          boatId,
+          ...gasPayload,
+        })
+      } else {
+        const existingRow = matches[0]!
+        await updateCompressor({
+          compressorId: existingRow._id,
+          location: 'boat',
+          boatId,
+          ...gasPayload,
+        })
+      }
+    } else if (matches.length === 1) {
+      await removeCompressor({ compressorId: matches[0]!._id })
+    }
+  }
 }
 
 export type BoatFleetFormState = {
@@ -71,14 +172,24 @@ export function boatFleetFromProfile(p: Record<string, unknown>): BoatFleetFormS
   return {
     fleet:
       fleet.length > 0
-        ? fleet.map((f) => ({
-            boatName: f.boatName as string,
-            maxPax: (f.maxPax as number) ?? 0,
-            minPax: f.minPax != null ? (f.minPax as number) : undefined,
-            boatType: f.boatType as BoatType,
-            routes: (f.routes as RouteState[] | undefined) ?? [],
-            cutoffHours: f.cutoffHours != null ? (f.cutoffHours as number) : undefined,
-          }))
+        ? fleet.map((f) => {
+            const rawRoutes = (f.routes as Array<{ venueIds?: string[]; daysOfWeek?: number[] }> | undefined) ?? []
+            return {
+              boatName: f.boatName as string,
+              maxPax: (f.maxPax as number) ?? 0,
+              minPax: f.minPax != null ? (f.minPax as number) : undefined,
+              boatType: f.boatType as BoatType,
+              routes: rawRoutes.map((r) => ({
+                venueIds: r.venueIds ?? [],
+                daysOfWeek: r.daysOfWeek ?? [],
+              })),
+              cutoffHours: f.cutoffHours != null ? (f.cutoffHours as number) : undefined,
+              hasCompressor: false,
+              compressorGasMixes: [],
+              compressorNitroxMin: undefined,
+              compressorNitroxMax: undefined,
+            }
+          })
         : [emptyFleet()],
   }
 }
@@ -97,10 +208,25 @@ export function boatFleetToPayload(f: BoatFleetFormState): Record<string, unknow
 }
 
 export function BoatFleetSection({ profile: existing, me, create, update, onClose }: BaseProfileSectionProps) {
-  const createOverride = (payload: Record<string, unknown>) =>
-    create({ ...buildParentContactDefaults(me), ...payload })
+  const t = useTranslations('common')
+  const boatProfile = useQuery(api.boats.mine)
+  const compressors = useQuery(api.compressors.mine)
+  const venues = useQuery(api.venues.visibleToMe)
+  const venueOptions = (venues ?? []).map((v) => ({ value: v._id, label: v.name }))
+  const createCompressor = useMutation(api.compressors.create)
+  const updateCompressor = useMutation(api.compressors.update)
+  const removeCompressor = useMutation(api.compressors.remove)
 
-  const { form, setField, errors, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit, resetToBaseline } =
+  const newBoatIdRef = useRef<Id<'boats'> | null>(null)
+  const hydratedRef = useRef(false)
+
+  const createOverride = async (payload: Record<string, unknown>) => {
+    const id = await create({ ...buildParentContactDefaults(me), ...payload })
+    if (typeof id === 'string') newBoatIdRef.current = id as Id<'boats'>
+    return id
+  }
+
+  const { form, setForm, setField, errors, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit, resetToBaseline } =
     useProfileForm({
       profile: existing,
       schema: boatFleetSchema,
@@ -109,7 +235,53 @@ export function BoatFleetSection({ profile: existing, me, create, update, onClos
       toPayload: boatFleetToPayload,
       create: createOverride,
       update,
+      afterSuccessfulSave: async (latestForm) => {
+        const boatId = boatProfile?._id ?? newBoatIdRef.current
+        if (!boatId) return
+        await reconcileCompressors({
+          boatId,
+          vessels: latestForm.fleet,
+          existing: (compressors ?? []).filter((c) => c.location === 'boat' && c.boatId === boatId),
+          createCompressor,
+          updateCompressor,
+          removeCompressor,
+          me,
+          formatMultipleCompressorsError: (name) => t('multipleCompressorsLinkedVessel', { name }),
+        })
+      },
     })
+
+  useEffect(() => {
+    if (hydratedRef.current) return
+    if (compressors === undefined) return
+    if (!existing) {
+      hydratedRef.current = true
+      return
+    }
+    const onboard = compressors.filter((c) => c.location === 'boat')
+    if (onboard.length === 0) {
+      hydratedRef.current = true
+      return
+    }
+    setForm((prev) => {
+      const nextFleet = prev.fleet.map((vessel) => {
+        const match = onboard.filter(
+          (c) => c.name.trim().toLowerCase() === vessel.boatName.trim().toLowerCase(),
+        )
+        if (match.length !== 1) return vessel
+        const c = match[0]!
+        return {
+          ...vessel,
+          hasCompressor: true,
+          compressorGasMixes: (c.gasMixes ?? []) as GasMix[],
+          compressorNitroxMin: c.nitroxMin,
+          compressorNitroxMax: c.nitroxMax,
+        }
+      })
+      return { ...prev, fleet: nextFleet }
+    })
+    hydratedRef.current = true
+  }, [compressors, existing, setForm])
 
   function addFleet() {
     setField('fleet', [...form.fleet, emptyFleet()])
@@ -179,6 +351,7 @@ export function BoatFleetSection({ profile: existing, me, create, update, onClos
               fleetIdx={fi}
               errors={errors}
               canRemove={form.fleet.length > 1}
+              venueOptions={venueOptions}
               onUpdate={(patch) => updateFleet(fi, patch)}
               onRemove={() => removeFleet(fi)}
               onAddRoute={() => addRoute(fi)}
@@ -198,6 +371,7 @@ interface FleetEntryCardProps {
   fleetIdx: number
   errors: Record<string, string>
   canRemove: boolean
+  venueOptions: { value: string; label: string }[]
   onUpdate: (patch: Partial<FleetState>) => void
   onRemove: () => void
   onAddRoute: () => void
@@ -206,7 +380,7 @@ interface FleetEntryCardProps {
   onToggleDay: (ri: number, day: number) => void
 }
 
-function FleetEntryCard({ vessel, fleetIdx: fi, errors, canRemove, onUpdate, onRemove, onAddRoute, onRemoveRoute, onUpdateRoute, onToggleDay }: FleetEntryCardProps) {
+function FleetEntryCard({ vessel, fleetIdx: fi, errors, canRemove, venueOptions, onUpdate, onRemove, onAddRoute, onRemoveRoute, onUpdateRoute, onToggleDay }: FleetEntryCardProps) {
   return (
     <ItemCard onRemove={onRemove} canRemove={canRemove} aria-label={`Remove vessel ${fi + 1}`}>
       <div className="mb-4">
@@ -263,6 +437,26 @@ function FleetEntryCard({ vessel, fleetIdx: fi, errors, canRemove, onUpdate, onR
         />
       </FieldRow>
 
+      <div className="mb-5">
+        <CompressorGasMixFields
+          checkboxLabel="Has compressor onboard"
+          value={{
+            hasCompressor: vessel.hasCompressor ?? false,
+            gasMixes: (vessel.compressorGasMixes ?? []) as GasMix[],
+            nitroxMin: vessel.compressorNitroxMin,
+            nitroxMax: vessel.compressorNitroxMax,
+          }}
+          onChange={(next) =>
+            onUpdate({
+              hasCompressor: next.hasCompressor,
+              compressorGasMixes: next.gasMixes,
+              compressorNitroxMin: next.nitroxMin,
+              compressorNitroxMax: next.nitroxMax,
+            })
+          }
+        />
+      </div>
+
       <div>
         <FormSectionHeader
           label="Routes"
@@ -280,7 +474,7 @@ function FleetEntryCard({ vessel, fleetIdx: fi, errors, canRemove, onUpdate, onR
         )}
         <div className="space-y-3 mt-2">
           {vessel.routes.map((route, ri) => (
-            <RouteRow key={ri} route={route} fleetIdx={fi} routeIdx={ri} errors={errors} onUpdate={(patch) => onUpdateRoute(ri, patch)} onRemove={() => onRemoveRoute(ri)} onToggleDay={(day) => onToggleDay(ri, day)} />
+            <RouteRow key={ri} route={route} fleetIdx={fi} routeIdx={ri} errors={errors} venueOptions={venueOptions} onUpdate={(patch) => onUpdateRoute(ri, patch)} onRemove={() => onRemoveRoute(ri)} onToggleDay={(day) => onToggleDay(ri, day)} />
           ))}
         </div>
       </div>
@@ -293,15 +487,23 @@ interface RouteRowProps {
   fleetIdx: number
   routeIdx: number
   errors: Record<string, string>
+  venueOptions: { value: string; label: string }[]
   onUpdate: (patch: Partial<RouteState>) => void
   onRemove: () => void
   onToggleDay: (day: number) => void
 }
 
-function RouteRow({ route, fleetIdx: fi, routeIdx: ri, errors, onUpdate, onRemove, onToggleDay }: RouteRowProps) {
+function RouteRow({ route, fleetIdx: fi, routeIdx: ri, errors, venueOptions, onUpdate, onRemove, onToggleDay }: RouteRowProps) {
   return (
     <ItemCard onRemove={onRemove} canRemove={true} aria-label="Remove route">
-      <Input value={route.diveSite} onChange={(e) => onUpdate({ diveSite: e.target.value })} error={errors[`fleet.${fi}.routes.${ri}.diveSite`]} placeholder="Dive site name" />
+      <CheckboxGroup
+        label="Venues"
+        required
+        items={venueOptions}
+        selected={route.venueIds}
+        onChange={(values) => onUpdate({ venueIds: values })}
+        error={errors[`fleet.${fi}.routes.${ri}.venueIds`]}
+      />
       <DayToggleGroup
         selected={route.daysOfWeek}
         onChange={(newDays) => {

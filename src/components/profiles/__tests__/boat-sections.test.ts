@@ -169,7 +169,7 @@ describe('boatFleetFromProfile', () => {
           maxPax: 20,
           minPax: 4,
           boatType: 'day_boat',
-          routes: [{ diveSite: 'Shark Point', daysOfWeek: [1, 3, 5] }],
+          routes: [{ venueIds: ['shark-point'], daysOfWeek: [1, 3, 5] }],
           cutoffHours: 24,
         },
       ],
@@ -181,7 +181,7 @@ describe('boatFleetFromProfile', () => {
     expect(form.fleet[0].minPax).toBe(4)
     expect(form.fleet[0].boatType).toBe('day_boat')
     expect(form.fleet[0].routes).toHaveLength(1)
-    expect(form.fleet[0].routes[0].diveSite).toBe('Shark Point')
+    expect(form.fleet[0].routes[0].venueIds).toEqual(['shark-point'])
     expect(form.fleet[0].cutoffHours).toBe(24)
   })
 
@@ -234,7 +234,7 @@ describe('boatFleetToPayload', () => {
           maxPax: 20,
           minPax: 4,
           boatType: 'day_boat',
-          routes: [{ diveSite: 'Shark Point', daysOfWeek: [1, 3, 5] }],
+          routes: [{ venueIds: ['shark-point'], daysOfWeek: [1, 3, 5] }],
           cutoffHours: 24,
         },
       ],
@@ -284,14 +284,14 @@ describe('boatFleetToPayload', () => {
           maxPax: 10,
           minPax: undefined,
           boatType: 'speedboat',
-          routes: [{ diveSite: 'Shark Point', daysOfWeek: [1] }],
+          routes: [{ venueIds: ['shark-point'], daysOfWeek: [1] }],
           cutoffHours: undefined,
         },
       ],
     }
     const payload = boatFleetToPayload(form)
     const vessel = (payload.fleet as Array<Record<string, unknown>>)[0]
-    expect(vessel.routes).toEqual([{ diveSite: 'Shark Point', daysOfWeek: [1] }])
+    expect(vessel.routes).toEqual([{ venueIds: ['shark-point'], daysOfWeek: [1] }])
   })
 
   it('does not include contact fields (name, email, phone, location)', () => {

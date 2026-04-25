@@ -4,7 +4,8 @@ import { e164Schema } from './i18n'
 import { AOW_REQUIRED_SPECIALTY_COUNT } from '@/lib/constants/agencies'
 import { BOAT_TYPES } from '@/lib/constants/boat-types'
 import { GAS_MIXES } from '@/lib/constants/gas-mixes'
-import { VENUE_SUBTYPES } from '../../../convex/shared/venueTypes'
+import { VENUE_KINDS } from '../../../convex/shared/venueTypes'
+import { VENUE_FEATURES } from '../../../convex/shared/venueFeatures'
 import {
   customerLanguagesFieldSchema,
   teachingLanguagesFieldSchema,
@@ -15,7 +16,7 @@ export { addressLocationSchema, type AddressLocationValue } from './location'
 export const contactSchema = z.object({
   name: z.string().min(1, 'Business name is required'),
   location: addressLocationSchema.nullable().refine((v) => v !== null, { message: 'Location is required' }),
-  email: z.string().email('Invalid email address'),
+  email: z.email('Invalid email address'),
   phone: e164Schema,
 })
 
@@ -38,7 +39,7 @@ export const diveCenterLanguagesSchema = z.object({
   customerLanguages: customerLanguagesFieldSchema,
 })
 
-export const diveCenterContactMergedSchema = contactSchema.merge(diveCenterLanguagesSchema)
+export const diveCenterContactMergedSchema = contactSchema.extend(diveCenterLanguagesSchema.shape)
 
 const diveCenterAssociationItemSchema = z.object({
   agency: z.string().min(1, 'Agency is required'),
@@ -68,7 +69,7 @@ export const agentLanguagesSchema = z.object({
   customerLanguages: customerLanguagesFieldSchema,
 })
 
-export const agentContactMergedSchema = agentContactSchema.merge(agentLanguagesSchema)
+export const agentContactMergedSchema = agentContactSchema.extend(agentLanguagesSchema.shape)
 
 export const agentAssociationsSchema = z.object({
   associations: z.array(associationSchema),
@@ -81,7 +82,7 @@ export const personalLanguagesSchema = z.object({
 })
 
 export const personalContactMergedSchema = personalContactSchema
-  .merge(personalLanguagesSchema)
+  .extend(personalLanguagesSchema.shape)
 
 export const instructorCredentialsSchema = z.object({
   credential: z.array(instructorCredentialSchema).min(1, 'At least one credential is required'),
@@ -90,7 +91,7 @@ export const instructorCredentialsSchema = z.object({
 const BOAT_TYPES_TUPLE = BOAT_TYPES
 
 const boatRouteSchema = z.object({
-  diveSite: z.string().min(1, 'Dive site required'),
+  venueIds: z.array(z.string().min(1)).min(1, 'Select at least one venue'),
   daysOfWeek: z.array(z.number()).min(1, 'Select at least one day'),
 })
 
@@ -140,7 +141,8 @@ export const compressorGasMixesSchema = z
 export const diveSiteDetailsSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   location: addressLocationSchema.nullable().refine((v) => v !== null, { message: 'Location is required' }),
-  subtype: z.enum(VENUE_SUBTYPES),
+  kind: z.enum(VENUE_KINDS),
+  features: z.array(z.enum(VENUE_FEATURES)).default([]),
 })
 
 export const diveSiteCapabilitiesSchema = z.object({
@@ -151,13 +153,14 @@ export const diveSiteCapabilitiesSchema = z.object({
 
 export const venueCapabilitiesSchema = z
   .object({
-    subtype: z.enum(['pool', 'shore', 'reef', 'lake', 'river', 'quarry', 'other']),
+    kind: z.enum(VENUE_KINDS),
+    features: z.array(z.enum(VENUE_FEATURES)).default([]),
     confinedCapable: z.boolean().optional(),
     maxDepth: z.number().min(1, 'Must be at least 1 m').optional(),
     maxCapacity: z.number().int('Must be a whole number').min(1, 'Must be at least 1').optional(),
   })
   .superRefine((v, ctx) => {
-    if (v.subtype !== 'pool') return
+    if (v.kind !== 'pool') return
 
     if (v.maxDepth === undefined) {
       ctx.addIssue({ code: 'custom', path: ['maxDepth'], message: 'Required for pool' })

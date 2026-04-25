@@ -1,58 +1,59 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { useQuery } from 'convex/react'
-import { api } from '@/lib/convex-generated'
 import { Dialog, DialogFooter } from '@/components/ui/dialog'
 import { NameField } from '@/components/ui/name-field'
 import { NumberPicker } from '@/components/ui/number-picker'
 import { SimpleSelect } from '@/components/ui/simple-select'
 import { Checkbox } from '@/components/ui/checkbox'
-import { FieldLabel } from '@/components/ui/field-shell'
+import { CheckboxGroup } from '@/components/ui/checkbox-group'
 import { LocationPicker, type LocationValue } from '@/components/profiles/location-picker-lazy'
+import { CompressorGasMixFields } from '@/components/profiles/compressor-gas-mix-fields'
 import {
-  VENUE_SUBTYPES,
-  RANGE_BY_SUBTYPE,
-  SUBTYPES_WITH_OPTIONAL_CONFINED,
-  CAPABILITIES_REQUIRED_BY_SUBTYPE,
-  type VenueSubtype,
+  AccessControlSection,
+  type AccessControlState,
+  deriveAccessMode,
+} from '@/components/profiles/access-control-section'
+import {
+  VENUE_KINDS,
+  VENUE_FEATURES,
+  RANGE_BY_KIND,
+  type VenueKind,
+  type VenueFeature,
 } from '@/lib/constants/venue-subtypes'
-
-const SUBTYPE_LABELS: Record<VenueSubtype, string> = {
-  pool: 'Pool',
-  shore: 'Shore',
-  reef: 'Reef',
-  lake: 'Lake',
-  river: 'River',
-  quarry: 'Quarry',
-  other: 'Other',
-}
-
-const SUBTYPE_OPTIONS = VENUE_SUBTYPES.map((s) => ({ value: s, label: SUBTYPE_LABELS[s] }))
+import type { GasMix } from '@/lib/constants/gas-mixes'
 
 export interface VenueEditValue {
   name: string
-  subtype: VenueSubtype
+  kind: VenueKind
   location: LocationValue | null
   maxDepth: number
   maxCapacity: number
   confinedCapable: boolean
-  hasCompressor: boolean
+  features: VenueFeature[]
   isAllowed: string[]
   notAllowed: string[]
+  hasCompressorOnSite: boolean
+  compressorGasMixes?: GasMix[]
+  compressorNitroxMin?: number
+  compressorNitroxMax?: number
 }
 
 export const EMPTY_VENUE_EDIT: VenueEditValue = {
   name: '',
-  subtype: 'pool',
+  kind: 'pool',
   location: null,
   maxDepth: 0,
   maxCapacity: 0,
   confinedCapable: false,
-  hasCompressor: false,
+  features: [],
   isAllowed: [],
   notAllowed: [],
+  hasCompressorOnSite: false,
+  compressorGasMixes: [],
+  compressorNitroxMin: undefined,
+  compressorNitroxMax: undefined,
 }
 
 interface VenueEditDialogProps {
@@ -69,6 +70,15 @@ export function VenueEditDialog({ open, onClose, mode, initialValue, onSubmit }:
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const kindOptions = useMemo(
+    () => VENUE_KINDS.map((k) => ({ value: k, label: t(`venueKinds.${k}`) })),
+    [t],
+  )
+  const featureItems = useMemo(
+    () => VENUE_FEATURES.map((f) => ({ value: f, label: t(`venueFeatures.${f}`) })),
+    [t],
+  )
+
   useEffect(() => {
     if (open) {
       setForm(initialValue ?? EMPTY_VENUE_EDIT)
@@ -76,9 +86,9 @@ export function VenueEditDialog({ open, onClose, mode, initialValue, onSubmit }:
     }
   }, [open, initialValue])
 
-  const range = RANGE_BY_SUBTYPE[form.subtype]
-  const showConfinedToggle = SUBTYPES_WITH_OPTIONAL_CONFINED.has(form.subtype)
-  const capabilitiesRequired = CAPABILITIES_REQUIRED_BY_SUBTYPE.has(form.subtype)
+  const range = RANGE_BY_KIND[form.kind]
+  const showConfinedToggle = form.kind === 'dive_site'
+  const capabilitiesRequired = form.kind === 'pool'
 
   const canSubmit =
     form.name.trim().length > 0 &&
@@ -93,10 +103,16 @@ export function VenueEditDialog({ open, onClose, mode, initialValue, onSubmit }:
       await onSubmit(form)
       onClose()
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Save failed')
+      setError(e instanceof Error ? e.message : t('actionFailed', { action: t('save') }))
     } finally {
       setSaving(false)
     }
+  }
+
+  const accessValue: AccessControlState = {
+    mode: deriveAccessMode({ isAllowed: form.isAllowed, notAllowed: form.notAllowed }),
+    isAllowed: form.isAllowed,
+    notAllowed: form.notAllowed,
   }
 
   return (
@@ -109,27 +125,27 @@ export function VenueEditDialog({ open, onClose, mode, initialValue, onSubmit }:
       <div className="space-y-4">
         <NameField
           scope="organization"
-          label="Venue Name"
+          label={t('venueName')}
           value={form.name}
           onChange={(v) => setForm((prev) => ({ ...prev, name: v }))}
           required
         />
         <SimpleSelect
-          label="Venue Type"
-          value={form.subtype}
-          onChange={(v) => setForm((prev) => ({ ...prev, subtype: v as VenueSubtype }))}
-          options={SUBTYPE_OPTIONS}
+          label={t('venueType')}
+          value={form.kind}
+          onChange={(v) => setForm((prev) => ({ ...prev, kind: v as VenueKind }))}
+          options={kindOptions}
           required
         />
         <LocationPicker
-          label="Location"
+          label={t('location')}
           value={form.location}
           onChange={(loc) => setForm((prev) => ({ ...prev, location: loc }))}
           required
         />
         <div className="flex flex-wrap gap-3">
           <NumberPicker
-            label="Max Depth (m)"
+            label={t('maxDepthM')}
             value={form.maxDepth || undefined}
             onChange={(v) => setForm((prev) => ({ ...prev, maxDepth: v ?? 0 }))}
             min={1}
@@ -139,7 +155,7 @@ export function VenueEditDialog({ open, onClose, mode, initialValue, onSubmit }:
             required={capabilitiesRequired}
           />
           <NumberPicker
-            label="Max Capacity"
+            label={t('maxCapacity')}
             value={form.maxCapacity || undefined}
             onChange={(v) => setForm((prev) => ({ ...prev, maxCapacity: v ?? 0 }))}
             min={1}
@@ -149,22 +165,41 @@ export function VenueEditDialog({ open, onClose, mode, initialValue, onSubmit }:
         </div>
         {showConfinedToggle && (
           <Checkbox
-            label="Confined Water Capable"
+            label={t('confinedCapable')}
             checked={form.confinedCapable}
             onChange={(v) => setForm((prev) => ({ ...prev, confinedCapable: v }))}
           />
         )}
-        <Checkbox
-          label="Has Compressor onsite"
-          checked={form.hasCompressor}
-          onChange={(v) => setForm((prev) => ({ ...prev, hasCompressor: v }))}
+        <CheckboxGroup
+          label={t('features')}
+          items={featureItems}
+          selected={form.features}
+          onChange={(values) => setForm((prev) => ({ ...prev, features: values as VenueFeature[] }))}
+          columns={3}
         />
-
-        <DiveCenterAccessPicker
-          isAllowed={form.isAllowed}
-          notAllowed={form.notAllowed}
-          onIsAllowedChange={(v) => setForm((prev) => ({ ...prev, isAllowed: v }))}
-          onNotAllowedChange={(v) => setForm((prev) => ({ ...prev, notAllowed: v }))}
+        <CompressorGasMixFields
+          checkboxLabel={t('hasCompressorOnSite')}
+          value={{
+            hasCompressor: form.hasCompressorOnSite,
+            gasMixes: (form.compressorGasMixes ?? []) as GasMix[],
+            nitroxMin: form.compressorNitroxMin,
+            nitroxMax: form.compressorNitroxMax,
+          }}
+          onChange={(next) =>
+            setForm((prev) => ({
+              ...prev,
+              hasCompressorOnSite: next.hasCompressor,
+              compressorGasMixes: next.gasMixes,
+              compressorNitroxMin: next.nitroxMin,
+              compressorNitroxMax: next.nitroxMax,
+            }))
+          }
+        />
+        <AccessControlSection
+          value={accessValue}
+          onChange={(next) =>
+            setForm((prev) => ({ ...prev, isAllowed: next.isAllowed, notAllowed: next.notAllowed }))
+          }
         />
 
         {error && <div className="text-destructive text-body">{error}</div>}
@@ -181,104 +216,5 @@ export function VenueEditDialog({ open, onClose, mode, initialValue, onSubmit }:
         />
       </div>
     </Dialog>
-  )
-}
-
-interface DiveCenterAccessPickerProps {
-  isAllowed: string[]
-  notAllowed: string[]
-  onIsAllowedChange: (next: string[]) => void
-  onNotAllowedChange: (next: string[]) => void
-}
-
-function DiveCenterAccessPicker({
-  isAllowed,
-  notAllowed,
-  onIsAllowedChange,
-  onNotAllowedChange,
-}: DiveCenterAccessPickerProps) {
-  const diveCenters = useQuery(api.directory.listByRole, { role: 'DiveCenter' })
-  const allowedSet = new Set(isAllowed)
-  const blockedSet = new Set(notAllowed)
-
-  const toggleAllowed = (slug: string) => {
-    const next = new Set(allowedSet)
-    if (next.has(slug)) next.delete(slug)
-    else {
-      next.add(slug)
-      if (blockedSet.has(slug)) {
-        const nextBlocked = new Set(blockedSet)
-        nextBlocked.delete(slug)
-        onNotAllowedChange(Array.from(nextBlocked))
-      }
-    }
-    onIsAllowedChange(Array.from(next))
-  }
-
-  const toggleBlocked = (slug: string) => {
-    const next = new Set(blockedSet)
-    if (next.has(slug)) next.delete(slug)
-    else {
-      next.add(slug)
-      if (allowedSet.has(slug)) {
-        const nextAllowed = new Set(allowedSet)
-        nextAllowed.delete(slug)
-        onIsAllowedChange(Array.from(nextAllowed))
-      }
-    }
-    onNotAllowedChange(Array.from(next))
-  }
-
-  if (diveCenters === undefined) {
-    return <p className="text-body-sm text-secondary">Loading dive centers…</p>
-  }
-
-  if (diveCenters.length === 0) {
-    return (
-      <p className="text-body-sm text-secondary">
-        No dive centers found. Access control can be configured once dive centers sign up.
-      </p>
-    )
-  }
-
-  return (
-    <div className="space-y-2">
-      <FieldLabel htmlFor="dc-access">Dive Center Access</FieldLabel>
-      <p className="text-body-sm text-secondary">
-        Leave both columns blank to allow every dive center. Check Allow to whitelist specific dive
-        centers (others blocked); check Block to blacklist specific dive centers (others allowed).
-      </p>
-      <div id="dc-access" className="glass-container rounded-theme p-3 space-y-2 max-h-64 overflow-y-auto overflow-x-hidden">
-        <div className="grid grid-cols-[1fr_auto_auto] gap-3 items-center text-body-sm font-medium text-secondary pb-1 border-b border-glass-border">
-          <span>Dive Center</span>
-          <span className="w-12 text-center">Allow</span>
-          <span className="w-12 text-center">Block</span>
-        </div>
-        {diveCenters.map((dc) => (
-          <div
-            key={dc.slug}
-            className="grid grid-cols-[1fr_auto_auto] gap-3 items-center"
-          >
-            <span className="truncate text-body">{dc.name}</span>
-            <div className="w-12 flex justify-center">
-              <Checkbox
-                label=""
-                checked={allowedSet.has(dc.slug)}
-                onChange={() => toggleAllowed(dc.slug)}
-                aria-label={`Allow ${dc.name}`}
-              />
-            </div>
-            <div className="w-12 flex justify-center">
-              <Checkbox
-                label=""
-                checked={blockedSet.has(dc.slug)}
-                onChange={() => toggleBlocked(dc.slug)}
-                aria-label={`Block ${dc.name}`}
-              />
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
   )
 }
