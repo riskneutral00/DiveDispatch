@@ -4,10 +4,6 @@ import type { Doc } from '../_generated/dataModel'
 import type { DbCtx } from './auth'
 import { ErrorCode } from './errorCodes'
 
-export function isPersonalOrg(org: Doc<'organizations'>): boolean {
-  return org.clerkOrgId === undefined
-}
-
 type OrgIdentityClaims = {
   orgId?: string
   orgRole?: string
@@ -37,8 +33,15 @@ export async function getActiveOrg(
       .withIndex('by_tokenIdentifier', (q) => q.eq('tokenIdentifier', identity.tokenIdentifier))
       .unique()
     if (user?.organizationId) {
-      const org = await ctx.db.get(user.organizationId)
-      if (org && isPersonalOrg(org)) return { org, orgRole: 'admin' }
+      const membership = await ctx.db
+        .query('userRoles')
+        .withIndex('by_userId', (q) => q.eq('userId', user._id))
+        .filter((q) => q.eq(q.field('organizationId'), user.organizationId))
+        .first()
+      if (membership) {
+        const org = await ctx.db.get(user.organizationId)
+        if (org) return { org, orgRole: 'admin' }
+      }
     }
     throw new ConvexError({ code: ErrorCode.FORBIDDEN, reason: 'no_active_org' })
   }
@@ -74,11 +77,14 @@ export async function tryGetActiveOrg(
       .query('users')
       .withIndex('by_tokenIdentifier', (q) => q.eq('tokenIdentifier', identity.tokenIdentifier))
       .unique()
-    if (user?.organizationId) {
-      const org = await ctx.db.get(user.organizationId)
-      if (org && isPersonalOrg(org)) return org
-    }
-    return null
+    if (!user?.organizationId) return null
+    const membership = await ctx.db
+      .query('userRoles')
+      .withIndex('by_userId', (q) => q.eq('userId', user._id))
+      .filter((q) => q.eq(q.field('organizationId'), user.organizationId))
+      .first()
+    if (!membership) return null
+    return await ctx.db.get(user.organizationId)
   }
   return await ctx.db
     .query('organizations')

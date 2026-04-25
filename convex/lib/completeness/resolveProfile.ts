@@ -1,7 +1,6 @@
 import type { QueryCtx } from '../../_generated/server'
 import type { Doc, Id, TableNames } from '../../_generated/dataModel'
 import { ROLE_TABLE_MAP } from '../profileHelpers'
-import { tryGetActiveOrg } from '../activeOrg'
 import { queryDynamicTable } from '../typedDb'
 import { str } from './types'
 
@@ -82,15 +81,20 @@ export async function resolveRoleProfile(
   userDoc: Doc<'users'>,
   role: string,
 ): Promise<ProfileResolution> {
-  let activeOrgId = userDoc.organizationId ?? null
-  if (!activeOrgId) {
-    const org = await tryGetActiveOrg(ctx)
-    activeOrgId = org?._id ?? null
-  }
+  const activeOrgId = userDoc.organizationId ?? null
 
   const table = ROLE_TABLE_MAP[role] as TableNames | undefined
   if (!table || !activeOrgId) {
     return { profile: null, activeOrgId }
+  }
+
+  const membership = await ctx.db
+    .query('userRoles')
+    .withIndex('by_userId', (q) => q.eq('userId', userDoc._id))
+    .filter((q) => q.eq(q.field('organizationId'), activeOrgId))
+    .first()
+  if (!membership) {
+    return { profile: null, activeOrgId: null }
   }
 
   const picker = PICKERS[role]

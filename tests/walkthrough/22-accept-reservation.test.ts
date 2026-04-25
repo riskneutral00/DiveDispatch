@@ -42,6 +42,12 @@ async function seedUser(
   })
   if (role === 'Instructor') {
     const organizationId = await getOrCreateTestOrg(ctx as SeedCtx, userId, `${slug} Display`)
+    await ctx.db.insert('userRoles', {
+      userId,
+      role: 'Instructor',
+      organizationId,
+      createdAt: Date.now(),
+    })
     await ctx.db.insert('diveStaff', {
       organizationId,
       role: 'Instructor',

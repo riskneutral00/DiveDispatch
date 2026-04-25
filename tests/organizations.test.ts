@@ -90,6 +90,12 @@ describe('destinationScope — visibleOrgIds', () => {
         updatedAt: now,
       })
       await ctx.db.patch(uid, { organizationId: oid })
+      await ctx.db.insert('userRoles', {
+        userId: uid,
+        role: 'DiveCenter',
+        organizationId: oid,
+        createdAt: now,
+      })
       return oid
     })
 
@@ -128,6 +134,12 @@ describe('destinationScope — visibleOrgIds', () => {
         appLanguage: 'en',
       })
       await ctx.db.patch(uid, { organizationId: oid })
+      await ctx.db.insert('userRoles', {
+        userId: uid,
+        role: 'DiveCenter',
+        organizationId: oid,
+        createdAt: now,
+      })
       return { operatorId: oid, areaId: aid }
     })
 
@@ -166,6 +178,12 @@ describe('organizations.updateBusinessMetadata — destinationIds wire-up', () =
         appLanguage: 'en',
       })
       await ctx.db.patch(uid, { organizationId: oid })
+      await ctx.db.insert('userRoles', {
+        userId: uid,
+        role: 'DiveCenter',
+        organizationId: oid,
+        createdAt: now,
+      })
       return otherId
     })
 
@@ -207,6 +225,12 @@ describe('organizations.updateBusinessMetadata — destinationIds wire-up', () =
         appLanguage: 'en',
       })
       await ctx.db.patch(uid, { organizationId: oid })
+      await ctx.db.insert('userRoles', {
+        userId: uid,
+        role: 'DiveCenter',
+        organizationId: oid,
+        createdAt: now,
+      })
       return { operatorId: oid, areaId: aid }
     })
 

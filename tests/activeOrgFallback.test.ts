@@ -2,12 +2,12 @@ import { describe, it, expect } from 'vitest'
 import { api } from '../convex/_generated/api'
 import { makeT, expectConvexError } from './helpers/convex-helpers'
 
-describe('getActiveOrg — user.organizationId fallback', () => {
-  it('resolves to personal org when JWT has no orgId but user.organizationId is set', async () => {
+describe('getActiveOrg — membership-gated denorm fallback', () => {
+  it('(b) resolves user.organizationId when JWT has no orgId AND a matching userRoles row exists', async () => {
     const t = makeT()
-    const tokenIdentifier = 'clerk|freelance-user'
+    const tokenIdentifier = 'clerk|free-with-role'
 
-    const { userId, orgId } = await t.run(async (ctx) => {
+    const { orgId } = await t.run(async (ctx) => {
       const uid = await ctx.db.insert('users', {
         tokenIdentifier,
         originalTokenIdentifier: tokenIdentifier,
@@ -26,10 +26,15 @@ describe('getActiveOrg — user.organizationId fallback', () => {
         updatedAt: now,
       })
       await ctx.db.patch(uid, { organizationId: oid })
-      return { userId: uid, orgId: oid }
+      await ctx.db.insert('userRoles', {
+        userId: uid,
+        role: 'DiveCenter',
+        organizationId: oid,
+        createdAt: now,
+      })
+      return { orgId: oid }
     })
 
-    // updateBusinessMetadata calls requireOrgAdmin → getActiveOrg. Success path proves the fallback works.
     await t.withIdentity({ tokenIdentifier }).mutation(
       api.organizations.updateBusinessMetadata,
       { phone: '+66-80-000-0000' },
@@ -37,55 +42,69 @@ describe('getActiveOrg — user.organizationId fallback', () => {
 
     const org = await t.run(async (ctx) => ctx.db.get(orgId))
     expect(org?.phone).toBe('+66-80-000-0000')
-    expect(userId).toBeDefined()
   })
 
-  it('still throws FORBIDDEN when no JWT orgId AND no user.organizationId', async () => {
+  it('(b/seed) resolves a Clerk-bound org via denorm + userRoles when JWT has no orgId — covers seeded users with synthetic clerkOrgId', async () => {
     const t = makeT()
-    const tokenIdentifier = 'clerk|orphan-user'
+    const tokenIdentifier = 'clerk|seed-style-user'
 
-    await t.run(async (ctx) => {
-      await ctx.db.insert('users', {
+    const { orgId } = await t.run(async (ctx) => {
+      const uid = await ctx.db.insert('users', {
         tokenIdentifier,
         originalTokenIdentifier: tokenIdentifier,
-        slug: 'orphan-slug',
-        email: 'orphan@test.com',
-        name: 'Orphan',
-        firstName: 'Or',
-        lastName: 'Phan',
+        slug: 'seed-slug',
+        email: 'seed@test.com',
+        name: 'Seed',
+        firstName: 'See',
+        lastName: 'Eed',
         appLanguage: 'en',
       })
+      const now = Date.now()
+      const oid = await ctx.db.insert('organizations', {
+        clerkOrgId: 'seed_org_seed-slug',
+        slug: 'seed-slug',
+        name: 'Seed Org',
+        createdAt: now,
+        updatedAt: now,
+      })
+      await ctx.db.patch(uid, { organizationId: oid })
+      await ctx.db.insert('userRoles', {
+        userId: uid,
+        role: 'DiveCenter',
+        organizationId: oid,
+        createdAt: now,
+      })
+      return { orgId: oid }
     })
 
-    await expectConvexError(
-      t.withIdentity({ tokenIdentifier }).mutation(
-        api.organizations.updateBusinessMetadata,
-        { phone: '+1-555-0000' },
-      ),
-      'FORBIDDEN',
+    await t.withIdentity({ tokenIdentifier }).mutation(
+      api.organizations.updateBusinessMetadata,
+      { phone: '+66-80-111-1111' },
     )
+
+    const org = await t.run(async (ctx) => ctx.db.get(orgId))
+    expect(org?.phone).toBe('+66-80-111-1111')
   })
 
-  it('refuses to grant admin when user.organizationId points at a Clerk-backed org (no JWT claim)', async () => {
+  it('(c) throws FORBIDDEN when user.organizationId is set but no userRoles row matches', async () => {
     const t = makeT()
-    const tokenIdentifier = 'clerk|confused-deputy'
+    const tokenIdentifier = 'clerk|denorm-no-role'
 
     await t.run(async (ctx) => {
       const uid = await ctx.db.insert('users', {
         tokenIdentifier,
         originalTokenIdentifier: tokenIdentifier,
-        slug: 'deputy-slug',
-        email: 'deputy@test.com',
-        name: 'Deputy',
-        firstName: 'De',
-        lastName: 'Puty',
+        slug: 'orphan-denorm',
+        email: 'orphan-denorm@test.com',
+        name: 'Orphan',
+        firstName: 'Or',
+        lastName: 'Phan',
         appLanguage: 'en',
       })
       const now = Date.now()
       const oid = await ctx.db.insert('organizations', {
-        clerkOrgId: 'org_clerk_backed',
-        slug: 'clerk-backed-slug',
-        name: 'Clerk-Backed Org',
+        slug: 'orphan-denorm',
+        name: 'Orphan Org',
         createdAt: now,
         updatedAt: now,
       })
@@ -98,6 +117,76 @@ describe('getActiveOrg — user.organizationId fallback', () => {
         { phone: '+1-555-0000' },
       ),
       'FORBIDDEN',
+      'no_active_org',
     )
+  })
+
+  it('(d) throws FORBIDDEN when no JWT orgId AND no user.organizationId', async () => {
+    const t = makeT()
+    const tokenIdentifier = 'clerk|no-denorm'
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert('users', {
+        tokenIdentifier,
+        originalTokenIdentifier: tokenIdentifier,
+        slug: 'no-denorm',
+        email: 'no-denorm@test.com',
+        name: 'NoDenorm',
+        firstName: 'No',
+        lastName: 'Denorm',
+        appLanguage: 'en',
+      })
+    })
+
+    await expectConvexError(
+      t.withIdentity({ tokenIdentifier }).mutation(
+        api.organizations.updateBusinessMetadata,
+        { phone: '+1-555-0000' },
+      ),
+      'FORBIDDEN',
+      'no_active_org',
+    )
+  })
+
+  it('(e) regression: JWT orgId claim resolves the matching Clerk-backed org', async () => {
+    const t = makeT()
+    const tokenIdentifier = 'clerk|jwt-org-user'
+    const clerkOrgId = 'org_real_clerk_id'
+
+    const { orgId } = await t.run(async (ctx) => {
+      const uid = await ctx.db.insert('users', {
+        tokenIdentifier,
+        originalTokenIdentifier: tokenIdentifier,
+        slug: 'jwt-user',
+        email: 'jwt@test.com',
+        name: 'JWT',
+        firstName: 'J',
+        lastName: 'WT',
+        appLanguage: 'en',
+      })
+      const now = Date.now()
+      const oid = await ctx.db.insert('organizations', {
+        clerkOrgId,
+        slug: 'jwt-org',
+        name: 'JWT Org',
+        createdAt: now,
+        updatedAt: now,
+      })
+      await ctx.db.patch(uid, { organizationId: oid })
+      return { orgId: oid }
+    })
+
+    await t.withIdentity({
+      tokenIdentifier,
+      orgId: clerkOrgId,
+      orgRole: 'admin',
+      orgSlug: 'jwt-org',
+    }).mutation(
+      api.organizations.updateBusinessMetadata,
+      { phone: '+1-415-555-0100' },
+    )
+
+    const org = await t.run(async (ctx) => ctx.db.get(orgId))
+    expect(org?.phone).toBe('+1-415-555-0100')
   })
 })

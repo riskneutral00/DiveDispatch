@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { api } from '../convex/_generated/api'
 import type { Doc, Id } from '../convex/_generated/dataModel'
-import { seedUser as _seedUser, getOrCreateTestOrg, seedBoatProfile, seedVenue, seedBooking, seedBookingResource, seedSession, seedReservation, seedInventoryUnit, type SeedCtx } from './fixtures'
+import { seedUser as _seedUser, getOrCreateTestOrg, seedBoatProfile, seedVenue, seedBooking, seedBookingResource, seedSession, seedReservation, seedInventoryUnit, seedSnapshot, type SeedCtx } from './fixtures'
 import { makeT, orgIdentityFor } from './helpers/convex-helpers'
 
 async function seedUser(ctx: SeedCtx, slug: string, role: 'Compressor' | 'DiveCenter' = 'Compressor') {
@@ -364,6 +364,19 @@ describe('compressors.remove — cascade + active-reservation guard', () => {
     ).rejects.toThrow(/FORBIDDEN/)
   })
 
+  it('returns silently when the compressor does not exist (idempotent)', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedUser(ctx, 'rm-ghost') })
+    const identity = orgIdentityFor('rm-ghost')
+
+    const compId = await t.withIdentity(identity).mutation(api.compressors.create, VALID_ARGS) as Id<'compressors'>
+    await t.withIdentity(identity).mutation(api.compressors.remove, { compressorId: compId })
+
+    await expect(
+      t.withIdentity(identity).mutation(api.compressors.remove, { compressorId: compId }),
+    ).resolves.toBeNull()
+  })
+
   it('deletes compressor when no bookingResources reference it; profileComplete denorm re-computed to false after removal', async () => {
     const t = makeT()
     await t.run(async (ctx) => { await seedUser(ctx, 'rm-solo') })
@@ -459,5 +472,47 @@ describe('compressors.remove — cascade + active-reservation guard', () => {
         expect(stillThere).toBeNull()
       }
     })
+  })
+
+  it('cascades inventoryUnits + snapshots + reservations on successful remove', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedUser(ctx, 'rm-casc') })
+    const identity = orgIdentityFor('rm-casc')
+    const compId = await t.withIdentity(identity).mutation(api.compressors.create, VALID_ARGS) as Id<'compressors'>
+
+    const compSlug = await t.run(async (ctx) => {
+      const comp = await ctx.db.get(compId) as Doc<'compressors'>
+      const unitId = await seedInventoryUnit(ctx, {
+        resourceType: 'Compressor',
+        ownerType: 'Compressor',
+        ownerId: comp.slug,
+        displayName: comp.name,
+        capacityModel: 'Pooled',
+        totalUnits: 1,
+      })
+      await seedSnapshot(ctx, unitId, {})
+      const bookingId = await seedBooking(ctx, { ownerId: 'rm-casc', ownerType: 'DiveCenter' })
+      const sessionId = await seedSession(ctx, bookingId, unitId)
+      await seedReservation(ctx, bookingId, unitId, sessionId, { status: 'Vacated' })
+      return comp.slug
+    })
+
+    await t.withIdentity(identity).mutation(api.compressors.remove, { compressorId: compId })
+
+    const { units, reservations, snapshots } = await t.run(async (ctx) => {
+      const units = await ctx.db
+        .query('inventoryUnits')
+        .withIndex('by_ownerId_ownerType', (q) =>
+          q.eq('ownerId', compSlug).eq('ownerType', 'Compressor'),
+        )
+        .collect()
+      const reservations = await ctx.db.query('reservations').collect()
+      const snapshots = await ctx.db.query('availabilitySnapshots').collect()
+      return { units, reservations, snapshots }
+    })
+
+    expect(units).toHaveLength(0)
+    expect(reservations).toHaveLength(0)
+    expect(snapshots).toHaveLength(0)
   })
 })

@@ -4,7 +4,12 @@ import type { Doc, Id } from '../convex/_generated/dataModel'
 import { seedUser as _seedUser, type SeedCtx } from './fixtures'
 import { makeT, expectConvexError } from './helpers/convex-helpers'
 
-async function seedUser(ctx: SeedCtx, slug: string, role: 'DiveCenter' | 'Boat' = 'DiveCenter') {
+async function seedUser(
+  ctx: SeedCtx,
+  slug: string,
+  role: 'DiveCenter' | 'Boat' = 'DiveCenter',
+  skipUserRoles = false,
+) {
   return _seedUser(ctx, {
     tokenIdentifier: `clerk|${slug}`,
     slug,
@@ -13,6 +18,7 @@ async function seedUser(ctx: SeedCtx, slug: string, role: 'DiveCenter' | 'Boat' 
     firstName: slug,
     lastName: 'Test',
     role,
+    skipUserRoles,
   })
 }
 
@@ -40,15 +46,14 @@ async function seedOrg(
 }
 
 describe('profileCreate — Rule 11 strict org requirement', () => {
-  it('throws FORBIDDEN no_active_org when caller has no org claim', async () => {
+  it('throws FORBIDDEN when caller has no org claim AND no userRoles membership', async () => {
     const t = makeT()
-    await t.run(async (ctx) => { await seedUser(ctx, 'no-org-dc') })
+    await t.run(async (ctx) => { await seedUser(ctx, 'no-org-dc', 'DiveCenter', true) })
 
     await expectConvexError(
       t.withIdentity({ tokenIdentifier: 'clerk|no-org-dc' })
         .mutation(api.diveCenters.create, BASE_DC_ARGS),
       'FORBIDDEN',
-      'no_active_org',
     )
   })
 
