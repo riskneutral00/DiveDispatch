@@ -97,7 +97,7 @@ describe('users.inheritedContactDefaults', () => {
     expect(result!.address).toEqual({ city: 'Phuket', country: 'TH' })
   })
 
-  it('prefers higher-precedence role (DiveCenter over Agent) when both exist', async () => {
+  it('prefers Agent over DiveCenter (Agent has highest precedence among operators)', async () => {
     await t.run(async (ctx) => {
       const userId = await seedUserForSlug(ctx, 'triple', 'DiveCenter')
       const user = await ctx.db.get(userId)
@@ -118,8 +118,8 @@ describe('users.inheritedContactDefaults', () => {
         excludeRole: 'Equipment',
       })
 
-    expect(result!.name).toBe('The DC')
-    expect(result!.email).toBe('dc@x.example')
+    expect(result!.name).toBe('The Agent')
+    expect(result!.email).toBe('agent@x.example')
   })
 
   it('falls through to Agent when DiveCenter profile not yet saved', async () => {

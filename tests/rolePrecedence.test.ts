@@ -18,8 +18,8 @@ describe('deriveDefaultRole', () => {
     expect(deriveDefaultRole(['Venue', 'Agent', 'Compressor'])).toBe('Agent')
   })
 
-  it('returns Instructor over Boat/Equipment/Venue/Compressor', () => {
-    expect(deriveDefaultRole(['Equipment', 'Venue', 'Instructor'])).toBe('Instructor')
+  it('returns Venue over Equipment and Instructor (resource precedence order)', () => {
+    expect(deriveDefaultRole(['Equipment', 'Venue', 'Instructor'])).toBe('Venue')
   })
 
   it('throws for empty roles array', () => {
@@ -38,12 +38,14 @@ describe('deriveDefaultRole', () => {
 })
 
 describe('ROLE_PRECEDENCE', () => {
-  it('DiveCenter has the highest precedence (0)', () => {
-    expect(ROLE_PRECEDENCE.DiveCenter).toBe(0)
+  it('Agent has the highest precedence among all roles', () => {
+    expect(ROLE_PRECEDENCE.Agent).toBeLessThan(ROLE_PRECEDENCE.DiveCenter)
+    expect(ROLE_PRECEDENCE.DiveCenter).toBeLessThan(ROLE_PRECEDENCE.Venue)
   })
 
-  it('Compressor has the lowest precedence (11)', () => {
-    expect(ROLE_PRECEDENCE.Compressor).toBe(11)
+  it('Compressor ranks between Equipment and Instructor', () => {
+    expect(ROLE_PRECEDENCE.Compressor).toBeGreaterThan(ROLE_PRECEDENCE.Equipment)
+    expect(ROLE_PRECEDENCE.Compressor).toBeLessThan(ROLE_PRECEDENCE.Instructor)
   })
 
   it('all expected roles are defined', () => {

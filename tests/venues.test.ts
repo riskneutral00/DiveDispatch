@@ -36,6 +36,8 @@ async function seedVenueUser(ctx: SeedCtx, slug: string) {
 
 const VALID_DIVE_SITE_ARGS = {
   name: 'Shark Bay Reef',
+  email: 'reef@test.com',
+  phone: '+66100000010',
   address: { city: 'Koh Tao', country: 'TH' },
   lat: 10.09,
   lng: 99.84,
@@ -47,6 +49,8 @@ const VALID_DIVE_SITE_ARGS = {
 
 const VALID_POOL_ARGS = {
   name: 'Sairee Training Pool',
+  email: 'pool@test.com',
+  phone: '+66100000011',
   address: { city: 'Koh Tao', country: 'TH' },
   lat: 10.09,
   lng: 99.84,
@@ -58,6 +62,8 @@ const VALID_POOL_ARGS = {
 
 const VALID_SHORE_ARGS = {
   name: 'Beach Entry',
+  email: 'shore@test.com',
+  phone: '+66100000012',
   address: { city: 'Phuket', country: 'TH' },
   lat: 7.88,
   lng: 98.39,

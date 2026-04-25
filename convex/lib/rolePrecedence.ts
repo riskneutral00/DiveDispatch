@@ -1,11 +1,11 @@
 export const ROLE_PRECEDENCE: Record<string, number> = {
-  DiveCenter: 0,
-  Agent: 1,
+  Agent: 0,
+  DiveCenter: 1,
+  Venue: 2,
+  Boat: 3,
+  Equipment: 4,
+  Compressor: 5,
   Instructor: 6,
-  Boat: 8,
-  Equipment: 9,
-  Venue: 10,
-  Compressor: 11,
 }
 
 export function deriveDefaultRole(roles: string[]): string {

@@ -1,4 +1,5 @@
 import { ConvexError, v } from 'convex/values'
+import type { Id } from './_generated/dataModel'
 import { internalMutation, mutation, query } from './_generated/server'
 import { sanitizeFields, THEME_FIELDS } from './lib/sanitize'
 import { authorize } from './lib/auth'
@@ -101,12 +102,79 @@ export const listMySkins = query({
   },
 })
 
-export const getConfig = query({
-  args: { id: v.id('themes') },
-  handler: async (ctx, args) => {
-    const theme = await ctx.db.get(args.id)
-    if (!theme) return null
-    return JSON.parse(theme.config)
+export const myThemeContext = query({
+  args: {},
+  handler: async (ctx) => {
+    type Skin = {
+      _id: Id<'themes'>
+      name: string
+      slug: string
+      appearance: 'dark' | 'light' | undefined
+    }
+    const empty = {
+      user: null as { _id: Id<'users'>; selectedThemeId: Id<'themes'> | null } | null,
+      selectedTheme: null as unknown,
+      selectedThemeAppearance: null as 'dark' | 'light' | null,
+      savedSkins: [] as Skin[],
+    }
+
+    const identity = await ctx.auth.getUserIdentity()
+    if (!identity) return empty
+
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_tokenIdentifier', (q) =>
+        q.eq('tokenIdentifier', identity.tokenIdentifier),
+      )
+      .unique()
+    if (!user) return empty
+
+    let selectedTheme: unknown = null
+    let selectedThemeAppearance: 'dark' | 'light' | null = null
+    if (user.selectedThemeId) {
+      const theme = await ctx.db.get(user.selectedThemeId)
+      if (theme) {
+        try {
+          selectedTheme = JSON.parse(theme.config)
+        } catch {
+          selectedTheme = null
+        }
+        if (theme.appearance === 'dark' || theme.appearance === 'light') {
+          selectedThemeAppearance = theme.appearance
+        }
+      }
+    }
+
+    let themeIds = user.savedThemeIds
+    if (!themeIds || themeIds.length === 0) {
+      const active = await ctx.db
+        .query('themes')
+        .withIndex('by_isActive', (q) => q.eq('isActive', true))
+        .take(200)
+      const sorted = [...active].sort(compareThemeSortOrder)
+      themeIds = sorted.map((t) => t._id)
+    }
+
+    const themes = await Promise.all(
+      themeIds.map(async (id) => ctx.db.get(id)),
+    )
+    const active = themes.filter(
+      (t): t is NonNullable<typeof t> => t !== null && t.isActive,
+    )
+    active.sort(compareThemeSortOrder)
+    const savedSkins = active.map((t) => ({
+      _id: t._id,
+      name: t.name,
+      slug: t.slug,
+      appearance: t.appearance,
+    }))
+
+    return {
+      user: { _id: user._id, selectedThemeId: user.selectedThemeId ?? null },
+      selectedTheme,
+      selectedThemeAppearance,
+      savedSkins,
+    }
   },
 })
 
@@ -117,13 +185,6 @@ export const bySlug = query({
       .query('themes')
       .withIndex('by_slug', (q) => q.eq('slug', args.slug))
       .unique()
-  },
-})
-
-export const byId = query({
-  args: { id: v.id('themes') },
-  handler: async (ctx, args) => {
-    return await ctx.db.get(args.id)
   },
 })
 

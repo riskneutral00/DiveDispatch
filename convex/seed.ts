@@ -43,6 +43,7 @@ interface InventoryLine {
   gearType: GearTypeValue
   manufacturer?: string
   size?: string
+  sizeSystem?: 'eu' | 'us' | 'cm' | 'letter'
   diopter?: number
   isPrescription?: boolean
   totalUnits: number
@@ -83,29 +84,35 @@ function buildEquipmentLines(
     }
   }
 
+  const primaryBrand = Object.values(manufacturers)[0]?.[0] ?? 'ScubaPro'
+
   for (const finSize of FIN_SIZES) {
     lines.push({
       gearType: 'fins',
-      size: `EU ${finSize}`,
+      manufacturer: primaryBrand,
+      size: `${finSize}`,
+      sizeSystem: 'eu',
       totalUnits: 4,
-      displayName: `Fins EU ${finSize}`,
+      displayName: `${primaryBrand} Fins EU ${finSize}`,
     })
   }
 
   lines.push({
     gearType: 'mask',
+    manufacturer: primaryBrand,
     isPrescription: false,
     totalUnits: 10,
-    displayName: 'Mask (Regular)',
+    displayName: `${primaryBrand} Mask (Regular)`,
   })
 
   for (const pm of PRESCRIPTION_MASKS) {
     lines.push({
       gearType: 'mask',
+      manufacturer: primaryBrand,
       diopter: pm.diopter,
       isPrescription: true,
       totalUnits: 2,
-      displayName: `Mask (Rx ${pm.diopter})`,
+      displayName: `${primaryBrand} Mask (Rx ${pm.diopter})`,
     })
   }
 
@@ -373,6 +380,7 @@ export const seedEquipmentInventory = internalMutation({
           gearType: line.gearType,
           ...(line.manufacturer !== undefined && { manufacturer: line.manufacturer }),
           ...(line.size !== undefined && { size: line.size }),
+          ...(line.sizeSystem !== undefined && { sizeSystem: line.sizeSystem }),
           ...(line.diopter !== undefined && { diopter: line.diopter }),
           ...(line.isPrescription !== undefined && { isPrescription: line.isPrescription }),
         })
@@ -552,6 +560,10 @@ export const seedStakeholderPreferences = internalMutation({
       },
       'sea-fun': {
         instructors: ['sea-fun'],
+        boats: ['sea-fun'],
+        venues: ['sea-fun'],
+        compressors: ['sea-fun'],
+        equipment: ['sea-fun'],
       },
     }
 

@@ -44,6 +44,8 @@ const gearInventoryEvaluator = subTableEnumSlots<EnrichedGearRow>({
 export const ROLE_SPECS: Record<string, Evaluator[]> = {
   DiveCenter: [
     scalarString('name'),
+    scalarString('email'),
+    scalarString('phone'),
     nestedAddress(),
     associationEvaluator({ minSpecialties: AOW_REQUIRED_SPECIALTY_COUNT }),
     arrayNonEmpty('customerLanguages'),
@@ -52,6 +54,8 @@ export const ROLE_SPECS: Record<string, Evaluator[]> = {
   ],
   Agent: [
     scalarString('name'),
+    scalarString('email'),
+    scalarString('phone'),
     nestedAddress(),
     associationEvaluator({ minSpecialties: 0 }),
     arrayNonEmpty('customerLanguages'),
@@ -60,29 +64,40 @@ export const ROLE_SPECS: Record<string, Evaluator[]> = {
   ],
   Instructor: [
     scalarString('name'),
+    scalarString('email'),
+    scalarString('phone'),
     nestedAddress(),
     credentialEvaluator({ requireSpecialties: true }),
     arrayNonEmpty('teachingLanguages'),
   ],
   Boat: [
     scalarString('name'),
+    scalarString('email'),
+    scalarString('phone'),
     nestedAddress(),
     nestedPathPredicate({ label: 'routeVenues', predicate: fleetRoutesHaveVenues }),
     fleetEvaluator(),
   ],
   Equipment: [
     scalarString('name'),
+    scalarString('email'),
+    scalarString('phone'),
     nestedAddress(),
     gearInventoryEvaluator,
   ],
   Venue: [
     scalarString('name'),
+    scalarString('email'),
+    scalarString('phone'),
     nestedAddress(),
     scalarString('kind'),
     operatorAcceptanceMode(),
   ],
   Compressor: [
     scalarString('name'),
+    scalarString('email'),
+    scalarString('phone'),
+    scalarString('location'),
     nestedAddress(),
     arrayNonEmpty('gasMixes'),
   ],

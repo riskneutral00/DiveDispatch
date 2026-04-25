@@ -6,7 +6,7 @@ import type { QueryCtx, MutationCtx } from './_generated/server'
 import type { Id, Doc } from './_generated/dataModel'
 import { stakeholderTypeValidator as stakeholderType, effectiveResourceType } from './lib/validators'
 import { ErrorCode } from './lib/errorCodes'
-import { deriveDefaultRole } from './lib/rolePrecedence'
+import { deriveDefaultRole, ROLE_PRECEDENCE } from './lib/rolePrecedence'
 import { batchGet, batchDelete } from './lib/batch'
 import { ROLE_TABLE_MAP } from './lib/profileHelpers'
 import { queryDynamicTable, deleteDynamic } from './lib/typedDb'
@@ -67,12 +67,13 @@ export async function checkHasAnyOperatorRole(
   return roles.some((r) => OPERATOR_ROLE_SET.has(r.role))
 }
 
-function sortUserRolesByGrantOrder<T extends { createdAt: number; role: string; _id: Id<'userRoles'> }>(
+function sortUserRolesByPrecedence<T extends { role: string; _id: Id<'userRoles'> }>(
   rows: T[],
 ): T[] {
   return [...rows].sort((a, b) => {
-    const d = a.createdAt - b.createdAt
-    if (d !== 0) return d
+    const pa = ROLE_PRECEDENCE[a.role] ?? Infinity
+    const pb = ROLE_PRECEDENCE[b.role] ?? Infinity
+    if (pa !== pb) return pa - pb
     return a._id < b._id ? -1 : a._id > b._id ? 1 : 0
   })
 }
@@ -83,7 +84,7 @@ export const myRoles = query({
     const user = await getAuthUser(ctx)
     if (!user) return []
     const rows = await getAllUserRoles(ctx, user._id)
-    return sortUserRolesByGrantOrder(rows)
+    return sortUserRolesByPrecedence(rows)
   },
 })
 
