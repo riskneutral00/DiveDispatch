@@ -1097,7 +1097,6 @@ describe('equipmentInventory.bulkSetMasksByManufacturer', () => {
 
     await t.run(async (ctx) => {
       await seedSnapshot(ctx, unitId, {
-        date: '2026-05-01',
         totalUnits: 5,
         reservedUnits: 3,
         availableUnits: 2,

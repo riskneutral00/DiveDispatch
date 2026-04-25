@@ -1,6 +1,7 @@
 import { ConvexError } from 'convex/values'
 import type { QueryCtx, MutationCtx } from '../_generated/server'
 import type { Doc, Id, TableNames } from '../_generated/dataModel'
+import type { UserIdentity } from 'convex/server'
 import { authorize } from './auth'
 import { checkHasRole } from '../userRoles'
 import { ErrorCode } from './errorCodes'
@@ -115,8 +116,9 @@ export async function profileUpdate(
   args: Record<string, unknown>,
   tableName: TableNames,
   role: string,
+  actor?: { user: Doc<'users'>; identity: UserIdentity },
 ) {
-  const { user } = await authorize(ctx, null, 'profile:manage', { type: 'profile' })
+  const { user } = await authorize(ctx, actor ?? null, 'profile:manage', { type: 'profile' })
   const { org: activeOrg } = await getActiveOrg(ctx)
 
   const profile = await queryDynamicTable(ctx.db, tableName)
@@ -142,8 +144,9 @@ export async function profileCreate(
   tableName: TableNames,
   roleName: string | string[],
   extraDefaults?: Record<string, unknown>,
+  actor?: { user: Doc<'users'>; identity: UserIdentity },
 ) {
-  const { user } = await authorize(ctx, null, 'profile:manage', { type: 'profile' })
+  const { user } = await authorize(ctx, actor ?? null, 'profile:manage', { type: 'profile' })
 
   const roles = Array.isArray(roleName) ? roleName : [roleName]
   const hasAny = await Promise.all(

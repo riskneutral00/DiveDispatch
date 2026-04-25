@@ -172,6 +172,94 @@ describe('boatWidget.getVesselCalendarTrips', () => {
     expect(result[0].activityType).toEqual(['Shark Island / Chumphon Pinnacle'])
   })
 
+  it('returns only the caller-org fleet when two boat orgs both have profiles', async () => {
+    const t = makeT()
+    const date = testDate(8)
+
+    const OTHER_TOKEN = 'test|other-boat-user'
+    const OTHER_SLUG = 'other-boat-slug'
+
+    await t.run(async (ctx) => {
+      const ownerUserId = await seedUser(ctx, {
+        tokenIdentifier: BOAT_TOKEN,
+        slug: BOAT_SLUG,
+        role: 'Boat',
+      })
+      await seedBoatProfile(ctx, ownerUserId, {
+        fleet: [{ boatName: 'MV Hug Ocean', maxPax: 50, boatType: 'day_boat' }],
+      })
+      const ownerUnit = await seedInventoryUnit(ctx, {
+        resourceType: 'Boat',
+        displayName: 'MV Hug Ocean',
+        capacityModel: 'Pooled',
+        totalUnits: 50,
+        ownerId: BOAT_SLUG,
+        ownerType: 'Boat',
+      })
+      await seedUser(ctx, {
+        tokenIdentifier: TEST_TOKENS.diveCenter,
+        slug: TEST_SLUGS.diveCenter,
+        role: 'DiveCenter',
+      })
+      const ownerBooking = await seedBooking(ctx, {
+        startDate: date,
+        endDate: date,
+        divers: [
+          { name: 'D1', abbrev: 'D1', flag: { code: 'en', label: 'English' }, startDate: date, endDate: date, activityType: ['OW'] },
+          { name: 'D2', abbrev: 'D2', flag: { code: 'en', label: 'English' }, startDate: date, endDate: date, activityType: ['OW'] },
+          { name: 'D3', abbrev: 'D3', flag: { code: 'en', label: 'English' }, startDate: date, endDate: date, activityType: ['OW'] },
+        ],
+      })
+      await seedSession(ctx, ownerBooking, ownerUnit, { date })
+
+      const otherUserId = await seedUser(ctx, {
+        tokenIdentifier: OTHER_TOKEN,
+        slug: OTHER_SLUG,
+        role: 'Boat',
+      })
+      await seedBoatProfile(ctx, otherUserId, {
+        fleet: [{ boatName: 'MV Other Boat', maxPax: 20, boatType: 'day_boat' }],
+      })
+      const otherUnit = await seedInventoryUnit(ctx, {
+        resourceType: 'Boat',
+        displayName: 'MV Other Boat',
+        capacityModel: 'Pooled',
+        totalUnits: 20,
+        ownerId: OTHER_SLUG,
+        ownerType: 'Boat',
+      })
+      const otherBooking = await seedBooking(ctx, {
+        startDate: date,
+        endDate: date,
+        ownerId: OTHER_SLUG,
+        divers: [
+          { name: 'X1', abbrev: 'X1', flag: { code: 'en', label: 'English' }, startDate: date, endDate: date, activityType: ['OW'] },
+        ],
+      })
+      await seedSession(ctx, otherBooking, otherUnit, { date })
+    })
+
+    const ownerResult = await t
+      .withIdentity({ tokenIdentifier: BOAT_TOKEN })
+      .query(api.boatWidget.getVesselCalendarTrips, {
+        dateRangeStart: date,
+        dateRangeEnd: date,
+      })
+    expect(ownerResult).toHaveLength(1)
+    expect(ownerResult[0].boatName).toBe('MV Hug Ocean')
+    expect(ownerResult[0].diverCount).toBe(3)
+
+    const otherResult = await t
+      .withIdentity({ tokenIdentifier: OTHER_TOKEN })
+      .query(api.boatWidget.getVesselCalendarTrips, {
+        dateRangeStart: date,
+        dateRangeEnd: date,
+      })
+    expect(otherResult).toHaveLength(1)
+    expect(otherResult[0].boatName).toBe('MV Other Boat')
+    expect(otherResult[0].diverCount).toBe(1)
+  })
+
   it('preserves vessel input order across multiple vessels with distinct routes', async () => {
     const t = makeT()
     const date = testDate(4)

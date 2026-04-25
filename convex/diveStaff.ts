@@ -5,7 +5,7 @@ import {
   profileUpdate,
   profileCreate,
 } from './lib/profileHelpers'
-import { getAuthUser } from './lib/auth'
+import { authorize } from './lib/auth'
 import { visibleOrgIds } from './lib/destinationScope'
 import { BASE_PROFILE_CREATE_FIELDS, BASE_PROFILE_UPDATE_FIELDS, ACCESS_CONTROL_FIELDS } from './lib/validators'
 import { ErrorCode } from './lib/errorCodes'
@@ -32,14 +32,15 @@ export const create = mutation({
     if (args.teachingLanguages.length === 0) {
       throw new ConvexError({ code: ErrorCode.TEACHING_LANGUAGES_REQUIRED })
     }
-    const user = await getAuthUser(ctx)
-    const name = user ? deriveStaffName(user) : ''
+    const actor = await authorize(ctx, null, 'profile:manage', { type: 'profile' })
+    const name = deriveStaffName(actor.user)
     return profileCreate(
       ctx,
       { ...args, name, role: 'Instructor' },
       'diveStaff',
       'Instructor',
       { verified: false },
+      actor,
     )
   },
 })
@@ -55,9 +56,9 @@ export const update = mutation({
     if (args.teachingLanguages !== undefined && args.teachingLanguages.length === 0) {
       throw new ConvexError({ code: ErrorCode.TEACHING_LANGUAGES_REQUIRED })
     }
-    const user = await getAuthUser(ctx)
-    const name = user ? deriveStaffName(user) : undefined
-    return profileUpdate(ctx, { ...args, ...(name ? { name } : {}) }, 'diveStaff', 'Instructor')
+    const actor = await authorize(ctx, null, 'profile:manage', { type: 'profile' })
+    const name = deriveStaffName(actor.user)
+    return profileUpdate(ctx, { ...args, ...(name ? { name } : {}) }, 'diveStaff', 'Instructor', actor)
   },
 })
 
