@@ -39,10 +39,10 @@ ALL_TRIGGERS=$(printf '%s\n%s\n' "$TRIGGERS" "$ARRAY_TRIGGERS" | sed '/^$/d')
 # Require the file to either import from i18nValidators or route through profileHelpers
 # (which calls validateContactInput internally).
 HAS_VALIDATORS=0
-if grep -qE "from '\./lib/i18nValidators'|from './i18nValidators'" "$FILE_PATH"; then
+if grep -qE "from '\.+(/lib)?/i18nValidators'" "$FILE_PATH"; then
   HAS_VALIDATORS=1
 fi
-if grep -qE "from '\./lib/profileHelpers'|profileCreate\(|profileUpdate\(" "$FILE_PATH"; then
+if grep -qE "from '\.+(/lib)?/profileHelpers'|profileCreate\(|profileUpdate\(" "$FILE_PATH"; then
   HAS_VALIDATORS=1
 fi
 # Also allow boundary wrappers that re-export

@@ -5,5 +5,6 @@ Privileged dev-tool ops. Each file exports `run` as a regular `mutation` or `que
 Current ops:
 - `promoteAreaOrg` — flips `organizations.isAreaOrg = true` for a given slug.
 - `auditOrgRelationships` — verifies the user/org/role/profile graph against the five Phase 3 invariants.
+- `upsertVenue` — creates or patches a venue (dive_site or pool) by `(orgSlug, slug)`. The Claude-driven entry point for venue mutations without going through the FE; see `.claude/rules/dive-site-mutations.md`.
 
-See `Vaults/DiveDispatch/wiki/PatternLibrary/dev-tool-internal-mutation-cli.md` for the reusable pattern.
+See `Vaults/DiveDispatch/wiki/PatternLibrary/dev-tool-mutation-cli.md` for the reusable pattern.
