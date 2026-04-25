@@ -231,6 +231,12 @@
           },
           {
             "type": "command",
+            "command": "bash .claude/hooks/screen-query-budget.sh",
+            "timeout": 5,
+            "statusMessage": "Checking screen-query budget…"
+          },
+          {
+            "type": "command",
             "command": "bash .claude/hooks/skeleton-stale-reminder.sh",
             "timeout": 5,
             "statusMessage": "Checking skeleton freshness…"

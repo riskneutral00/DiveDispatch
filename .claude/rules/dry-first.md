@@ -58,6 +58,9 @@ Before defining a new constant, type, schema, or utility function, grep `src/lib
 ### Convex — shared enum validators
 - **Literal-union factory:** `convex/shared/enumValidator.ts` (`defineLiteralUnion(values)` — returns `{ values, validator }` with a compile-time guard that the validator round-trips back to the union. Use for any new `as const` array that needs a Convex `v.union(...)` validator. Callers: `venueTypes.ts`, `compressorTypes.ts`, `venueFeatures.ts`. Never repeat the 4-step boilerplate (`map(v.literal) as [...]` cast → `v.union(...)` → `Infer<>` extract → mutual-extends type guard).
 
+### Screen-level data
+- **One screen, one query.** Screen-level components consume one aggregation query (e.g. `convex/themes.ts:myThemeContext`), not many entity queries. Sub-components read from context or props. Cap: 3 `useQuery`/`useStableQuery` calls per non-provider component. See `.claude/rules/screen-shaped-queries.md` (auto-loaded) and `Vaults/DiveDispatch/wiki/PatternLibrary/screen-shaped-queries.md`. Enforced by `screen-query-budget.sh` (PostToolUse) + `tests/architecture/query-budget.test.ts` (CI).
+
 ## Three copies = extract
 If the same logic exists in 3+ places, extract it to a shared file before adding a 4th. If it exists in 2 places, flag it in the PR description or `/gate` output for the next `/design propagate` run — do not add inline comments (per no-comments rule).
 

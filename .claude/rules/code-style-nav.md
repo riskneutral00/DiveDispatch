@@ -23,3 +23,4 @@ The codebase is AI-generated and AI-maintained — the code is the documentation
 - `// snapshot: <description>` — required by `schema-invariants.md` Rule 5 to annotate denormalized fields
 - `// bounded: <reason>` — required by `query-invariants.md` Rule 1 to document why a `.collect()` is safe
 - `// spacing-ok: <reason>` — required by `spacing-ladder-guard.sh` to suppress off-ladder spacing values (`px-2.5`, `gap-2.5`, `gap-5`) when the visual is intentional
+- `// query-budget-ok: <reason>` — required by `screen-query-budget.sh` to document a non-provider component that legitimately exceeds the 3-subscription cap (or to grandfather a known offender pending its planned aggregation migration)
