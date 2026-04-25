@@ -2,6 +2,8 @@
 
 When Matt asks to add, edit, or feature-toggle a dive site (or any venue), do NOT edit `convex/seedData.ts` and do NOT ask him to use the FE. Use the privileged upsert at `convex/admin/upsertVenue.ts`. It is dev-only (`requireDevEnvironment()`) and lookup-by-`(orgSlug, slug)`.
 
+**Enforcement.** `.claude/hooks/seed-venue-edit-guard.sh` (PreToolUse on Edit/Write) blocks any change to `convex/seedData.ts` that touches a `kind: 'dive_site'` or `kind: 'pool'` literal. The escape comment is `// seed-edit-ok: <reason>` for cases where Matt explicitly asks for a permanent seed-baseline change (one that survives `seed:force`).
+
 ## Steps
 
 1. **Read first.** Use `mcp__convex__runOneoffQuery` to fetch the org by slug + the venue by `(organizationId, slug)`. Confirm current `features`, `lat`, `lng`, `verified`, `name`. Surface what's there before changing it.

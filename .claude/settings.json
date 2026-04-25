@@ -116,6 +116,12 @@
             "command": "bash .claude/hooks/frontmatter-guard.sh",
             "timeout": 3,
             "statusMessage": "Checking vault frontmatter…"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/seed-venue-edit-guard.sh",
+            "timeout": 5,
+            "statusMessage": "Checking seed venue edit…"
           }
         ]
       },
@@ -151,6 +157,12 @@
             "command": "bash .claude/hooks/frontmatter-guard.sh",
             "timeout": 3,
             "statusMessage": "Checking vault frontmatter…"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/seed-venue-edit-guard.sh",
+            "timeout": 5,
+            "statusMessage": "Checking seed venue edit…"
           }
         ]
       }
