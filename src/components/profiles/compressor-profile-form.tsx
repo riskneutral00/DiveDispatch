@@ -155,6 +155,12 @@ export function CompressorContactSection({ me }: CompressorListSectionProps) {
         }
         itemKey={(compressor) => compressor._id}
         removeAriaLabel={(compressor) => `Remove ${compressor.name}`}
+        getCompleteness={(compressor) => ({
+          complete: compressor.profileComplete === true,
+          incomplete: [],
+        })}
+        completeLabel={t('complete')}
+        incompleteLabel={t('incomplete')}
         renderCard={(compressor) => {
           const mixes = (compressor.gasMixes ?? []) as GasMix[]
           return (

@@ -209,6 +209,12 @@ export function VenueCapabilitiesSection({ me }: VenueCapabilitiesSectionProps) 
         onRemove={(venue) => void handleRemove(venue._id)}
         itemKey={(venue) => venue._id}
         removeAriaLabel={(venue) => t('removeVenue', { name: venue.name })}
+        getCompleteness={(venue) => ({
+          complete: venue.profileComplete === true,
+          incomplete: [],
+        })}
+        completeLabel={t('complete')}
+        incompleteLabel={t('incomplete')}
         renderCard={(venue) => {
           const features = (venue.features ?? []) as VenueFeature[]
           return (
