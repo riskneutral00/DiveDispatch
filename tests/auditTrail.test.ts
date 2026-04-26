@@ -3,7 +3,7 @@ import { api, internal } from '../convex/_generated/api'
 import type { Id } from '../convex/_generated/dataModel'
 import { HOLD_TTL_MS as HOLD_TTL } from '../convex/lib/auth'
 import { testDate } from './helpers/dates'
-import { logBookingChange } from '../convex/bookingAuditLog'
+import { logBookingChange } from '../convex/lib/auditLog'
 import { makeT } from './helpers/convex-helpers'
 
 
@@ -133,7 +133,7 @@ describe('getAuditLog returns entries sorted by timestamp desc', () => {
 
     const entries = await t
       .withIdentity({ tokenIdentifier: 'clerk|dc-test' })
-      .query(api.bookingAuditLog.getAuditLog, { bookingId })
+      .query(api.bookings.getAuditLog, { bookingId })
 
     expect(entries).toHaveLength(3)
     expect((entries[0] as Record<string, unknown>).timestamp).toBe(3000)
@@ -162,7 +162,7 @@ describe('getAuditLog scoped to bookingId', () => {
 
     const entriesA = await t
       .withIdentity({ tokenIdentifier: 'clerk|dc-test' })
-      .query(api.bookingAuditLog.getAuditLog, { bookingId: bookingA })
+      .query(api.bookings.getAuditLog, { bookingId: bookingA })
 
     expect(entriesA).toHaveLength(1)
     expect((entriesA[0] as Record<string, unknown>).bookingId).toBe(bookingA)
@@ -209,7 +209,7 @@ describe('submitToDraft creates audit entries', () => {
 
     const entries = await t
       .withIdentity({ tokenIdentifier: 'clerk|dc-test' })
-      .query(api.bookingAuditLog.getAuditLog, { bookingId })
+      .query(api.bookings.getAuditLog, { bookingId })
 
     const actions = (entries as Array<Record<string, unknown>>).map((e) => e.action)
     expect(actions).toContain('submitted')
@@ -233,7 +233,7 @@ describe('cancel creates audit entry', () => {
 
     const entries = await t
       .withIdentity({ tokenIdentifier: 'clerk|dc-test' })
-      .query(api.bookingAuditLog.getAuditLog, { bookingId })
+      .query(api.bookings.getAuditLog, { bookingId })
 
     const cancelEntry = (entries as Array<Record<string, unknown>>).find(
       (e) => e.action === 'cancelled',
@@ -268,7 +268,7 @@ describe('expire creates audit entry', () => {
 
     const entries = await t
       .withIdentity({ tokenIdentifier: 'clerk|dc-test' })
-      .query(api.bookingAuditLog.getAuditLog, { bookingId })
+      .query(api.bookings.getAuditLog, { bookingId })
 
     const expiredEntry = (entries as Array<Record<string, unknown>>).find(
       (e) => e.action === 'expired',
@@ -310,7 +310,7 @@ describe('complete creates audit entry', () => {
 
     const entries = await t
       .withIdentity({ tokenIdentifier: 'clerk|dc-test' })
-      .query(api.bookingAuditLog.getAuditLog, { bookingId })
+      .query(api.bookings.getAuditLog, { bookingId })
 
     const completedEntry = (entries as Array<Record<string, unknown>>).find(
       (e) => e.action === 'completed',
@@ -342,17 +342,17 @@ describe('audit entries are immutable', () => {
       })
     })
 
-    expect(typeof api.bookingAuditLog.getAuditLog).toBe('object')
+    expect(typeof api.bookings.getAuditLog).toBe('object')
 
     const publicKeys = Object.keys(
       Object.getOwnPropertyDescriptors(
-        Object.getPrototypeOf(api.bookingAuditLog) ?? api.bookingAuditLog,
+        Object.getPrototypeOf(api.bookings) ?? api.bookings,
       ),
     ).filter((k) => k !== 'constructor')
 
     const entry = await t
       .withIdentity({ tokenIdentifier: 'clerk|dc-test' })
-      .query(api.bookingAuditLog.getAuditLog, { bookingId })
+      .query(api.bookings.getAuditLog, { bookingId })
 
     expect(entry).toHaveLength(1)
     expect(publicKeys.includes('patchAuditLog')).toBe(false)
@@ -371,7 +371,7 @@ describe('getAuditLog unauthenticated', () => {
     })
 
     await expect(
-      t.query(api.bookingAuditLog.getAuditLog, { bookingId }),
+      t.query(api.bookings.getAuditLog, { bookingId }),
     ).rejects.toMatchObject({ data: expect.stringContaining('UNAUTHENTICATED') })
   })
 })
@@ -396,7 +396,7 @@ describe('getAuditLog ownership check (A5)', () => {
 
     await expect(
       t.withIdentity({ tokenIdentifier: 'clerk|outsider' })
-        .query(api.bookingAuditLog.getAuditLog, { bookingId }),
+        .query(api.bookings.getAuditLog, { bookingId }),
     ).rejects.toMatchObject({ data: expect.stringContaining('FORBIDDEN') })
   })
 
@@ -417,7 +417,7 @@ describe('getAuditLog ownership check (A5)', () => {
 
     const entries = await t
       .withIdentity({ tokenIdentifier: 'clerk|dc-test' })
-      .query(api.bookingAuditLog.getAuditLog, { bookingId })
+      .query(api.bookings.getAuditLog, { bookingId })
 
     expect(entries).toHaveLength(1)
   })

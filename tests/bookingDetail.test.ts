@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { api } from '../convex/_generated/api'
-import { logBookingChange } from '../convex/bookingAuditLog'
+import { logBookingChange } from '../convex/lib/auditLog'
 import { testDate, testToken } from './helpers/dates'
 import type { Id } from '../convex/_generated/dataModel'
 import {

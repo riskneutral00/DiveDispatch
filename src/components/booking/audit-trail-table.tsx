@@ -21,7 +21,7 @@ import {
 } from 'lucide-react'
 import { api } from '@/lib/convex-generated'
 import type { Id } from '@/lib/convex-generated'
-import type { AuditAction } from '../../../convex/bookingAuditLog'
+import type { AuditAction } from '../../../convex/lib/auditLog'
 import { timeAgo } from '@/lib/utils/time-ago'
 import { Skeleton } from '@/components/ui/skeleton'
 
@@ -233,7 +233,7 @@ function TimelineEntry({
 }
 
 export function AuditTrailTable({ bookingId }: AuditTrailTableProps) {
-  const entries = useQuery(api.bookingAuditLog.getAuditLog, {
+  const entries = useQuery(api.bookings.getAuditLog, {
     bookingId: bookingId as Id<'bookings'>,
   })
 

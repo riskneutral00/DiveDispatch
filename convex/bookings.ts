@@ -2,7 +2,7 @@ import { ConvexError, v } from 'convex/values'
 import { type QueryCtx, query } from './_generated/server'
 import type { Id } from './_generated/dataModel'
 import type { UserDoc, BookingDoc, InventoryUnitDoc, ReservationDoc } from './lib/types'
-import { requireAuth, requireOwnerOrResourceAccess, OPERATOR_ROLE_SET } from './lib/auth'
+import { requireAuth, requireOwnerOrResourceAccess, authorize, OPERATOR_ROLE_SET } from './lib/auth'
 import { checkHasAnyOperatorRole, requireActiveRole } from './userRoles'
 import { stakeholderTypeValidator as stakeholderType } from './lib/validators'
 import {
@@ -697,4 +697,25 @@ export const myDashboard = query({
 export const getBookingDetail = query({
   args: { bookingId: v.id('bookings') },
   handler: _getBookingDetail,
+})
+
+export const getAuditLog = query({
+  args: { bookingId: v.id('bookings') },
+  handler: async (ctx, args) => {
+    const booking = await ctx.db.get(args.bookingId)
+    if (!booking) throw new ConvexError({ code: ErrorCode.NOT_FOUND, reason: 'booking_not_found' })
+    await authorize(ctx, null, 'booking:read', {
+      type: 'booking',
+      id: args.bookingId,
+      ownerId: booking.ownerId,
+    })
+
+    return ctx.db
+      .query('bookingAuditLog')
+      .withIndex('by_bookingId_timestamp', (q) =>
+        q.eq('bookingId', args.bookingId),
+      )
+      .order('desc')
+      .take(100)
+  },
 })
