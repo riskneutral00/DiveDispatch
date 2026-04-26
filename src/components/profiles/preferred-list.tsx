@@ -8,7 +8,7 @@ import { DragDropProvider } from '@dnd-kit/react'
 import { useSortable } from '@dnd-kit/react/sortable'
 import { api } from '@/lib/convex-generated'
 import type { DirectoryEntry } from '../../../convex/directory'
-import type { StakeholderRole } from '@/lib/utils/role'
+import { useDirectoryByRoleKey } from '@/lib/hooks/use-directory-by-role-key'
 import { Input } from '@/components/ui/input'
 import { Dialog } from '@/components/ui/dialog'
 import { BOAT_TYPE_LABELS } from '@/lib/constants/boat-types'
@@ -240,7 +240,7 @@ export function PreferredInstructorList(props: ListProps) {
   const tDialogs = useTranslations('booking.dialogs')
   const tEmpty = useTranslations('booking.emptyStates')
 
-  const entries = useQuery(api.directory.listByRole, { role: 'Instructor' as StakeholderRole })
+  const entries = useDirectoryByRoleKey('instructor')
   const diveCenterProfile = useQuery(api.diveCenters.mine)
 
   const [showOverlay, setShowOverlay] = useState(false)
@@ -549,7 +549,7 @@ function BoatBadge({ entry }: { entry: DirectoryEntry }) {
 
 export function PreferredVenueList(props: ListProps) {
   const { slugs, onChange } = props
-  const entries = useQuery(api.directory.listByRole, { role: 'Venue' as StakeholderRole })
+  const entries = useDirectoryByRoleKey('venue')
 
   const [search, setSearch] = useState('')
 
@@ -587,7 +587,7 @@ export function PreferredVenueList(props: ListProps) {
 
 export function PreferredBoatList(props: ListProps) {
   const { slugs, onChange } = props
-  const entries = useQuery(api.directory.listByRole, { role: 'Boat' as StakeholderRole })
+  const entries = useDirectoryByRoleKey('boat')
 
   const [search, setSearch] = useState('')
 
@@ -648,7 +648,7 @@ function EquipmentBadge({ entry }: { entry: DirectoryEntry }) {
 
 export function PreferredEquipmentList(props: ListProps) {
   const { slugs, onChange } = props
-  const entries = useQuery(api.directory.listByRole, { role: 'Equipment' as StakeholderRole })
+  const entries = useDirectoryByRoleKey('equipment')
 
   const [activeGearType, setActiveGearType] = useState<string | null>(null)
   const [search, setSearch] = useState('')
@@ -718,7 +718,7 @@ function CompressorBadge({ entry }: { entry: DirectoryEntry }) {
 
 export function PreferredCompressorList(props: ListProps) {
   const { slugs, onChange } = props
-  const entries = useQuery(api.directory.listByRole, { role: 'Compressor' as StakeholderRole })
+  const entries = useDirectoryByRoleKey('compressor')
 
   const [activeGasMix, setActiveGasMix] = useState<string | null>(null)
   const [search, setSearch] = useState('')

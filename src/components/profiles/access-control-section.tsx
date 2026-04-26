@@ -1,8 +1,7 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { useQuery } from 'convex/react'
-import { api } from '@/lib/convex-generated'
+import { useDirectoryByRoleKey } from '@/lib/hooks/use-directory-by-role-key'
 import { Checkbox } from '@/components/ui/checkbox'
 import { FieldLabel } from '@/components/ui/field-shell'
 
@@ -50,7 +49,7 @@ interface AccessControlSectionProps {
 
 export function AccessControlSection({ value, onChange }: AccessControlSectionProps) {
   const t = useTranslations('common')
-  const diveCenters = useQuery(api.directory.listByRole, { role: 'DiveCenter' })
+  const diveCenters = useDirectoryByRoleKey('dive-center')
   const allowedSet = new Set(value.isAllowed)
   const blockedSet = new Set(value.notAllowed)
 

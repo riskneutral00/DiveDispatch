@@ -1,10 +1,9 @@
 'use client'
 
-import { useQuery } from 'convex/react'
-import { api } from '@/lib/convex-generated'
 import { Card, FieldRow } from '@/components/ui'
 import { CardTitle } from '@/components/ui/card-title'
 import { ResourceOrExternalField } from './resource-or-external-field'
+import { useDirectoryByRoleKey } from '@/lib/hooks/use-directory-by-role-key'
 import type { WizardState, WizardAction } from '@/lib/booking/wizard-state'
 import type { Dispatch } from 'react'
 
@@ -14,8 +13,8 @@ interface ResourceStepProps {
 }
 
 export function ResourceStep({ state, dispatch }: ResourceStepProps) {
-  const equipmentManagers = useQuery(api.directory.listByRole, { role: 'Equipment' }) ?? []
-  const compressors = useQuery(api.directory.listByRole, { role: 'Compressor' }) ?? []
+  const equipmentManagers = useDirectoryByRoleKey('equipment') ?? []
+  const compressors = useDirectoryByRoleKey('compressor') ?? []
 
   const equipmentOptions = equipmentManagers.map((r) => ({ id: r.slug, label: r.name }))
   const compressorOptions = compressors.map((r) => ({ id: r.slug, label: r.name }))

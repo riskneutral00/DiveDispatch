@@ -47,6 +47,8 @@ export interface ProfileTab {
 
 export type RoleClass = 'freelance' | 'business'
 
+export type BookingPresence = 'itinerary' | 'resource-step' | 'operator' | 'none'
+
 export interface RoleConfig {
   key: RoleKey
   clerkRole: ClerkRole
@@ -61,6 +63,7 @@ export interface RoleConfig {
   roleClass: RoleClass
   tableName: string
   description: string
+  bookingPresence: BookingPresence
   profileTabs: ProfileTab[]
 }
 
@@ -78,6 +81,7 @@ export const ROLES: RoleConfig[] = [
     displayGroup: 'operator',
     roleClass: 'business',
     tableName: 'diveCenters',
+    bookingPresence: 'operator',
     description: 'Manage dive bookings, assign resources, and coordinate trips for customers.',
     profileTabs: [
       { id: 'contact', label: 'Contact', fields: ['name', 'email', 'phone', 'address', 'customerLanguages'] },
@@ -99,6 +103,7 @@ export const ROLES: RoleConfig[] = [
     displayGroup: 'operator',
     roleClass: 'freelance',
     tableName: 'agents',
+    bookingPresence: 'operator',
     description: 'Book dives on behalf of customers and earn commission from dive operators.',
     profileTabs: [
       { id: 'contact', label: 'Contact', fields: ['name', 'email', 'phone', 'address', 'customerLanguages'] },
@@ -120,6 +125,7 @@ export const ROLES: RoleConfig[] = [
     displayGroup: 'resource',
     roleClass: 'freelance',
     tableName: 'diveStaff',
+    bookingPresence: 'itinerary',
     description: 'Dive professionals — Divemaster through Course Director. Lead courses, guide dives, and assist at operator-organized trips.',
     profileTabs: [
       { id: 'contact', label: 'Contact', fields: ['name', 'email', 'phone', 'address'] },
@@ -140,6 +146,7 @@ export const ROLES: RoleConfig[] = [
     displayGroup: 'resource',
     roleClass: 'freelance',
     tableName: 'boats',
+    bookingPresence: 'itinerary',
     description: 'Provide vessel transport and surface support for dive operations.',
     profileTabs: [
       { id: 'contact', label: 'Contact', fields: ['name', 'email', 'phone', 'address'] },
@@ -160,6 +167,7 @@ export const ROLES: RoleConfig[] = [
     displayGroup: 'resource',
     roleClass: 'freelance',
     tableName: 'equipment',
+    bookingPresence: 'resource-step',
     description: 'Supply rental gear and manage inventory across dive bookings.',
     profileTabs: [
       { id: 'contact', label: 'Contact', fields: ['name', 'email', 'phone', 'address'] },
@@ -180,6 +188,7 @@ export const ROLES: RoleConfig[] = [
     displayGroup: 'resource',
     roleClass: 'freelance',
     tableName: 'compressors',
+    bookingPresence: 'resource-step',
     description: 'Supply and track tank fills and gas blending for dive operations.',
     profileTabs: [
       { id: 'contact', label: 'Contact', fields: ['name', 'email', 'phone', 'address', 'location', 'gasMixes'] },
@@ -199,6 +208,7 @@ export const ROLES: RoleConfig[] = [
     displayGroup: 'resource',
     roleClass: 'freelance',
     tableName: 'venues',
+    bookingPresence: 'itinerary',
     description: 'Provide a place where diving happens — pool, shore, reef, lake, river, quarry, or other.',
     profileTabs: [
       { id: 'contact', label: 'Contact', fields: ['name', 'email', 'phone', 'address'] },

@@ -9,6 +9,7 @@ import { prefsSchema, type PrefsFormData } from '@/lib/preferences/prefs-schema'
 import { SAVE_FEEDBACK_MS } from '@/lib/constants/ui-timings'
 import { useMutation, useQuery } from 'convex/react'
 import { api } from '@/lib/convex-generated'
+import { useDirectoryByRoleKey } from '@/lib/hooks/use-directory-by-role-key'
 import { ROLE_BY_KEY, DISPLAY_OPERATOR_ROLES, type RoleKey } from '@/lib/constants/roles'
 import { BottomActionBar } from '@/components/ui/bottom-action-bar'
 import { SaveButton } from '@/components/ui/save-button'
@@ -171,10 +172,7 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp,
 
   const showResourcePrefs = activeRole != null && DISPLAY_OPERATOR_ROLE_KEYS.has(activeRole)
 
-  const boatDirectory = useQuery(
-    api.directory.listByRole,
-    showResourcePrefs ? { role: 'Boat' } : 'skip',
-  )
+  const boatDirectory = useDirectoryByRoleKey(showResourcePrefs ? 'boat' : null)
 
   const resourceTabRequirement = useMemo(
     () =>

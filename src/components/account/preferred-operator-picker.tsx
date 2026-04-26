@@ -2,8 +2,7 @@
 
 import { useMemo } from 'react'
 import { useTranslations } from 'next-intl'
-import { useQuery } from 'convex/react'
-import { api } from '@/lib/convex-generated'
+import { useDirectoryByRoleKey } from '@/lib/hooks/use-directory-by-role-key'
 import { Card } from '@/components/ui/card'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
 import { SimpleSelect } from '@/components/ui/simple-select'
@@ -15,8 +14,8 @@ interface PreferredOperatorPickerProps {
 
 export function PreferredOperatorPicker({ value, onChange }: PreferredOperatorPickerProps) {
   const t = useTranslations('booking')
-  const dc = useQuery(api.directory.listByRole, { role: 'DiveCenter' })
-  const ag = useQuery(api.directory.listByRole, { role: 'Agent' })
+  const dc = useDirectoryByRoleKey('dive-center')
+  const ag = useDirectoryByRoleKey('agent')
 
   const options = useMemo(() => {
     const merged = [...(dc ?? []), ...(ag ?? [])]

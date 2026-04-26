@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 import { useQuery } from 'convex/react'
 import { api } from '@/lib/convex-generated'
 import { useWizardPreferences } from '@/lib/hooks/use-wizard-preferences'
+import { useDirectoryByRoleKey } from '@/lib/hooks/use-directory-by-role-key'
 import { Button, Checkbox, SimpleSelect, ErrorAlert, FieldRow } from '@/components/ui'
 import { CardTitle } from '@/components/ui/card-title'
 import { DateField } from '@/components/ui/date-field'
@@ -202,9 +203,9 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
   const { customers, days, agency, sameForAll } = state
   const prevCoursesRef = useRef<string>('')
 
-  const instructorsRaw = useQuery(api.directory.listByRole, { role: 'Instructor' })
-  const boatsRaw = useQuery(api.directory.listByRole, { role: 'Boat' })
-  const venuesRaw = useQuery(api.directory.listByRole, { role: 'Venue' })
+  const instructorsRaw = useDirectoryByRoleKey('instructor')
+  const boatsRaw = useDirectoryByRoleKey('boat')
+  const venuesRaw = useDirectoryByRoleKey('venue')
   const shoreOptionsRaw = useQuery(api.availability.listVenues)
   const instructors = useMemo(() => instructorsRaw ?? [], [instructorsRaw])
   const boats = useMemo(() => boatsRaw ?? [], [boatsRaw])
@@ -291,7 +292,7 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
   const targetOperatorSlug = state.isReferral ? (state.targetOperatorSlug ?? null) : null
   const { prefs: cascadePrefs, isLoading: cascadePrefsLoading } = useWizardPreferences(targetOperatorSlug)
 
-  const operatorDirectoryRaw = useQuery(api.directory.listByRole, { role: 'DiveCenter' })
+  const operatorDirectoryRaw = useDirectoryByRoleKey('dive-center')
   const operatorDirectory = useMemo(() => operatorDirectoryRaw ?? [], [operatorDirectoryRaw])
   const targetOperatorOptions = useMemo(
     () => operatorDirectory
