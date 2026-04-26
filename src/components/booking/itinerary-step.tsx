@@ -166,6 +166,7 @@ function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minSta
             min={minStartDate}
             onChange={(v) => handleStartDateChange(v ?? '')}
             data-testid="course-start-date"
+            required
           />
           <DateField
             className="field-md min-w-0 reading-plane rounded-theme p-2"
@@ -173,6 +174,7 @@ function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minSta
             value={entry.dates[1] ?? entry.dates[0] ?? null}
             min={entry.dates[0]}
             onChange={(v) => handleEndDateChange(v ?? '')}
+            required
           />
         </FieldRow>
         {canRemove && (

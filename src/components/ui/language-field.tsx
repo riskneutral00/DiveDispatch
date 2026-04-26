@@ -23,7 +23,7 @@ export function LanguageField({
   onChange,
   id = "language-field",
   max = 4,
-  required,
+  required = true,
   error,
   disabled = false,
   className,

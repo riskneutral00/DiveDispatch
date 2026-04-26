@@ -416,6 +416,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
               value={form.passportExpirationDate || null}
               onChange={(v) => setField('passportExpirationDate', v ?? '')}
               error={errors.passportExpirationDate}
+              required
             />
             {passportExpiringSoon && !errors.passportExpirationDate && (
               <ErrorAlert variant="warning" iconSize={16} className="mt-2">
