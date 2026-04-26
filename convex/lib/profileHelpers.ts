@@ -9,6 +9,7 @@ import { queryDynamicTable, insertDynamicTable, patchDynamic } from './typedDb'
 import { getActiveOrg, tryGetActiveOrg } from './activeOrg'
 import { assertCountryCode, assertPhoneE164, assertLanguageCodes } from './validators'
 import { setRoleProfileComplete } from './setRoleProfileComplete'
+import { ROLE_SPECS, type StakeholderRole } from '../shared/roleKinds'
 
 const LANGUAGE_ARRAY_FIELDS: readonly string[] = [
   'customerLanguages',
@@ -38,15 +39,10 @@ export function validateContactInput(args: Record<string, unknown>): void {
   }
 }
 
-export const ROLE_TABLE_MAP: Record<string, TableNames> = {
-  Instructor: 'diveStaff',
-  Boat: 'boats',
-  Equipment: 'equipment',
-  Venue: 'venues',
-  Compressor: 'compressors',
-  DiveCenter: 'diveCenters',
-  Agent: 'agents',
-}
+export const ROLE_TABLE_MAP: Record<string, TableNames> = Object.fromEntries(
+  (Object.entries(ROLE_SPECS) as Array<[StakeholderRole, (typeof ROLE_SPECS)[StakeholderRole]]>)
+    .map(([role, spec]) => [role, spec.table]),
+) as Record<string, TableNames>
 
 export async function profileMine<T extends TableNames>(
   ctx: QueryCtx,
