@@ -1,6 +1,5 @@
 'use client'
 
-// query-budget-ok: 4 calls — file hosts both PreferencesEditor (form prefs + boat directory for live compressor-substitution UI) and PreferredOperatorPicker (Agent-only DC+Agent directory). The operator-picker queries are lazy-rendered for Agent role only; the boat directory is required to mirror operatorCoverage's boat-with-compressor substitution. Aggregating into one query would still fan out these subscribes server-side. Track in Tier 1 followup if PreferredOperatorPicker is extracted to its own file.
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
@@ -31,6 +30,7 @@ import {
 } from '@/components/profiles/preferred-list'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 import { SimpleSelect } from '@/components/ui/simple-select'
+import { PreferredOperatorPicker } from '@/components/account/preferred-operator-picker'
 import {
   computeResourceTabRequirement,
   type ResourceSubTab as ResourceSubTabId,
@@ -114,55 +114,6 @@ const SECTION_FIELDS: Record<ResourceSubTab, keyof PrefsFormData> = {
   equipment: 'preferredEquipmentSlugs',
   compressors: 'preferredCompressorSlugs',
   operator: 'preferredOperatorSlug',
-}
-
-function PreferredOperatorPicker({
-  value,
-  onChange,
-}: {
-  value: string | undefined
-  onChange: (slug: string | undefined) => void
-}) {
-  const t = useTranslations('booking')
-  const dc = useQuery(api.directory.listByRole, { role: 'DiveCenter' })
-  const ag = useQuery(api.directory.listByRole, { role: 'Agent' })
-
-  const options = useMemo(() => {
-    const merged = [...(dc ?? []), ...(ag ?? [])]
-    return merged
-      .map((e) => ({
-        value: `${e.role}:${e.slug}`,
-        label: `${e.name} (${e.role}) — ${e.placeName}`,
-      }))
-      .sort((a, b) => a.label.localeCompare(b.label))
-  }, [dc, ag])
-
-  const selectValue = useMemo(
-    () => value ? (options.find(o => o.value.endsWith(`:${value}`))?.value ?? '') : '',
-    [value, options],
-  )
-
-  return (
-    <Card padding="sm">
-      <FormSectionHeader className="mb-4" label={t('preferredOperator')} />
-      <p className="text-body mb-4 text-secondary">
-        {t('preferredOperatorDesc')}
-      </p>
-      <SimpleSelect
-        label={t('targetOperator')}
-        value={selectValue}
-        onChange={(v) => {
-          if (!v) { onChange(undefined); return }
-          const idx = v.indexOf(':')
-          onChange(idx >= 0 ? v.slice(idx + 1) : v)
-        }}
-        options={[
-          { value: '', label: 'None' },
-          ...options,
-        ]}
-      />
-    </Card>
-  )
 }
 
 interface PreferencesEditorProps {
