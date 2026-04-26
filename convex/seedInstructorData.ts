@@ -50,10 +50,7 @@ function buildInstructor(def: InstructorDef, index: number): SeedStakeholder {
 }
 
 const ROSTER: InstructorDef[] = [
-
   { firstName: 'Nattaya', lastName: 'Srisuk', credentials: [{ agency: 'PADI', level: 'OWSI', specialtyRatings: ['Deep', 'Enriched Air', 'Night'] }], teachingLanguages: ['th', 'en', 'zh-CN'] },
-  { firstName: 'Wei', lastName: 'Chen', credentials: [{ agency: 'PADI', level: 'MSDT', specialtyRatings: ['Deep', 'Enriched Air', 'Wreck', 'Navigation', 'Night'] }], teachingLanguages: ['zh-CN', 'zh-TW', 'th'] },
-  { firstName: 'Li', lastName: 'Ming', credentials: [{ agency: 'SSI', level: 'OWI', specialtyRatings: ['Deep'] }], teachingLanguages: ['zh-CN', 'en', 'ko'] },
   { firstName: 'Zhang', lastName: 'Yong', credentials: [{ agency: 'PADI', level: 'OWSI', specialtyRatings: ['Deep', 'Drift'] }], teachingLanguages: ['zh-CN', 'zh-TW', 'en'] },
   { firstName: 'Nicole', lastName: 'Tam', credentials: [{ agency: 'PADI', level: 'OWSI', specialtyRatings: ['Night', 'Fish ID'] }], teachingLanguages: ['zh-TW', 'zh-CN', 'th'] },
   { firstName: 'Pierre', lastName: 'Dubois', credentials: [{ agency: 'PADI', level: 'MSDT', specialtyRatings: ['Deep', 'Wreck', 'Enriched Air', 'S&R', 'Drift'] }], teachingLanguages: ['fr', 'en', 'de'] },
@@ -103,75 +100,11 @@ const ROSTER: InstructorDef[] = [
   { firstName: 'Oh', lastName: 'Sang-Hoon', credentials: [{ agency: 'SSI', level: 'OWI', specialtyRatings: ['Deep', 'Enriched Air'] }], teachingLanguages: ['ko', 'zh-TW', 'ja'] },
 ]
 
-export const PARKED_INSTRUCTORS: SeedStakeholder[] = ROSTER.map((def, i) => buildInstructor(def, i))
-
 const PHUKET_CHALONG = {
   address: { city: 'Phuket', state: 'Phuket', country: 'TH' } as const,
   lat: 7.8367169,
   lng: 98.3483897,
 } as const
-
-export const RESTORED_RYAN: SeedStakeholder = {
-  user: {
-    slug: 'geprkx',
-    email: 'ryan-clarke+clerk_test@divedispatch.dev',
-    name: 'Ryan Clarke',
-    firstName: 'Ryan',
-    lastName: 'Clarke',
-    appLanguage: 'en',
-    phone: '+66816001000',
-    dateOfBirth: '1985-03-22',
-  },
-  roles: [{ role: 'Instructor' }],
-  instructor: {
-    name: 'Ryan Clarke',
-    role: 'Instructor',
-    ...PHUKET_CHALONG,
-    email: 'ryan-clarke+clerk_test@divedispatch.dev',
-    phone: '+66816001000',
-    teachingLanguages: ['en-GB', 'th-TH'],
-    credential: [
-      {
-        agency: 'PADI',
-        level: 'OWSI',
-        agencyID: '3000000',
-        specialtyRatings: ['Deep', 'Navigation'],
-      },
-    ],
-    verified: false,
-  },
-}
-
-export const RESTORED_ARISA: SeedStakeholder = {
-  user: {
-    slug: 'z039zt',
-    email: 'arisa-kanchanaburi+clerk_test@divedispatch.dev',
-    name: 'Arisa Kanchanaburi',
-    firstName: 'Arisa',
-    lastName: 'Kanchanaburi',
-    appLanguage: 'en',
-    phone: '+66816151015',
-    dateOfBirth: '1993-12-01',
-  },
-  roles: [{ role: 'Instructor' }],
-  instructor: {
-    name: 'Arisa Kanchanaburi',
-    role: 'Instructor',
-    ...PHUKET_CHALONG,
-    email: 'arisa-kanchanaburi+clerk_test@divedispatch.dev',
-    phone: '+66816151015',
-    teachingLanguages: ['en-GB', 'th-TH'],
-    credential: [
-      {
-        agency: 'PADI',
-        level: 'DM',
-        agencyID: '300150',
-        specialtyRatings: [],
-      },
-    ],
-    verified: false,
-  },
-}
 
 const PHUKET_ISLAND = {
   address: { city: 'Phuket', country: 'TH' } as const,
@@ -179,66 +112,112 @@ const PHUKET_ISLAND = {
   lng: 98.3923,
 } as const
 
-export const RESTORED_LIMING: SeedStakeholder = {
-  user: {
-    slug: 'lkp3zm',
-    email: 'li-ming+clerk_test@divedispatch.dev',
-    name: 'Li Ming',
-    firstName: 'Li',
-    lastName: 'Ming',
-    appLanguage: 'en',
-    phone: '+66816031003',
-    dateOfBirth: '1991-07-14',
+const BESPOKE: SeedStakeholder[] = [
+  {
+    user: {
+      slug: 'geprkx',
+      email: 'ryan-clarke+clerk_test@divedispatch.dev',
+      name: 'Ryan Clarke',
+      firstName: 'Ryan',
+      lastName: 'Clarke',
+      appLanguage: 'en',
+      phone: '+66816001000',
+      dateOfBirth: '1985-03-22',
+    },
+    roles: [{ role: 'Instructor' }],
+    instructor: {
+      name: 'Ryan Clarke',
+      role: 'Instructor',
+      ...PHUKET_CHALONG,
+      email: 'ryan-clarke+clerk_test@divedispatch.dev',
+      phone: '+66816001000',
+      teachingLanguages: ['en-GB', 'th-TH'],
+      credential: [
+        { agency: 'PADI', level: 'OWSI', agencyID: '3000000', specialtyRatings: ['Deep', 'Navigation'] },
+      ],
+      verified: true,
+    },
   },
-  roles: [{ role: 'Instructor' }],
-  instructor: {
-    name: 'Li Ming',
-    role: 'Instructor',
-    ...PHUKET_ISLAND,
-    email: 'li-ming+clerk_test@divedispatch.dev',
-    phone: '+66816031003',
-    teachingLanguages: ['zh-CN', 'en', 'ko'],
-    credential: [
-      {
-        agency: 'SSI',
-        level: 'OWI',
-        agencyID: 'SSI-500030',
-        specialtyRatings: ['Deep'],
-      },
-    ],
-    verified: false,
+  {
+    user: {
+      slug: 'z039zt',
+      email: 'arisa-kanchanaburi+clerk_test@divedispatch.dev',
+      name: 'Arisa Kanchanaburi',
+      firstName: 'Arisa',
+      lastName: 'Kanchanaburi',
+      appLanguage: 'en',
+      phone: '+66816151015',
+      dateOfBirth: '1993-12-01',
+    },
+    roles: [{ role: 'Instructor' }],
+    instructor: {
+      name: 'Arisa Kanchanaburi',
+      role: 'Instructor',
+      ...PHUKET_CHALONG,
+      email: 'arisa-kanchanaburi+clerk_test@divedispatch.dev',
+      phone: '+66816151015',
+      teachingLanguages: ['en-GB', 'th-TH'],
+      credential: [
+        { agency: 'PADI', level: 'DM', agencyID: '300150', specialtyRatings: [] },
+      ],
+      verified: true,
+    },
   },
-}
+  {
+    user: {
+      slug: 'lkp3zm',
+      email: 'li-ming+clerk_test@divedispatch.dev',
+      name: 'Li Ming',
+      firstName: 'Li',
+      lastName: 'Ming',
+      appLanguage: 'en',
+      phone: '+66816031003',
+      dateOfBirth: '1991-07-14',
+    },
+    roles: [{ role: 'Instructor' }],
+    instructor: {
+      name: 'Li Ming',
+      role: 'Instructor',
+      ...PHUKET_ISLAND,
+      email: 'li-ming+clerk_test@divedispatch.dev',
+      phone: '+66816031003',
+      teachingLanguages: ['zh-CN', 'en', 'ko'],
+      credential: [
+        { agency: 'SSI', level: 'OWI', agencyID: 'SSI-500030', specialtyRatings: ['Deep'] },
+      ],
+      verified: true,
+    },
+  },
+  {
+    user: {
+      slug: 'wc8qg2',
+      email: 'wei-chen+clerk_test@divedispatch.dev',
+      name: 'Wei Chen',
+      firstName: 'Wei',
+      lastName: 'Chen',
+      appLanguage: 'en',
+      phone: '+66816021002',
+      dateOfBirth: '1989-02-10',
+    },
+    roles: [{ role: 'Instructor' }],
+    instructor: {
+      name: 'Wei Chen',
+      role: 'Instructor',
+      ...PHUKET_ISLAND,
+      email: 'wei-chen+clerk_test@divedispatch.dev',
+      phone: '+66816021002',
+      teachingLanguages: ['zh-CN', 'zh-TW', 'th', 'en'],
+      credential: [
+        { agency: 'PADI', level: 'MSDT', agencyID: 'PADI-300020', specialtyRatings: ['Deep', 'Enriched Air', 'Wreck', 'Navigation', 'Night'] },
+      ],
+      verified: true,
+    },
+  },
+]
 
-export const RESTORED_WEICHEN: SeedStakeholder = {
-  user: {
-    slug: 'wc8qg2',
-    email: 'wei-chen+clerk_test@divedispatch.dev',
-    name: 'Wei Chen',
-    firstName: 'Wei',
-    lastName: 'Chen',
-    appLanguage: 'en',
-    phone: '+66816021002',
-    dateOfBirth: '1989-02-10',
-  },
-  roles: [{ role: 'Instructor' }],
-  instructor: {
-    name: 'Wei Chen',
-    role: 'Instructor',
-    ...PHUKET_ISLAND,
-    email: 'wei-chen+clerk_test@divedispatch.dev',
-    phone: '+66816021002',
-    teachingLanguages: ['zh-CN', 'zh-TW', 'th', 'en'],
-    credential: [
-      {
-        agency: 'PADI',
-        level: 'MSDT',
-        agencyID: 'PADI-300020',
-        specialtyRatings: ['Deep', 'Enriched Air', 'Wreck', 'Navigation', 'Night'],
-      },
-    ],
-    verified: false,
-  },
-}
+export const PARKED_INSTRUCTORS: SeedStakeholder[] = [
+  ...ROSTER.map((def, i) => buildInstructor(def, i)),
+  ...BESPOKE,
+]
 
 export const ALL_INSTRUCTORS: SeedStakeholder[] = []

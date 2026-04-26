@@ -74,7 +74,7 @@ function parseArgs(argv: string[]): { slug: string; name?: string } {
     }
   }
   if (!slug) {
-    console.error('Usage: tsx scripts/capture-role-to-seed.ts --slug <user-slug> [--name RESTORED_LABEL]')
+    console.error('Usage: tsx scripts/capture-role-to-seed.ts --slug <user-slug> [--name PARKED_LABEL]')
     process.exit(1)
   }
   return { slug, name }
@@ -94,7 +94,7 @@ function deriveLabel(firstName: string, slug: string): string {
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/[^A-Z0-9]/g, '')
-  return upper.length > 0 ? `RESTORED_${upper}` : `RESTORED_${slug.toUpperCase()}`
+  return upper.length > 0 ? `PARKED_${upper}` : `PARKED_${slug.toUpperCase()}`
 }
 
 async function main(): Promise<void> {
