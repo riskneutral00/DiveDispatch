@@ -66,10 +66,10 @@ async function queryProfileByUser(
   if (!table) return null
   const user = await db.get(userId)
   if (!user?.organizationId) return null
-  const result = await queryDynamicTable(db, table)
+  const rows = await queryDynamicTable(db, table)
     .withIndex('by_organizationId', (q) => q.eq('organizationId', user.organizationId!))
-    .unique()
-  return result as Record<string, unknown> | null
+    .collect() // bounded: small per-org entity count
+  return (rows[0] as Record<string, unknown> | undefined) ?? null
 }
 
 async function fetchProfile(
