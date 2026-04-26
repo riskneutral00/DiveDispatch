@@ -21,6 +21,15 @@ export function assertOwnership(
   }
 }
 
+export function isResourceAccessible(
+  resource: { isAllowed?: string[]; notAllowed?: string[] },
+  requesterSlug: string,
+): boolean {
+  if (resource.notAllowed?.includes(requesterSlug)) return false
+  if (!resource.isAllowed || resource.isAllowed.length === 0) return true
+  return resource.isAllowed.includes(requesterSlug)
+}
+
 export function assertOrgOwnership(
   resource: { organizationId?: Id<'organizations'> },
   activeOrg: { _id: Id<'organizations'> },

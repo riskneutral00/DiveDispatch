@@ -23,14 +23,14 @@ const VALID_INSTRUCTOR_ARGS = {
 describe('instructors.create', () => {
   it('rejects unauthenticated callers', async () => {
     const t = makeT()
-    await expect(t.mutation(api.instructors.create, VALID_INSTRUCTOR_ARGS)).rejects.toThrow(/UNAUTHENTICATED/)
+    await expect(t.mutation(api.diveStaff.create, VALID_INSTRUCTOR_ARGS)).rejects.toThrow(/UNAUTHENTICATED/)
   })
 
   it('rejects non-Instructor roles', async () => {
     const t = makeT()
     await t.run(async (ctx) => { await seedUser(ctx, 'dc-user', 'DiveCenter') })
     await expect(
-      t.withIdentity(orgIdentityFor('dc-user')).mutation(api.instructors.create, VALID_INSTRUCTOR_ARGS),
+      t.withIdentity(orgIdentityFor('dc-user')).mutation(api.diveStaff.create, VALID_INSTRUCTOR_ARGS),
     ).rejects.toThrow(/FORBIDDEN/)
   })
 
@@ -40,7 +40,7 @@ describe('instructors.create', () => {
     await t.run(async (ctx) => { userId = await seedUser(ctx, 'new-instr') })
 
     const instrId = await t.withIdentity(orgIdentityFor('new-instr'))
-      .mutation(api.instructors.create, VALID_INSTRUCTOR_ARGS)
+      .mutation(api.diveStaff.create, VALID_INSTRUCTOR_ARGS)
 
     expect(typeof instrId).toBe('string')
     await t.run(async (ctx) => {
@@ -59,8 +59,8 @@ describe('instructors.create', () => {
     await t.run(async (ctx) => { await seedUser(ctx, 'dup-instr') })
     const identity = orgIdentityFor('dup-instr')
 
-    const id1 = await t.withIdentity(identity).mutation(api.instructors.create, VALID_INSTRUCTOR_ARGS)
-    const id2 = await t.withIdentity(identity).mutation(api.instructors.create, { ...VALID_INSTRUCTOR_ARGS, phone: '+66999999999' })
+    const id1 = await t.withIdentity(identity).mutation(api.diveStaff.create, VALID_INSTRUCTOR_ARGS)
+    const id2 = await t.withIdentity(identity).mutation(api.diveStaff.create, { ...VALID_INSTRUCTOR_ARGS, phone: '+66999999999' })
     expect(id1).toBe(id2)
   })
 })
@@ -68,14 +68,14 @@ describe('instructors.create', () => {
 describe('instructors.update', () => {
   it('rejects unauthenticated callers', async () => {
     const t = makeT()
-    await expect(t.mutation(api.instructors.update, { phone: '+660000000000' })).rejects.toThrow(/UNAUTHENTICATED/)
+    await expect(t.mutation(api.diveStaff.update, { phone: '+660000000000' })).rejects.toThrow(/UNAUTHENTICATED/)
   })
 
   it('rejects when no profile exists', async () => {
     const t = makeT()
     await t.run(async (ctx) => { await seedUser(ctx, 'no-instr') })
     await expect(
-      t.withIdentity(orgIdentityFor('no-instr')).mutation(api.instructors.update, { phone: '+660000000000' }),
+      t.withIdentity(orgIdentityFor('no-instr')).mutation(api.diveStaff.update, { phone: '+660000000000' }),
     ).rejects.toThrow(/NOT_FOUND/)
   })
 
@@ -88,7 +88,7 @@ describe('instructors.update', () => {
     })
 
     await t.withIdentity(orgIdentityFor('upd-instr'))
-      .mutation(api.instructors.update, { phone: '+66812345680' })
+      .mutation(api.diveStaff.update, { phone: '+66812345680' })
 
     await t.run(async (ctx) => {
       const instr = await ctx.db.get(instrId!) as Doc<'diveStaff'> | null
@@ -156,7 +156,7 @@ describe('instructors.create — teachingLanguages empty-array gate (P0-20)', ()
 
     await expect(
       t.withIdentity(orgIdentityFor('empty-lang'))
-        .mutation(api.instructors.create, { ...VALID_INSTRUCTOR_ARGS, teachingLanguages: [] }),
+        .mutation(api.diveStaff.create, { ...VALID_INSTRUCTOR_ARGS, teachingLanguages: [] }),
     ).rejects.toThrow(/TEACHING_LANGUAGES_REQUIRED/)
   })
 
@@ -169,7 +169,7 @@ describe('instructors.create — teachingLanguages empty-array gate (P0-20)', ()
 
     await expect(
       t.withIdentity(orgIdentityFor('regress-lang'))
-        .mutation(api.instructors.update, { teachingLanguages: [] }),
+        .mutation(api.diveStaff.update, { teachingLanguages: [] }),
     ).rejects.toThrow(/TEACHING_LANGUAGES_REQUIRED/)
   })
 })
@@ -177,14 +177,14 @@ describe('instructors.create — teachingLanguages empty-array gate (P0-20)', ()
 describe('instructors.mine', () => {
   it('returns null for unauthenticated callers', async () => {
     const t = makeT()
-    expect(await t.query(api.instructors.mine, {})).toBeNull()
+    expect(await t.query(api.diveStaff.mine, {})).toBeNull()
   })
 
   it('returns null when no profile exists', async () => {
     const t = makeT()
     await t.run(async (ctx) => { await seedUser(ctx, 'no-instr-profile') })
     expect(
-      await t.withIdentity(orgIdentityFor('no-instr-profile')).query(api.instructors.mine, {}),
+      await t.withIdentity(orgIdentityFor('no-instr-profile')).query(api.diveStaff.mine, {}),
     ).toBeNull()
   })
 
@@ -195,7 +195,7 @@ describe('instructors.mine', () => {
       await seedInstructorProfile(ctx, userId)
     })
 
-    const result = await t.withIdentity(orgIdentityFor('my-instr')).query(api.instructors.mine, {})
+    const result = await t.withIdentity(orgIdentityFor('my-instr')).query(api.diveStaff.mine, {})
     expect(result).not.toBeNull()
     expect(result!.name).toBe('Test Instructor')
   })

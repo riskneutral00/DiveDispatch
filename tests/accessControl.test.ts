@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { isResourceAccessible } from '../convex/lib/accessControl'
+import { isResourceAccessible } from '../convex/lib/auth'
 
 describe('isResourceAccessible', () => {
   it('grants access when isAllowed is empty (open access)', () => {

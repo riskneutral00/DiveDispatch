@@ -65,7 +65,7 @@ const RESOURCE_CONFIGS: Array<{
   // as dedicated multi-venue CRUD suite (tests/venues.test.ts).
   {
     name: 'diveStaff',
-    apiModule: api.instructors as CrudApi,
+    apiModule: api.diveStaff as CrudApi,
     role: 'Instructor',
     createArgs: {
       address: { city: 'Koh Tao', country: 'TH' },
