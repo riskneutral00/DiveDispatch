@@ -7,6 +7,7 @@ import { stakeholderTypeValidator, type StakeholderRole } from './lib/validators
 import type { Id } from './_generated/dataModel'
 import { queryDynamicTable } from './lib/typedDb'
 import { ROLE_TABLE_MAP } from './lib/profileHelpers'
+import { isPersonRole, isEntityRole } from './shared/roleKinds'
 import { isUserRoleComplete, isRoleProfileComplete } from './lib/setRoleProfileComplete'
 import { ConvexError } from 'convex/values'
 import { ErrorCode } from './lib/errorCodes'
@@ -182,16 +183,35 @@ export const listByRole = query({
       .unique()
     const preferredSlugs = new Set<string>(prefs?.preferredInstructorSlugs ?? [])
 
-    const roleEntries = await ctx.db
-      .query('userRoles')
-      .withIndex('by_role', (q) => q.eq('role', args.role))
-      .take(DIRECTORY_LIST_LIMIT)
-    const userDocs = await Promise.all(roleEntries.map((r) => ctx.db.get(r.userId)))
-    const users = userDocs.filter(Boolean) as NonNullable<(typeof userDocs)[number]>[]
+    const applyEntryFilters = (entry: DirectoryEntry): DirectoryEntry | null => {
+      if (args.placeName && entry.placeName.toLowerCase() !== args.placeName.toLowerCase()) return null
+      if (args.country && entry.country.toLowerCase() !== args.country.toLowerCase()) return null
+      if (args.agency && args.agency !== 'all') {
+        const agencies = entry.agencies ?? []
+        if (!agencies.some((a) => a.toLowerCase() === args.agency!.toLowerCase())) return null
+      }
+      if (args.minCapacity !== undefined && args.minCapacity > 0) {
+        if ((entry.boatCapacity ?? 0) < args.minCapacity) return null
+      }
+      if (args.gasMix && args.gasMix !== 'all') {
+        const mixes = entry.gasMixes ?? []
+        if (!mixes.some((m) => m.toLowerCase() === args.gasMix!.toLowerCase())) return null
+      }
+      return entry
+    }
 
-    const results = await Promise.all(
-      users
-        .map(async (u): Promise<DirectoryEntry | null> => {
+    let raw: Array<DirectoryEntry | null> = []
+
+    if (isPersonRole(args.role)) {
+      const roleEntries = await ctx.db
+        .query('userRoles')
+        .withIndex('by_role', (q) => q.eq('role', args.role))
+        .take(DIRECTORY_LIST_LIMIT)
+      const userDocs = await Promise.all(roleEntries.map((r) => ctx.db.get(r.userId)))
+      const users = userDocs.filter(Boolean) as NonNullable<(typeof userDocs)[number]>[]
+
+      raw = await Promise.all(
+        users.map(async (u): Promise<DirectoryEntry | null> => {
           if (!(await isUserRoleComplete(ctx, u._id, args.role))) return null
 
           const rawProfile = await queryProfileByUser(ctx.db, args.role, u._id)
@@ -204,23 +224,8 @@ export const listByRole = query({
           const profile = await fetchProfile(ctx.db, u._id, args.role, u.slug, rawProfile)
           if (!profile) return null
 
-          if (args.placeName && profile.placeName.toLowerCase() !== args.placeName.toLowerCase()) return null
-          if (args.country && profile.country.toLowerCase() !== args.country.toLowerCase()) return null
-          if (args.agency && args.agency !== 'all') {
-            const agencies = profile.agencies ?? []
-            if (!agencies.some((a) => a.toLowerCase() === args.agency!.toLowerCase())) return null
-          }
-          if (args.minCapacity !== undefined && args.minCapacity > 0) {
-            if ((profile.boatCapacity ?? 0) < args.minCapacity) return null
-          }
-          if (args.gasMix && args.gasMix !== 'all') {
-            const mixes = profile.gasMixes ?? []
-            if (!mixes.some((m) => m.toLowerCase() === args.gasMix!.toLowerCase())) return null
-          }
-
           const isPreferred = args.role === 'Instructor' ? preferredSlugs.has(u.slug) : undefined
-
-          return {
+          return applyEntryFilters({
             slug: u.slug,
             name: profile.name,
             placeName: profile.placeName,
@@ -229,6 +234,52 @@ export const listByRole = query({
             role: args.role,
             agencies: profile.agencies,
             credentials: profile.credentials,
+            isPreferred,
+            languages: profile.teachingLanguages ?? profile.customerLanguages,
+          })
+        }),
+      )
+    } else if (isEntityRole(args.role)) {
+      const table = ROLE_TABLE_MAP[args.role]
+      if (!table) return []
+
+      const roleEntries = await ctx.db
+        .query('userRoles')
+        .withIndex('by_role', (q) => q.eq('role', args.role))
+        .take(DIRECTORY_LIST_LIMIT)
+      const userDocs = await Promise.all(roleEntries.map((r) => ctx.db.get(r.userId)))
+      const users = userDocs.filter(Boolean) as NonNullable<(typeof userDocs)[number]>[]
+
+      const perUserRows = await Promise.all(
+        users.map(async (u) => {
+          if (!u.organizationId) return [] as Array<{ user: typeof u; row: Record<string, unknown> & { _id: string; slug?: string } }>
+          const rows = await queryDynamicTable(ctx.db, table)
+            .withIndex('by_organizationId', (q) => q.eq('organizationId', u.organizationId!))
+            .collect() // bounded: per-org entity-role row count
+          return rows.map((row) => ({ user: u, row: row as Record<string, unknown> & { _id: string; slug?: string } }))
+        }),
+      )
+
+      raw = await Promise.all(
+        perUserRows.flat().map(async ({ user: u, row }): Promise<DirectoryEntry | null> => {
+          if (!(await isUserRoleComplete(ctx, u._id, args.role))) return null
+
+          if (!isResourceAccessible(
+            row as { isAllowed?: string[]; notAllowed?: string[] },
+            caller.slug,
+          )) return null
+
+          const profile = await fetchProfile(ctx.db, u._id, args.role, u.slug, row)
+          if (!profile) return null
+
+          const entrySlug = row.slug ?? u.slug
+          return applyEntryFilters({
+            slug: entrySlug,
+            name: profile.name,
+            placeName: profile.placeName,
+            country: profile.country,
+            verified: profile.verified,
+            role: args.role,
             boatCapacity: profile.boatCapacity,
             boatType: profile.boatType,
             boatTypes: profile.boatTypes,
@@ -240,20 +291,16 @@ export const listByRole = query({
             maxDepth: profile.maxDepth,
             maxCapacity: profile.maxCapacity,
             association: profile.association,
-            isPreferred,
-            languages:
-              profile.teachingLanguages
-              ?? profile.customerLanguages,
-          }
+            languages: profile.customerLanguages,
+          })
         }),
-    )
+      )
+    }
 
-    const filtered = results.filter((r): r is DirectoryEntry => r !== null)
-
+    const filtered = raw.filter((r): r is DirectoryEntry => r !== null)
     if (args.role === 'Instructor') {
       filtered.sort((a, b) => (b.isPreferred ? 1 : 0) - (a.isPreferred ? 1 : 0))
     }
-
     return filtered
   },
 })

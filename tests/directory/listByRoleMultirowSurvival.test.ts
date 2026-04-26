@@ -53,7 +53,8 @@ describe('directory.listByRole — survives multi-row entity roles', () => {
       .query(api.directory.listByRole, { role: 'Compressor' })
 
     expect(Array.isArray(result)).toBe(true)
-    expect(result.length).toBeGreaterThanOrEqual(1)
+    expect(result.length).toBe(3)
+    expect(result.map((r) => r.slug).sort()).toEqual(['comp-1', 'comp-2', 'comp-3'])
   })
 
   it('does not throw when a Venue user owns 2 venue rows', async () => {
@@ -87,6 +88,7 @@ describe('directory.listByRole — survives multi-row entity roles', () => {
       .query(api.directory.listByRole, { role: 'Venue' })
 
     expect(Array.isArray(result)).toBe(true)
-    expect(result.length).toBeGreaterThanOrEqual(1)
+    expect(result.length).toBe(2)
+    expect(result.map((r) => r.slug).sort()).toEqual(['venue-1', 'venue-2'])
   })
 })

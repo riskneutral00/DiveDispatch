@@ -24,7 +24,13 @@ export const stakeholderTypeValidator = v.union(
   v.literal('Venue'),
 )
 
+export const personRoleValidator = v.union(
+  v.literal('Instructor'),
+  v.literal('Agent'),
+)
+
 export type StakeholderRole = typeof stakeholderTypeValidator['type']
+export type PersonRoleLiteral = typeof personRoleValidator['type']
 
 const RESOURCE_TYPES: ReadonlySet<string> = new Set(RESOURCE_OWNER_TYPES)
 

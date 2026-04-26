@@ -92,7 +92,7 @@ describe('parity: computeResourceTabRequirement vs operatorCoverage + directory.
             role: 'Boat',
             email: `${boat.slug}@test.com`,
           })
-          const boatRowId = await seedBoatProfile(ctx, boatUserId, { name: `Boat ${boat.slug}` })
+          const boatRowId = await seedBoatProfile(ctx, boatUserId, { name: `Boat ${boat.slug}`, slug: boat.slug })
           if (boat.hasCompressor) {
             const boatRow = await ctx.db.get(boatRowId)
             if (!boatRow) throw new Error(`boat row ${boatRowId} missing`)
