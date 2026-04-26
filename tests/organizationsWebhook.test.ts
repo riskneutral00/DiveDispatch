@@ -174,10 +174,100 @@ describe('organizations.upsertFromWebhook', () => {
     })
     expect(org?.name).toBe('Second')
   })
+
+  it('rebinds an existing seed-only row (clerkOrgId undefined) by slug match instead of inserting a duplicate', async () => {
+    const t = makeT()
+    const seedOrgId = await t.run(async (ctx) => {
+      const now = Date.now()
+      return ctx.db.insert('organizations', {
+        name: 'Sea Fun Divers',
+        slug: 'sea-fun-divers',
+        createdAt: now,
+        updatedAt: now,
+      })
+    })
+
+    const realClerkOrgId = makeClerkOrgId('sea-fun-real')
+    const returnedId = await t.mutation(internal.organizations.upsertFromWebhook, {
+      clerkOrgId: realClerkOrgId,
+      name: 'Sea Fun Divers',
+      slug: 'sea-fun-divers',
+      svixId: makeSvixId(),
+    })
+
+    expect(returnedId).toBe(seedOrgId)
+
+    const allMatching = await t.run(async (ctx) =>
+      ctx.db.query('organizations').filter((q) => q.eq(q.field('name'), 'Sea Fun Divers')).collect(),
+    )
+    expect(allMatching.length).toBe(1)
+    expect(allMatching[0].clerkOrgId).toBe(realClerkOrgId)
+    expect(allMatching[0].slug).toBe('sea-fun-divers')
+  })
+
+  it('rebinds via name match when Clerk auto-suffixes the slug', async () => {
+    const t = makeT()
+    const seedOrgId = await t.run(async (ctx) => {
+      const now = Date.now()
+      return ctx.db.insert('organizations', {
+        name: 'Dive Co',
+        slug: 'dive-co',
+        createdAt: now,
+        updatedAt: now,
+      })
+    })
+
+    const realClerkOrgId = makeClerkOrgId('dive-co-real')
+    const returnedId = await t.mutation(internal.organizations.upsertFromWebhook, {
+      clerkOrgId: realClerkOrgId,
+      name: 'Dive Co',
+      slug: 'dive-co-1234567890',
+      svixId: makeSvixId(),
+    })
+
+    expect(returnedId).toBe(seedOrgId)
+
+    const allByName = await t.run(async (ctx) =>
+      ctx.db.query('organizations').filter((q) => q.eq(q.field('name'), 'Dive Co')).collect(),
+    )
+    expect(allByName.length).toBe(1)
+    expect(allByName[0].clerkOrgId).toBe(realClerkOrgId)
+    expect(allByName[0].slug).toBe('dive-co-1234567890')
+  })
+
+  it('does NOT rebind when the slug-matched row is already bound to a real Clerk org', async () => {
+    const t = makeT()
+    const realClerkOrgIdA = makeClerkOrgId('real-a')
+    const existingOrgId = await t.run(async (ctx) => {
+      const now = Date.now()
+      return ctx.db.insert('organizations', {
+        clerkOrgId: realClerkOrgIdA,
+        name: 'Same Name',
+        slug: 'same-slug',
+        createdAt: now,
+        updatedAt: now,
+      })
+    })
+
+    const realClerkOrgIdB = makeClerkOrgId('real-b')
+    const newOrgId = await t.mutation(internal.organizations.upsertFromWebhook, {
+      clerkOrgId: realClerkOrgIdB,
+      name: 'Same Name',
+      slug: 'same-slug',
+      svixId: makeSvixId(),
+    })
+
+    expect(newOrgId).not.toBe(existingOrgId)
+
+    const allByName = await t.run(async (ctx) =>
+      ctx.db.query('organizations').filter((q) => q.eq(q.field('name'), 'Same Name')).collect(),
+    )
+    expect(allByName.length).toBe(2)
+  })
 })
 
 describe('organizations.deleteFromWebhook', () => {
-  it('deletes organization on delete event', async () => {
+  it('soft-deletes organization on delete event (sets deletedAt; org row remains)', async () => {
     const t = makeT()
     const clerkOrgId = makeClerkOrgId('del')
 
@@ -199,7 +289,97 @@ describe('organizations.deleteFromWebhook', () => {
         .withIndex('by_clerkOrgId', (q) => q.eq('clerkOrgId', clerkOrgId))
         .unique()
     })
-    expect(org).toBeNull()
+    expect(org).not.toBeNull()
+    expect(org?.deletedAt).toBeTypeOf('number')
+  })
+
+  it('soft-delete hides org from publicByClerkOrgId and publicBySlug', async () => {
+    const t = makeT()
+    const clerkOrgId = makeClerkOrgId('hidden')
+
+    await t.mutation(internal.organizations.upsertFromWebhook, {
+      clerkOrgId,
+      name: 'Hidden',
+      slug: 'hidden',
+      svixId: makeSvixId(),
+    })
+
+    await t.mutation(internal.organizations.deleteFromWebhook, {
+      clerkOrgId,
+      svixId: makeSvixId(),
+    })
+
+    const byClerk = await t.query(api.organizations.publicByClerkOrgId, { clerkOrgId })
+    const bySlug = await t.query(api.organizations.publicBySlug, { slug: 'hidden' })
+    expect(byClerk).toBeNull()
+    expect(bySlug).toBeNull()
+  })
+
+  it('soft-delete writes webhookAuditLog org_cascade_initiated with manifest counts', async () => {
+    const t = makeT()
+    const clerkOrgId = makeClerkOrgId('audit')
+
+    const orgId = await t.mutation(internal.organizations.upsertFromWebhook, {
+      clerkOrgId,
+      name: 'Audit Test',
+      slug: 'audit-test',
+      svixId: makeSvixId(),
+    })
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert('diveCenters', {
+        organizationId: orgId,
+        name: 'Audit DC',
+        address: { city: 'Phuket', country: 'TH' },
+        lat: 7.88,
+        lng: 98.39,
+        email: 'audit@test.com',
+        phone: '+66800000099',
+        associations: [],
+        verified: false,
+      })
+    })
+
+    await t.mutation(internal.organizations.deleteFromWebhook, {
+      clerkOrgId,
+      svixId: makeSvixId(),
+    })
+
+    const auditEntries = await t.run(async (ctx) =>
+      (await ctx.db.query('webhookAuditLog').collect()).filter(
+        (e) => e.eventType === 'org_cascade_initiated' && e.orgId === orgId,
+      ),
+    )
+    expect(auditEntries.length).toBe(1)
+    expect(auditEntries[0].orgSlug).toBe('audit-test')
+    expect(auditEntries[0].manifestCounts?.diveCenters).toBe(1)
+  })
+
+  it('a Clerk recreation upsert clears deletedAt and reactivates the org', async () => {
+    const t = makeT()
+    const clerkOrgId = makeClerkOrgId('revive')
+
+    await t.mutation(internal.organizations.upsertFromWebhook, {
+      clerkOrgId,
+      name: 'To Revive',
+      slug: 'to-revive',
+      svixId: makeSvixId(),
+    })
+    await t.mutation(internal.organizations.deleteFromWebhook, {
+      clerkOrgId,
+      svixId: makeSvixId(),
+    })
+    await t.mutation(internal.organizations.upsertFromWebhook, {
+      clerkOrgId,
+      name: 'To Revive',
+      slug: 'to-revive',
+      svixId: makeSvixId(),
+    })
+
+    const org = await t.run(async (ctx) =>
+      ctx.db.query('organizations').withIndex('by_clerkOrgId', (q) => q.eq('clerkOrgId', clerkOrgId)).unique(),
+    )
+    expect(org?.deletedAt).toBeUndefined()
   })
 
   it('skips duplicate svixId on delete (second call is no-op)', async () => {
@@ -251,7 +431,7 @@ describe('organizations.deleteFromWebhook', () => {
     ).resolves.toBeNull()
   })
 
-  it('cascades: unbinds users.organizationId + userRoles.organizationId, deletes role profile rows and grandchildren', async () => {
+  it('soft-delete preserves child rows immediately (cascade is deferred to TTL cron)', async () => {
     const t = makeT()
     const clerkOrgId = makeClerkOrgId('cascade')
 
@@ -314,55 +494,29 @@ describe('organizations.deleteFromWebhook', () => {
       org: await ctx.db.get(orgId),
     }))
 
-    expect(results.user?.organizationId).toBeUndefined()
-    expect(results.user?.email).toBe('cascade@test.com')
-    expect(results.userRole).toBeNull()
-    expect(results.diveCenter).toBeNull()
-    expect(results.org).toBeNull()
+    expect(results.org).not.toBeNull()
+    expect(results.org?.deletedAt).toBeTypeOf('number')
+    expect(results.user?.organizationId).toBe(orgId)
+    expect(results.userRole).not.toBeNull()
+    expect(results.diveCenter).not.toBeNull()
   })
 
-  it('cascade leaves users from OTHER orgs untouched', async () => {
+  it('soft-delete leaves other orgs untouched (no deletedAt on bystanders)', async () => {
     const t = makeT()
-    const targetClerkOrgId = makeClerkOrgId('cascade-target')
-    const otherClerkOrgId = makeClerkOrgId('cascade-other')
+    const targetClerkOrgId = makeClerkOrgId('iso-target')
+    const otherClerkOrgId = makeClerkOrgId('iso-other')
 
     const targetOrgId = await t.mutation(internal.organizations.upsertFromWebhook, {
       clerkOrgId: targetClerkOrgId,
       name: 'Target',
-      slug: 'target',
+      slug: 'iso-target',
       svixId: makeSvixId(),
     })
     const otherOrgId = await t.mutation(internal.organizations.upsertFromWebhook, {
       clerkOrgId: otherClerkOrgId,
       name: 'Other',
-      slug: 'other',
+      slug: 'iso-other',
       svixId: makeSvixId(),
-    })
-
-    const { targetUserId, otherUserId } = await t.run(async (ctx) => {
-      const targetUserId = await ctx.db.insert('users', {
-        tokenIdentifier: 'clerk|isolation-target',
-        originalTokenIdentifier: 'clerk|isolation-target',
-        slug: 'target-user',
-        email: 'target@test.com',
-        name: '',
-        firstName: '',
-        lastName: '',
-        appLanguage: 'en',
-        organizationId: targetOrgId,
-      })
-      const otherUserId = await ctx.db.insert('users', {
-        tokenIdentifier: 'clerk|isolation-other',
-        originalTokenIdentifier: 'clerk|isolation-other',
-        slug: 'other-user',
-        email: 'other@test.com',
-        name: '',
-        firstName: '',
-        lastName: '',
-        appLanguage: 'en',
-        organizationId: otherOrgId,
-      })
-      return { targetUserId, otherUserId }
     })
 
     await t.mutation(internal.organizations.deleteFromWebhook, {
@@ -370,13 +524,51 @@ describe('organizations.deleteFromWebhook', () => {
       svixId: makeSvixId(),
     })
 
-    const { targetUser, otherUser } = await t.run(async (ctx) => ({
-      targetUser: await ctx.db.get(targetUserId),
-      otherUser: await ctx.db.get(otherUserId),
+    const { target, other } = await t.run(async (ctx) => ({
+      target: await ctx.db.get(targetOrgId),
+      other: await ctx.db.get(otherOrgId),
     }))
 
-    expect(targetUser?.organizationId).toBeUndefined()
-    expect(otherUser?.organizationId).toBe(otherOrgId)
+    expect(target?.deletedAt).toBeTypeOf('number')
+    expect(other?.deletedAt).toBeUndefined()
+  })
+
+  it('repeat soft-delete is a no-op (deletedAt stays at the first call value)', async () => {
+    const t = makeT()
+    const clerkOrgId = makeClerkOrgId('redel')
+
+    await t.mutation(internal.organizations.upsertFromWebhook, {
+      clerkOrgId,
+      name: 'Redel',
+      slug: 'redel',
+      svixId: makeSvixId(),
+    })
+
+    await t.mutation(internal.organizations.deleteFromWebhook, {
+      clerkOrgId,
+      svixId: makeSvixId(),
+    })
+
+    const firstDeletedAt = await t.run(async (ctx) => {
+      const o = await ctx.db.query('organizations').withIndex('by_clerkOrgId', (q) => q.eq('clerkOrgId', clerkOrgId)).unique()
+      return o?.deletedAt
+    })
+
+    await t.mutation(internal.organizations.deleteFromWebhook, {
+      clerkOrgId,
+      svixId: makeSvixId(),
+    })
+
+    const auditCount = await t.run(async (ctx) =>
+      (await ctx.db.query('webhookAuditLog').collect()).filter((e) => e.eventType === 'org_cascade_initiated').length,
+    )
+    const secondDeletedAt = await t.run(async (ctx) => {
+      const o = await ctx.db.query('organizations').withIndex('by_clerkOrgId', (q) => q.eq('clerkOrgId', clerkOrgId)).unique()
+      return o?.deletedAt
+    })
+
+    expect(secondDeletedAt).toBe(firstDeletedAt)
+    expect(auditCount).toBe(1)
   })
 })
 
@@ -485,16 +677,37 @@ describe('organizations.updateBusinessMetadata (admin gate)', () => {
   it('allows admins to patch metadata', async () => {
     const t = makeT()
     const clerkOrgId = makeClerkOrgId('admin-update')
+    const adminToken = 'clerk|admin-user'
 
-    await t.mutation(internal.organizations.upsertFromWebhook, {
+    const orgId = await t.mutation(internal.organizations.upsertFromWebhook, {
       clerkOrgId,
       name: 'Admin Co',
       slug: 'admin-co',
       svixId: makeSvixId(),
     })
 
+    await t.run(async (ctx) => {
+      const uid = await ctx.db.insert('users', {
+        tokenIdentifier: adminToken,
+        originalTokenIdentifier: adminToken,
+        slug: 'admin-user',
+        email: 'admin-user@test.com',
+        name: 'Admin User',
+        firstName: 'Admin',
+        lastName: 'User',
+        appLanguage: 'en',
+        organizationId: orgId,
+      })
+      await ctx.db.insert('userRoles', {
+        userId: uid,
+        role: 'DiveCenter',
+        organizationId: orgId,
+        createdAt: Date.now(),
+      })
+    })
+
     const adminIdentity = {
-      tokenIdentifier: 'clerk|admin-user',
+      tokenIdentifier: adminToken,
       orgId: clerkOrgId,
       orgRole: 'admin',
       orgSlug: 'admin-co',
@@ -519,17 +732,38 @@ describe('organizations.updateBusinessMetadata (admin gate)', () => {
   it('rejects when no fields are supplied', async () => {
     const t = makeT()
     const clerkOrgId = makeClerkOrgId('empty-update')
+    const adminToken = 'clerk|admin-empty'
 
-    await t.mutation(internal.organizations.upsertFromWebhook, {
+    const orgId = await t.mutation(internal.organizations.upsertFromWebhook, {
       clerkOrgId,
       name: 'Empty',
       slug: 'empty',
       svixId: makeSvixId(),
     })
 
+    await t.run(async (ctx) => {
+      const uid = await ctx.db.insert('users', {
+        tokenIdentifier: adminToken,
+        originalTokenIdentifier: adminToken,
+        slug: 'admin-empty',
+        email: 'admin-empty@test.com',
+        name: 'Admin Empty',
+        firstName: 'Admin',
+        lastName: 'Empty',
+        appLanguage: 'en',
+        organizationId: orgId,
+      })
+      await ctx.db.insert('userRoles', {
+        userId: uid,
+        role: 'DiveCenter',
+        organizationId: orgId,
+        createdAt: Date.now(),
+      })
+    })
+
     await expectConvexError(
       t.withIdentity({
-        tokenIdentifier: 'clerk|admin-empty',
+        tokenIdentifier: adminToken,
         orgId: clerkOrgId,
         orgRole: 'admin',
         orgSlug: 'empty',
@@ -548,7 +782,8 @@ describe('organizations.updateBusinessMetadata (admin gate)', () => {
         orgRole: 'admin',
         orgSlug: 'orphan',
       }).mutation(api.organizations.updateBusinessMetadata, { phone: '+1' }),
-      'NOT_FOUND',
+      'FORBIDDEN',
+      'no_active_org',
     )
   })
 })

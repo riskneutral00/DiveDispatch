@@ -1,14 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { api } from '../convex/_generated/api'
 import type { Doc, Id } from '../convex/_generated/dataModel'
-import { seedUser as _seedUser, seedDiveCenterProfile, getOrCreateTestOrg, type SeedCtx } from './fixtures'
+import { seedUserWithOrg as seedUser, seedDiveCenterProfile } from './fixtures'
 import { makeT, orgIdentityFor } from './helpers/convex-helpers'
-
-async function seedUser(ctx: SeedCtx, slug: string, role: 'DiveCenter' | 'Boat' = 'DiveCenter') {
-  const userId = await _seedUser(ctx, { tokenIdentifier: `clerk|${slug}`, slug, email: `${slug}@test.com`, name: slug, firstName: slug, lastName: 'Test', role })
-  await getOrCreateTestOrg(ctx, userId, slug)
-  return userId
-}
 
 const VALID_DC_ARGS = {
   name: 'Sairee Dive',
@@ -37,7 +31,7 @@ describe('diveCenters.create', () => {
   it('creates dive center profile', async () => {
     const t = makeT()
     let userId: Awaited<ReturnType<typeof seedUser>> | undefined
-    await t.run(async (ctx) => { userId = await seedUser(ctx, 'dc-owner') })
+    await t.run(async (ctx) => { userId = await seedUser(ctx, 'dc-owner', 'DiveCenter') })
 
     const dcId = await t.withIdentity(orgIdentityFor('dc-owner'))
       .mutation(api.diveCenters.create, VALID_DC_ARGS)
@@ -56,7 +50,7 @@ describe('diveCenters.create', () => {
 
   it('returns existing ID on duplicate create', async () => {
     const t = makeT()
-    await t.run(async (ctx) => { await seedUser(ctx, 'dup-dc') })
+    await t.run(async (ctx) => { await seedUser(ctx, 'dup-dc', 'DiveCenter') })
     const identity = orgIdentityFor('dup-dc')
 
     const id1 = await t.withIdentity(identity).mutation(api.diveCenters.create, VALID_DC_ARGS)
@@ -73,7 +67,7 @@ describe('diveCenters.update', () => {
 
   it('rejects when no profile exists', async () => {
     const t = makeT()
-    await t.run(async (ctx) => { await seedUser(ctx, 'no-dc') })
+    await t.run(async (ctx) => { await seedUser(ctx, 'no-dc', 'DiveCenter') })
     await expect(
       t.withIdentity(orgIdentityFor('no-dc')).mutation(api.diveCenters.update, { name: 'New' }),
     ).rejects.toThrow(/NOT_FOUND/)
@@ -83,7 +77,7 @@ describe('diveCenters.update', () => {
     const t = makeT()
     let dcId: Awaited<ReturnType<typeof seedDiveCenterProfile>> | undefined
     await t.run(async (ctx) => {
-      const userId = await seedUser(ctx, 'upd-dc')
+      const userId = await seedUser(ctx, 'upd-dc', 'DiveCenter')
       dcId = await seedDiveCenterProfile(ctx, userId)
     })
 
@@ -106,7 +100,7 @@ describe('diveCenters.mine', () => {
 
   it('returns null when no profile exists', async () => {
     const t = makeT()
-    await t.run(async (ctx) => { await seedUser(ctx, 'no-dc-profile') })
+    await t.run(async (ctx) => { await seedUser(ctx, 'no-dc-profile', 'DiveCenter') })
     expect(
       await t.withIdentity(orgIdentityFor('no-dc-profile')).query(api.diveCenters.mine, {}),
     ).toBeNull()
@@ -115,7 +109,7 @@ describe('diveCenters.mine', () => {
   it('returns dive center profile for owner', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
-      const userId = await seedUser(ctx, 'my-dc')
+      const userId = await seedUser(ctx, 'my-dc', 'DiveCenter')
       await seedDiveCenterProfile(ctx, userId)
     })
 

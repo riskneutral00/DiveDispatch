@@ -1,26 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { api, internal } from '../convex/_generated/api'
 import type { Doc, Id } from '../convex/_generated/dataModel'
-import { seedUser as _seedUser, type SeedCtx } from './fixtures'
+import { seedUserWithOrg as seedUser, rebindUserToOrg } from './fixtures'
 import { makeT, expectConvexError } from './helpers/convex-helpers'
-
-async function seedUser(
-  ctx: SeedCtx,
-  slug: string,
-  role: 'DiveCenter' | 'Boat' = 'DiveCenter',
-  skipUserRoles = false,
-) {
-  return _seedUser(ctx, {
-    tokenIdentifier: `clerk|${slug}`,
-    slug,
-    email: `${slug}@test.com`,
-    name: slug,
-    firstName: slug,
-    lastName: 'Test',
-    role,
-    skipUserRoles,
-  })
-}
 
 const BASE_DC_ARGS = {
   name: 'Hug Ocean',
@@ -48,7 +30,7 @@ async function seedOrg(
 describe('profileCreate — Rule 11 strict org requirement', () => {
   it('throws FORBIDDEN when caller has no org claim AND no userRoles membership', async () => {
     const t = makeT()
-    await t.run(async (ctx) => { await seedUser(ctx, 'no-org-dc', 'DiveCenter', true) })
+    await t.run(async (ctx) => { await seedUser(ctx, 'no-org-dc', 'DiveCenter', { skipUserRoles: true }) })
 
     await expectConvexError(
       t.withIdentity({ tokenIdentifier: 'clerk|no-org-dc' })
@@ -59,8 +41,9 @@ describe('profileCreate — Rule 11 strict org requirement', () => {
 
   it('sets organizationId when caller has active synced org', async () => {
     const t = makeT()
-    await t.run(async (ctx) => { await seedUser(ctx, 'org-dc') })
+    await t.run(async (ctx) => { await seedUser(ctx, 'org-dc', 'DiveCenter') })
     const orgDocId = await seedOrg(t, 'org_dc_123', 'dc-corp')
+    await t.run(async (ctx) => { await rebindUserToOrg(ctx, 'clerk|org-dc', orgDocId) })
 
     const dcId = await t.withIdentity({
       tokenIdentifier: 'clerk|org-dc',
@@ -74,28 +57,34 @@ describe('profileCreate — Rule 11 strict org requirement', () => {
     expect(dc?.organizationId).toBeDefined()
   })
 
-  it('throws NOT_FOUND org_not_synced when org claim present but org row missing', async () => {
+  it('falls through to membership fallback when JWT org claim does not resolve to any Convex org', async () => {
     const t = makeT()
-    await t.run(async (ctx) => { await seedUser(ctx, 'unsynced-dc') })
+    let userId: Id<'users'> | undefined
+    await t.run(async (ctx) => { userId = await seedUser(ctx, 'unsynced-dc', 'DiveCenter') })
+    const fallbackOrgId = await t.run(async (ctx) => {
+      const u = await ctx.db.get(userId!)
+      return u?.organizationId ?? null
+    })
 
-    await expectConvexError(
-      t.withIdentity({
-        tokenIdentifier: 'clerk|unsynced-dc',
-        orgId: 'org_unknown_xxx',
-        orgRole: 'admin',
-        orgSlug: 'unknown',
-      }).mutation(api.diveCenters.create, BASE_DC_ARGS),
-      'NOT_FOUND',
-      'org_not_synced',
-    )
+    const dcId = await t.withIdentity({
+      tokenIdentifier: 'clerk|unsynced-dc',
+      orgId: 'org_unknown_xxx',
+      orgRole: 'admin',
+      orgSlug: 'unknown',
+    }).mutation(api.diveCenters.create, BASE_DC_ARGS)
+
+    const dc = await t.run(async (ctx) => ctx.db.get(dcId as Id<'diveCenters'>))
+    expect(dc).not.toBeNull()
+    expect(dc?.organizationId).toBe(fallbackOrgId)
   })
 })
 
 describe('profileMine — org-scope query', () => {
   it('returns org-scoped record when caller has active org with record', async () => {
     const t = makeT()
-    await t.run(async (ctx) => { await seedUser(ctx, 'org-mine') })
+    await t.run(async (ctx) => { await seedUser(ctx, 'org-mine', 'DiveCenter') })
     const orgDocId = await seedOrg(t, 'org_mine_1', 'mine-corp')
+    await t.run(async (ctx) => { await rebindUserToOrg(ctx, 'clerk|org-mine', orgDocId) })
 
     const identity = {
       tokenIdentifier: 'clerk|org-mine',
@@ -112,8 +101,9 @@ describe('profileMine — org-scope query', () => {
 
   it('returns null when no record exists for active org', async () => {
     const t = makeT()
-    await t.run(async (ctx) => { await seedUser(ctx, 'nothing-dc') })
-    await seedOrg(t, 'org_nothing', 'nothing-corp')
+    await t.run(async (ctx) => { await seedUser(ctx, 'nothing-dc', 'DiveCenter') })
+    const nothingOrgId = await seedOrg(t, 'org_nothing', 'nothing-corp')
+    await t.run(async (ctx) => { await rebindUserToOrg(ctx, 'clerk|nothing-dc', nothingOrgId) })
 
     const mine = await t.withIdentity({
       tokenIdentifier: 'clerk|nothing-dc',
@@ -129,8 +119,9 @@ describe('profileMine — org-scope query', () => {
 describe('profileUpdate — organizationId is protected', () => {
   it('Convex validator rejects organizationId in update args', async () => {
     const t = makeT()
-    await t.run(async (ctx) => { await seedUser(ctx, 'prot-dc') })
+    await t.run(async (ctx) => { await seedUser(ctx, 'prot-dc', 'DiveCenter') })
     const orgDocId = await seedOrg(t, 'org_prot', 'prot-corp')
+    await t.run(async (ctx) => { await rebindUserToOrg(ctx, 'clerk|prot-dc', orgDocId) })
 
     const identity = {
       tokenIdentifier: 'clerk|prot-dc',

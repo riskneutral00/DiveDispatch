@@ -50,6 +50,28 @@ export async function findProfileByUser<T extends TableNames>(
   return doc as Doc<T> | null
 }
 
+export async function rebindUserToOrg(
+  ctx: SeedCtx,
+  tokenIdentifier: string,
+  newOrgId: Id<'organizations'>,
+): Promise<void> {
+  const user = await ctx.db
+    .query('users')
+    .withIndex('by_tokenIdentifier', (q) => q.eq('tokenIdentifier', tokenIdentifier))
+    .unique()
+  if (!user) return
+  await ctx.db.patch(user._id, { organizationId: newOrgId })
+  const roles = await ctx.db
+    .query('userRoles')
+    .withIndex('by_userId', (q) => q.eq('userId', user._id))
+    .collect()
+  for (const r of roles) {
+    if (r.organizationId !== newOrgId) {
+      await ctx.db.patch(r._id, { organizationId: newOrgId })
+    }
+  }
+}
+
 export async function seedUser(
   ctx: SeedCtx,
   overrides: {
@@ -83,10 +105,29 @@ export async function seedUser(
       userId,
       role,
       organizationId: orgId,
+      permissionLevel: 'admin',
       createdAt: Date.now(),
     })
   }
   return userId
+}
+
+export async function seedUserWithOrg(
+  ctx: SeedCtx,
+  slug: string,
+  role: Doc<'userRoles'>['role'],
+  options: { skipUserRoles?: boolean } = {},
+): Promise<Id<'users'>> {
+  return await seedUser(ctx, {
+    tokenIdentifier: `clerk|${slug}`,
+    slug,
+    email: `${slug}@test.com`,
+    name: slug,
+    firstName: slug,
+    lastName: 'Test',
+    role,
+    skipUserRoles: options.skipUserRoles,
+  })
 }
 
 export async function seedBlockedDates(

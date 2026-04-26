@@ -18,7 +18,6 @@ function coreSourceFiles(): string[] {
     'availability.ts',
     'reservationsMutations.ts',
     'bookingResources.ts',
-    'bookingAuditLog.ts',
   ]) {
     out.push(path.join(REPO_ROOT, 'convex', f))
   }

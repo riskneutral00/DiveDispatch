@@ -148,7 +148,7 @@ describe('getActiveOrg — membership-gated denorm fallback', () => {
     )
   })
 
-  it('(e) regression: JWT orgId claim resolves the matching Clerk-backed org', async () => {
+  it('(e) regression: JWT orgId claim resolves the matching Clerk-backed org when user has membership', async () => {
     const t = makeT()
     const tokenIdentifier = 'clerk|jwt-org-user'
     const clerkOrgId = 'org_real_clerk_id'
@@ -173,6 +173,12 @@ describe('getActiveOrg — membership-gated denorm fallback', () => {
         updatedAt: now,
       })
       await ctx.db.patch(uid, { organizationId: oid })
+      await ctx.db.insert('userRoles', {
+        userId: uid,
+        role: 'DiveCenter',
+        organizationId: oid,
+        createdAt: now,
+      })
       return { orgId: oid }
     })
 
@@ -188,5 +194,191 @@ describe('getActiveOrg — membership-gated denorm fallback', () => {
 
     const org = await t.run(async (ctx) => ctx.db.get(orgId))
     expect(org?.phone).toBe('+1-415-555-0100')
+  })
+
+  it('(f) JWT orgId claim that resolves to no org falls through to membership-fallback', async () => {
+    const t = makeT()
+    const tokenIdentifier = 'clerk|jwt-unresolvable'
+
+    const { membershipOrgId } = await t.run(async (ctx) => {
+      const uid = await ctx.db.insert('users', {
+        tokenIdentifier,
+        originalTokenIdentifier: tokenIdentifier,
+        slug: 'jwt-fall',
+        email: 'jwt-fall@test.com',
+        name: 'JWT Fall',
+        firstName: 'JWT',
+        lastName: 'Fall',
+        appLanguage: 'en',
+      })
+      const now = Date.now()
+      const oid = await ctx.db.insert('organizations', {
+        clerkOrgId: 'seed_org_jwt-fall',
+        slug: 'jwt-fall',
+        name: 'JWT Fall Org',
+        createdAt: now,
+        updatedAt: now,
+      })
+      await ctx.db.patch(uid, { organizationId: oid })
+      await ctx.db.insert('userRoles', {
+        userId: uid,
+        role: 'DiveCenter',
+        organizationId: oid,
+        createdAt: now,
+      })
+      return { membershipOrgId: oid }
+    })
+
+    await t.withIdentity({
+      tokenIdentifier,
+      orgId: 'org_does_not_exist_in_db',
+      orgRole: 'admin',
+    }).mutation(
+      api.organizations.updateBusinessMetadata,
+      { phone: '+1-415-555-0200' },
+    )
+
+    const org = await t.run(async (ctx) => ctx.db.get(membershipOrgId))
+    expect(org?.phone).toBe('+1-415-555-0200')
+  })
+
+  it('(g) JWT orgId claim that resolves to an org user has no membership in falls through to membership-fallback', async () => {
+    const t = makeT()
+    const tokenIdentifier = 'clerk|jwt-wrong-org'
+    const wrongClerkOrgId = 'org_wrong_clerk_id'
+
+    const { membershipOrgId } = await t.run(async (ctx) => {
+      const uid = await ctx.db.insert('users', {
+        tokenIdentifier,
+        originalTokenIdentifier: tokenIdentifier,
+        slug: 'jwt-wrong',
+        email: 'jwt-wrong@test.com',
+        name: 'JWT Wrong',
+        firstName: 'JWT',
+        lastName: 'Wrong',
+        appLanguage: 'en',
+      })
+      const now = Date.now()
+      const correctOrgId = await ctx.db.insert('organizations', {
+        clerkOrgId: 'seed_org_jwt-wrong',
+        slug: 'jwt-wrong',
+        name: 'Correct Org',
+        createdAt: now,
+        updatedAt: now,
+      })
+      await ctx.db.insert('organizations', {
+        clerkOrgId: wrongClerkOrgId,
+        slug: 'wrong-clerk-org',
+        name: 'Wrong Empty Org',
+        createdAt: now,
+        updatedAt: now,
+      })
+      await ctx.db.patch(uid, { organizationId: correctOrgId })
+      await ctx.db.insert('userRoles', {
+        userId: uid,
+        role: 'DiveCenter',
+        organizationId: correctOrgId,
+        createdAt: now,
+      })
+      return { membershipOrgId: correctOrgId }
+    })
+
+    await t.withIdentity({
+      tokenIdentifier,
+      orgId: wrongClerkOrgId,
+      orgRole: 'admin',
+    }).mutation(
+      api.organizations.updateBusinessMetadata,
+      { phone: '+1-415-555-0300' },
+    )
+
+    const org = await t.run(async (ctx) => ctx.db.get(membershipOrgId))
+    expect(org?.phone).toBe('+1-415-555-0300')
+  })
+
+  it('(h) membership-fallback path with permissionLevel: member rejects admin-only mutations', async () => {
+    const t = makeT()
+    const tokenIdentifier = 'clerk|member-fallback'
+
+    await t.run(async (ctx) => {
+      const uid = await ctx.db.insert('users', {
+        tokenIdentifier,
+        originalTokenIdentifier: tokenIdentifier,
+        slug: 'member-fb',
+        email: 'member-fb@test.com',
+        name: 'Member',
+        firstName: 'Mem',
+        lastName: 'Ber',
+        appLanguage: 'en',
+      })
+      const now = Date.now()
+      const oid = await ctx.db.insert('organizations', {
+        slug: 'member-fb',
+        name: 'Member Org',
+        createdAt: now,
+        updatedAt: now,
+      })
+      await ctx.db.patch(uid, { organizationId: oid })
+      await ctx.db.insert('userRoles', {
+        userId: uid,
+        role: 'DiveCenter',
+        organizationId: oid,
+        permissionLevel: 'member',
+        createdAt: now,
+      })
+    })
+
+    await expectConvexError(
+      t.withIdentity({ tokenIdentifier }).mutation(
+        api.organizations.updateBusinessMetadata,
+        { phone: '+1-415-555-0400' },
+      ),
+      'FORBIDDEN',
+      'org_admin_required',
+    )
+  })
+
+  it('(i) JWT-claim path narrows to member when membership permissionLevel is member, even if claim says admin', async () => {
+    const t = makeT()
+    const tokenIdentifier = 'clerk|jwt-member'
+    const clerkOrgId = 'org_member_jwt'
+
+    await t.run(async (ctx) => {
+      const uid = await ctx.db.insert('users', {
+        tokenIdentifier,
+        originalTokenIdentifier: tokenIdentifier,
+        slug: 'jwt-member',
+        email: 'jwt-member@test.com',
+        name: 'JWT Member',
+        firstName: 'JWT',
+        lastName: 'Member',
+        appLanguage: 'en',
+      })
+      const now = Date.now()
+      const oid = await ctx.db.insert('organizations', {
+        clerkOrgId,
+        slug: 'jwt-member',
+        name: 'JWT Member Org',
+        createdAt: now,
+        updatedAt: now,
+      })
+      await ctx.db.patch(uid, { organizationId: oid })
+      await ctx.db.insert('userRoles', {
+        userId: uid,
+        role: 'DiveCenter',
+        organizationId: oid,
+        permissionLevel: 'member',
+        createdAt: now,
+      })
+    })
+
+    await expectConvexError(
+      t.withIdentity({ tokenIdentifier, orgId: clerkOrgId, orgRole: 'admin' }).mutation(
+        api.organizations.updateBusinessMetadata,
+        { phone: '+1-415-555-0500' },
+      ),
+      'FORBIDDEN',
+      'org_admin_required',
+    )
   })
 })

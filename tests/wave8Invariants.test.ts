@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { api, internal } from '../convex/_generated/api'
 import type { Doc, Id } from '../convex/_generated/dataModel'
-import { seedUser as _seedUser, type SeedCtx } from './fixtures'
-import { makeT, expectConvexError } from './helpers/convex-helpers'
+import { seedUser as _seedUser, rebindUserToOrg, type SeedCtx } from './fixtures'
+import { makeT } from './helpers/convex-helpers'
 
 async function seedUser(
   ctx: SeedCtx,
@@ -63,6 +63,7 @@ describe('Wave 8 — C3 invariant (multi-role user shares one org)', () => {
     })
 
     const orgDocId = await seedOrg(t, 'org_somchai', 'somchai')
+    await t.run(async (ctx) => { await rebindUserToOrg(ctx, 'clerk|somchai', orgDocId) })
     const identity = {
       tokenIdentifier: 'clerk|somchai',
       orgId: 'org_somchai',
@@ -113,6 +114,7 @@ describe('Wave 8 — C3 invariant (multi-role user shares one org)', () => {
     })
 
     const orgDocId = await seedOrg(t, 'org_mixed', 'mixed')
+    await t.run(async (ctx) => { await rebindUserToOrg(ctx, 'clerk|mixed', orgDocId) })
     const identity = {
       tokenIdentifier: 'clerk|mixed',
       orgId: 'org_mixed',

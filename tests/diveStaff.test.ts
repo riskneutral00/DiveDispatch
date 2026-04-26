@@ -1,21 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { api } from '../convex/_generated/api'
-import { seedUser as _seedUser, getOrCreateTestOrg, type SeedCtx } from './fixtures'
+import { seedUserWithOrg as seedUser } from './fixtures'
 import { makeT, orgIdentityFor } from './helpers/convex-helpers'
-
-async function seedUser(ctx: SeedCtx, slug: string, role: 'Instructor' | 'DiveCenter' = 'Instructor') {
-  const userId = await _seedUser(ctx, {
-    tokenIdentifier: `clerk|${slug}`,
-    slug,
-    email: `${slug}@test.com`,
-    name: slug,
-    firstName: slug,
-    lastName: 'Test',
-    role,
-  })
-  await getOrCreateTestOrg(ctx, userId, slug)
-  return userId
-}
 
 describe('diveStaff.visibleToMe — destination-scoped discovery', () => {
   it('returns own-org + destination-org instructors for an operator with destinationIds', async () => {
@@ -42,7 +28,7 @@ describe('diveStaff.visibleToMe — destination-scoped discovery', () => {
         teachingLanguages: ['en'],
         verified: true,
       })
-      const operatorId = await seedUser(ctx, 'rene-staff-vis')
+      const operatorId = await seedUser(ctx, 'rene-staff-vis', 'Instructor')
       const user = await ctx.db.get(operatorId)
       if (!user?.organizationId) throw new Error('op org missing')
       await ctx.db.patch(user.organizationId, { destinationIds: [areaId] })
@@ -68,7 +54,7 @@ describe('diveStaff.visibleToMe — destination-scoped discovery', () => {
   it('returns own-org instructors only when destinationIds is undefined', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
-      const userId = await seedUser(ctx, 'solo-staff-vis')
+      const userId = await seedUser(ctx, 'solo-staff-vis', 'Instructor')
       const user = await ctx.db.get(userId)
       if (!user?.organizationId) throw new Error('op org missing')
       await ctx.db.insert('diveStaff', {

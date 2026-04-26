@@ -1,14 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { api } from '../convex/_generated/api'
 import type { Doc, Id } from '../convex/_generated/dataModel'
-import { seedUser as _seedUser, seedBoatProfile, getOrCreateTestOrg, type SeedCtx } from './fixtures'
+import { seedUserWithOrg as seedUser, seedBoatProfile } from './fixtures'
 import { makeT, orgIdentityFor } from './helpers/convex-helpers'
-
-async function seedUser(ctx: SeedCtx, slug: string, role: 'Boat' | 'DiveCenter' = 'Boat') {
-  const userId = await _seedUser(ctx, { tokenIdentifier: `clerk|${slug}`, slug, email: `${slug}@test.com`, name: slug, firstName: slug, lastName: 'Test', role })
-  await getOrCreateTestOrg(ctx, userId, slug)
-  return userId
-}
 
 const VALID_BOAT_ARGS = {
   name: 'MV Seatran',
@@ -36,7 +30,7 @@ describe('boats.create', () => {
 
   it('creates boat profile for Boat user', async () => {
     const t = makeT()
-    await t.run(async (ctx) => { await seedUser(ctx, 'boat-owner') })
+    await t.run(async (ctx) => { await seedUser(ctx, 'boat-owner', 'Boat') })
 
     const boatId = await t.withIdentity(orgIdentityFor('boat-owner'))
       .mutation(api.boats.create, VALID_BOAT_ARGS)
@@ -54,7 +48,7 @@ describe('boats.create', () => {
 
   it('returns existing ID on duplicate create', async () => {
     const t = makeT()
-    await t.run(async (ctx) => { await seedUser(ctx, 'dup-boat') })
+    await t.run(async (ctx) => { await seedUser(ctx, 'dup-boat', 'Boat') })
     const identity = orgIdentityFor('dup-boat')
 
     const id1 = await t.withIdentity(identity).mutation(api.boats.create, VALID_BOAT_ARGS)
@@ -71,7 +65,7 @@ describe('boats.update', () => {
 
   it('rejects when no profile exists', async () => {
     const t = makeT()
-    await t.run(async (ctx) => { await seedUser(ctx, 'no-profile') })
+    await t.run(async (ctx) => { await seedUser(ctx, 'no-profile', 'Boat') })
     await expect(
       t.withIdentity(orgIdentityFor('no-profile')).mutation(api.boats.update, { name: 'New' }),
     ).rejects.toThrow(/NOT_FOUND/)
@@ -81,7 +75,7 @@ describe('boats.update', () => {
     const t = makeT()
     let boatId: Awaited<ReturnType<typeof seedBoatProfile>> | undefined
     await t.run(async (ctx) => {
-      const userId = await seedUser(ctx, 'upd-boat')
+      const userId = await seedUser(ctx, 'upd-boat', 'Boat')
       boatId = await seedBoatProfile(ctx, userId)
     })
 
@@ -104,7 +98,7 @@ describe('boats.mine', () => {
 
   it('returns null when no profile exists', async () => {
     const t = makeT()
-    await t.run(async (ctx) => { await seedUser(ctx, 'no-boat') })
+    await t.run(async (ctx) => { await seedUser(ctx, 'no-boat', 'Boat') })
     expect(
       await t.withIdentity(orgIdentityFor('no-boat')).query(api.boats.mine, {}),
     ).toBeNull()
@@ -113,7 +107,7 @@ describe('boats.mine', () => {
   it('returns boat profile for owner', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
-      const userId = await seedUser(ctx, 'my-boat')
+      const userId = await seedUser(ctx, 'my-boat', 'Boat')
       await seedBoatProfile(ctx, userId)
     })
 
@@ -146,7 +140,7 @@ describe('boats.visibleToMe — destination-scoped discovery', () => {
         fleet: [],
         verified: true,
       })
-      const operatorId = await seedUser(ctx, 'rene-boat-vis')
+      const operatorId = await seedUser(ctx, 'rene-boat-vis', 'Boat')
       const user = await ctx.db.get(operatorId)
       if (!user?.organizationId) throw new Error('op org missing')
       await ctx.db.patch(user.organizationId, { destinationIds: [areaId] })
@@ -170,7 +164,7 @@ describe('boats.visibleToMe — destination-scoped discovery', () => {
   it('returns own-org boats only when destinationIds is undefined', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
-      const userId = await seedUser(ctx, 'solo-boat-vis')
+      const userId = await seedUser(ctx, 'solo-boat-vis', 'Boat')
       const user = await ctx.db.get(userId)
       if (!user?.organizationId) throw new Error('op org missing')
       await ctx.db.insert('boats', {

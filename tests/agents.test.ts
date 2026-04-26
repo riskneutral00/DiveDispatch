@@ -1,14 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { api } from '../convex/_generated/api'
 import type { Doc, Id } from '../convex/_generated/dataModel'
-import { seedUser as _seedUser, seedAgent, getOrCreateTestOrg, type SeedCtx } from './fixtures'
+import { seedUserWithOrg as seedUser, seedAgent } from './fixtures'
 import { makeT, orgIdentityFor } from './helpers/convex-helpers'
-
-async function seedUser(ctx: SeedCtx, slug: string, role: NonNullable<NonNullable<Parameters<typeof _seedUser>[1]>['role']> = 'Agent') {
-  const userId = await _seedUser(ctx, { tokenIdentifier: `clerk|${slug}`, slug, email: `${slug}@test.com`, name: `${slug} Display`, firstName: slug, lastName: 'Test', role })
-  await getOrCreateTestOrg(ctx, userId, slug)
-  return userId
-}
 
 const VALID_AGENT_ARGS = {
   name: 'Test Agent',

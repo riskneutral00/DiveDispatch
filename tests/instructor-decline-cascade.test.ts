@@ -10,8 +10,6 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest'
-import { convexTest } from 'convex-test'
-import schema from '../convex/schema'
 import { api } from '../convex/_generated/api'
 import {
   TEST_TOKENS,
@@ -24,12 +22,12 @@ import {
   seedReservation,
 } from './fixtures'
 import { testDate } from './helpers/dates'
+import { makeT } from './helpers/convex-helpers'
 import type { Id } from '../convex/_generated/dataModel'
 
-const modules = import.meta.glob('../convex/**/*.ts')
-let t = convexTest(schema, modules)
+let t = makeT()
 beforeEach(() => {
-  t = convexTest(schema, modules)
+  t = makeT()
 })
 
 type SetupResult = {

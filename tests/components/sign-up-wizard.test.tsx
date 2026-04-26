@@ -23,7 +23,7 @@ vi.mock('convex/react', async (importOriginal) => {
     useConvexAuth: () => mockConvexAuth(),
     useQuery: (_query: unknown, args?: unknown) => {
       if (args === 'skip') return undefined
-      if (args && typeof args === 'object' && args !== null && 'slug' in (args as object)) {
+      if (args && typeof args === 'object' && args !== null && ('slug' in (args as object) || 'clerkOrgId' in (args as object))) {
         return mockOrgRow
       }
       const idx = queryCallIndex++

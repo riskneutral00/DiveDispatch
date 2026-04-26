@@ -12,7 +12,7 @@ import type { Id } from '../convex/_generated/dataModel'
 import { testDate } from './helpers/dates'
 import { makeT, expectConvexError } from './helpers/convex-helpers'
 import {
-  seedUser,
+  seedUserWithOrg as seedUserBySlug,
   seedStakeholderPreferences,
   seedDiveCenterProfile,
   seedBookingTemplate,
@@ -21,19 +21,12 @@ import {
   getOrCreateTestOrg,
   type SeedCtx, findProfileByUser } from './fixtures'
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-/** Thin wrapper: adapts positional (ctx, slug, role?) to shared seedUser overrides format */
-async function seedUserBySlug(ctx: SeedCtx, slug: string, role: NonNullable<NonNullable<Parameters<typeof seedUser>[1]>['role']> = 'DiveCenter') {
-  return seedUser(ctx, { tokenIdentifier: `clerk|${slug}`, slug, email: `${slug}@test.com`, name: `${slug} Display`, firstName: slug, lastName: 'Test', role })
-}
-
 async function seedVenueUser(
   ctx: SeedCtx,
   slug: string,
   caps: { confinedCapable: boolean },
 ) {
-  const userId = await seedUser(ctx, { tokenIdentifier: `clerk|${slug}`, slug, email: `${slug}@test.com`, name: `${slug} Display`, firstName: slug, lastName: 'Test', role: 'Venue' })
+  const userId = await seedUserBySlug(ctx, slug, 'Venue')
   await seedVenue(ctx, {
     userId,
     name: `${slug} Venue`,
@@ -42,7 +35,7 @@ async function seedVenueUser(
 }
 
 async function seedBoatUser(ctx: SeedCtx, slug: string, hasCompressor: boolean) {
-  const userId = await seedUser(ctx, { tokenIdentifier: `clerk|${slug}`, slug, email: `${slug}@test.com`, name: `${slug} Display`, firstName: slug, lastName: 'Test', role: 'Boat' })
+  const userId = await seedUserBySlug(ctx, slug, 'Boat')
   const organizationId = await getOrCreateTestOrg(ctx, userId, `${slug} Boat`)
   const boatId = await ctx.db.insert('boats', {
     organizationId,
@@ -82,7 +75,7 @@ describe('createDraftShell — coverage gate', () => {
   it('rejects with PROFILE_INCOMPLETE when only instructor is in preferences (missing equipment/venue/compressor)', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
-      const userId = await seedUserBySlug(ctx, 'dc-noprofs')
+      const userId = await seedUserBySlug(ctx, 'dc-noprofs', 'DiveCenter')
       await seedDCProfile(ctx, userId,'dc-noprofs')
       await seedUserBySlug(ctx, 'inst-gate', 'Instructor')
       await seedStakeholderPreferences(ctx, 'dc-noprofs', {
@@ -102,7 +95,7 @@ describe('createDraftShell — coverage gate', () => {
   it('rejects with PROFILE_INCOMPLETE listing 3 missing resources when only instructor pref is set', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
-      const userId = await seedUserBySlug(ctx, 'dc-empty')
+      const userId = await seedUserBySlug(ctx, 'dc-empty', 'DiveCenter')
       await seedDCProfile(ctx, userId,'dc-empty')
       await seedUserBySlug(ctx, 'inst-gate', 'Instructor')
       await seedStakeholderPreferences(ctx, 'dc-empty', {
@@ -136,7 +129,7 @@ describe('createDraftShell — coverage gate', () => {
   it('rejects when only instructor is preferred (missing equipment, venue, compressor)', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
-      const userId = await seedUserBySlug(ctx, 'dc-partial')
+      const userId = await seedUserBySlug(ctx, 'dc-partial', 'DiveCenter')
       await seedDCProfile(ctx, userId,'dc-partial')
       await seedUserBySlug(ctx, 'inst-1', 'Instructor')
       await seedStakeholderPreferences(ctx, 'dc-partial', {
@@ -164,7 +157,7 @@ describe('createDraftShell — coverage gate', () => {
   it('succeeds when all 5 coverage requirements are met via venue + standalone compressor', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
-      const userId = await seedUserBySlug(ctx, 'dc-full')
+      const userId = await seedUserBySlug(ctx, 'dc-full', 'DiveCenter')
       await seedDCProfile(ctx, userId,'dc-full')
       await seedUserBySlug(ctx, 'inst-1', 'Instructor')
       await seedUserBySlug(ctx, 'equip-1', 'Equipment')
@@ -205,7 +198,7 @@ describe('createDraftShell — coverage gate', () => {
   it('succeeds when boat with compressor covers venue + compressor needs', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
-      const userId = await seedUserBySlug(ctx, 'dc-boat')
+      const userId = await seedUserBySlug(ctx, 'dc-boat', 'DiveCenter')
       await seedDCProfile(ctx, userId,'dc-boat')
       await seedUserBySlug(ctx, 'inst-1', 'Instructor')
       await seedUserBySlug(ctx, 'equip-1', 'Equipment')
@@ -234,7 +227,7 @@ describe('createDraftShell — coverage gate', () => {
   it('succeeds without startDate arg (optional dates)', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
-      const userId = await seedUserBySlug(ctx, 'dc-nodate')
+      const userId = await seedUserBySlug(ctx, 'dc-nodate', 'DiveCenter')
       await seedDCProfile(ctx, userId,'dc-nodate')
       await seedUserBySlug(ctx, 'inst-1', 'Instructor')
       await seedUserBySlug(ctx, 'equip-1', 'Equipment')

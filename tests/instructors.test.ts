@@ -1,14 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { api } from '../convex/_generated/api'
 import type { Doc, Id } from '../convex/_generated/dataModel'
-import { seedUser as _seedUser, seedInstructorProfile, getOrCreateTestOrg, type SeedCtx } from './fixtures'
+import { seedUserWithOrg as seedUser, seedInstructorProfile } from './fixtures'
 import { makeT, orgIdentityFor } from './helpers/convex-helpers'
-
-async function seedUser(ctx: SeedCtx, slug: string, role: 'Instructor' | 'DiveCenter' = 'Instructor') {
-  const userId = await _seedUser(ctx, { tokenIdentifier: `clerk|${slug}`, slug, email: `${slug}@test.com`, name: slug, firstName: slug, lastName: 'Test', role })
-  await getOrCreateTestOrg(ctx, userId, slug)
-  return userId
-}
 
 const VALID_INSTRUCTOR_ARGS = {
   address: { city: 'Koh Tao', country: 'TH' },
@@ -37,7 +31,7 @@ describe('instructors.create', () => {
   it('creates instructor profile for Instructor user with name derived from user firstName+lastName', async () => {
     const t = makeT()
     let userId: Awaited<ReturnType<typeof seedUser>> | undefined
-    await t.run(async (ctx) => { userId = await seedUser(ctx, 'new-instr') })
+    await t.run(async (ctx) => { userId = await seedUser(ctx, 'new-instr', 'Instructor') })
 
     const instrId = await t.withIdentity(orgIdentityFor('new-instr'))
       .mutation(api.diveStaff.create, VALID_INSTRUCTOR_ARGS)
@@ -56,7 +50,7 @@ describe('instructors.create', () => {
 
   it('returns existing ID on duplicate create', async () => {
     const t = makeT()
-    await t.run(async (ctx) => { await seedUser(ctx, 'dup-instr') })
+    await t.run(async (ctx) => { await seedUser(ctx, 'dup-instr', 'Instructor') })
     const identity = orgIdentityFor('dup-instr')
 
     const id1 = await t.withIdentity(identity).mutation(api.diveStaff.create, VALID_INSTRUCTOR_ARGS)
@@ -73,7 +67,7 @@ describe('instructors.update', () => {
 
   it('rejects when no profile exists', async () => {
     const t = makeT()
-    await t.run(async (ctx) => { await seedUser(ctx, 'no-instr') })
+    await t.run(async (ctx) => { await seedUser(ctx, 'no-instr', 'Instructor') })
     await expect(
       t.withIdentity(orgIdentityFor('no-instr')).mutation(api.diveStaff.update, { phone: '+660000000000' }),
     ).rejects.toThrow(/NOT_FOUND/)
@@ -83,7 +77,7 @@ describe('instructors.update', () => {
     const t = makeT()
     let instrId: Awaited<ReturnType<typeof seedInstructorProfile>> | undefined
     await t.run(async (ctx) => {
-      const userId = await seedUser(ctx, 'upd-instr')
+      const userId = await seedUser(ctx, 'upd-instr', 'Instructor')
       instrId = await seedInstructorProfile(ctx, userId)
     })
 
@@ -101,7 +95,7 @@ describe('instructors.update', () => {
     const t = makeT()
     let instrId: Awaited<ReturnType<typeof seedInstructorProfile>> | undefined
     await t.run(async (ctx) => {
-      const userId = await seedUser(ctx, 'sync-instr')
+      const userId = await seedUser(ctx, 'sync-instr', 'Instructor')
       instrId = await seedInstructorProfile(ctx, userId)
     })
 
@@ -152,7 +146,7 @@ describe('directory.listByRole — Instructor picker gate', () => {
 describe('instructors.create — teachingLanguages empty-array gate (P0-20)', () => {
   it('rejects empty teachingLanguages on create', async () => {
     const t = makeT()
-    await t.run(async (ctx) => { await seedUser(ctx, 'empty-lang') })
+    await t.run(async (ctx) => { await seedUser(ctx, 'empty-lang', 'Instructor') })
 
     await expect(
       t.withIdentity(orgIdentityFor('empty-lang'))
@@ -163,7 +157,7 @@ describe('instructors.create — teachingLanguages empty-array gate (P0-20)', ()
   it('rejects empty teachingLanguages on update', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
-      const userId = await seedUser(ctx, 'regress-lang')
+      const userId = await seedUser(ctx, 'regress-lang', 'Instructor')
       await seedInstructorProfile(ctx, userId)
     })
 
@@ -182,7 +176,7 @@ describe('instructors.mine', () => {
 
   it('returns null when no profile exists', async () => {
     const t = makeT()
-    await t.run(async (ctx) => { await seedUser(ctx, 'no-instr-profile') })
+    await t.run(async (ctx) => { await seedUser(ctx, 'no-instr-profile', 'Instructor') })
     expect(
       await t.withIdentity(orgIdentityFor('no-instr-profile')).query(api.diveStaff.mine, {}),
     ).toBeNull()
@@ -191,7 +185,7 @@ describe('instructors.mine', () => {
   it('returns instructor profile for owner', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
-      const userId = await seedUser(ctx, 'my-instr')
+      const userId = await seedUser(ctx, 'my-instr', 'Instructor')
       await seedInstructorProfile(ctx, userId)
     })
 
