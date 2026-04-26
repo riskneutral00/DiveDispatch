@@ -105,7 +105,7 @@ describe('ProfileOverlay — Roles tab visibility', () => {
   })
 })
 
-describe('ProfileOverlay — Row 1 + Row 2 stay asterisk-free', () => {
+describe('ProfileOverlay — Row 1 (outer role pills) stays asterisk-free', () => {
   beforeEach(() => {
     mockMyRoles = []
   })

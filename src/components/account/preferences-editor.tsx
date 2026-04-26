@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { ProfileSectionTabBar } from '@/components/account/profile-section-tab-bar'
-import { z } from 'zod'
+import { prefsSchema, type PrefsFormData } from '@/lib/preferences/prefs-schema'
 import { SAVE_FEEDBACK_MS } from '@/lib/constants/ui-timings'
 import { useMutation, useQuery } from 'convex/react'
 import { api } from '@/lib/convex-generated'
@@ -57,22 +57,6 @@ const ACCEPTANCE_MODES = [
 type PreferencesRecord = Record<string, unknown>
 
 const DISPLAY_OPERATOR_ROLE_KEYS = new Set(DISPLAY_OPERATOR_ROLES.map((r) => r.clerkRole))
-
-const prefsSchema = z.object({
-  acceptanceMode: z.enum(['Auto', 'PrePayRequired', 'PostPayAllowed']),
-  commonLanguageCodes: z.array(z.string()).optional(),
-  confirmOnAccept: z.boolean(),
-  confirmOnDecline: z.boolean(),
-  preferredInstructorSlugs: z.array(z.string()).optional(),
-  preferredVenueSlugs: z.array(z.string()).optional(),
-  preferredEquipmentSlugs: z.array(z.string()).optional(),
-  preferredBoatSlugs: z.array(z.string()).optional(),
-  preferredCompressorSlugs: z.array(z.string()).optional(),
-  preferredOperatorSlug: z.string().optional(),
-  autoAssignPreferred: z.boolean(),
-})
-
-type PrefsFormData = z.infer<typeof prefsSchema>
 
 export type ResourceSubTab = ResourceSubTabId
 
