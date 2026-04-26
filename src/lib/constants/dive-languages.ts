@@ -184,9 +184,13 @@ export function languageToCode(input: string): string {
   return _labelToCode.get(lower) ?? ''
 }
 
+export function findLanguageByCode(code: string): DiveLanguage | undefined {
+  return ALL_LANGUAGES.find((l) => l.code === code)
+}
+
 export function resolveLanguages(codes: string[]): { code: string; label: string }[] {
   return (codes ?? [])
-    .map((code) => ALL_LANGUAGES.find((l) => l.code === languageToCode(code)))
+    .map((code) => findLanguageByCode(languageToCode(code)))
     .filter((l): l is DiveLanguage => l !== undefined)
     .map((l) => ({ code: l.code, label: CHINESE_SCRIPT_LABELS[l.code as LanguageCode] ?? l.label }))
 }

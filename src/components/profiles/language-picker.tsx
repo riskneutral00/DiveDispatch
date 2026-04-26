@@ -7,6 +7,7 @@ import {
   POPULAR_ROW1_CODES,
   POPULAR_ROW2_CODES,
   CHINESE_SCRIPT_LABELS,
+  findLanguageByCode,
   type LanguageCode,
   type DiveLanguage,
 } from "@/lib/constants/dive-languages";
@@ -55,13 +56,10 @@ export function LanguagePicker({
     setQuery("");
   }
 
-  const resolveDiveLanguage = (code: string) =>
-    ALL_LANGUAGES.find((l) => l.code === code);
-
-  const popRowALanguages = POPULAR_ROW1_CODES.map(resolveDiveLanguage).filter(
+  const popRowALanguages = POPULAR_ROW1_CODES.map(findLanguageByCode).filter(
     Boolean,
   ) as DiveLanguage[];
-  const popRowBLanguages = POPULAR_ROW2_CODES.map(resolveDiveLanguage).filter(
+  const popRowBLanguages = POPULAR_ROW2_CODES.map(findLanguageByCode).filter(
     Boolean,
   ) as DiveLanguage[];
 
@@ -151,7 +149,7 @@ export function LanguagePicker({
             {renderFlagGroup(overflowLanguages)}
             {renderFlagGroup(
               popularCodes
-                .map(resolveDiveLanguage)
+                .map(findLanguageByCode)
                 .filter(Boolean) as DiveLanguage[],
             )}
           </div>

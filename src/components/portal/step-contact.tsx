@@ -21,7 +21,7 @@ import { FieldRow } from '@/components/ui/field-row'
 import { toISODateString } from '@/lib/utils/date'
 import { makeCustomerContactSchema, useFormValidation } from '@/lib/validation'
 import type { CustomerContactData } from '@/lib/validation'
-import { languageToCode, ALL_LANGUAGES } from '@/lib/constants/dive-languages'
+import { languageToCode, findLanguageByCode } from '@/lib/constants/dive-languages'
 import type { Language } from '@/lib/types/language'
 import { CERT_REQUIRED_ACTIVITIES, getMinAge, calcAgeAtDate, isPassportExpiringSoon } from '@/lib/constants/activity-rules'
 import { usePortalContact } from '@/lib/hooks/use-portal-contact'
@@ -39,7 +39,7 @@ function defaultLanguageFromBrowser(): Language[] {
       ? navigator.language
       : 'en'
   const code = languageToCode(raw) || 'en-GB'
-  const match = ALL_LANGUAGES.find((l) => l.code === code)
+  const match = findLanguageByCode(code)
   if (!match) return []
   return [{ code: match.code, label: match.label }]
 }
@@ -47,7 +47,7 @@ function defaultLanguageFromBrowser(): Language[] {
 function languagesFromCodes(codes: string[] | undefined): Language[] {
   if (!codes) return []
   return codes
-    .map((c) => ALL_LANGUAGES.find((l) => l.code === c))
+    .map((c) => findLanguageByCode(c))
     .filter((l): l is NonNullable<typeof l> => Boolean(l))
     .map((l) => ({ code: l.code, label: l.label }))
 }

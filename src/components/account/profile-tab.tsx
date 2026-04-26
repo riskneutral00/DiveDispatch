@@ -14,7 +14,7 @@ import { BirthdayField } from '@/components/ui/birthday-field'
 import { FieldRow } from '@/components/ui/field-row'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
-import { ALL_LANGUAGES, languageToCode } from '@/lib/constants/dive-languages'
+import { findLanguageByCode, languageToCode } from '@/lib/constants/dive-languages'
 import { LanguageField } from '@/components/ui/language-field'
 
 export type ProfileValues = {
@@ -102,7 +102,7 @@ export function ProfileTab({ onClose }: { onClose?: () => void }) {
     update: (payload) => updateProfile(payload),
   })
 
-  const selectedLocaleObj = ALL_LANGUAGES.find((l) => l.code === languageToCode(form.appLanguage))
+  const selectedLocaleObj = findLanguageByCode(languageToCode(form.appLanguage))
   const selectedLocale = selectedLocaleObj
     ? [{ code: selectedLocaleObj.code, label: selectedLocaleObj.label }]
     : []

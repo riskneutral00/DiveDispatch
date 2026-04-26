@@ -14,7 +14,7 @@ import { StepIndicator } from '@/components/ui/step-indicator'
 import { StepRoleSelection } from '@/components/onboarding/step-role-selection'
 import { StepProfileCompletion } from '@/components/onboarding/step-profile-completion'
 import { LanguageField } from '@/components/ui/language-field'
-import { ALL_LANGUAGES, languageToCode } from '@/lib/constants/dive-languages'
+import { findLanguageByCode, languageToCode } from '@/lib/constants/dive-languages'
 import { DEFAULT_LOCALE, normalizeLocale } from '@/lib/constants/locales'
 import { clerkGlassAppearance } from '../../clerk-glass-appearance'
 import { parseConvexErrorI18n } from '@/lib/utils/convex-error'
@@ -150,9 +150,7 @@ export default function SignUpPage() {
   }
 
   if (!isAuthenticated) {
-    const selectedLocaleObj = ALL_LANGUAGES.find(
-      (l) => l.code === languageToCode(appLanguage),
-    )
+    const selectedLocaleObj = findLanguageByCode(languageToCode(appLanguage))
     const selectedLocale = selectedLocaleObj
       ? [{ code: selectedLocaleObj.code, label: selectedLocaleObj.label }]
       : []

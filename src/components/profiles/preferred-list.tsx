@@ -22,7 +22,7 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { SortableOverlayList } from '@/components/ui/sortable-overlay-list'
 import { LanguagePicker, type Language } from '@/components/profiles/language-picker'
 import { InstructorCardContent } from '@/components/profiles/instructor-card'
-import { ALL_LANGUAGES } from '@/lib/constants/dive-languages'
+import { findLanguageByCode } from '@/lib/constants/dive-languages'
 
 // query-budget-ok: 6 subscriptions; planned migration to preferred.listContext (Phase 2D of zesty-creek perf plan)
 
@@ -253,7 +253,7 @@ export function PreferredInstructorList(props: ListProps) {
   const operatorDefaultLangs = useMemo(() => {
     return (diveCenterProfile?.customerLanguages ?? [])
       .map((code) => {
-        const lang = ALL_LANGUAGES.find((l) => l.code === code)
+        const lang = findLanguageByCode(code)
         return lang ? { code: lang.code, label: lang.label } : null
       })
       .filter(Boolean) as Language[]
