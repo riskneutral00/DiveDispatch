@@ -27,9 +27,13 @@ vi.mock('convex/react', async (importOriginal) => {
   const actual = await importOriginal<typeof import('convex/react')>()
   return {
     ...actual,
-    useQuery: (_query: unknown, _args?: unknown) => {
-      // directory queries return [] (for PreferredOperatorPicker when role=Agent)
-      // stakeholderPreferences.mine is the no-arg query
+    useQuery: (_query: unknown, args?: unknown) => {
+      // 'skip' yields undefined per Convex API
+      if (args === 'skip') return undefined
+      // directory queries (any { role: ... } arg) return [] — used by PreferredOperatorPicker
+      // (Agent only) and the boat directory subscribed by PreferencesEditor itself
+      if (args && typeof args === 'object' && 'role' in args) return []
+      // stakeholderPreferences.mine (no args)
       return mockPrefs
     },
     useMutation: () => mockUpsert,

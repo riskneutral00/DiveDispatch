@@ -1,5 +1,6 @@
 'use client'
 
+// query-budget-ok: 4 calls — file hosts both PreferencesEditor (form prefs + boat directory for live compressor-substitution UI) and PreferredOperatorPicker (Agent-only DC+Agent directory). The operator-picker queries are lazy-rendered for Agent role only; the boat directory is required to mirror operatorCoverage's boat-with-compressor substitution. Aggregating into one query would still fan out these subscribes server-side. Track in Tier 1 followup if PreferredOperatorPicker is extracted to its own file.
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
@@ -30,6 +31,10 @@ import {
 } from '@/components/profiles/preferred-list'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 import { SimpleSelect } from '@/components/ui/simple-select'
+import {
+  computeResourceTabRequirement,
+  type ResourceSubTab as ResourceSubTabId,
+} from '@/lib/preferences/resource-tab-requirement'
 
 const ACCEPTANCE_MODES = [
   {
@@ -69,13 +74,7 @@ const prefsSchema = z.object({
 
 type PrefsFormData = z.infer<typeof prefsSchema>
 
-export type ResourceSubTab =
-  | 'instructors'
-  | 'venues'
-  | 'boats'
-  | 'equipment'
-  | 'compressors'
-  | 'operator'
+export type ResourceSubTab = ResourceSubTabId
 
 const defaultFormData = (): PrefsFormData => ({
   acceptanceMode: 'Auto',
@@ -91,13 +90,16 @@ const defaultFormData = (): PrefsFormData => ({
   autoAssignPreferred: true,
 })
 
-export function buildResourceSubTabs(clerkRole: string | undefined): { id: ResourceSubTab; label: string }[] {
-  const base: { id: ResourceSubTab; label: string }[] = [
-    { id: 'instructors', label: 'Instructors' },
-    { id: 'venues', label: 'Venues' },
-    { id: 'boats', label: 'Boats' },
-    { id: 'equipment', label: 'Equipment' },
-    { id: 'compressors', label: 'Compressors' },
+export function buildResourceSubTabs(
+  clerkRole: string | undefined,
+  requirementByTab?: Record<ResourceSubTab, boolean>,
+): { id: ResourceSubTab; label: string; required?: boolean }[] {
+  const base: { id: ResourceSubTab; label: string; required?: boolean }[] = [
+    { id: 'instructors', label: 'Instructors', required: requirementByTab?.instructors },
+    { id: 'venues', label: 'Venues', required: requirementByTab?.venues },
+    { id: 'boats', label: 'Boats', required: requirementByTab?.boats },
+    { id: 'equipment', label: 'Equipment', required: requirementByTab?.equipment },
+    { id: 'compressors', label: 'Compressors', required: requirementByTab?.compressors },
   ]
   if (clerkRole === 'Agent') {
     base.push({ id: 'operator', label: 'Operator' })
@@ -234,7 +236,37 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp,
 
   const showResourcePrefs = activeRole != null && DISPLAY_OPERATOR_ROLE_KEYS.has(activeRole)
 
-  const resourceSubTabs = useMemo(() => buildResourceSubTabs(activeRole), [activeRole])
+  const boatDirectory = useQuery(
+    api.directory.listByRole,
+    showResourcePrefs ? { role: 'Boat' } : 'skip',
+  )
+
+  const resourceTabRequirement = useMemo(
+    () =>
+      computeResourceTabRequirement(
+        {
+          preferredInstructorSlugs: form.preferredInstructorSlugs,
+          preferredEquipmentSlugs: form.preferredEquipmentSlugs,
+          preferredVenueSlugs: form.preferredVenueSlugs,
+          preferredBoatSlugs: form.preferredBoatSlugs,
+          preferredCompressorSlugs: form.preferredCompressorSlugs,
+        },
+        boatDirectory,
+      ),
+    [
+      form.preferredInstructorSlugs,
+      form.preferredEquipmentSlugs,
+      form.preferredVenueSlugs,
+      form.preferredBoatSlugs,
+      form.preferredCompressorSlugs,
+      boatDirectory,
+    ],
+  )
+
+  const resourceSubTabs = useMemo(
+    () => buildResourceSubTabs(activeRole, resourceTabRequirement),
+    [activeRole, resourceTabRequirement],
+  )
 
   const saveStakeholderPreferences = useCallback(async () => {
     if (!activeRole) {
@@ -423,7 +455,6 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp,
                   <PreferredInstructorList
                     slugs={form.preferredInstructorSlugs ?? []}
                     onChange={(slugs) => setField('preferredInstructorSlugs', slugs)}
-                    required
                   />
                   <BottomActionBar className="pt-4">
                     <SaveButton
@@ -443,7 +474,6 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp,
                   <PreferredVenueList
                     slugs={form.preferredVenueSlugs ?? []}
                     onChange={(slugs) => setField('preferredVenueSlugs', slugs)}
-                    required
                   />
                   <BottomActionBar className="pt-4">
                     <SaveButton
@@ -463,7 +493,6 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp,
                   <PreferredBoatList
                     slugs={form.preferredBoatSlugs ?? []}
                     onChange={(slugs) => setField('preferredBoatSlugs', slugs)}
-                    required
                   />
                   <BottomActionBar className="pt-4">
                     <SaveButton
@@ -483,7 +512,6 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp,
                   <PreferredEquipmentList
                     slugs={form.preferredEquipmentSlugs ?? []}
                     onChange={(slugs) => setField('preferredEquipmentSlugs', slugs)}
-                    required
                   />
                   <BottomActionBar className="pt-4">
                     <SaveButton

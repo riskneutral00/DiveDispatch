@@ -3,9 +3,11 @@
 import { Fragment, useCallback, useEffect, useRef, type KeyboardEvent, type ReactNode } from 'react'
 import { TabButton } from '@/components/ui/tab-button'
 import { MenuButton } from '@/components/ui/menu-button'
+import { RequiredAsterisk } from '@/components/ui/required-asterisk'
+import type { Requirable } from '@/lib/types/requirable'
 import { cn } from '@/lib/utils/cn'
 
-export interface TabItem {
+export interface TabItem extends Requirable {
   id: string
   label: ReactNode
   ariaLabel?: string
@@ -74,15 +76,23 @@ export function Tabs(props: TabsProps) {
 
   const renderTab = (tab: TabItem) => {
     const isActive = tab.id === activeTab
+    const composedLabel = (
+      <>
+        {tab.label}
+        {tab.required && <RequiredAsterisk />}
+      </>
+    )
+    const announceRequired = tab.ariaRequired ?? tab.required
     if (variant === 'underline') {
-      const stringLabel = typeof tab.label === 'string' ? tab.label : ''
       return (
         <TabButton
           key={tab.id}
           variant="underline"
           id={tab.id}
-          label={stringLabel}
+          label={composedLabel}
           active={isActive}
+          required={tab.required}
+          ariaRequired={tab.ariaRequired}
           onSelect={onChange}
           controlsId={`tabpanel-${tab.id}`}
           tabRef={isActive ? activeTabRef : undefined}
@@ -97,13 +107,14 @@ export function Tabs(props: TabsProps) {
         aria-selected={isActive}
         aria-controls={`tabpanel-${tab.id}`}
         aria-label={tab.ariaLabel}
+        aria-required={announceRequired ? true : undefined}
         active={isActive}
         variant="pill"
         size="sm"
         onClick={() => onChange(tab.id)}
         ref={isActive ? activeTabRef : undefined}
       >
-        {tab.label}
+        {composedLabel}
       </MenuButton>
     )
   }

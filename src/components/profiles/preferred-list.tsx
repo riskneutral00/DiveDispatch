@@ -19,7 +19,6 @@ import { Tooltip } from '@/components/ui/tooltip'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import { EmptyState } from '@/components/ui/empty-state'
-import { RequiredAsterisk } from '@/components/ui/required-asterisk'
 import { SortableOverlayList } from '@/components/ui/sortable-overlay-list'
 import { LanguagePicker, type Language } from '@/components/profiles/language-picker'
 import { InstructorCardContent } from '@/components/profiles/instructor-card'
@@ -50,7 +49,6 @@ const PAGE_SIZE = 10
 interface ListProps {
   slugs: string[]
   onChange: (slugs: string[]) => void
-  required?: boolean
 }
 
 interface FilterBarProps {
@@ -64,7 +62,6 @@ interface FilterBarProps {
   onLangsChange: (langs: Language[]) => void
   customerLanguageCodes: string[]
   currentCount: number
-  required?: boolean
 }
 
 function Chip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
@@ -95,7 +92,6 @@ function InstructorFilterBar({
   onLangsChange,
   customerLanguageCodes,
   currentCount,
-  required,
 }: FilterBarProps) {
   return (
     <div className="space-y-2">
@@ -115,7 +111,6 @@ function InstructorFilterBar({
         })}
         <span className="ml-auto text-label text-secondary">
           {currentCount}/{MAX_PREFERRED_INSTRUCTORS}
-          {required && <RequiredAsterisk />}
         </span>
       </div>
 
@@ -406,7 +401,6 @@ export function PreferredInstructorList(props: ListProps) {
         </span>
         <span className="text-label text-secondary">
           {slugs.length}/{MAX_PREFERRED_INSTRUCTORS}
-          {props.required && <RequiredAsterisk />}
         </span>
       </div>
 
@@ -458,7 +452,6 @@ export function PreferredInstructorList(props: ListProps) {
             onLangsChange={handleLangsChange}
             customerLanguageCodes={diveCenterProfile?.customerLanguages ?? []}
             currentCount={slugs.length}
-            required={props.required}
           />
 
           <Input
@@ -582,7 +575,6 @@ export function PreferredVenueList(props: ListProps) {
       previousPageAriaLabel="Previous page"
       nextPageAriaLabel="Next page"
       maxItems={MAX_PREFERRED_VENUES}
-      required={props.required}
       renderBadge={(e) => <VenueBadge entry={e} />}
       renderCandidate={(e) => defaultCandidateRender(e, <VenueBadge entry={e} />)}
       filteredEntries={filteredEntries}
@@ -621,7 +613,6 @@ export function PreferredBoatList(props: ListProps) {
       previousPageAriaLabel="Previous page"
       nextPageAriaLabel="Next page"
       maxItems={MAX_PREFERRED_BOATS}
-      required={props.required}
       renderBadge={(e) => <BoatBadge entry={e} />}
       renderCandidate={(e) => defaultCandidateRender(e, <BoatBadge entry={e} />)}
       filteredEntries={filteredEntries}
@@ -693,7 +684,6 @@ export function PreferredEquipmentList(props: ListProps) {
       previousPageAriaLabel="Previous page"
       nextPageAriaLabel="Next page"
       maxItems={MAX_PREFERRED_EQUIPMENT}
-      required={props.required}
       renderBadge={(e) => <EquipmentBadge entry={e} />}
       renderCandidate={(e) => defaultCandidateRender(e, <EquipmentBadge entry={e} />)}
       filterBar={filterBar}

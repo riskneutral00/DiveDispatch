@@ -94,6 +94,45 @@ describe('TabButton', () => {
     expect(btn.className).toContain('min-h-[44px]')
   })
 
+  it('sets aria-required when required prop is true', () => {
+    renderButton({ required: true })
+    expect(screen.getByRole('tab')).toHaveAttribute('aria-required', 'true')
+  })
+
+  it('omits aria-required when required is unset or false', () => {
+    const { rerender } = renderButton()
+    expect(screen.getByRole('tab')).not.toHaveAttribute('aria-required')
+    rerender(
+      <TabButton
+        id="general"
+        label="General"
+        active={false}
+        onSelect={vi.fn()}
+        controlsId="tabpanel-general"
+        required={false}
+      />,
+    )
+    expect(screen.getByRole('tab')).not.toHaveAttribute('aria-required')
+  })
+
+  it('ariaRequired overrides required for ARIA-only signaling', () => {
+    renderButton({ required: false, ariaRequired: true })
+    expect(screen.getByRole('tab')).toHaveAttribute('aria-required', 'true')
+  })
+
+  it('renders ReactNode label (e.g. label with appended asterisk)', () => {
+    renderButton({
+      label: (
+        <>
+          Instructors<span data-testid="ast">{' *'}</span>
+        </>
+      ),
+    })
+    const btn = screen.getByRole('tab')
+    expect(btn.textContent).toContain('Instructors')
+    expect(screen.getByTestId('ast')).toBeInTheDocument()
+  })
+
   it('tabRef forwards to underlying button element', () => {
     const ref = createRef<HTMLButtonElement>()
     render(

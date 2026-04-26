@@ -8,7 +8,6 @@ import { Input } from '@/components/ui/input'
 import { Dialog } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
-import { RequiredAsterisk } from '@/components/ui/required-asterisk'
 
 const OVERLAY_LIST_HEIGHT = 380
 const PAGE_SIZE = 10
@@ -87,7 +86,6 @@ export interface SortableOverlayListProps<T extends { slug: string; name?: strin
   previousPageAriaLabel: string
   nextPageAriaLabel: string
   maxItems: number
-  required?: boolean
   renderBadge: (entry: T) => ReactNode
   renderCandidate: (entry: T) => ReactNode
   filterBar?: ReactNode
@@ -111,7 +109,6 @@ export function SortableOverlayList<T extends { slug: string; name?: string }>({
   previousPageAriaLabel,
   nextPageAriaLabel,
   maxItems,
-  required,
   renderBadge,
   renderCandidate,
   filterBar,
@@ -181,7 +178,6 @@ export function SortableOverlayList<T extends { slug: string; name?: string }>({
         </Button>
         <span className="text-label text-secondary">
           {slugs.length}/{maxItems}
-          {required && <RequiredAsterisk />}
         </span>
       </div>
 

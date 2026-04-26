@@ -1,14 +1,15 @@
 'use client'
 
-import type { Ref } from 'react'
+import type { ReactNode, Ref } from 'react'
 import { TOUCH_TARGET_CLASS } from '@/lib/constants/button-sizes'
+import type { Requirable } from '@/lib/types/requirable'
 import { cn } from '@/lib/utils/cn'
 
 export type TabButtonVariant = 'underline' | 'pill'
 
-interface TabButtonProps {
+interface TabButtonProps extends Requirable {
   id: string
-  label: string
+  label: ReactNode
   active: boolean
   onSelect: (id: string) => void
   controlsId: string
@@ -25,9 +26,12 @@ export function TabButton({
   controlsId,
   variant = 'underline',
   tabRef,
+  required,
+  ariaRequired,
   className,
 }: TabButtonProps) {
   const isUnderline = variant === 'underline'
+  const announceRequired = ariaRequired ?? required
 
   return (
     <button /* design-ok: tab indicator requires conditional inline border-bottom per MASTER.md */
@@ -37,6 +41,7 @@ export function TabButton({
       id={`tab-${id}`}
       aria-selected={active}
       aria-controls={controlsId}
+      aria-required={announceRequired ? true : undefined}
       tabIndex={active ? 0 : -1}
       onClick={() => onSelect(id)}
       className={cn(
