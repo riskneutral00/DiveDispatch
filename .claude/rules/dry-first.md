@@ -13,6 +13,7 @@ Before defining a new constant, type, schema, or utility function, grep `src/lib
 - **Gas mixes:** `src/lib/constants/gas-mixes.ts`
 - **i18n constants:** `src/lib/constants/i18n.ts` (`COUNTRY_CODES`, `LANGUAGE_CODES`, `LOCALE_CODES`, `E164_REGEX`, `isValidCountryCode`, `isValidPhoneE164`, `isValidLocale`, `isValidLanguageCode`, `normalizePhone`)
 - **Supported locales:** `src/lib/constants/locales.ts` (`SUPPORTED_LOCALES`, `SupportedLocale`)
+- **Dive languages:** `src/lib/constants/dive-languages.ts` (`ALL_LANGUAGES`, `findLanguageByCode(code)`, `languageToCode`, `resolveLanguages`, `POPULAR_LANGUAGE_CODES`, `CHINESE_SCRIPT_LABELS`). `findLanguageByCode` is the only call into `ALL_LANGUAGES.find` — never reimplement at a callsite.
 - **Button sizes:** `src/lib/constants/button-sizes.ts` (`BUTTON_SIZE_MAP`, `ICON_BUTTON_SIZE`, `MENU_BUTTON_SIZE_MAP`, `TOUCH_TARGET_CLASS`)
 - **Number parsing:** `src/lib/utils/numbers.ts` (`parseNumber`)
 - **Date formatters:** `src/lib/utils/date.ts` (`formatDateRange`, `formatDateRangeLocalized`, `formatDateRangeCompact`, `formatDateShort`, `toISODateString`, `addDays`, `diffDays`)
@@ -34,6 +35,7 @@ Before defining a new constant, type, schema, or utility function, grep `src/lib
 ### Convex — profile + role resolution
 - **Role-to-table map:** `convex/lib/profileHelpers.ts` (`ROLE_TABLE_MAP`, `profileMine`, `profileBySlug`, `profileByUser`, `profileUpdate`, `profileCreate`, `getProfileName`). `profileCreate` and `profileUpdate` accept an optional final `actor: { user, identity }` param — pass it when the caller has already resolved auth via `authorize()` (e.g. `diveStaff.create`/`update` derives staff name from the user before delegating). Skips the redundant gateway lookup; callers without a pre-resolved actor omit the arg.
 - **Per-user role collection:** `convex/lib/userRoleHelpers.ts` (`getAllUserRoles` — replaces inline `.withIndex('by_userId').collect()` on `userRoles`; `insertUserRole` — every userRoles insert site uses this. `organizationId` is a **required** parameter; the caller must resolve org first.)
+- **Per-user-per-org membership:** `convex/lib/userRoleHelpers.ts` (`findMembership(ctx, userId, organizationId)` — single-row lookup, returns `Doc<'userRoles'> | null`. Used by `auth-model.md` Rule 11 active-org gates. `getUserRolesInOrg(ctx, userId, organizationId)` — multi-row variant for patching/deleting all of a user's roles within one org. Never inline `userRoles.withIndex('by_userId').filter(... organizationId ...)` — drift caught by `tests/architecture/membership-helper.test.ts`.)
 - **User org assignment:** `convex/lib/userOrg.ts` (`setUserOrganization(ctx, userId, orgId)` — single writer for `user.organizationId`. Patches the user AND syncs every `userRoles.organizationId` in the same mutation. Never call `ctx.db.patch(userId, { organizationId })` directly — the denorm on `userRoles` will drift. Callers: `ensurePersonalOrg`, `createUser` activeOrg paths, `organizations.upsertFromWebhook` creator patch, `seed` paths.)
 
 ### Convex — auth gateway
