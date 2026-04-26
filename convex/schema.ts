@@ -357,6 +357,7 @@ export default defineSchema({
     customerLanguages: v.optional(v.array(v.string())),
     ...accessControlFields,
     verified: v.boolean(),
+    profileComplete: v.optional(v.boolean()),
   })
     .index('by_organizationId', ['organizationId'])
     .index('by_slug', ['slug']),
@@ -413,6 +414,7 @@ export default defineSchema({
     ),
     ...accessControlFields,
     verified: v.boolean(),
+    profileComplete: v.optional(v.boolean()),
   })
     .index('by_organizationId', ['organizationId'])
     .index('by_slug', ['slug']),
@@ -429,6 +431,7 @@ export default defineSchema({
     manufacturersByGearType: v.optional(v.record(v.string(), v.array(v.string()))),
     ...accessControlFields,
     verified: v.boolean(),
+    profileComplete: v.optional(v.boolean()),
   })
     .index('by_organizationId', ['organizationId'])
     .index('by_slug', ['slug']),
@@ -449,6 +452,7 @@ export default defineSchema({
     confinedCapable: v.optional(v.boolean()),
     maxDepth: v.optional(v.number()),
     maxCapacity: v.optional(v.number()),
+    profileComplete: v.optional(v.boolean()),
   })
     .index('by_organizationId', ['organizationId'])
     .index('by_slug', ['slug']),
@@ -470,6 +474,7 @@ export default defineSchema({
     nitroxMax: v.optional(v.number()),
     ...accessControlFields,
     verified: v.boolean(),
+    profileComplete: v.optional(v.boolean()),
   })
     .index('by_organizationId', ['organizationId'])
     .index('by_slug', ['slug'])
