@@ -555,8 +555,6 @@ export const seedStakeholderPreferences = internalMutation({
   handler: async (ctx) => {
     await dedupeStakeholderPreferencesTable(ctx)
 
-    const OPERATOR_PREFERRED: Record<string, { instructors?: string[]; boats?: string[]; venues?: string[]; compressors?: string[]; equipment?: string[] }> = {}
-
     const allStakeholders: { slug: string; role: StakeholderRole }[] = [
       ...ALL_STAKEHOLDERS
         .filter((s) => !s.organization?.isAreaOrg)
@@ -582,21 +580,6 @@ export const seedStakeholderPreferences = internalMutation({
         commonLanguageCodes: [],
         confirmOnAccept: false,
         confirmOnDecline: false,
-        ...(OPERATOR_PREFERRED[slug]?.instructors && {
-          preferredInstructorSlugs: OPERATOR_PREFERRED[slug].instructors,
-        }),
-        ...(OPERATOR_PREFERRED[slug]?.boats && {
-          preferredBoatSlugs: OPERATOR_PREFERRED[slug].boats,
-        }),
-        ...(OPERATOR_PREFERRED[slug]?.venues && {
-          preferredVenueSlugs: OPERATOR_PREFERRED[slug].venues,
-        }),
-        ...(OPERATOR_PREFERRED[slug]?.compressors && {
-          preferredCompressorSlugs: OPERATOR_PREFERRED[slug].compressors,
-        }),
-        ...(OPERATOR_PREFERRED[slug]?.equipment && {
-          preferredEquipmentSlugs: OPERATOR_PREFERRED[slug].equipment,
-        }),
       })
     }
   },
