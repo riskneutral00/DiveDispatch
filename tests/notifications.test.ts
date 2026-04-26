@@ -3,7 +3,7 @@ import {
   notify,
   _createNotificationHandler,
   _markAsReadHandler,
-  _deleteNotificationHandler,
+  _removeNotificationHandler,
   _clearAllHandler,
   _getUnreadCountHandler,
   _listNotificationsHandler,
@@ -311,15 +311,15 @@ describe('listNotifications', () => {
   })
 })
 
-// ─── deleteNotification ──────────────────────────────────────────────────────
+// ─── removeNotification ──────────────────────────────────────────────────────
 
-describe('deleteNotification', () => {
+describe('removeNotification', () => {
   it('deletes the notification when caller owns it', async () => {
     await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter }).run(async (ctx) => {
       await seedUser(ctx)
       const notifId = await seedNotification(ctx, { userId: TEST_SLUGS.diveCenter })
 
-      await _deleteNotificationHandler(ctx, { notificationId: notifId })
+      await _removeNotificationHandler(ctx, { notificationId: notifId })
 
       const notif = await ctx.db.get(notifId)
       expect(notif).toBeNull()
@@ -334,7 +334,7 @@ describe('deleteNotification', () => {
       await ctx.db.delete(notifId)
 
       await expect(
-        _deleteNotificationHandler(ctx, { notificationId: notifId }),
+        _removeNotificationHandler(ctx, { notificationId: notifId }),
       ).rejects.toMatchObject({ data: { code: 'NOT_FOUND' } })
     })
   })
@@ -349,7 +349,7 @@ describe('deleteNotification', () => {
       const notifId = await seedNotification(ctx, { userId: TEST_SLUGS.diveCenter })
 
       await expect(
-        _deleteNotificationHandler(ctx, { notificationId: notifId }),
+        _removeNotificationHandler(ctx, { notificationId: notifId }),
       ).rejects.toMatchObject({ data: { code: 'FORBIDDEN' } })
 
       // Notification should still exist
@@ -361,7 +361,7 @@ describe('deleteNotification', () => {
   it('throws UNAUTHENTICATED when there is no identity', async () => {
     await t.run(async (ctx) => {
       await expect(
-        _deleteNotificationHandler(ctx, { notificationId: 'irrelevant' }),
+        _removeNotificationHandler(ctx, { notificationId: 'irrelevant' }),
       ).rejects.toMatchObject({ data: { code: 'UNAUTHENTICATED' } })
     })
   })

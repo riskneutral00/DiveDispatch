@@ -2,7 +2,7 @@ import { ConvexError } from 'convex/values'
 import { z } from 'zod'
 import { ErrorCode } from './errorCodes'
 
-export function validateOrThrow<T>(schema: z.ZodSchema<T>, data: unknown): T {
+export function assertZodSchema<T>(schema: z.ZodSchema<T>, data: unknown): T {
   const result = schema.safeParse(data)
   if (result.success) return result.data
 

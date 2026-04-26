@@ -115,7 +115,7 @@ export const markAsRead = mutation({
   handler: _markAsReadHandler,
 })
 
-export async function _deleteNotificationHandler(
+export async function _removeNotificationHandler(
   ctx: MutationCtx,
   args: { notificationId: string },
 ): Promise<void> {
@@ -132,9 +132,9 @@ export async function _deleteNotificationHandler(
   await ctx.db.delete(notifId)
 }
 
-export const deleteNotification = mutation({
+export const removeNotification = mutation({
   args: { notificationId: v.id('notifications') },
-  handler: _deleteNotificationHandler,
+  handler: _removeNotificationHandler,
 })
 
 export async function _clearAllHandler(

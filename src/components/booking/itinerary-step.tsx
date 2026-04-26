@@ -205,7 +205,7 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
   const instructorsRaw = useQuery(api.directory.listByRole, { role: 'Instructor' })
   const boatsRaw = useQuery(api.directory.listByRole, { role: 'Boat' })
   const venuesRaw = useQuery(api.directory.listByRole, { role: 'Venue' })
-  const shoreOptionsRaw = useQuery(api.availability.listDiveSites)
+  const shoreOptionsRaw = useQuery(api.availability.listVenues)
   const instructors = useMemo(() => instructorsRaw ?? [], [instructorsRaw])
   const boats = useMemo(() => boatsRaw ?? [], [boatsRaw])
   const poolVenues = useMemo(() => venuesRaw?.filter((r) => r.kind === 'pool') ?? [], [venuesRaw])

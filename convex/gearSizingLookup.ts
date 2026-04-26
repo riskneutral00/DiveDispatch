@@ -31,7 +31,7 @@ function validateRanges(
   }
 }
 
-export const addSizingEntry = mutation({
+export const createSizingEntry = mutation({
   args: {
     manufacturer: v.string(),
     gearType: gearTypeValidator,

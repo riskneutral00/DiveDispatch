@@ -1,7 +1,7 @@
 /**
  * DD-301: gearSizingLookup CRUD mutations for equipment managers.
  *
- * Tests addSizingEntry, updateSizingEntry, removeSizingEntry, and
+ * Tests createSizingEntry, updateSizingEntry, removeSizingEntry, and
  * listByManufacturer covering: happy paths, auth/role enforcement,
  * duplicate guard, and range validation.
  */
@@ -15,9 +15,9 @@ import { TEST_TOKENS, TEST_SLUGS, seedUser } from './fixtures'
 const EM_TOKEN = 'test|em-user'
 const EM_SLUG = TEST_SLUGS.em
 
-// ── addSizingEntry ────────────────────────────────────────────────────────────
+// ── createSizingEntry ────────────────────────────────────────────────────────────
 
-describe('gearSizingLookup.addSizingEntry', () => {
+describe('gearSizingLookup.createSizingEntry', () => {
   let t: ReturnType<typeof makeT>
   beforeEach(() => { t = makeT() })
 
@@ -27,7 +27,7 @@ describe('gearSizingLookup.addSizingEntry', () => {
     })
 
     const entryId = await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
-      api.gearSizingLookup.addSizingEntry,
+      api.gearSizingLookup.createSizingEntry,
       {
         manufacturer: 'TestBrand',
         gearType: 'wetsuit',
@@ -58,7 +58,7 @@ describe('gearSizingLookup.addSizingEntry', () => {
     })
 
     const entryId = await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
-      api.gearSizingLookup.addSizingEntry,
+      api.gearSizingLookup.createSizingEntry,
       {
         manufacturer: 'TestBrand',
         gearType: 'fins',
@@ -86,7 +86,7 @@ describe('gearSizingLookup.addSizingEntry', () => {
 
     await expectConvexError(
       t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter }).mutation(
-        api.gearSizingLookup.addSizingEntry,
+        api.gearSizingLookup.createSizingEntry,
         {
           manufacturer: 'TestBrand',
           gearType: 'wetsuit',
@@ -103,7 +103,7 @@ describe('gearSizingLookup.addSizingEntry', () => {
 
   it('rejects unauthenticated caller', async () => {
     await expectConvexError(
-      t.mutation(api.gearSizingLookup.addSizingEntry, {
+      t.mutation(api.gearSizingLookup.createSizingEntry, {
         manufacturer: 'TestBrand',
         gearType: 'bcd',
         size: 'S',
@@ -122,7 +122,7 @@ describe('gearSizingLookup.addSizingEntry', () => {
     })
 
     await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
-      api.gearSizingLookup.addSizingEntry,
+      api.gearSizingLookup.createSizingEntry,
       {
         manufacturer: 'TestBrand',
         gearType: 'bcd',
@@ -136,7 +136,7 @@ describe('gearSizingLookup.addSizingEntry', () => {
 
     await expectConvexError(
       t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
-        api.gearSizingLookup.addSizingEntry,
+        api.gearSizingLookup.createSizingEntry,
         {
           manufacturer: 'TestBrand',
           gearType: 'bcd',
@@ -158,7 +158,7 @@ describe('gearSizingLookup.addSizingEntry', () => {
 
     await expectConvexError(
       t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
-        api.gearSizingLookup.addSizingEntry,
+        api.gearSizingLookup.createSizingEntry,
         {
           manufacturer: 'TestBrand',
           gearType: 'wetsuit',
@@ -180,7 +180,7 @@ describe('gearSizingLookup.addSizingEntry', () => {
 
     await expectConvexError(
       t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
-        api.gearSizingLookup.addSizingEntry,
+        api.gearSizingLookup.createSizingEntry,
         {
           manufacturer: 'TestBrand',
           gearType: 'bcd',
@@ -202,7 +202,7 @@ describe('gearSizingLookup.addSizingEntry', () => {
 
     await expectConvexError(
       t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
-        api.gearSizingLookup.addSizingEntry,
+        api.gearSizingLookup.createSizingEntry,
         {
           manufacturer: 'TestBrand',
           gearType: 'wetsuit',
@@ -224,7 +224,7 @@ describe('gearSizingLookup.addSizingEntry', () => {
 
     await expectConvexError(
       t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
-        api.gearSizingLookup.addSizingEntry,
+        api.gearSizingLookup.createSizingEntry,
         {
           manufacturer: 'TestBrand',
           gearType: 'wetsuit',
@@ -252,7 +252,7 @@ describe('gearSizingLookup.updateSizingEntry', () => {
     })
 
     const entryId = await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
-      api.gearSizingLookup.addSizingEntry,
+      api.gearSizingLookup.createSizingEntry,
       {
         manufacturer: 'TestBrand',
         gearType: 'bcd',
@@ -290,7 +290,7 @@ describe('gearSizingLookup.updateSizingEntry', () => {
     })
 
     const entryId = await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
-      api.gearSizingLookup.addSizingEntry,
+      api.gearSizingLookup.createSizingEntry,
       {
         manufacturer: 'TestBrand',
         gearType: 'wetsuit',
@@ -318,7 +318,7 @@ describe('gearSizingLookup.updateSizingEntry', () => {
 
     // Create and delete to get a stale id
     const entryId = await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
-      api.gearSizingLookup.addSizingEntry,
+      api.gearSizingLookup.createSizingEntry,
       {
         manufacturer: 'TestBrand',
         gearType: 'bcd',
@@ -346,7 +346,7 @@ describe('gearSizingLookup.updateSizingEntry', () => {
     })
 
     const entryId = await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
-      api.gearSizingLookup.addSizingEntry,
+      api.gearSizingLookup.createSizingEntry,
       {
         manufacturer: 'TestBrand',
         gearType: 'wetsuit',
@@ -374,7 +374,7 @@ describe('gearSizingLookup.updateSizingEntry', () => {
     })
 
     const entryId = await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
-      api.gearSizingLookup.addSizingEntry,
+      api.gearSizingLookup.createSizingEntry,
       {
         manufacturer: 'TestBrand',
         gearType: 'bcd',
@@ -402,11 +402,11 @@ describe('gearSizingLookup.updateSizingEntry', () => {
 
     // Insert two entries: M and L for the same manufacturer + gearType
     await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
-      api.gearSizingLookup.addSizingEntry,
+      api.gearSizingLookup.createSizingEntry,
       { manufacturer: 'TestBrand', gearType: 'wetsuit', size: 'M', minHeight: 165, maxHeight: 180, minWeight: 60, maxWeight: 80 },
     )
     const entryL = await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
-      api.gearSizingLookup.addSizingEntry,
+      api.gearSizingLookup.createSizingEntry,
       { manufacturer: 'TestBrand', gearType: 'wetsuit', size: 'L', minHeight: 175, maxHeight: 190, minWeight: 75, maxWeight: 95 },
     )
 
@@ -426,7 +426,7 @@ describe('gearSizingLookup.updateSizingEntry', () => {
     })
 
     const entryId = await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
-      api.gearSizingLookup.addSizingEntry,
+      api.gearSizingLookup.createSizingEntry,
       { manufacturer: 'TestBrand', gearType: 'wetsuit', size: 'M', minHeight: 165, maxHeight: 180, minWeight: 60, maxWeight: 80 },
     )
 
@@ -447,7 +447,7 @@ describe('gearSizingLookup.updateSizingEntry', () => {
     })
 
     const entryId = await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
-      api.gearSizingLookup.addSizingEntry,
+      api.gearSizingLookup.createSizingEntry,
       { manufacturer: 'TestBrand', gearType: 'bcd', size: 'S', minHeight: 155, maxHeight: 170, minWeight: 50, maxWeight: 70 },
     )
 
@@ -473,7 +473,7 @@ describe('gearSizingLookup.removeSizingEntry', () => {
     })
 
     const entryId = await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
-      api.gearSizingLookup.addSizingEntry,
+      api.gearSizingLookup.createSizingEntry,
       {
         manufacturer: 'TestBrand',
         gearType: 'bcd',
@@ -503,7 +503,7 @@ describe('gearSizingLookup.removeSizingEntry', () => {
     })
 
     const entryId = await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
-      api.gearSizingLookup.addSizingEntry,
+      api.gearSizingLookup.createSizingEntry,
       {
         manufacturer: 'TestBrand',
         gearType: 'fins',
@@ -530,7 +530,7 @@ describe('gearSizingLookup.removeSizingEntry', () => {
     })
 
     const entryId = await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
-      api.gearSizingLookup.addSizingEntry,
+      api.gearSizingLookup.createSizingEntry,
       {
         manufacturer: 'TestBrand',
         gearType: 'mask',
@@ -558,7 +558,7 @@ describe('gearSizingLookup.removeSizingEntry', () => {
     })
 
     const entryId = await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
-      api.gearSizingLookup.addSizingEntry,
+      api.gearSizingLookup.createSizingEntry,
       {
         manufacturer: 'TestBrand',
         gearType: 'regulator',
@@ -593,15 +593,15 @@ describe('gearSizingLookup.listByManufacturer', () => {
 
     // Insert in reverse order to verify sorting
     await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
-      api.gearSizingLookup.addSizingEntry,
+      api.gearSizingLookup.createSizingEntry,
       { manufacturer: 'BrandA', gearType: 'wetsuit', size: 'XL', minHeight: 180, maxHeight: 195, minWeight: 80, maxWeight: 100 },
     )
     await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
-      api.gearSizingLookup.addSizingEntry,
+      api.gearSizingLookup.createSizingEntry,
       { manufacturer: 'BrandA', gearType: 'wetsuit', size: 'M', minHeight: 165, maxHeight: 180, minWeight: 60, maxWeight: 80 },
     )
     await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
-      api.gearSizingLookup.addSizingEntry,
+      api.gearSizingLookup.createSizingEntry,
       { manufacturer: 'BrandA', gearType: 'wetsuit', size: 'S', minHeight: 155, maxHeight: 170, minWeight: 50, maxWeight: 70 },
     )
 
@@ -623,11 +623,11 @@ describe('gearSizingLookup.listByManufacturer', () => {
     })
 
     await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
-      api.gearSizingLookup.addSizingEntry,
+      api.gearSizingLookup.createSizingEntry,
       { manufacturer: 'BrandA', gearType: 'wetsuit', size: 'M', minHeight: 165, maxHeight: 180, minWeight: 60, maxWeight: 80 },
     )
     await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
-      api.gearSizingLookup.addSizingEntry,
+      api.gearSizingLookup.createSizingEntry,
       { manufacturer: 'BrandA', gearType: 'bcd', size: 'M', minHeight: 165, maxHeight: 180, minWeight: 60, maxWeight: 80 },
     )
 
@@ -659,11 +659,11 @@ describe('gearSizingLookup.listByManufacturer', () => {
     })
 
     await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
-      api.gearSizingLookup.addSizingEntry,
+      api.gearSizingLookup.createSizingEntry,
       { manufacturer: 'BrandA', gearType: 'bcd', size: 'S', minHeight: 155, maxHeight: 170, minWeight: 50, maxWeight: 70 },
     )
     await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
-      api.gearSizingLookup.addSizingEntry,
+      api.gearSizingLookup.createSizingEntry,
       { manufacturer: 'BrandB', gearType: 'bcd', size: 'L', minHeight: 175, maxHeight: 190, minWeight: 80, maxWeight: 100 },
     )
 
@@ -700,7 +700,7 @@ describe('gearSizingLookup ownership', () => {
       await seedUser(ctx, { tokenIdentifier: EM_TOKEN_B, slug: EM_SLUG_B, role: 'Equipment', email: 'em-b@test.com' })
     })
     entryId = await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
-      api.gearSizingLookup.addSizingEntry,
+      api.gearSizingLookup.createSizingEntry,
       { manufacturer: 'OwnerBrand', gearType: 'wetsuit', size: 'M', minHeight: 165, maxHeight: 180, minWeight: 60, maxWeight: 85 },
     ) as Id<'gearSizingLookup'>
   })

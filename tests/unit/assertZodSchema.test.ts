@@ -1,28 +1,28 @@
 import { describe, it, expect } from 'vitest'
 import { z } from 'zod'
 import { ConvexError } from 'convex/values'
-import { validateOrThrow } from '../../convex/lib/validate'
+import { assertZodSchema } from '../../convex/lib/validate'
 
-describe('validateOrThrow', () => {
+describe('assertZodSchema', () => {
   const schema = z.object({
     name: z.string().min(1, 'Name is required'),
     age: z.number().int().min(0),
   })
 
   it('returns parsed data for valid input', () => {
-    const result = validateOrThrow(schema, { name: 'Alice', age: 30 })
+    const result = assertZodSchema(schema, { name: 'Alice', age: 30 })
     expect(result).toEqual({ name: 'Alice', age: 30 })
   })
 
   it('strips unknown fields via parse', () => {
-    const result = validateOrThrow(schema, { name: 'Bob', age: 25, extra: true })
+    const result = assertZodSchema(schema, { name: 'Bob', age: 25, extra: true })
     expect(result).toEqual({ name: 'Bob', age: 25 })
     expect(result).not.toHaveProperty('extra')
   })
 
   it('throws ConvexError with VALIDATION code on invalid input', () => {
     try {
-      validateOrThrow(schema, { name: '', age: 30 })
+      assertZodSchema(schema, { name: '', age: 30 })
       expect.fail('should have thrown')
     } catch (err) {
       expect(err).toBeInstanceOf(ConvexError)
@@ -33,7 +33,7 @@ describe('validateOrThrow', () => {
 
   it('includes field path in the error data', () => {
     try {
-      validateOrThrow(schema, { name: 'Alice', age: -1 })
+      assertZodSchema(schema, { name: 'Alice', age: -1 })
       expect.fail('should have thrown')
     } catch (err) {
       const data = (err as ConvexError<{ field: string }>).data
@@ -43,7 +43,7 @@ describe('validateOrThrow', () => {
 
   it('includes reason string in the error data', () => {
     try {
-      validateOrThrow(schema, { name: '', age: 30 })
+      assertZodSchema(schema, { name: '', age: 30 })
       expect.fail('should have thrown')
     } catch (err) {
       const data = (err as ConvexError<{ reason: string }>).data
@@ -58,7 +58,7 @@ describe('validateOrThrow', () => {
       }),
     })
     try {
-      validateOrThrow(nested, { address: { city: '' } })
+      assertZodSchema(nested, { address: { city: '' } })
       expect.fail('should have thrown')
     } catch (err) {
       const data = (err as ConvexError<{ field: string }>).data
@@ -67,14 +67,14 @@ describe('validateOrThrow', () => {
   })
 
   it('throws on completely wrong type (string instead of object)', () => {
-    expect(() => validateOrThrow(schema, 'not an object')).toThrow(ConvexError)
+    expect(() => assertZodSchema(schema, 'not an object')).toThrow(ConvexError)
   })
 
   it('throws on null input', () => {
-    expect(() => validateOrThrow(schema, null)).toThrow(ConvexError)
+    expect(() => assertZodSchema(schema, null)).toThrow(ConvexError)
   })
 
   it('throws on undefined input', () => {
-    expect(() => validateOrThrow(schema, undefined)).toThrow(ConvexError)
+    expect(() => assertZodSchema(schema, undefined)).toThrow(ConvexError)
   })
 })

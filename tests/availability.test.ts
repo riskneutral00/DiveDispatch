@@ -1288,10 +1288,10 @@ describe('listInventoryByType auth gate', () => {
   })
 })
 
-describe('listDiveSites auth gate', () => {
+describe('listVenues auth gate', () => {
   it('throws UNAUTHENTICATED when called without identity', async () => {
     await expect(
-      t.query(api.availability.listDiveSites, {}),
+      t.query(api.availability.listVenues, {}),
     ).rejects.toMatchObject({ data: expect.stringContaining('UNAUTHENTICATED') })
   })
 
@@ -1303,7 +1303,7 @@ describe('listDiveSites auth gate', () => {
 
     const result = await t
       .withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter })
-      .query(api.availability.listDiveSites, {})
+      .query(api.availability.listVenues, {})
 
     expect(result).toHaveLength(1)
   })

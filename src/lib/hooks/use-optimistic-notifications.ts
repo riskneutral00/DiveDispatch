@@ -30,7 +30,7 @@ export function useOptimisticNotifications({
   const rawNotifications = useQuery(api.notifications.listNotifications, { userId, limit })
   const serverNotifications = rawNotifications as NotificationDoc[] | undefined
   const markAsRead = useMutation(api.notifications.markAsRead)
-  const deleteNotification = useMutation(api.notifications.deleteNotification)
+  const removeNotification = useMutation(api.notifications.removeNotification)
   const clearAll = useMutation(api.notifications.clearAll)
 
   const [optimisticOverrides, setOptimisticOverrides] = useState<
@@ -98,7 +98,7 @@ export function useOptimisticNotifications({
     setOptimisticDeleted((prev) => new Set(prev).add(id))
 
     try {
-      await deleteNotification({ notificationId: id as Id<'notifications'> })
+      await removeNotification({ notificationId: id as Id<'notifications'> })
     } catch {
       onError?.('delete')
     } finally {
@@ -117,7 +117,7 @@ export function useOptimisticNotifications({
         return next
       })
     }
-  }, [deleteNotification, onError])
+  }, [removeNotification, onError])
 
   const handleClearAll = useCallback(async () => {
     const key = 'clearAll'

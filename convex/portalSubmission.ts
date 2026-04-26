@@ -4,7 +4,7 @@ import { mutation, query } from './_generated/server'
 import { tryAutoAdvance, computeMedicalDeadline } from './bookings/_shared'
 import { resolvePortalToken, resolvePortalTokenSoft } from './lib/portal'
 import { checkRateLimit } from './lib/rateLimiter'
-import { validateOrThrow } from './lib/validate'
+import { assertZodSchema } from './lib/validate'
 import { ErrorCode } from './lib/errorCodes'
 import { safeDecryptMedical } from './lib/crypto'
 import { notify } from './notifications'
@@ -93,7 +93,7 @@ export const submitPortal = mutation({
     let medicalHardBlock = false
     if (booking.portalMedical && profile.medicalAnswers) {
       const decryptedAnswers = await safeDecryptMedical(profile.medicalAnswers)
-      const validatedAnswers = validateOrThrow(_medicalAnswersSchema, decryptedAnswers)
+      const validatedAnswers = assertZodSchema(_medicalAnswersSchema, decryptedAnswers)
       medicalHardBlock = Object.values(validatedAnswers).some((v) => v === true)
       if ((booking.medicalHardBlock as boolean) !== medicalHardBlock) {
         const bookingPatch: Record<string, unknown> = { medicalHardBlock }

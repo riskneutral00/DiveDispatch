@@ -508,7 +508,7 @@ export const listInventoryByType = query({
   },
 })
 
-export const listDiveSites = query({
+export const listVenues = query({
   args: {},
   handler: async (ctx) => {
     await requireAuth(ctx)

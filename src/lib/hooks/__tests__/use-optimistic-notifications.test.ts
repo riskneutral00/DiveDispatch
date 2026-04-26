@@ -24,7 +24,7 @@ vi.mock('convex/react', async () => {
     useMutation: (apiRef: Record<symbol, string>) => {
       const name: string = apiRef[FUNCTION_NAME] ?? ''
       if (name.includes('markAsRead')) return mockMarkAsRead
-      if (name.includes('deleteNotification')) return mockDeleteNotification
+      if (name.includes('removeNotification')) return mockDeleteNotification
       if (name.includes('clearAll')) return mockClearAll
       throw new Error(`Unexpected useMutation argument: ${name}`)
     },
@@ -116,7 +116,7 @@ describe('useOptimisticNotifications', () => {
     expect(result.current.unreadCount).toBe(1)
   })
 
-  it('deleteNotification optimistically removes notification before mutation resolves', async () => {
+  it('removeNotification optimistically removes notification before mutation resolves', async () => {
     mockNotifications = [
       makeNotification({ _id: 'n-1' }),
       makeNotification({ _id: 'n-2' }),
@@ -148,7 +148,7 @@ describe('useOptimisticNotifications', () => {
     expect(mockDeleteNotification).toHaveBeenCalledWith({ notificationId: 'n-1' })
   })
 
-  it('deleteNotification reverts on server rejection', async () => {
+  it('removeNotification reverts on server rejection', async () => {
     mockNotifications = [
       makeNotification({ _id: 'n-1' }),
     ]
@@ -241,7 +241,7 @@ describe('useOptimisticNotifications', () => {
     expect(result.current.notifications?.[0]?.readAt).toBeUndefined()
   })
 
-  it('deleteNotification clears optimistic delete after successful mutation', async () => {
+  it('removeNotification clears optimistic delete after successful mutation', async () => {
     mockNotifications = [
       makeNotification({ _id: 'n-1' }),
       makeNotification({ _id: 'n-2' }),
@@ -662,7 +662,7 @@ describe('useOptimisticNotifications', () => {
     expect(onError).toHaveBeenCalledWith('markAsRead')
   })
 
-  it('deleteNotification calls onError callback on server rejection', async () => {
+  it('removeNotification calls onError callback on server rejection', async () => {
     mockNotifications = [makeNotification({ _id: 'n-1' })]
     mockDeleteNotification.mockRejectedValue(new Error('Server error'))
     const onError = vi.fn()
