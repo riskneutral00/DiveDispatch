@@ -9,16 +9,15 @@ import { queryDynamicTable, insertDynamicTable, patchDynamic } from './typedDb'
 import { getActiveOrg, tryGetActiveOrg } from './activeOrg'
 import { assertCountryCode, assertPhoneE164, assertLanguageCodes } from './validators'
 import { setRoleProfileComplete } from './setRoleProfileComplete'
-import { ROLE_SPECS, type StakeholderRole } from '../shared/roleKinds'
-import { deriveDefaultEntitySlug } from './entitySlug'
-
-const ENTITY_SLUG_TABLES = new Set<TableNames>([
-  'diveCenters',
-  'boats',
-  'equipment',
-  'venues',
-  'compressors',
-])
+import {
+  ROLE_SPECS,
+  type StakeholderRole,
+  type PersonRole,
+  type EntityRole,
+  isPersonRole,
+  isEntityRole,
+} from '../shared/roleKinds'
+import { deriveDefaultEntitySlug, assertEntitySlug } from './entitySlug'
 
 const LANGUAGE_ARRAY_FIELDS: readonly string[] = [
   'customerLanguages',
@@ -53,13 +52,288 @@ export const ROLE_TABLE_MAP: Record<string, TableNames> = Object.fromEntries(
     .map(([role, spec]) => [role, spec.table]),
 ) as Record<string, TableNames>
 
+const PROTECTED_FIELDS = new Set([
+  'verified',
+  'userId',
+  'organizationId',
+  '_id',
+  '_creationTime',
+])
+
+const ENTITY_SLUG_TABLES = new Set<TableNames>([
+  'diveCenters',
+  'boats',
+  'equipment',
+  'venues',
+  'compressors',
+])
+
+export function assertPersonRole(role: string): asserts role is PersonRole {
+  if (!isPersonRole(role)) {
+    throw new ConvexError({ code: ErrorCode.VALIDATION, reason: `not_person_role:${role}` })
+  }
+}
+
+export function assertEntityRole(role: string): asserts role is EntityRole {
+  if (!isEntityRole(role)) {
+    throw new ConvexError({ code: ErrorCode.VALIDATION, reason: `not_entity_role:${role}` })
+  }
+}
+
+type TableForRole<R extends StakeholderRole> = (typeof ROLE_SPECS)[R]['table']
+
+export async function personProfileMine<R extends PersonRole>(
+  ctx: QueryCtx,
+  role: R,
+): Promise<Doc<TableForRole<R>> | null> {
+  const activeOrg = await tryGetActiveOrg(ctx)
+  if (!activeOrg) return null
+  const doc = await queryDynamicTable(ctx.db, ROLE_SPECS[role].table)
+    .withIndex('by_organizationId', (q) => q.eq('organizationId', activeOrg._id))
+    .unique()
+  return doc as Doc<TableForRole<R>> | null
+}
+
+export async function personProfileByUser<R extends PersonRole>(
+  ctx: QueryCtx,
+  userId: Id<'users'>,
+  role: R,
+): Promise<Doc<TableForRole<R>> | null> {
+  const user = await ctx.db.get(userId)
+  if (!user?.organizationId) return null
+  const doc = await queryDynamicTable(ctx.db, ROLE_SPECS[role].table)
+    .withIndex('by_organizationId', (q) => q.eq('organizationId', user.organizationId!))
+    .unique()
+  return doc as Doc<TableForRole<R>> | null
+}
+
+export async function personProfileBySlug<R extends PersonRole>(
+  ctx: QueryCtx,
+  orgSlug: string,
+  role: R,
+): Promise<Doc<TableForRole<R>> | null> {
+  const org = await ctx.db
+    .query('organizations')
+    .withIndex('by_slug', (q) => q.eq('slug', orgSlug))
+    .unique()
+  if (!org) return null
+  const doc = await queryDynamicTable(ctx.db, ROLE_SPECS[role].table)
+    .withIndex('by_organizationId', (q) => q.eq('organizationId', org._id))
+    .unique()
+  return doc as Doc<TableForRole<R>> | null
+}
+
+export async function entityProfilesMine<R extends EntityRole>(
+  ctx: QueryCtx,
+  role: R,
+): Promise<Array<Doc<TableForRole<R>>>> {
+  const activeOrg = await tryGetActiveOrg(ctx)
+  if (!activeOrg) return []
+  const docs = await queryDynamicTable(ctx.db, ROLE_SPECS[role].table)
+    .withIndex('by_organizationId', (q) => q.eq('organizationId', activeOrg._id))
+    .collect() // bounded: per-org entity-role row count, realistic cap ~20
+  return docs as Array<Doc<TableForRole<R>>>
+}
+
+export async function entityProfilesByUser<R extends EntityRole>(
+  ctx: QueryCtx,
+  userId: Id<'users'>,
+  role: R,
+): Promise<Array<Doc<TableForRole<R>>>> {
+  const user = await ctx.db.get(userId)
+  if (!user?.organizationId) return []
+  const docs = await queryDynamicTable(ctx.db, ROLE_SPECS[role].table)
+    .withIndex('by_organizationId', (q) => q.eq('organizationId', user.organizationId!))
+    .collect() // bounded: per-org entity-role row count
+  return docs as Array<Doc<TableForRole<R>>>
+}
+
+export async function entityProfileBySlug<R extends EntityRole>(
+  ctx: QueryCtx,
+  slug: string,
+  role: R,
+): Promise<Doc<TableForRole<R>> | null> {
+  const doc = await queryDynamicTable(ctx.db, ROLE_SPECS[role].table)
+    .withIndex('by_slug', (q) => q.eq('slug', slug))
+    .unique()
+  return doc as Doc<TableForRole<R>> | null
+}
+
+export async function personProfileUpdate<R extends PersonRole>(
+  ctx: MutationCtx,
+  args: Record<string, unknown>,
+  role: R,
+  actor?: { user: Doc<'users'>; identity: UserIdentity },
+): Promise<void> {
+  const { user } = await authorize(ctx, actor ?? null, 'profile:manage', { type: 'profile' })
+  const { org: activeOrg } = await getActiveOrg(ctx)
+
+  const profile = await queryDynamicTable(ctx.db, ROLE_SPECS[role].table)
+    .withIndex('by_organizationId', (q) => q.eq('organizationId', activeOrg._id))
+    .unique()
+  if (!profile) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
+
+  validateContactInput(args)
+  const safeArgs: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(args)) {
+    if (!PROTECTED_FIELDS.has(key)) safeArgs[key] = value
+  }
+
+  await patchDynamic(ctx.db, profile._id, safeArgs)
+  await setRoleProfileComplete(ctx, user._id, role)
+}
+
+export async function entityProfileUpdate<R extends EntityRole>(
+  ctx: MutationCtx,
+  entityId: Id<TableForRole<R>>,
+  args: Record<string, unknown>,
+  role: R,
+  actor?: { user: Doc<'users'>; identity: UserIdentity },
+): Promise<void> {
+  const { user } = await authorize(ctx, actor ?? null, 'profile:manage', { type: 'profile' })
+  const { org: activeOrg } = await getActiveOrg(ctx)
+
+  const profile = await ctx.db.get(entityId as Id<TableNames>)
+  if (!profile) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
+  if ((profile as { organizationId?: Id<'organizations'> }).organizationId !== activeOrg._id) {
+    throw new ConvexError({ code: ErrorCode.FORBIDDEN })
+  }
+
+  validateContactInput(args)
+  const safeArgs: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(args)) {
+    if (!PROTECTED_FIELDS.has(key)) safeArgs[key] = value
+  }
+  if (typeof safeArgs.slug === 'string') {
+    assertEntitySlug(safeArgs.slug)
+  }
+
+  await patchDynamic(ctx.db, entityId, safeArgs)
+  await setRoleProfileComplete(ctx, user._id, role)
+}
+
+export async function personProfileCreate<R extends PersonRole>(
+  ctx: MutationCtx,
+  args: Record<string, unknown>,
+  role: R,
+  extraDefaults?: Record<string, unknown>,
+  actor?: { user: Doc<'users'>; identity: UserIdentity },
+): Promise<Id<TableForRole<R>>> {
+  const { user } = await authorize(ctx, actor ?? null, 'profile:manage', { type: 'profile' })
+  if (!(await checkHasRole(ctx, user._id, role))) {
+    throw new ConvexError({ code: ErrorCode.FORBIDDEN })
+  }
+  const { org: activeOrg } = await getActiveOrg(ctx)
+  const tableName = ROLE_SPECS[role].table
+
+  const existing = await queryDynamicTable(ctx.db, tableName)
+    .withIndex('by_organizationId', (q) => q.eq('organizationId', activeOrg._id))
+    .unique()
+  if (existing) return existing._id as Id<TableForRole<R>>
+
+  validateContactInput(args)
+  const mergedArgs = { ...args }
+  if (!mergedArgs.email || (typeof mergedArgs.email === 'string' && mergedArgs.email.trim() === '')) {
+    mergedArgs.email = user.email ?? ''
+  }
+  if (!mergedArgs.phone || (typeof mergedArgs.phone === 'string' && mergedArgs.phone.trim() === '')) {
+    mergedArgs.phone = user.phone ?? ''
+  }
+
+  const insertedId = await insertDynamicTable(
+    ctx.db,
+    tableName,
+    {
+      ...mergedArgs,
+      organizationId: activeOrg._id,
+      ...extraDefaults,
+    } as Parameters<typeof insertDynamicTable>[2],
+  )
+  await setRoleProfileComplete(ctx, user._id, role)
+  return insertedId as Id<TableForRole<R>>
+}
+
+export async function entityProfileCreate<R extends EntityRole>(
+  ctx: MutationCtx,
+  args: Record<string, unknown>,
+  role: R,
+  extraDefaults?: Record<string, unknown>,
+  actor?: { user: Doc<'users'>; identity: UserIdentity },
+): Promise<Id<TableForRole<R>>> {
+  const { user } = await authorize(ctx, actor ?? null, 'profile:manage', { type: 'profile' })
+  if (!(await checkHasRole(ctx, user._id, role))) {
+    throw new ConvexError({ code: ErrorCode.FORBIDDEN })
+  }
+  const { org: activeOrg } = await getActiveOrg(ctx)
+  const tableName = ROLE_SPECS[role].table
+
+  validateContactInput(args)
+  const mergedArgs = { ...args }
+  if (!mergedArgs.email || (typeof mergedArgs.email === 'string' && mergedArgs.email.trim() === '')) {
+    mergedArgs.email = user.email ?? ''
+  }
+  if (!mergedArgs.phone || (typeof mergedArgs.phone === 'string' && mergedArgs.phone.trim() === '')) {
+    mergedArgs.phone = user.phone ?? ''
+  }
+
+  const insertPayload: Record<string, unknown> = {
+    ...mergedArgs,
+    organizationId: activeOrg._id,
+    ...extraDefaults,
+  }
+  if (ENTITY_SLUG_TABLES.has(tableName) && insertPayload.slug === undefined) {
+    insertPayload.slug = deriveDefaultEntitySlug(tableName, user.slug)
+  }
+  if (typeof insertPayload.slug === 'string') {
+    assertEntitySlug(insertPayload.slug)
+  }
+
+  const insertedId = await insertDynamicTable(
+    ctx.db,
+    tableName,
+    insertPayload as Parameters<typeof insertDynamicTable>[2],
+  )
+  await setRoleProfileComplete(ctx, user._id, role)
+  return insertedId as Id<TableForRole<R>>
+}
+
+export async function personProfileName(
+  ctx: QueryCtx,
+  userId: Id<'users'>,
+  role: PersonRole,
+): Promise<string> {
+  const profile = (await personProfileByUser(ctx, userId, role)) as { name?: string } | null
+  return profile?.name ?? ''
+}
+
+export async function entityProfileNames(
+  ctx: QueryCtx,
+  userId: Id<'users'>,
+  role: EntityRole,
+): Promise<string[]> {
+  const rows = (await entityProfilesByUser(ctx, userId, role)) as Array<{ name?: string }>
+  return rows.map((r) => r.name ?? '').filter(Boolean)
+}
+
+export async function getProfileName(
+  ctx: QueryCtx,
+  userId: Id<'users'>,
+  role: string,
+): Promise<string> {
+  if (isPersonRole(role)) return personProfileName(ctx, userId, role)
+  if (isEntityRole(role)) {
+    const names = await entityProfileNames(ctx, userId, role)
+    return names[0] ?? ''
+  }
+  return ''
+}
+
 export async function profileMine<T extends TableNames>(
   ctx: QueryCtx,
   tableName: T,
 ): Promise<Doc<T> | null> {
   const activeOrg = await tryGetActiveOrg(ctx)
   if (!activeOrg) return null
-
   const doc = await queryDynamicTable(ctx.db, tableName)
     .withIndex('by_organizationId', (q) => q.eq('organizationId', activeOrg._id))
     .unique()
@@ -72,10 +346,9 @@ export async function profileMineMulti<T extends TableNames>(
 ): Promise<Doc<T>[]> {
   const activeOrg = await tryGetActiveOrg(ctx)
   if (!activeOrg) return []
-
   const docs = await queryDynamicTable(ctx.db, tableName)
     .withIndex('by_organizationId', (q) => q.eq('organizationId', activeOrg._id))
-    .collect() // bounded: per-org venue count, realistic cap ~20
+    .collect() // bounded: per-org entity-role row count
   return docs as Doc<T>[]
 }
 
@@ -108,14 +381,6 @@ export async function profileByUser<T extends TableNames>(
   return doc as Doc<T> | null
 }
 
-const PROTECTED_FIELDS = new Set([
-  'verified',
-  'userId',
-  'organizationId',
-  '_id',
-  '_creationTime',
-])
-
 export async function profileUpdate(
   ctx: MutationCtx,
   args: Record<string, unknown>,
@@ -132,14 +397,11 @@ export async function profileUpdate(
   if (!profile) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
 
   validateContactInput(args)
-
   const safeArgs: Record<string, unknown> = {}
   for (const [key, value] of Object.entries(args)) {
     if (!PROTECTED_FIELDS.has(key)) safeArgs[key] = value
   }
-
   await patchDynamic(ctx.db, profile._id, safeArgs)
-
   await setRoleProfileComplete(ctx, user._id, role)
 }
 
@@ -152,15 +414,11 @@ export async function profileCreate(
   actor?: { user: Doc<'users'>; identity: UserIdentity },
 ) {
   const { user } = await authorize(ctx, actor ?? null, 'profile:manage', { type: 'profile' })
-
   const roles = Array.isArray(roleName) ? roleName : [roleName]
-  const hasAny = await Promise.all(
-    roles.map((r) => checkHasRole(ctx, user._id, r)),
-  )
+  const hasAny = await Promise.all(roles.map((r) => checkHasRole(ctx, user._id, r)))
   if (!hasAny.some(Boolean)) {
     throw new ConvexError({ code: ErrorCode.FORBIDDEN })
   }
-
   const { org: activeOrg } = await getActiveOrg(ctx)
 
   const existing = await queryDynamicTable(ctx.db, tableName)
@@ -169,7 +427,6 @@ export async function profileCreate(
   if (existing) return existing._id
 
   validateContactInput(args)
-
   const mergedArgs = { ...args }
   if (!mergedArgs.email || (typeof mergedArgs.email === 'string' && mergedArgs.email.trim() === '')) {
     mergedArgs.email = user.email ?? ''
@@ -191,21 +448,8 @@ export async function profileCreate(
     tableName,
     insertPayload as Parameters<typeof insertDynamicTable>[2],
   )
-
   for (const r of roles) {
     await setRoleProfileComplete(ctx, user._id, r)
   }
-
   return insertedId
-}
-
-export async function getProfileName(
-  ctx: QueryCtx,
-  userId: Id<'users'>,
-  role: string,
-): Promise<string> {
-  const tableName = ROLE_TABLE_MAP[role]
-  if (!tableName) return ''
-  const profile = await profileByUser(ctx, userId, tableName) as unknown as { name?: string } | null
-  return profile?.name ?? ''
 }
