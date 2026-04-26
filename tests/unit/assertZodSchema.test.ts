@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { z } from 'zod'
 import { ConvexError } from 'convex/values'
-import { assertZodSchema } from '../../convex/lib/validate'
+import { assertZodSchema } from '../../convex/lib/validators'
 
 describe('assertZodSchema', () => {
   const schema = z.object({

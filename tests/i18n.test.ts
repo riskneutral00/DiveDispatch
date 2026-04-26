@@ -22,7 +22,7 @@ import {
   assertLanguageCodes,
   normalizeAppLanguage,
   normalizeAppLanguageOrThrow,
-} from '../convex/lib/i18nValidators'
+} from '../convex/lib/validators'
 import { normalizeAppLanguage as feNormalizeAppLanguage } from '../src/lib/constants/i18n'
 import {
   e164Schema,

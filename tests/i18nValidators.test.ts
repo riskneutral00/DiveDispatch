@@ -6,7 +6,7 @@ import {
   assertLanguageCodes,
   assertSupportedLocale,
   normalizeAppLanguageOrThrow,
-} from '../convex/lib/i18nValidators'
+} from '../convex/lib/validators'
 
 function reasonOf(err: unknown): string {
   if (!(err instanceof ConvexError)) return String(err)

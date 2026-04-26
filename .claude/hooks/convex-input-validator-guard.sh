@@ -36,10 +36,10 @@ ARRAY_TRIGGERS=$(grep -nE '^\s*(customerLanguages|teachingLanguages|languages)\s
 ALL_TRIGGERS=$(printf '%s\n%s\n' "$TRIGGERS" "$ARRAY_TRIGGERS" | sed '/^$/d')
 [ -z "$ALL_TRIGGERS" ] && exit 0
 
-# Require the file to either import from i18nValidators or route through profileHelpers
+# Require the file to either import from validators or route through profileHelpers
 # (which calls validateContactInput internally).
 HAS_VALIDATORS=0
-if grep -qE "from '\.+(/lib)?/i18nValidators'" "$FILE_PATH"; then
+if grep -qE "from '\.+(/lib)?/validators'" "$FILE_PATH"; then
   HAS_VALIDATORS=1
 fi
 if grep -qE "from '\.+(/lib)?/profileHelpers'|profileCreate\(|profileUpdate\(" "$FILE_PATH"; then
@@ -61,7 +61,7 @@ sufficient defense-in-depth.
 Offending lines:
 $ALL_TRIGGERS
 
-Fix: import from './lib/i18nValidators' and call assertPhoneE164 / assertCountryCode /
+Fix: import from './lib/validators' and call assertPhoneE164 / assertCountryCode /
 assertSupportedLocale / assertLanguageCodes in the handler, OR route the mutation through
 profileCreate / profileUpdate in './lib/profileHelpers' (which calls validateContactInput
 internally).

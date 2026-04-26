@@ -5,8 +5,7 @@ import { requireDevEnvironment } from '../lib/devGuard'
 import { addressStructuredValidator } from '../shared/addressValidator'
 import { venueKindValidator } from '../shared/venueTypes'
 import { venueFeatureValidator } from '../shared/venueFeatures'
-import { assertVenueRange, assertVenueKindConsistent } from '../lib/venueValidators'
-import { assertPhoneE164, assertCountryCode } from '../lib/i18nValidators'
+import { assertVenueRange, assertVenueKindConsistent, assertPhoneE164, assertCountryCode } from '../lib/validators'
 
 export const run = mutation({
   args: {

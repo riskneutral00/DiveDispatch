@@ -6,7 +6,7 @@ import { resolvePortalToken, resolvePortalTokenSoft } from './lib/portal'
 import { sanitizeFields, sanitizePassport, PORTAL_CONTACT_FIELDS } from './lib/sanitize'
 import { checkRateLimit } from './lib/rateLimiter'
 import { ErrorCode } from './lib/errorCodes'
-import { assertPhoneE164, assertLanguageCodes } from './lib/i18nValidators'
+import { assertPhoneE164, assertLanguageCodes } from './lib/validators'
 
 export async function _checkReturningCustomerHandler(
   ctx: QueryCtx,

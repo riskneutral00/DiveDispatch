@@ -7,7 +7,7 @@ import { checkHasRole } from '../userRoles'
 import { ErrorCode } from './errorCodes'
 import { queryDynamicTable, insertDynamicTable, patchDynamic } from './typedDb'
 import { getActiveOrg, tryGetActiveOrg } from './activeOrg'
-import { assertCountryCode, assertPhoneE164, assertLanguageCodes } from './i18nValidators'
+import { assertCountryCode, assertPhoneE164, assertLanguageCodes } from './validators'
 import { setRoleProfileComplete } from './setRoleProfileComplete'
 
 const LANGUAGE_ARRAY_FIELDS: readonly string[] = [

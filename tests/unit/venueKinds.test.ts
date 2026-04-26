@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { VENUE_KINDS, RANGE_BY_KIND } from '../../src/lib/constants/venue-subtypes'
-import { assertVenueRange } from '../../convex/lib/venueValidators'
+import { assertVenueRange } from '../../convex/lib/validators'
 
 describe('VENUE_KINDS membership', () => {
   it('contains exactly pool and dive_site', () => {
