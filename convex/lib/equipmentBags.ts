@@ -1,9 +1,9 @@
 import { ConvexError } from 'convex/values'
-import type { MutationCtx } from './_generated/server'
-import type { Id } from './_generated/dataModel'
-import { ErrorCode } from './lib/errorCodes'
-import { BAG_STATUS } from './shared/statuses'
-import { batchPatch } from './lib/batch'
+import type { MutationCtx } from '../_generated/server'
+import type { Id } from '../_generated/dataModel'
+import { ErrorCode } from './errorCodes'
+import { BAG_STATUS } from '../shared/statuses'
+import { batchPatch } from './batch'
 
 export async function assignBagsForBooking(
   ctx: MutationCtx,

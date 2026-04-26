@@ -10,7 +10,7 @@ import { ErrorCode } from '../lib/errorCodes'
 import { assertValidTime } from '../lib/validators'
 import { logBookingChange } from '../lib/auditLog'
 import { batchPatch } from '../lib/batch'
-import { releaseBagsForBooking } from '../equipmentBags'
+import { releaseBagsForBooking } from '../lib/equipmentBags'
 import { log } from '../lib/logger'
 
 export async function getAvailabilitySnapshot(

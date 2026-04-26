@@ -14,7 +14,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import type { Id } from '../convex/_generated/dataModel'
 import { api } from '../convex/_generated/api'
 import { makeT, expectConvexError } from './helpers/convex-helpers'
-import { assignBagsForBooking, releaseBagsForBooking } from '../convex/equipmentBags'
+import { assignBagsForBooking, releaseBagsForBooking } from '../convex/lib/equipmentBags'
 import { testDate } from './helpers/dates'
 import { TEST_TOKENS, TEST_SLUGS, seedUser, seedBooking, type SeedCtx } from './fixtures'
 
