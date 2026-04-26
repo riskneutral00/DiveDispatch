@@ -310,7 +310,7 @@ async function deleteProfileForRole(
   if (p) await deleteDynamic(ctx.db, p._id)
 }
 
-export function clerkRoleToPermissionLevel(role: string | undefined): PermissionLevel {
+function clerkRoleToPermissionLevel(role: string | undefined): PermissionLevel {
   return role === 'org:admin' ? 'admin' : 'member'
 }
 

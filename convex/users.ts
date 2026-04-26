@@ -23,7 +23,6 @@ import { normalizeAppLanguageOrThrow, assertPhoneE164 } from './lib/validators'
 import { readOrgClaims } from './lib/activeOrg'
 import { parseTokenIdentifier, isAllowedRebind } from './lib/tokenIdentifier'
 import { insertUserRole, getAllUserRoles, type PermissionLevel } from './lib/userRoleHelpers'
-import { clerkRoleToPermissionLevel } from './userRoles'
 import { setUserOrganization } from './lib/userOrg'
 import { ensureSystemThemesInline } from './lib/ensureSystemThemes'
 import { ROLE_PRECEDENCE } from './lib/rolePrecedence'
@@ -120,9 +119,7 @@ export const createUser = mutation({
         .unique()
       if (clerkOrg) activeOrgId = clerkOrg._id
     }
-    const jwtPermissionLevel: PermissionLevel = clerkRoleToPermissionLevel(
-      clerkOrgRole === 'admin' ? 'org:admin' : 'org:member',
-    )
+    const jwtPermissionLevel: PermissionLevel = clerkOrgRole === 'admin' ? 'admin' : 'member'
 
     if (existing) {
       await ctx.db.patch(existing._id, {
