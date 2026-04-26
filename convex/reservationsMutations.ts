@@ -12,7 +12,8 @@ import { getDatesInRange } from './shared/dateRange'
 import { notify } from './notifications'
 import { logBookingChange } from './lib/auditLog'
 import { ErrorCode } from './lib/errorCodes'
-import { ROLE_TABLE_MAP, profileByUser } from './lib/profileHelpers'
+import { personProfileByUser, entityProfilesByUser } from './lib/profileHelpers'
+import { isPersonRole, isEntityRole, type PersonRole, type EntityRole } from './shared/roleKinds'
 import { NOSHOW_REVERT_WINDOW_MS } from './lib/timeConstants'
 import { BOOKING_STATUS, RESERVATION_STATUS, NOTIFICATION_TYPE, VACATED_REASON, type ReservationStatus } from './shared/statuses'
 import { batchPatch } from './lib/batch'
@@ -39,10 +40,19 @@ async function getProfileCity(
   userId: Id<'users'>,
   ownerType: ResourceType,
 ): Promise<string | null> {
-  const tableName = ROLE_TABLE_MAP[ownerType]
-  if (!tableName) return null
-  const profile = await profileByUser(ctx, userId, tableName) as { address?: { city?: string } } | null
-  return profile?.address?.city ?? null
+  if (isPersonRole(ownerType)) {
+    const profile = (await personProfileByUser(ctx, userId, ownerType as PersonRole)) as
+      | { address?: { city?: string } }
+      | null
+    return profile?.address?.city ?? null
+  }
+  if (isEntityRole(ownerType)) {
+    const rows = (await entityProfilesByUser(ctx, userId, ownerType as EntityRole)) as Array<{
+      address?: { city?: string }
+    }>
+    return rows[0]?.address?.city ?? null
+  }
+  return null
 }
 
 async function batchGetUsers(
@@ -95,7 +105,7 @@ async function batchGetTeachingLanguages(
     slugs.map((slug) => {
       const user = userMap.get(slug)
       return user
-        ? profileByUser(ctx, user._id, 'diveStaff')
+        ? personProfileByUser(ctx, user._id, 'Instructor')
         : Promise.resolve(null)
     }),
   )

@@ -26,7 +26,8 @@ import { insertUserRole, getAllUserRoles, type PermissionLevel } from './lib/use
 import { setUserOrganization } from './lib/userOrg'
 import { ensureSystemThemesInline } from './lib/ensureSystemThemes'
 import { ROLE_PRECEDENCE } from './lib/rolePrecedence'
-import { ROLE_TABLE_MAP, profileMine } from './lib/profileHelpers'
+import { personProfileMine, entityProfilesMine } from './lib/profileHelpers'
+import { isPersonRole, isEntityRole, type PersonRole, type EntityRole } from './shared/roleKinds'
 import { tryGetActiveOrg } from './lib/activeOrg'
 import type { AddressStructured } from './shared/addressValidator'
 
@@ -430,9 +431,13 @@ export const inheritedContactDefaults = query({
       .sort((a, b) => (ROLE_PRECEDENCE[a] ?? Infinity) - (ROLE_PRECEDENCE[b] ?? Infinity))
 
     for (const role of candidates) {
-      const tableName = ROLE_TABLE_MAP[role]
-      if (!tableName) continue
-      const profile = (await profileMine(ctx, tableName)) as InheritedContactProfile | null
+      let profile: InheritedContactProfile | null = null
+      if (isPersonRole(role)) {
+        profile = (await personProfileMine(ctx, role as PersonRole)) as InheritedContactProfile | null
+      } else if (isEntityRole(role)) {
+        const rows = await entityProfilesMine(ctx, role as EntityRole)
+        profile = (rows[0] ?? null) as InheritedContactProfile | null
+      }
       if (!profile) continue
 
       return {

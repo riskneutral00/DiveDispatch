@@ -22,7 +22,7 @@ import { notifyReleasedInventory } from '../notifications'
 import { deleteResourcesForBooking, insertBookingResource } from '../bookingResources'
 import { ErrorCode } from '../lib/errorCodes'
 import { assertSnapshotImmutability, BOOKINGS_SNAPSHOT_FIELDS } from '../lib/snapshotFields'
-import { profileBySlug } from '../lib/profileHelpers'
+import { personProfileBySlug } from '../lib/profileHelpers'
 import type { Doc } from '../_generated/dataModel'
 import { staffCanConductActivity, type Credential } from '../shared/capabilityGate'
 import { assertNitroxCapable } from '../lib/diveStaffHelpers'
@@ -267,7 +267,7 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
   const bookingNeedsNitrox = bookingSpecialtyCodes.includes('Enriched Air')
 
   for (const ir of gateResources) { // batch-exempt: sequential per-resource gate
-    const instructor = await profileBySlug(ctx, ir.resourceId!, 'diveStaff') as Doc<'diveStaff'> | null
+    const instructor = await personProfileBySlug(ctx, ir.resourceId!, 'Instructor') as Doc<'diveStaff'> | null
     if (!instructor) continue
 
     assertNitroxCapable(instructor, bookingNeedsNitrox)

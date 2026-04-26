@@ -1,10 +1,13 @@
-import { v } from 'convex/values'
+import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import {
-  profileMine,
-  profileUpdate,
-  profileCreate,
+  entityProfilesMine,
+  entityProfilesByUser,
+  entityProfileUpdate,
+  entityProfileCreate,
 } from './lib/profileHelpers'
+import { authorize } from './lib/auth'
+import { ErrorCode } from './lib/errorCodes'
 import { visibleOrgIds } from './lib/destinationScope'
 import { BASE_PROFILE_CREATE_FIELDS, BASE_PROFILE_UPDATE_FIELDS, ACCESS_CONTROL_FIELDS, BUSINESS_NAME_CREATE_FIELD, BUSINESS_NAME_UPDATE_FIELD } from './lib/validators'
 
@@ -42,9 +45,7 @@ export const create = mutation({
     fleet: v.array(fleetEntryValidator),
   },
   handler: async (ctx, args) => {
-    return profileCreate(ctx, args, 'boats', 'Boat', {
-      verified: false,
-    })
+    return entityProfileCreate(ctx, args, 'Boat', { verified: false })
   },
 })
 
@@ -56,13 +57,20 @@ export const update = mutation({
     fleet: v.optional(v.array(fleetEntryValidator)),
   },
   handler: async (ctx, args) => {
-    return profileUpdate(ctx, args, 'boats', 'Boat')
+    const actor = await authorize(ctx, null, 'profile:manage', { type: 'profile' })
+    const rows = await entityProfilesByUser(ctx, actor.user._id, 'Boat')
+    const target = rows[0]
+    if (!target) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
+    return entityProfileUpdate(ctx, target._id, args, 'Boat', actor)
   },
 })
 
 export const mine = query({
   args: {},
-  handler: async (ctx) => profileMine(ctx, 'boats'),
+  handler: async (ctx) => {
+    const rows = await entityProfilesMine(ctx, 'Boat')
+    return rows[0] ?? null
+  },
 })
 
 export const visibleToMe = query({

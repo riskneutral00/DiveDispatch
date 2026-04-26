@@ -1,9 +1,9 @@
 import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import {
-  profileMine,
-  profileUpdate,
-  profileCreate,
+  personProfileMine,
+  personProfileUpdate,
+  personProfileCreate,
 } from './lib/profileHelpers'
 import { authorize } from './lib/auth'
 import { visibleOrgIds } from './lib/destinationScope'
@@ -34,10 +34,9 @@ export const create = mutation({
     }
     const actor = await authorize(ctx, null, 'profile:manage', { type: 'profile' })
     const name = deriveStaffName(actor.user)
-    return profileCreate(
+    return personProfileCreate(
       ctx,
       { ...args, name, role: 'Instructor' },
-      'diveStaff',
       'Instructor',
       { verified: false },
       actor,
@@ -58,13 +57,13 @@ export const update = mutation({
     }
     const actor = await authorize(ctx, null, 'profile:manage', { type: 'profile' })
     const name = deriveStaffName(actor.user)
-    return profileUpdate(ctx, { ...args, ...(name ? { name } : {}) }, 'diveStaff', 'Instructor', actor)
+    return personProfileUpdate(ctx, { ...args, ...(name ? { name } : {}) }, 'Instructor', actor)
   },
 })
 
 export const mine = query({
   args: {},
-  handler: async (ctx) => profileMine(ctx, 'diveStaff'),
+  handler: async (ctx) => personProfileMine(ctx, 'Instructor'),
 })
 
 export const visibleToMe = query({

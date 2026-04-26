@@ -1,9 +1,9 @@
 import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import {
-  profileMine,
-  profileUpdate,
-  profileCreate,
+  personProfileMine,
+  personProfileUpdate,
+  personProfileCreate,
 } from './lib/profileHelpers'
 import { BASE_PROFILE_CREATE_FIELDS, BASE_PROFILE_UPDATE_FIELDS, ACCESS_CONTROL_FIELDS, BUSINESS_NAME_CREATE_FIELD, BUSINESS_NAME_UPDATE_FIELD } from './lib/validators'
 
@@ -18,7 +18,7 @@ export const create = mutation({
     customerLanguages: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) =>
-    profileCreate(ctx, args, 'agents', 'Agent', {
+    personProfileCreate(ctx, args, 'Agent', {
       verified: false,
     }),
 })
@@ -31,10 +31,10 @@ export const update = mutation({
     associations: v.optional(v.array(associationValidator)),
     customerLanguages: v.optional(v.array(v.string())),
   },
-  handler: async (ctx, args) => profileUpdate(ctx, args, 'agents', 'Agent'),
+  handler: async (ctx, args) => personProfileUpdate(ctx, args, 'Agent'),
 })
 
 export const mine = query({
   args: {},
-  handler: async (ctx) => profileMine(ctx, 'agents'),
+  handler: async (ctx) => personProfileMine(ctx, 'Agent'),
 })

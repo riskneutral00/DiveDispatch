@@ -3,6 +3,7 @@ import type { Doc, Id, TableNames } from '../../_generated/dataModel'
 import { ROLE_TABLE_MAP } from '../profileHelpers'
 import { queryDynamicTable } from '../typedDb'
 import { findMembership } from '../userRoleHelpers'
+import { isEntityRole } from '../../shared/roleKinds'
 import { str } from './types'
 
 type ProfileDoc = Record<string, unknown>
@@ -98,8 +99,15 @@ export async function resolveRoleProfile(
   if (picker) {
     const docs = await queryDynamicTable(ctx.db, table)
       .withIndex('by_organizationId', (q) => q.eq('organizationId', activeOrgId))
-      .collect() // bounded: per-org multi-row (venues) realistic cap ~20
+      .collect() // bounded: per-org multi-row entity-role rows ~20
     return { profile: picker(docs as unknown as ProfileDoc[]), activeOrgId }
+  }
+
+  if (isEntityRole(role)) {
+    const docs = await queryDynamicTable(ctx.db, table)
+      .withIndex('by_organizationId', (q) => q.eq('organizationId', activeOrgId))
+      .collect() // bounded: per-org multi-row entity-role rows
+    return { profile: ((docs[0] as ProfileDoc | undefined) ?? null), activeOrgId }
   }
 
   const doc = await queryDynamicTable(ctx.db, table)

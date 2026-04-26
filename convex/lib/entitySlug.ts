@@ -16,10 +16,14 @@ const ENTITY_SLUG_PREFIX: Record<string, string> = {
   compressors: 'comp',
 }
 
+function normalizeSlugComponent(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '')
+}
+
 export function deriveDefaultEntitySlug(table: TableNames, userSlug: string): string {
   const prefix = ENTITY_SLUG_PREFIX[table]
   if (!prefix) throw new Error(`deriveDefaultEntitySlug called on non-entity table: ${table}`)
-  return `${prefix}-${userSlug}`
+  return `${prefix}-${normalizeSlugComponent(userSlug)}`
 }
 
 export function assertEntitySlug(slug: string, field = 'slug'): void {

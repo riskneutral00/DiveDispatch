@@ -3,7 +3,7 @@ import type { Id, Doc } from './_generated/dataModel'
 import { query } from './_generated/server'
 import type { QueryCtx } from './_generated/server'
 import { requireAuth } from './lib/auth'
-import { profileByUser } from './lib/profileHelpers'
+import { entityProfilesByUser } from './lib/profileHelpers'
 import { batchGet } from './lib/batch'
 import { getResourcesForBooking } from './bookingResources'
 import type { CalendarBooking } from './bookings'
@@ -73,7 +73,8 @@ export type ManifestData = {
 }
 
 async function getBoatContext(ctx: QueryCtx, user: { _id: Id<'users'>; slug: string }) {
-  const boatProfile = await profileByUser(ctx, user._id, 'boats')
+  const boatProfiles = await entityProfilesByUser(ctx, user._id, 'Boat')
+  const boatProfile = boatProfiles[0]
   if (!boatProfile) return null
   const units = await ctx.db
     .query('inventoryUnits')
