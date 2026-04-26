@@ -330,7 +330,7 @@ export const seedStakeholders = internalMutation({
       await setUserOrganization(ctx, userId, organizationId) // batch-exempt
 
       if (s.diveCenter) {
-        await ctx.db.insert('diveCenters', { organizationId, ...s.diveCenter }) // batch-exempt
+        await ctx.db.insert('diveCenters', { organizationId, slug: `dc-${s.user.slug}`, ...s.diveCenter }) // batch-exempt
       }
       for (const venue of s.venues ?? []) {
         const slug = venue.slug ?? (venue.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || `venue-${organizationId}`)
@@ -346,12 +346,12 @@ export const seedStakeholders = internalMutation({
             venueIds: r.venueSlugs.map((slug) => venueSlugToId.get(slug)).filter((id): id is Id<'venues'> => id !== undefined),
           })),
         }))
-        const boatId = await ctx.db.insert('boats', { organizationId, ...s.boat, fleet: resolvedFleet }) // batch-exempt
+        const boatId = await ctx.db.insert('boats', { organizationId, slug: `boat-${s.user.slug}`, ...s.boat, fleet: resolvedFleet }) // batch-exempt
         userSlugToBoatId.set(s.user.slug, boatId)
       }
       if (s.equipment) {
         const { inventoryOverrides: _overrides, ...equipmentProfile } = s.equipment
-        await ctx.db.insert('equipment', { organizationId, ...equipmentProfile }) // batch-exempt
+        await ctx.db.insert('equipment', { organizationId, slug: `eq-${s.user.slug}`, ...equipmentProfile }) // batch-exempt
       }
       for (const compressor of s.compressors ?? []) {
         const { boatOwnerUserSlug, venueSlug, ...compressorData } = compressor

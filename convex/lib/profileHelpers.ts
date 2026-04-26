@@ -10,6 +10,15 @@ import { getActiveOrg, tryGetActiveOrg } from './activeOrg'
 import { assertCountryCode, assertPhoneE164, assertLanguageCodes } from './validators'
 import { setRoleProfileComplete } from './setRoleProfileComplete'
 import { ROLE_SPECS, type StakeholderRole } from '../shared/roleKinds'
+import { deriveDefaultEntitySlug } from './entitySlug'
+
+const ENTITY_SLUG_TABLES = new Set<TableNames>([
+  'diveCenters',
+  'boats',
+  'equipment',
+  'venues',
+  'compressors',
+])
 
 const LANGUAGE_ARRAY_FIELDS: readonly string[] = [
   'customerLanguages',
@@ -169,11 +178,19 @@ export async function profileCreate(
     mergedArgs.phone = user.phone ?? ''
   }
 
-  const insertedId = await insertDynamicTable(ctx.db, tableName, {
+  const insertPayload: Record<string, unknown> = {
     ...mergedArgs,
     organizationId: activeOrg._id,
     ...extraDefaults,
-  })
+  }
+  if (ENTITY_SLUG_TABLES.has(tableName) && insertPayload.slug === undefined) {
+    insertPayload.slug = deriveDefaultEntitySlug(tableName, user.slug)
+  }
+  const insertedId = await insertDynamicTable(
+    ctx.db,
+    tableName,
+    insertPayload as Parameters<typeof insertDynamicTable>[2],
+  )
 
   for (const r of roles) {
     await setRoleProfileComplete(ctx, user._id, r)

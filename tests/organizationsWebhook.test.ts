@@ -329,6 +329,7 @@ describe('organizations.deleteFromWebhook', () => {
     await t.run(async (ctx) => {
       await ctx.db.insert('diveCenters', {
         organizationId: orgId,
+        slug: 'dc-audit',
         name: 'Audit DC',
         address: { city: 'Phuket', country: 'TH' },
         lat: 7.88,
@@ -466,6 +467,7 @@ describe('organizations.deleteFromWebhook', () => {
       })
       const diveCenterId = await ctx.db.insert('diveCenters', {
         organizationId: orgId,
+        slug: 'dc-cascade',
         name: 'Cascade Dive Center',
         address: { city: 'Phuket', country: 'TH' },
         lat: 7.88,

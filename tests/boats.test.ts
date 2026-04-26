@@ -131,6 +131,7 @@ describe('boats.visibleToMe — destination-scoped discovery', () => {
       })
       await ctx.db.insert('boats', {
         organizationId: areaId,
+        slug: 'boat-area',
         name: 'Area Boat',
         address: { city: 'Phuket', country: 'TH' },
         lat: 7.8,
@@ -146,6 +147,7 @@ describe('boats.visibleToMe — destination-scoped discovery', () => {
       await ctx.db.patch(user.organizationId, { destinationIds: [areaId] })
       await ctx.db.insert('boats', {
         organizationId: user.organizationId,
+        slug: 'boat-rene',
         name: 'Rene Boat',
         address: { city: 'Phuket', country: 'TH' },
         lat: 7.8,
@@ -169,6 +171,7 @@ describe('boats.visibleToMe — destination-scoped discovery', () => {
       if (!user?.organizationId) throw new Error('op org missing')
       await ctx.db.insert('boats', {
         organizationId: user.organizationId,
+        slug: 'boat-solo',
         name: 'Solo Boat',
         address: { city: 'Koh Tao', country: 'TH' },
         lat: 10,

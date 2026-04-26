@@ -189,6 +189,7 @@ describe('prerequisite gate: Boat — fleet depth', () => {
       const organizationId = await getOrCreateTestOrg(ctx as SeedCtx, userId, 'Test Boat Biz')
       await ctx.db.insert('boats', {
         organizationId,
+        slug: 'boat-prereq',
         name: 'Test Boat Biz',
         address: { city: 'Koh Tao', country: 'TH' },
         lat: 10.0957,

@@ -39,6 +39,7 @@ async function seedSoftDeletedOrgWithChildren(
     })
     await ctx.db.insert('diveCenters', {
       organizationId: orgId,
+      slug: 'dc-purge',
       name: 'Purge DC',
       address: { city: 'Phuket', country: 'TH' },
       lat: 7.88,

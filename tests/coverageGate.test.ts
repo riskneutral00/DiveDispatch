@@ -39,6 +39,7 @@ async function seedBoatUser(ctx: SeedCtx, slug: string, hasCompressor: boolean) 
   const organizationId = await getOrCreateTestOrg(ctx, userId, `${slug} Boat`)
   const boatId = await ctx.db.insert('boats', {
     organizationId,
+    slug: `boat-${slug}`,
     name: `${slug} Boat`,
     address: { city: 'Koh Tao', country: 'TH' },
     lat: 10.0957,

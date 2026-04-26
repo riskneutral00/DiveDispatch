@@ -48,12 +48,15 @@ export async function seedDiveCenterProfile(
     customerLanguages?: string[]
     verified?: boolean
     organizationId?: Id<'organizations'>
+    slug?: string
   } = {},
 ) {
   const organizationId = overrides.organizationId ?? (await getOrCreateTestOrg(ctx, userId, overrides.name ?? 'Test DC'))
   const address = resolveAddress(overrides)
+  const user = await ctx.db.get(userId)
   const id = await ctx.db.insert('diveCenters', {
     organizationId,
+    slug: overrides.slug ?? `dc-${user?.slug ?? userId}`,
     name: overrides.name ?? 'Test DC',
     address,
     lat: overrides.lat ?? 10.0957,
@@ -226,12 +229,15 @@ export async function seedBoatProfile(
     fleet?: Array<{ boatName: string; maxPax: number; boatType: 'day_boat' | 'speedboat' | 'longtail' | 'liveaboard' | 'catamaran' | 'rib' }>
     verified?: boolean
     organizationId?: Id<'organizations'>
+    slug?: string
   } = {},
 ) {
   const organizationId = overrides.organizationId ?? (await getOrCreateTestOrg(ctx, userId, overrides.name ?? 'Test Boat'))
   const address = resolveAddress(overrides)
+  const user = await ctx.db.get(userId)
   const id = await ctx.db.insert('boats', {
     organizationId,
+    slug: overrides.slug ?? `boat-${user?.slug ?? userId}`,
     name: overrides.name ?? 'Test Boat',
     address,
     lat: 10.0957,
@@ -257,12 +263,15 @@ export async function seedEquipmentProfile(
     phone?: string
     verified?: boolean
     organizationId?: Id<'organizations'>
+    slug?: string
   } = {},
 ) {
   const organizationId = overrides.organizationId ?? (await getOrCreateTestOrg(ctx, userId, overrides.name ?? 'Test Equipment'))
   const address = resolveAddress(overrides)
+  const user = await ctx.db.get(userId)
   const id = await ctx.db.insert('equipment', {
     organizationId,
+    slug: overrides.slug ?? `eq-${user?.slug ?? userId}`,
     name: overrides.name ?? 'Test Equipment',
     address,
     lat: 10.0957,

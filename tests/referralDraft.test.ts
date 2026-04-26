@@ -39,6 +39,7 @@ async function seedCompleteOperator(ctx: Ctx, slug: string, role: StakeholderRol
     const organizationId = await getOrCreateTestOrg(ctx as SeedCtx, userId, `${slug} DC`)
     await ctx.db.insert('diveCenters', {
       organizationId,
+      slug: `dc-${slug}`,
       name: `${slug} DC`,
       address: { city: 'Koh Tao', country: 'TH' },
       lat: 10.0957,

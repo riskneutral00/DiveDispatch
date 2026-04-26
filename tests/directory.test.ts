@@ -265,6 +265,7 @@ describe('listByRole language propagation', () => {
       })
       await ctx.db.insert('diveCenters', {
         organizationId: dcOrgId,
+        slug: 'dc-test',
         name: 'Test DC',
         address: { city: 'Koh Tao', country: 'TH' },
         lat: 10.0957,

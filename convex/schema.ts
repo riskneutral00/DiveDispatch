@@ -339,6 +339,7 @@ export default defineSchema({
 
   diveCenters: defineTable({
     organizationId: v.id('organizations'),
+    slug: v.string(),
     name: v.string(),
     ...structuredLocationFields,
     lat: v.number(),
@@ -357,7 +358,8 @@ export default defineSchema({
     ...accessControlFields,
     verified: v.boolean(),
   })
-    .index('by_organizationId', ['organizationId']),
+    .index('by_organizationId', ['organizationId'])
+    .index('by_slug', ['slug']),
 
   diveStaff: defineTable({
     organizationId: v.id('organizations'),
@@ -384,6 +386,7 @@ export default defineSchema({
 
   boats: defineTable({
     organizationId: v.id('organizations'),
+    slug: v.string(),
     name: v.string(),
     ...structuredLocationFields,
     lat: v.number(),
@@ -411,10 +414,12 @@ export default defineSchema({
     ...accessControlFields,
     verified: v.boolean(),
   })
-    .index('by_organizationId', ['organizationId']),
+    .index('by_organizationId', ['organizationId'])
+    .index('by_slug', ['slug']),
 
   equipment: defineTable({
     organizationId: v.id('organizations'),
+    slug: v.string(),
     name: v.string(),
     ...structuredLocationFields,
     lat: v.number(),
@@ -425,7 +430,8 @@ export default defineSchema({
     ...accessControlFields,
     verified: v.boolean(),
   })
-    .index('by_organizationId', ['organizationId']),
+    .index('by_organizationId', ['organizationId'])
+    .index('by_slug', ['slug']),
 
   venues: defineTable({
     organizationId: v.id('organizations'),

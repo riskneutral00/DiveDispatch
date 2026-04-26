@@ -57,6 +57,7 @@ describe('operatorCoverage — preferred-boat compressor lookup', () => {
       await ctx.db.patch(boatUserId, { organizationId: boatOrgId })
       const boatId = await ctx.db.insert('boats', {
         organizationId: boatOrgId,
+        slug: 'boat-compressor',
         name: 'Compressor Boat',
         address: { city: 'Koh Tao', country: 'TH' },
         lat: 10.0957,
@@ -153,6 +154,7 @@ describe('operatorCoverage — preferred-boat compressor lookup', () => {
       await ctx.db.patch(boatUserId, { organizationId: boatOrgId })
       await ctx.db.insert('boats', {
         organizationId: boatOrgId,
+        slug: 'boat-no-compressor',
         name: 'No Compressor Boat',
         address: { city: 'Koh Tao', country: 'TH' },
         lat: 10.0957,

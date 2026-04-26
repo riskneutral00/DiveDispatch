@@ -138,6 +138,7 @@ describe('Clerk organizationMembership webhooks → userRoles permissionLevel', 
       })
       await ctx.db.insert('equipment', {
         organizationId: oid,
+        slug: 'eq-set',
         name: 'Eq Set',
         address: { city: 'Phuket', country: 'TH' },
         lat: 7.7,
@@ -252,6 +253,7 @@ describe('Clerk organizationMembership webhooks → userRoles permissionLevel', 
       })
       await ctx.db.insert('equipment', {
         organizationId: oid,
+        slug: 'eq-multi',
         name: 'Multi Eq',
         address: { city: 'Phuket', country: 'TH' },
         lat: 7.7,

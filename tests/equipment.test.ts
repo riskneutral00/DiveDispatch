@@ -17,6 +17,7 @@ describe('equipment.visibleToMe — destination-scoped discovery', () => {
       })
       await ctx.db.insert('equipment', {
         organizationId: areaId,
+        slug: 'eq-area',
         name: 'Area Equipment',
         address: { city: 'Phuket', country: 'TH' },
         lat: 7.8,
@@ -31,6 +32,7 @@ describe('equipment.visibleToMe — destination-scoped discovery', () => {
       await ctx.db.patch(user.organizationId, { destinationIds: [areaId] })
       await ctx.db.insert('equipment', {
         organizationId: user.organizationId,
+        slug: 'eq-rene',
         name: 'Rene Equipment',
         address: { city: 'Phuket', country: 'TH' },
         lat: 7.8,
@@ -53,6 +55,7 @@ describe('equipment.visibleToMe — destination-scoped discovery', () => {
       if (!user?.organizationId) throw new Error('op org missing')
       await ctx.db.insert('equipment', {
         organizationId: user.organizationId,
+        slug: 'eq-solo',
         name: 'Solo Equipment',
         address: { city: 'Koh Tao', country: 'TH' },
         lat: 10,
