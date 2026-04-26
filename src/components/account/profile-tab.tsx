@@ -1,10 +1,11 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { useQuery, useMutation } from 'convex/react'
+import { useMutation } from 'convex/react'
 import { z } from 'zod'
 import { isValidPhoneNumber } from 'libphonenumber-js'
 import { api } from '@/lib/convex-generated'
+import { useSessionIdentity } from '@/lib/hooks/use-session-identity'
 import { isValidISODate } from '@/lib/utils/date'
 import { NameField } from '@/components/ui/name-field'
 import { EmailField } from '@/components/ui/email-field'
@@ -77,7 +78,7 @@ export function profileToPayload(form: ProfileValues) {
 
 export function ProfileTab({ onClose }: { onClose?: () => void }) {
   const t = useTranslations('common')
-  const user = useQuery(api.users.me)
+  const { user } = useSessionIdentity()
   const updateProfile = useMutation(api.users.updateProfile)
 
   const {

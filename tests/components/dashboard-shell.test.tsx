@@ -9,22 +9,30 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ replace: mockReplace, push: vi.fn(), back: vi.fn() }),
 }))
 
-const mockUseCurrentUser = vi.fn<() => { user: unknown; isLoading: boolean }>()
-vi.mock('@/lib/hooks/use-current-user', () => ({
-  useCurrentUser: () => mockUseCurrentUser(),
-}))
-
+const mockSession = vi.fn<() => { user: unknown; status: 'loading' | 'unauthenticated' | 'ready' }>()
 let mockMyRoles: unknown = [{ role: 'DiveCenter' }]
+
+vi.mock('@/lib/hooks/use-session-identity', () => ({
+  useSessionIdentity: () => {
+    const s = mockSession()
+    return {
+      user: s.user,
+      roles: mockMyRoles,
+      defaultRole: null,
+      defaultRoleKey: null,
+      slug: (s.user as { slug?: string } | null)?.slug ?? null,
+      status: s.status,
+      isAuthLoading: false,
+      isAuthenticated: s.user != null,
+    }
+  },
+}))
 
 vi.mock('convex/react', async () => {
   const actual = await vi.importActual<typeof import('convex/react')>('convex/react')
   return {
     ...actual,
-    useQuery: (_query: unknown, args?: unknown) => {
-      // No-args query = myRoles; return configurable mock
-      if (args === undefined) return mockMyRoles
-      return undefined
-    },
+    useQuery: () => undefined,
   }
 })
 
@@ -47,7 +55,7 @@ beforeEach(() => {
 
 describe('DashboardShell redirect logic', () => {
   it('redirects to /account when user has no Convex record', () => {
-    mockUseCurrentUser.mockReturnValue({ user: null, isLoading: false })
+    mockSession.mockReturnValue({ user: null, status: 'unauthenticated' })
 
     render(
       <DashboardShell roleSlug="dive-center" slug="test-slug">
@@ -59,7 +67,7 @@ describe('DashboardShell redirect logic', () => {
   })
 
   it('does NOT redirect while loading', () => {
-    mockUseCurrentUser.mockReturnValue({ user: null, isLoading: true })
+    mockSession.mockReturnValue({ user: null, status: 'loading' })
 
     render(
       <DashboardShell roleSlug="dive-center" slug="test-slug">
@@ -71,10 +79,7 @@ describe('DashboardShell redirect logic', () => {
   })
 
   it('redirects to own dashboard on slug mismatch', () => {
-    mockUseCurrentUser.mockReturnValue({
-      user: { slug: 'abc', role: 'DiveCenter' },
-      isLoading: false,
-    })
+    mockSession.mockReturnValue({ user: { slug: 'abc', role: 'DiveCenter' }, status: 'ready' })
 
     render(
       <DashboardShell roleSlug="dive-center" slug="xyz">
@@ -82,15 +87,11 @@ describe('DashboardShell redirect logic', () => {
       </DashboardShell>,
     )
 
-    // managedChildren is undefined (useQuery stubbed), so mismatch triggers redirect
     expect(mockReplace).toHaveBeenCalledWith('/abc/dive-center/dashboard')
   })
 
   it('renders children when slug matches', () => {
-    mockUseCurrentUser.mockReturnValue({
-      user: { slug: 'abc', role: 'DiveCenter' },
-      isLoading: false,
-    })
+    mockSession.mockReturnValue({ user: { slug: 'abc', role: 'DiveCenter' }, status: 'ready' })
 
     const { getByText } = render(
       <DashboardShell roleSlug="dive-center" slug="abc">
@@ -104,10 +105,7 @@ describe('DashboardShell redirect logic', () => {
 
   it('shows spinner while myRoles is loading', () => {
     mockMyRoles = undefined
-    mockUseCurrentUser.mockReturnValue({
-      user: { slug: 'abc', role: 'DiveCenter' },
-      isLoading: false,
-    })
+    mockSession.mockReturnValue({ user: { slug: 'abc', role: 'DiveCenter' }, status: 'loading' })
 
     const { queryByText } = render(
       <DashboardShell roleSlug="dive-center" slug="abc">
@@ -121,10 +119,7 @@ describe('DashboardShell redirect logic', () => {
 
   it('redirects to default role when user does not hold requested role', () => {
     mockMyRoles = [{ role: 'Instructor' }]
-    mockUseCurrentUser.mockReturnValue({
-      user: { slug: 'abc', role: 'Instructor' },
-      isLoading: false,
-    })
+    mockSession.mockReturnValue({ user: { slug: 'abc', role: 'Instructor' }, status: 'ready' })
 
     render(
       <DashboardShell roleSlug="dive-center" slug="abc">
@@ -137,10 +132,7 @@ describe('DashboardShell redirect logic', () => {
 
   it('redirects to /sign-up when user holds zero roles', () => {
     mockMyRoles = []
-    mockUseCurrentUser.mockReturnValue({
-      user: { slug: 'abc', role: 'DiveCenter' },
-      isLoading: false,
-    })
+    mockSession.mockReturnValue({ user: { slug: 'abc', role: 'DiveCenter' }, status: 'ready' })
 
     render(
       <DashboardShell roleSlug="dive-center" slug="abc">
@@ -152,8 +144,7 @@ describe('DashboardShell redirect logic', () => {
   })
 
   it('NEVER redirects to /role-select in any scenario', () => {
-    // Scenario: no user
-    mockUseCurrentUser.mockReturnValue({ user: null, isLoading: false })
+    mockSession.mockReturnValue({ user: null, status: 'unauthenticated' })
     const { unmount } = render(
       <DashboardShell roleSlug="dive-center" slug="test">
         <div />
@@ -161,11 +152,7 @@ describe('DashboardShell redirect logic', () => {
     )
     unmount()
 
-    // Scenario: slug mismatch
-    mockUseCurrentUser.mockReturnValue({
-      user: { slug: 'abc', role: 'DiveCenter' },
-      isLoading: false,
-    })
+    mockSession.mockReturnValue({ user: { slug: 'abc', role: 'DiveCenter' }, status: 'ready' })
     const { unmount: unmount2 } = render(
       <DashboardShell roleSlug="dive-center" slug="xyz">
         <div />
@@ -173,7 +160,6 @@ describe('DashboardShell redirect logic', () => {
     )
     unmount2()
 
-    // Assert no call ever contained role-select
     for (const call of mockReplace.mock.calls) {
       expect(call[0]).not.toContain('role-select')
     }

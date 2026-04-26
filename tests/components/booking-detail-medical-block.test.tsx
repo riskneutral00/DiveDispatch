@@ -21,18 +21,28 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush, back: mockBack }),
 }))
 
-// The component calls useQuery 3 times and useMutation 1 time per render.
-// Order: useQuery(getBookingDetail), useQuery(getByBookingId), useQuery(myRoles)
-//        useMutation(clearMedicalBlock)
+// The component calls useQuery 2 times (getBookingDetail, getByBookingId) and
+// reads roles via useSessionIdentity. useMutation is called once for clearMedicalBlock.
 
 let mockBooking: unknown = undefined
 let mockPortalLink: unknown = undefined
 let mockUserRoles: unknown = undefined
 const mockClearMedicalBlock = vi.fn()
 
-// Reset counters on every useQuery/useMutation cycle (handles re-renders).
-// We track per-render-cycle by resetting when we see query index 0 again.
 let qIdx = 0
+
+vi.mock('@/lib/hooks/use-session-identity', () => ({
+  useSessionIdentity: () => ({
+    user: null,
+    roles: mockUserRoles,
+    defaultRole: null,
+    defaultRoleKey: null,
+    slug: null,
+    status: 'ready',
+    isAuthLoading: false,
+    isAuthenticated: true,
+  }),
+}))
 
 vi.mock('convex/react', async (importOriginal) => {
   const actual = await importOriginal<typeof import('convex/react')>()
@@ -40,13 +50,10 @@ vi.mock('convex/react', async (importOriginal) => {
     ...actual,
     useConvexAuth: () => ({ isLoading: false, isAuthenticated: true }),
     useQuery: () => {
-      // Reset on new render cycle: the first hook call in the component is getBookingDetail
-      // which is always qIdx 0. If qIdx is already past 0, we've started a new render.
-      if (qIdx >= 3) qIdx = 0
+      if (qIdx >= 2) qIdx = 0
       const idx = qIdx++
       if (idx === 0) return mockBooking
-      if (idx === 1) return mockPortalLink
-      return mockUserRoles
+      return mockPortalLink
     },
     useMutation: () => mockClearMedicalBlock,
   }

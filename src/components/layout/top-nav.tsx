@@ -1,14 +1,12 @@
 'use client'
 
 import { useClerk, useUser } from '@clerk/nextjs'
-import { useQuery } from 'convex/react'
 import { LogOut, User } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { Button, Menu, MenuItem, MenuTrigger, Popover } from 'react-aria-components'
-import { api } from '@/lib/convex-generated'
 import { ROLE_BY_CLERK_ROLE, type ClerkRole, type RoleKey } from '@/lib/constants/roles'
 import { ICON_BUTTON_SIZE } from '@/lib/constants/button-sizes'
-import { useCurrentUser } from '@/lib/hooks/use-current-user'
+import { useSessionIdentity } from '@/lib/hooks/use-session-identity'
 import { firstIncompleteTab } from '@/lib/utils/first-incomplete-tab'
 import { ProfileCompletionBadge } from '../profiles/profile-completion-badge'
 import type { ProfileOverlayTab } from '../profiles/profile-overlay'
@@ -29,9 +27,8 @@ const MENU_ITEM_CLASS =
 export function TopNav({ onOpenOverlay, profileCompletion, roleComplete, roleSlug }: TopNavProps) {
   const tNav = useTranslations('nav')
   const { user: clerkUser } = useUser()
-  const { user: convexUser } = useCurrentUser()
+  const { user: convexUser, roles: userRoles } = useSessionIdentity()
   const { signOut } = useClerk()
-  const userRoles = useQuery(api.userRoles.myRoles)
   const roleConfigs = (userRoles ?? [])
     .map((r) => ROLE_BY_CLERK_ROLE[r.role as ClerkRole])
     .filter(Boolean)

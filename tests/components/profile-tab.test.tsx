@@ -22,6 +22,19 @@ const mockUpdateProfile = vi.fn()
 
 let mutationCallIndex = 0
 
+vi.mock('@/lib/hooks/use-session-identity', () => ({
+  useSessionIdentity: () => ({
+    user: mockUser,
+    roles: undefined,
+    defaultRole: null,
+    defaultRoleKey: null,
+    slug: null,
+    status: mockUser === undefined ? 'loading' : 'ready',
+    isAuthLoading: false,
+    isAuthenticated: mockUser !== null && mockUser !== undefined,
+  }),
+}))
+
 vi.mock('convex/react', async (importOriginal) => {
   const actual = await importOriginal<typeof import('convex/react')>()
   return {

@@ -2,9 +2,23 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook } from '@testing-library/react'
 
-const mockCurrentUser = vi.fn<() => { user: Record<string, unknown> | null; isLoading: boolean }>()
-vi.mock('@/lib/hooks/use-current-user', () => ({
-  useCurrentUser: () => mockCurrentUser(),
+let mockSession: {
+  user: Record<string, unknown> | null
+  roles: { role: string }[] | undefined
+  status: 'loading' | 'unauthenticated' | 'ready'
+} = { user: null, roles: undefined, status: 'loading' }
+
+vi.mock('@/lib/hooks/use-session-identity', () => ({
+  useSessionIdentity: () => ({
+    user: mockSession.user,
+    roles: mockSession.roles,
+    defaultRole: null,
+    defaultRoleKey: null,
+    slug: (mockSession.user as { slug?: string } | null)?.slug ?? null,
+    status: mockSession.status,
+    isAuthLoading: false,
+    isAuthenticated: mockSession.user != null,
+  }),
 }))
 
 let mockWizardPrefs: Record<string, unknown> | null | undefined = undefined
@@ -17,7 +31,7 @@ vi.mock('@/lib/hooks/use-wizard-preferences', () => ({
 }))
 
 let queryCallIndex = 0
-const queryReturns: (unknown | undefined)[] = [undefined, undefined, undefined]
+const queryReturns: (unknown | undefined)[] = [undefined, undefined]
 
 vi.mock('convex/react', async () => {
   const actual = await vi.importActual<typeof import('convex/react')>('convex/react')
@@ -38,19 +52,15 @@ beforeEach(() => {
   queryCallIndex = 0
   queryReturns[0] = undefined
   queryReturns[1] = undefined
-  queryReturns[2] = undefined
   mockWizardPrefs = undefined
+  mockSession = { user: null, roles: undefined, status: 'loading' }
 })
 
 describe('useOperatorDefaults', () => {
   it('returns empty defaults when preferences are null', () => {
-    mockCurrentUser.mockReturnValue({
-      user: { slug: 'test' },
-      isLoading: false,
-    })
+    mockSession = { user: { slug: 'test' }, roles: [{ role: 'DiveCenter' }], status: 'ready' }
     mockWizardPrefs = null
-    queryReturns[0] = [{ role: 'DiveCenter' }]
-    queryReturns[1] = { associations: [{ agency: 'PADI', number: '123' }] }
+    queryReturns[0] = { associations: [{ agency: 'PADI', number: '123' }] }
 
     const { result } = renderHook(() => useOperatorDefaults())
     expect(result.current.defaults.agency).toBe('')
@@ -58,10 +68,7 @@ describe('useOperatorDefaults', () => {
   })
 
   it('returns correct agency from DiveCenter associations[0]', () => {
-    mockCurrentUser.mockReturnValue({
-      user: { slug: 'test' },
-      isLoading: false,
-    })
+    mockSession = { user: { slug: 'test' }, roles: [{ role: 'DiveCenter' }], status: 'ready' }
     mockWizardPrefs = {
       preferredInstructorSlugs: ['instr-1'],
       preferredVenueSlugs: [],
@@ -69,8 +76,7 @@ describe('useOperatorDefaults', () => {
       preferredEquipmentSlugs: [],
       preferredCompressorSlugs: [],
     }
-    queryReturns[0] = [{ role: 'DiveCenter' }]
-    queryReturns[1] = {
+    queryReturns[0] = {
       associations: [{ agency: 'PADI', number: '12345' }, { agency: 'SSI', number: '999' }],
     }
 
@@ -80,10 +86,7 @@ describe('useOperatorDefaults', () => {
   })
 
   it('returns all preferred slugs from stakeholderPreferences', () => {
-    mockCurrentUser.mockReturnValue({
-      user: { slug: 'test' },
-      isLoading: false,
-    })
+    mockSession = { user: { slug: 'test' }, roles: [{ role: 'DiveCenter' }], status: 'ready' }
     mockWizardPrefs = {
       preferredInstructorSlugs: ['instr-a', 'instr-b'],
       preferredVenueSlugs: ['venue-x'],
@@ -91,8 +94,7 @@ describe('useOperatorDefaults', () => {
       preferredEquipmentSlugs: ['equip-1'],
       preferredCompressorSlugs: ['comp-1'],
     }
-    queryReturns[0] = [{ role: 'DiveCenter' }]
-    queryReturns[1] = { associations: [{ agency: 'PADI', number: '1' }] }
+    queryReturns[0] = { associations: [{ agency: 'PADI', number: '1' }] }
 
     const { result } = renderHook(() => useOperatorDefaults())
     expect(result.current.defaults.preferredInstructorSlug).toBe('instr-a')
@@ -104,17 +106,14 @@ describe('useOperatorDefaults', () => {
   })
 
   it('isLoading true while user is loading', () => {
-    mockCurrentUser.mockReturnValue({ user: null, isLoading: true })
+    mockSession = { user: null, roles: undefined, status: 'loading' }
 
     const { result } = renderHook(() => useOperatorDefaults())
     expect(result.current.isLoading).toBe(true)
   })
 
   it('isLoading false once all queries resolved', () => {
-    mockCurrentUser.mockReturnValue({
-      user: { slug: 'test' },
-      isLoading: false,
-    })
+    mockSession = { user: { slug: 'test' }, roles: [{ role: 'DiveCenter' }], status: 'ready' }
     mockWizardPrefs = {
       preferredInstructorSlugs: [],
       preferredVenueSlugs: [],
@@ -122,8 +121,7 @@ describe('useOperatorDefaults', () => {
       preferredEquipmentSlugs: [],
       preferredCompressorSlugs: [],
     }
-    queryReturns[0] = [{ role: 'DiveCenter' }]
-    queryReturns[1] = { associations: [] }
+    queryReturns[0] = { associations: [] }
 
     const { result } = renderHook(() => useOperatorDefaults())
     expect(result.current.isLoading).toBe(false)

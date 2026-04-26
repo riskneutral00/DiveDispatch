@@ -3,7 +3,7 @@
 import { useMutation, useQuery } from 'convex/react'
 import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
-import { api } from '@/lib/convex-generated'
+import { useSessionIdentity } from '@/lib/hooks/use-session-identity'
 import { InlineError, NumberPicker } from '@/components/ui'
 import { LoadingCard } from '@/components/ui/loading-card'
 import { resolveLanguages } from '@/lib/constants/dive-languages'
@@ -49,7 +49,7 @@ interface LanguagesStepInnerProps {
 function LanguagesStepInner({ role, roleApi, onSaved, onBack }: LanguagesStepInnerProps) {
   const tCommon = useTranslations('common')
   const existing = useQuery(roleApi.mine)
-  const me = useQuery(api.users.me)
+  const { user: me } = useSessionIdentity()
   const update = useMutation(roleApi.update)
 
   const { supportsCoursePreferences } = getOrganizerRoleFlags(role)

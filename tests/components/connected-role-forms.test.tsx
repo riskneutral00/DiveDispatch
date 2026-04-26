@@ -39,6 +39,19 @@ vi.mock('@/components/profiles/venue-capabilities-section', () => ({
 }))
 
 // mock-ok: frontend RoleProfileForm dispatch test; stubs Convex hooks because we're asserting React routing, not DB behavior. Sections are independently mocked above.
+vi.mock('@/lib/hooks/use-session-identity', () => ({
+  useSessionIdentity: () => ({
+    user: null,
+    roles: undefined,
+    defaultRole: null,
+    defaultRoleKey: null,
+    slug: null,
+    status: 'loading',
+    isAuthLoading: false,
+    isAuthenticated: false,
+  }),
+}))
+
 vi.mock('convex/react', async (importOriginal) => {
   const actual = await importOriginal<typeof import('convex/react')>()
   return {

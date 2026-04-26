@@ -6,13 +6,18 @@ import { render, screen } from '../helpers/render'
 
 let mockRoles: Array<{ _id: string; role: string; createdAt: number }> | undefined
 
-vi.mock('convex/react', async () => {
-  const actual = await vi.importActual<typeof import('convex/react')>('convex/react')
-  return {
-    ...actual,
-    useQuery: () => mockRoles,
-  }
-})
+vi.mock('@/lib/hooks/use-session-identity', () => ({
+  useSessionIdentity: () => ({
+    user: null,
+    roles: mockRoles,
+    defaultRole: null,
+    defaultRoleKey: null,
+    slug: null,
+    status: 'loading',
+    isAuthLoading: false,
+    isAuthenticated: false,
+  }),
+}))
 
 // ─── Import after mocks ─────────────────────────────────────────────────────
 import { HierarchySubBar } from '@/components/layout/hierarchy-sub-bar'

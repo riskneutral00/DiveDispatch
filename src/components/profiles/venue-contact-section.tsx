@@ -13,11 +13,12 @@ import {
   type ContactFormState,
 } from '@/lib/profile-form'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
+import { useSessionIdentity } from '@/lib/hooks/use-session-identity'
 import type { BaseProfileSectionProps } from '@/lib/profile-form'
 
 export function VenueContactSection({ onSaved, onClose }: BaseProfileSectionProps) {
   const org = useQuery(api.organizations.mine)
-  const me = useQuery(api.users.me)
+  const { user: me } = useSessionIdentity()
   const inheritance = useQuery(api.users.inheritedContactDefaults, { excludeRole: 'Venue' })
   const updateMutation = useMutation(api.organizations.updateBusinessMetadata)
 

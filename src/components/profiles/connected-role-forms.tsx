@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery } from 'convex/react'
 import { api } from '@/lib/convex-generated'
+import { useSessionIdentity } from '@/lib/hooks/use-session-identity'
 
 import {
   ROLE_SECTION_REGISTRY,
@@ -39,7 +40,7 @@ function StandardConnectedForm({
   onClose?: () => void
 }) {
   const profile = useQuery(apiModule.mine)
-  const me = useQuery(api.users.me)
+  const { user: me } = useSessionIdentity()
   const create = useMutation(apiModule.create)
   const update = useMutation(apiModule.update)
   return (

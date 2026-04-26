@@ -7,12 +7,21 @@ vi.mock('@clerk/nextjs', () => ({
   useUser: () => ({ user: { fullName: 'Matt', username: 'matt' } }),
 }))
 
-vi.mock('@/lib/hooks/use-current-user', () => ({
-  useCurrentUser: () => ({ user: { firstName: 'Matt', nickname: null }, isLoading: false, isAuthenticated: true }),
+vi.mock('@/lib/hooks/use-session-identity', () => ({
+  useSessionIdentity: () => ({
+    user: { firstName: 'Matt', nickname: null },
+    roles: [],
+    defaultRole: null,
+    defaultRoleKey: null,
+    slug: null,
+    status: 'ready',
+    isAuthLoading: false,
+    isAuthenticated: true,
+  }),
 }))
 
 // mock-ok: TopNav is a pure presentational component; this test targets the
-// pill visibility conditional alone. myRoles is tangential — stubbed to [].
+// pill visibility conditional alone.
 vi.mock('convex/react', async () => {
   const actual = await vi.importActual<typeof import('convex/react')>('convex/react')
   return {

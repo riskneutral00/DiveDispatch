@@ -4,6 +4,7 @@ import { useMemo } from 'react'
 import { useQuery } from 'convex/react'
 import { api } from '@/lib/convex-generated'
 import type { Doc } from '@/lib/convex-generated'
+import { useSessionIdentity } from './use-session-identity'
 
 export type WizardPreferencesDoc = Doc<'stakeholderPreferences'> | null | undefined
 
@@ -48,7 +49,7 @@ export function resolveWizardPreferences(
 export function useWizardPreferences(
   targetOperatorSlug?: string | null,
 ): ResolveWizardPreferencesResult {
-  const userRoles = useQuery(api.userRoles.myRoles)
+  const { roles: userRoles } = useSessionIdentity()
   const minePrefs = useQuery(api.stakeholderPreferences.mine)
 
   const fromTarget = useQuery(

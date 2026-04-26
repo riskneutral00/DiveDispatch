@@ -18,6 +18,7 @@ import {
 } from './booking-detail-shared'
 import { CancelBookingDialog } from './cancel-booking-dialog'
 import { ORGANIZER_ROLE_KEYS } from '@/lib/constants/roles'
+import { useSessionIdentity } from '@/lib/hooks/use-session-identity'
 
 interface BookingDetailProps {
   bookingId: string
@@ -36,7 +37,7 @@ export function BookingDetail({ bookingId }: BookingDetailProps) {
     booking != null ? { bookingId: bookingId as Id<'bookings'> } : 'skip',
   )
 
-  const userRoles = useQuery(api.userRoles.myRoles)
+  const { roles: userRoles } = useSessionIdentity()
 
   const clearMedicalBlock = useMutation(api.bookings.status.clearMedicalBlock)
 

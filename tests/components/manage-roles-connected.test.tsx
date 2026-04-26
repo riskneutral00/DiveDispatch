@@ -47,15 +47,27 @@ let _deleteRoleFn: ReturnType<typeof vi.fn>
 let _mutIdx = 0
 let _qIdx = 0
 
+vi.mock('@/lib/hooks/use-session-identity', () => ({
+  useSessionIdentity: () => ({
+    user: null,
+    roles: mockRoles,
+    defaultRole: null,
+    defaultRoleKey: null,
+    slug: null,
+    status: 'ready',
+    isAuthLoading: false,
+    isAuthenticated: false,
+  }),
+}))
+
 vi.mock('convex/react', async (importOriginal) => {
   const actual = await importOriginal<typeof import('convex/react')>()
   return {
     ...actual,
     useQuery: () => {
-      if (_qIdx >= 3) _qIdx = 0
+      if (_qIdx >= 2) _qIdx = 0
       const idx = _qIdx++
-      if (idx === 0) return mockRoles
-      if (idx === 1) return mockBookingCounts
+      if (idx === 0) return mockBookingCounts
       return mockRoleCompleteness
     },
     useMutation: () => {

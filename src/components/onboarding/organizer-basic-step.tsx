@@ -11,6 +11,7 @@ import { PhoneField } from '@/components/ui/phone-field'
 import { FieldRow } from '@/components/ui/field-row'
 import type { ClerkRole } from '@/lib/constants/roles'
 import { useOrganizerRoleApi } from '@/lib/hooks/use-organizer-role-api'
+import { useSessionIdentity } from '@/lib/hooks/use-session-identity'
 import { getOrganizerRoleFlags } from '@/lib/constants/organizer-wizard-config'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 import {
@@ -22,7 +23,7 @@ import {
 import { contactSchema } from '@/lib/schemas/profile-shared'
 import { OrganizerStepCard } from './organizer-step-card'
 
-// query-budget-ok: 5 subscriptions; planned migration to organizer.basicStepContext (Phase 2D of zesty-creek perf plan)
+// query-budget-ok: 4 subscriptions; planned migration to organizer.basicStepContext (Phase 2D of zesty-creek perf plan)
 
 function mergeInheritedDefaults(
   inheritance: Record<string, unknown> | null,
@@ -110,7 +111,7 @@ export function OrganizerBasicStep({ role, onSaved, onBack }: OrganizerBasicStep
 function VenueBasicStep({ onSaved, onBack }: { onSaved: () => void; onBack?: () => void }) {
   const t = useTranslations('common')
   const org = useQuery(api.organizations.mine)
-  const me = useQuery(api.users.me)
+  const { user: me } = useSessionIdentity()
   const updateMutation = useMutation(api.organizations.updateBusinessMetadata)
 
   const { form, setField, errors, saving, isValid, loading, handleSubmit } =
@@ -181,7 +182,7 @@ interface BasicStepInnerProps {
 function BasicStepInner({ role, mutations, onSaved, onBack }: BasicStepInnerProps) {
   const t = useTranslations('common')
   const existing = useQuery(mutations.mine)
-  const me = useQuery(api.users.me)
+  const { user: me } = useSessionIdentity()
   const inheritance = useQuery(api.users.inheritedContactDefaults, { excludeRole: role })
   const createMutation = useMutation(mutations.create)
   const updateMutation = useMutation(mutations.update)

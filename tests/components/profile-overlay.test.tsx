@@ -51,6 +51,19 @@ vi.mock('@/components/account/preferences-editor', () => ({
 
 let mockMyRoles: { role: string }[] = []
 
+vi.mock('@/lib/hooks/use-session-identity', () => ({
+  useSessionIdentity: () => ({
+    user: null,
+    roles: mockMyRoles,
+    defaultRole: null,
+    defaultRoleKey: null,
+    slug: null,
+    status: 'ready',
+    isAuthLoading: false,
+    isAuthenticated: false,
+  }),
+}))
+
 vi.mock('convex/react', async (importOriginal) => {
   const actual = await importOriginal<typeof import('convex/react')>()
   return {

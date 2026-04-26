@@ -3,7 +3,7 @@
 import { useMemo } from 'react'
 import { useQuery } from 'convex/react'
 import { api } from '@/lib/convex-generated'
-import { useCurrentUser } from './use-current-user'
+import { useSessionIdentity } from './use-session-identity'
 import { useWizardPreferences } from './use-wizard-preferences'
 
 export interface OperatorDefaults {
@@ -35,8 +35,8 @@ const EMPTY_DEFAULTS: OperatorDefaults = {
 }
 
 export function useOperatorDefaults(): { defaults: OperatorDefaults; isLoading: boolean } {
-  const { isLoading: userLoading } = useCurrentUser()
-  const userRoles = useQuery(api.userRoles.myRoles)
+  const { roles: userRoles, status } = useSessionIdentity()
+  const userLoading = status === 'loading'
   const roleNames = userRoles?.map((r) => r.role) ?? []
   const hasDC = roleNames.includes('DiveCenter')
   const hasAgent = roleNames.includes('Agent')

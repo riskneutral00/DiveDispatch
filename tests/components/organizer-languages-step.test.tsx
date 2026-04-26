@@ -6,20 +6,27 @@ import userEvent from '@testing-library/user-event'
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 
 const mockUpdate = vi.fn()
-let queryCallIndex = 0
 let mockExisting: unknown = undefined
 let mockMe: unknown = undefined
+
+vi.mock('@/lib/hooks/use-session-identity', () => ({
+  useSessionIdentity: () => ({
+    user: mockMe,
+    roles: undefined,
+    defaultRole: null,
+    defaultRoleKey: null,
+    slug: null,
+    status: mockMe === undefined ? 'loading' : 'ready',
+    isAuthLoading: false,
+    isAuthenticated: mockMe !== null && mockMe !== undefined,
+  }),
+}))
 
 vi.mock('convex/react', async (importOriginal) => {
   const actual = await importOriginal<typeof import('convex/react')>()
   return {
     ...actual,
-    useQuery: () => {
-      const idx = queryCallIndex++
-      // Alternates: even = existing profile, odd = me
-      if (idx % 2 === 0) return mockExisting
-      return mockMe
-    },
+    useQuery: () => mockExisting,
     useMutation: () => mockUpdate,
   }
 })
@@ -57,7 +64,6 @@ import { OrganizerLanguagesStep } from '@/components/onboarding/organizer-langua
 
 beforeEach(() => {
   vi.clearAllMocks()
-  queryCallIndex = 0
   mockExisting = undefined
   mockMe = undefined
   mockUpdate.mockResolvedValue(undefined)

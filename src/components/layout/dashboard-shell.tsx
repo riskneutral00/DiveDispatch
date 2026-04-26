@@ -10,7 +10,7 @@ import { type RoleKey, type ClerkRole, ROLE_BY_KEY, ROLE_BY_CLERK_ROLE } from '@
 import { DASHBOARD_CONTENT_GUTTER_X } from '@/lib/constants/dashboard-layout'
 import { deriveDefaultRole } from '@/lib/utils/role'
 import { cn } from '@/lib/utils/cn'
-import { useCurrentUser } from '@/lib/hooks/use-current-user'
+import { useSessionIdentity } from '@/lib/hooks/use-session-identity'
 import { FullPageSpinner } from '@/components/ui/full-page-spinner'
 import { ProfileOverlay, type ProfileOverlayTab } from '../profiles/profile-overlay'
 import { HierarchySubBar } from './hierarchy-sub-bar'
@@ -24,10 +24,9 @@ interface DashboardShellProps {
 
 export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps) {
   const t = useTranslations('common')
-  const { user, isLoading } = useCurrentUser()
+  const { user, roles: myRoles, status } = useSessionIdentity()
   const clerkRole = ROLE_BY_KEY[roleSlug]?.clerkRole ?? 'DiveCenter'
   const profileCompletion = useQuery(api.users.getProfileCompletionForRole, { role: clerkRole })
-  const myRoles = useQuery(api.userRoles.myRoles)
   const roleComplete = myRoles?.some((r) => r.role === clerkRole && r.profileComplete === true) ?? false
   const router = useRouter()
 
@@ -46,12 +45,12 @@ export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps
   }, [])
 
   useEffect(() => {
-    if (isLoading) return
-    if (!user) {
+    if (status === 'loading') return
+    if (status === 'unauthenticated' || !user) {
       router.replace('/sign-up')
       return
     }
-    if (myRoles === undefined) return // user exists but roles still loading
+    if (!myRoles) return
     if (user.slug !== slug) {
       router.replace(`/${user.slug}/${roleSlug}/dashboard`)
       return
@@ -69,9 +68,9 @@ export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps
       }
       router.replace('/sign-up')
     }
-  }, [user, isLoading, myRoles, router, slug, roleSlug, clerkRole])
+  }, [user, status, myRoles, router, slug, roleSlug, clerkRole])
 
-  if (isLoading || !user || myRoles === undefined) {
+  if (status !== 'ready' || !user || !myRoles) {
     return <FullPageSpinner label={t('loading')} />
   }
 

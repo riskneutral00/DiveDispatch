@@ -12,14 +12,27 @@ let mockInheritance: unknown = null
 
 const mockMutate = vi.fn()
 
+vi.mock('@/lib/hooks/use-session-identity', () => ({
+  useSessionIdentity: () => ({
+    user: mockMe,
+    roles: undefined,
+    defaultRole: null,
+    defaultRoleKey: null,
+    slug: null,
+    status: mockMe === undefined ? 'loading' : 'ready',
+    isAuthLoading: false,
+    isAuthenticated: mockMe !== null && mockMe !== undefined,
+  }),
+}))
+
 vi.mock('convex/react', async (importOriginal) => {
   const actual = await importOriginal<typeof import('convex/react')>()
   return {
     ...actual,
     useQuery: () => {
       const idx = queryCallIndex++
-      if (idx % 3 === 0) return mockExisting
-      if (idx % 3 === 1) return mockMe
+      // After hook migration: only existing + inheritance via useQuery (me comes from session hook)
+      if (idx % 2 === 0) return mockExisting
       return mockInheritance
     },
     useMutation: () => {

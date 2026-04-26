@@ -3,12 +3,9 @@
 import { createContext, useContext, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { useQuery } from 'convex/react'
-import { api } from '@/lib/convex-generated'
-import { ROLE_BY_CLERK_ROLE, type ClerkRole, type RoleKey } from '@/lib/constants/roles'
-import { deriveDefaultRole } from '@/lib/utils/role'
+import type { RoleKey } from '@/lib/constants/roles'
 import { FullPageSpinner } from '@/components/ui/full-page-spinner'
-import { useCurrentUser } from '@/lib/hooks/use-current-user'
+import { useSessionIdentity } from '@/lib/hooks/use-session-identity'
 import { DashboardShell } from './dashboard-shell'
 
 export interface SessionRoleContextValue {
@@ -24,33 +21,25 @@ export function useSessionRoleContext(): SessionRoleContextValue | null {
 
 export function SessionDashboardShell({ children }: { children: React.ReactNode }) {
   const t = useTranslations('common')
-  const user = useQuery(api.users.me)
-  const userRoles = useQuery(api.userRoles.myRoles)
-  const { user: convexUser } = useCurrentUser()
+  const { defaultRoleKey, slug, status } = useSessionIdentity()
   const router = useRouter()
 
-  const defaultRole =
-    userRoles && userRoles.length > 0 ? deriveDefaultRole(userRoles.map((r) => r.role)) : null
-  const roleConfig = defaultRole ? ROLE_BY_CLERK_ROLE[defaultRole as ClerkRole] : undefined
-  const roleSlug = roleConfig?.key
-  const slug = convexUser?.slug
-
   const contextValue = useMemo(
-    () => roleSlug && slug ? { slug, roleSlug: roleSlug as RoleKey } : null,
-    [slug, roleSlug],
+    () => (defaultRoleKey && slug ? { slug, roleSlug: defaultRoleKey } : null),
+    [slug, defaultRoleKey],
   )
 
   useEffect(() => {
-    if (user === null) {
+    if (status === 'unauthenticated') {
       router.replace('/sign-up')
     }
-  }, [user, router])
+  }, [status, router])
 
-  if (user === undefined) {
+  if (status === 'loading') {
     return <FullPageSpinner label={t('loading')} />
   }
 
-  if (user === null) {
+  if (status === 'unauthenticated') {
     return <FullPageSpinner label={t('redirecting')} />
   }
 

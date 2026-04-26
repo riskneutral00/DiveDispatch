@@ -1,15 +1,14 @@
 'use client'
 
 import Link from 'next/link'
-import { useQuery } from 'convex/react'
 import type { Doc } from '@/lib/convex-generated'
-import { api } from '@/lib/convex-generated'
 import { ROLE_BY_CLERK_ROLE, type ClerkRole, type RoleKey } from '@/lib/constants/roles'
 import { ROLE_PRECEDENCE } from '@/lib/utils/role'
 import { Tooltip } from '@/components/ui'
 import { DASHBOARD_CONTENT_GUTTER_X } from '@/lib/constants/dashboard-layout'
 import { PILL_BASE } from '@/lib/constants/pill-shell'
 import { cn } from '@/lib/utils/cn'
+import { useSessionIdentity } from '@/lib/hooks/use-session-identity'
 
 type UserRoleDoc = Doc<'userRoles'>
 
@@ -28,7 +27,7 @@ interface HierarchySubBarProps {
 }
 
 export function HierarchySubBar({ slug, roleSlug }: HierarchySubBarProps) {
-  const roles = useQuery(api.userRoles.myRoles)
+  const { roles } = useSessionIdentity()
 
   if (!roles || roles.length <= 1) return null
 

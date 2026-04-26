@@ -2,12 +2,12 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { SignUp, useOrganization } from '@clerk/nextjs'
-import { useConvexAuth, useMutation, useQuery } from 'convex/react'
+import { useMutation, useQuery } from 'convex/react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { api } from '@/lib/convex-generated'
-import { ROLE_BY_CLERK_ROLE, type ClerkRole, type RoleConfig } from '@/lib/constants/roles'
-import { deriveDefaultRole } from '@/lib/utils/role'
+import { type RoleConfig } from '@/lib/constants/roles'
+import { useSessionIdentity } from '@/lib/hooks/use-session-identity'
 import { ErrorAlert } from '@/components/ui/error-alert'
 import { Spinner } from '@/components/ui/spinner'
 import { StepIndicator } from '@/components/ui/step-indicator'
@@ -40,9 +40,13 @@ export default function SignUpPage() {
   const t = useTranslations('common')
   const tAuth = useTranslations('auth')
   const tErr = useTranslations('errors')
-  const { isLoading: authLoading, isAuthenticated } = useConvexAuth()
-  const user = useQuery(api.users.me)
-  const userRoles = useQuery(api.userRoles.myRoles)
+  const {
+    user,
+    roles: userRoles,
+    defaultRoleKey,
+    isAuthLoading: authLoading,
+    isAuthenticated,
+  } = useSessionIdentity()
   const createUser = useMutation(api.users.createUser)
   const router = useRouter()
   const { organization: activeOrg, isLoaded: orgLoaded } = useOrganization()
@@ -60,11 +64,11 @@ export default function SignUpPage() {
   const [selectedRoles, setSelectedRoles] = useState<RoleConfig[]>([])
   const [stage, setStage] = useState<PostAuthStage>('role')
 
-  const orgLookupSlug = activeOrg?.slug ?? null
+  const orgLookupClerkId = activeOrg?.id ?? null
 
   const orgRow = useQuery(
-    api.organizations.publicBySlug,
-    orgLookupSlug ? { slug: orgLookupSlug } : 'skip',
+    api.organizations.publicByClerkOrgId,
+    orgLookupClerkId ? { clerkOrgId: orgLookupClerkId } : 'skip',
   )
 
   const [firstName, setFirstName] = useState('')
@@ -85,14 +89,12 @@ export default function SignUpPage() {
     if (!user) return
     if (!userRoles || userRoles.length === 0) return
     if (!orgRow) return
-    const defaultRole = deriveDefaultRole(userRoles.map((r) => r.role))
-    const roleConfig = defaultRole ? ROLE_BY_CLERK_ROLE[defaultRole as ClerkRole] : undefined
-    if (roleConfig) {
-      router.replace(`/${user.slug}/${roleConfig.key}/dashboard`)
+    if (defaultRoleKey) {
+      router.replace(`/${user.slug}/${defaultRoleKey}/dashboard`)
     } else {
       router.replace('/dashboard')
     }
-  }, [user, userRoles, orgRow, router])
+  }, [user, userRoles, defaultRoleKey, orgRow, router])
 
   function changeAppLanguage(code: string) {
     const cookieLocale = normalizeLocale(code)
