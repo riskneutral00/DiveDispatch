@@ -2,7 +2,7 @@ import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import type { DbCtx } from './lib/auth'
 import { resolvePortalToken, resolvePortalTokenSoft } from './lib/portal'
-import { sanitizeString, sanitizeFields, PORTAL_WAIVER_FIELDS, PORTAL_EQUIPMENT_FIELDS, PORTAL_EQUIPMENT_CHECKLIST_FIELDS, SHORT_TEXT_MAX } from './lib/sanitize'
+import { sanitizeFields, PORTAL_EQUIPMENT_FIELDS, PORTAL_EQUIPMENT_CHECKLIST_FIELDS } from './lib/sanitize'
 import { checkRateLimit } from './lib/rateLimiter'
 import { safeDecryptMedical } from './lib/crypto'
 import { rentalChecklistValidator } from './lib/validators'
@@ -174,30 +174,6 @@ export async function _getPortalProgress(
 export const getPortalProgress = query({
   args: { token: v.string() },
   handler: _getPortalProgress,
-})
-
-export const saveWaiver = mutation({
-  args: {
-    token: v.string(),
-    insurancePolicyNumber: v.optional(v.string()),
-  },
-  handler: async (
-    ctx,
-    args,
-  ): Promise<void> => {
-    await checkRateLimit(ctx, 'saveWaiver', args.token)
-    const { profile } = await resolvePortalToken(ctx, args.token)
-
-    const sanitized = sanitizeFields(args, PORTAL_WAIVER_FIELDS)
-    const patch: Record<string, unknown> = {
-      waiverSignedAt: Date.now(),
-    }
-    if (sanitized.insurancePolicyNumber !== undefined) {
-      patch.insurancePolicyNumber = sanitized.insurancePolicyNumber
-    }
-
-    await ctx.db.patch(profile._id, patch)
-  },
 })
 
 export const saveEquipmentData = mutation({

@@ -16,7 +16,6 @@ const LIMITS = {
   saveMedicalAnswers: { maxTokens: 10, windowMs: 60_000 },
   savePortalWaiver: { maxTokens: 10, windowMs: 60_000 },
   savePortalEquipment: { maxTokens: 10, windowMs: 60_000 },
-  saveWaiver: { maxTokens: 10, windowMs: 60_000 },
   saveEquipmentData: { maxTokens: 10, windowMs: 60_000 },
   submitPortal: { maxTokens: 3, windowMs: 60_000 },
   saveSafetyInfo: { maxTokens: 10, windowMs: 60_000 },
