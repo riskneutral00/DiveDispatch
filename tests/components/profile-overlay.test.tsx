@@ -104,3 +104,33 @@ describe('ProfileOverlay — Roles tab visibility', () => {
     expect(screen.queryByTestId('profile-tab')).not.toBeInTheDocument()
   })
 })
+
+describe('ProfileOverlay — Row 1 + Row 2 stay asterisk-free', () => {
+  beforeEach(() => {
+    mockMyRoles = []
+  })
+
+  it('outer role pills (Row 1) never carry aria-required, regardless of role mix', () => {
+    renderOverlay({ roles: ['DiveCenter', 'Agent', 'Instructor', 'Boat', 'Equipment', 'Compressor', 'Venue'] })
+    const tabs = screen.getAllByRole('tab', { hidden: true })
+    for (const tab of tabs) {
+      expect(tab).not.toHaveAttribute('aria-required', 'true')
+    }
+  })
+
+  it('Row 1 contains no `*` glyph in any pill label', () => {
+    renderOverlay({ roles: ['DiveCenter', 'Agent', 'Instructor'] })
+    const tabs = screen.getAllByRole('tab', { hidden: true })
+    for (const tab of tabs) {
+      expect(tab.textContent ?? '').not.toContain('*')
+    }
+  })
+
+  it('does not crash when the active-role query returns nothing', () => {
+    expect(() => renderOverlay({ roles: [] })).not.toThrow()
+    const tabs = screen.queryAllByRole('tab', { hidden: true })
+    for (const tab of tabs) {
+      expect(tab).not.toHaveAttribute('aria-required', 'true')
+    }
+  })
+})
