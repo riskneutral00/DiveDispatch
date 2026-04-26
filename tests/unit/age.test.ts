@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { ageInYears, isAdult, MIN_SIGNUP_AGE_YEARS } from '../../convex/lib/age'
+import { ageInYears, isAdult, MIN_SIGNUP_AGE_YEARS } from '../../convex/lib/timeConstants'
 
 beforeEach(() => {
   vi.useFakeTimers()
