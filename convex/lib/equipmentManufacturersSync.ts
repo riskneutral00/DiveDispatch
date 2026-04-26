@@ -10,10 +10,11 @@ export async function syncManufacturersByGearType(
     .unique()
   if (!org) return
 
-  const profile = await ctx.db
+  const profiles = await ctx.db
     .query('equipment')
     .withIndex('by_organizationId', (q) => q.eq('organizationId', org._id))
-    .unique()
+    .collect() // bounded: per-org equipment row count
+  const profile = profiles[0]
   if (!profile) return
 
   const inventory = await ctx.db
