@@ -21,7 +21,7 @@
     },
     "admin_venues": {
       "type": "object",
-      "description": "Admin-added venues. No owning stakeholder; pre-seeded via UNOWNED_DIVE_SITES.",
+      "description": "Admin-added venues. Owned by an area org (e.g. `south-andaman`) and seeded via that org's `venues[]` block.",
       "additionalProperties": { "$ref": "#/$defs/adminVenueEntry" }
     }
   },

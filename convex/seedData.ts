@@ -207,12 +207,6 @@ export interface SeedStakeholder {
   instructor?: InstructorProfile
 }
 
-export interface SeedDiveSite {
-  name: string
-  slug: string
-  capacity: number
-}
-
 function buildNicoleInventoryOverrides(): SeedInventoryLine[] {
   const lines: SeedInventoryLine[] = []
 
@@ -964,65 +958,6 @@ export const SCUBA_REVOLUTION: SeedStakeholder = {
   },
 }
 
-export const UNOWNED_DIVE_SITES: SeedDiveSite[] = [
-  { name: 'Kata Beach', slug: 'kata-beach', capacity: 50 },
-]
-
-export const RESTORED_SOMBAT: SeedStakeholder = {
-  user: {
-    slug: 'h0a5zl',
-    email: 'compressor-chalong+clerk_test@divedispatch.dev',
-    name: 'Sombat Charoensuk',
-    firstName: 'Sombat',
-    lastName: 'Charoensuk',
-    appLanguage: 'th',
-    phone: '+6676395001',
-    dateOfBirth: '1982-04-20',
-  },
-  roles: [{ role: 'Compressor' }],
-  compressors: [{
-    slug: 'compressor-shop-chalong-pier',
-    name: 'Compressor Shop Chalong Pier',
-    location: 'fixed',
-    address: { street: 'Asian Divers, Wiset Rd, Tambon Karon', city: 'Phuket', state: 'Phuket', country: 'TH', postalCode: '83100' },
-    lat: 7.8203607,
-    lng: 98.3423974,
-    email: 'compressor-chalong+clerk_test@divedispatch.dev',
-    phone: '+66812345014',
-    gasMixes: ['air', 'nitrox'],
-    nitroxMin: 32,
-    nitroxMax: 32,
-    isAllowed: [],
-    notAllowed: [],
-    verified: false,
-  }],
-}
-
-export const RESTORED_ALEX: SeedStakeholder = {
-  user: {
-    slug: 'ax3k7p',
-    email: 'ax3k7p+clerk_test@divedispatch.dev',
-    name: 'Alex Walker',
-    firstName: 'Alex',
-    lastName: 'Walker',
-    appLanguage: 'en',
-    phone: '+66819001234',
-    dateOfBirth: '1992-04-17',
-    customerLanguages: ['en'],
-  },
-  roles: [{ role: 'Agent' }],
-  agent: {
-    name: 'Alex Walker',
-    ...PHUKET,
-    email: 'ax3k7p+clerk_test@divedispatch.dev',
-    phone: '+66819001234',
-    associations: [{ agency: 'PADI', number: 'PAD-AG-70001' }],
-    isAllowed: [],
-    notAllowed: [],
-    verified: false,
-  },
-}
-
 export const PHUKET_ADMIN: SeedStakeholder = {
   user: {
     slug: 'admin',
@@ -1227,8 +1162,6 @@ export const PARKED_STAKEHOLDERS: SeedStakeholder[] = [
   WATER_PRO,
   SHARK_BITES,
   SCUBA_REVOLUTION,
-  RESTORED_SOMBAT,
-  RESTORED_ALEX,
 ]
 
 export const ALL_STAKEHOLDERS: SeedStakeholder[] = [PHUKET_ADMIN, RENE_SEA_FUN]

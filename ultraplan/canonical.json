@@ -911,7 +911,7 @@
   "admin_venues": {
     "kata_beach": {
       "category": "AdminVenue",
-      "note": "Admin-added venue \u2014 no stakeholder user signs in. Pre-seeded via UNOWNED_DIVE_SITES in convex/seedData.ts and convex/seed.ts. venues.userId is omitted (schema v.optional allows); inventoryUnits uses sentinel ownerId '__unowned__' / ownerType 'DiveSite'. DiveSite stakeholder role is v0.1.1 defer \u2014 this row is a booking-form location reference only, not an operator-run resource.",
+      "note": "Admin-added venue under area org `south-andaman` (PHUKET_ADMIN). Seeded via that org's `venues[]` block in convex/seedData.ts. Booking-form location reference only \u2014 no operator user signs in. (Canonical structural assertions about `ownerId: '__unowned__'` are pre-Wave-5 spec drift, tracked separately.)",
       "venues": {
         "name": "Kata Beach",
         "lat": 7.8206,
