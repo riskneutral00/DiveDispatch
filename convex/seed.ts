@@ -12,6 +12,7 @@ import { ensureSystemThemesInline } from './lib/ensureSystemThemes'
 import { stakeholderPreferenceIdsToDelete } from './lib/stakeholderPreferencesDedupe'
 import { insertUserRole } from './lib/userRoleHelpers'
 import { setUserOrganization } from './lib/userOrg'
+import { setRoleProfileComplete } from './lib/setRoleProfileComplete'
 import { ALL_INSTRUCTORS } from './seedInstructorData'
 import {
   ALL_GEAR_SIZING,
@@ -145,6 +146,7 @@ export const seedAll = internalAction({
     await ctx.runMutation(internal.seed.seedStakeholderPreferences)
     await ctx.runMutation(internal.seed.seedBookingTemplates)
     await ctx.runMutation(internal.seed.seedDefaultTheme)
+    await ctx.runMutation(internal.seed.seedRoleCompletenessDenorm)
   },
 })
 
@@ -553,15 +555,7 @@ export const seedStakeholderPreferences = internalMutation({
   handler: async (ctx) => {
     await dedupeStakeholderPreferencesTable(ctx)
 
-    const OPERATOR_PREFERRED: Record<string, { instructors?: string[]; boats?: string[]; venues?: string[]; compressors?: string[]; equipment?: string[] }> = {
-      'sea-fun': {
-        instructors: ['sea-fun'],
-        boats: ['sea-fun'],
-        venues: ['sea-fun'],
-        compressors: ['sea-fun'],
-        equipment: ['sea-fun'],
-      },
-    }
+    const OPERATOR_PREFERRED: Record<string, { instructors?: string[]; boats?: string[]; venues?: string[]; compressors?: string[]; equipment?: string[] }> = {}
 
     const allStakeholders: { slug: string; role: StakeholderRole }[] = [
       ...ALL_STAKEHOLDERS
@@ -571,6 +565,7 @@ export const seedStakeholderPreferences = internalMutation({
     ]
 
     for (const { slug, role } of allStakeholders) {
+      if (slug === 'sea-fun') continue
       const existing = await ctx.db
         .query('stakeholderPreferences')
         .withIndex('by_stakeholderId', (q) => q.eq('stakeholderId', slug))
@@ -648,6 +643,16 @@ export const seedDefaultTheme = internalMutation({
   args: {},
   handler: async (ctx) => {
     await ensureSystemThemesInline(ctx, { force: true })
+  },
+})
+
+export const seedRoleCompletenessDenorm = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const rows = await ctx.db.query('userRoles').collect() // bounded: dev-only seed
+    for (const row of rows) {
+      await setRoleProfileComplete(ctx, row.userId, row.role) // batch-exempt: dev-only seed
+    }
   },
 })
 
