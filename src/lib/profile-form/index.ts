@@ -29,3 +29,10 @@ export {
   INITIAL_TEACHING_LANGUAGES,
 } from './languages'
 
+export type { FormBlock } from './merged-states'
+export {
+  customerLanguagesBlock,
+  teachingLanguagesBlock,
+  composeBlocks,
+} from './merged-states'
+

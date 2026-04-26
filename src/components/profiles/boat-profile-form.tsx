@@ -2,20 +2,17 @@
 
 import { useEffect, useRef } from 'react'
 import { useTranslations } from 'next-intl'
-import { Plus } from 'lucide-react'
 import { useMutation, useQuery } from 'convex/react'
 import { api, type Id } from '@/lib/convex-generated'
 import { BusinessContactSection } from '@/components/profiles/business-contact-section'
 
-import { FormSectionHeader } from '@/components/ui/form-section-header'
 import { DayToggleGroup } from '@/components/ui/day-toggle-group'
-import { Button } from '@/components/ui/button'
 import { CheckboxGroup } from '@/components/ui/checkbox-group'
 import { FieldRow } from '@/components/ui/field-row'
 import { Input } from '@/components/ui/input'
 import { NumberPicker } from '@/components/ui/number-picker'
 import { SimpleSelect } from '@/components/ui/simple-select'
-import { ItemCard } from '@/components/ui/item-card'
+import { EntityCardList } from '@/components/ui/entity-card-list'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import { compressorGasMixesToPayload } from '@/components/profiles/compressor-profile-form'
 import { CompressorGasMixFields } from '@/components/profiles/compressor-gas-mix-fields'
@@ -68,6 +65,35 @@ export function emptyFleet(): FleetState {
 
 export function emptyRoute(): RouteState {
   return { venueIds: [], daysOfWeek: [] }
+}
+
+export function applyDayToggle(
+  fleet: FleetState[],
+  fleetIndex: number,
+  routeIndex: number,
+  day: number,
+): FleetState[] {
+  return fleet.map((vessel, vi) => {
+    if (vi !== fleetIndex) return vessel
+    const targetRoute = vessel.routes[routeIndex]
+    if (!targetRoute) return vessel
+    const alreadyHasDay = targetRoute.daysOfWeek.includes(day)
+    if (alreadyHasDay) {
+      return {
+        ...vessel,
+        routes: vessel.routes.map((r, ri) =>
+          ri === routeIndex ? { ...r, daysOfWeek: r.daysOfWeek.filter((d) => d !== day) } : r,
+        ),
+      }
+    }
+    return {
+      ...vessel,
+      routes: vessel.routes.map((r, ri) => {
+        if (ri === routeIndex) return { ...r, daysOfWeek: [...r.daysOfWeek, day] }
+        return { ...r, daysOfWeek: r.daysOfWeek.filter((d) => d !== day) }
+      }),
+    }
+  })
 }
 
 export function BoatContactSection(props: BaseProfileSectionProps) {
@@ -283,40 +309,8 @@ export function BoatFleetSection({ profile: existing, me, create, update, onClos
     hydratedRef.current = true
   }, [compressors, existing, setForm])
 
-  function addFleet() {
-    setField('fleet', [...form.fleet, emptyFleet()])
-  }
-  function removeFleet(i: number) {
-    setField('fleet', form.fleet.filter((_, idx) => idx !== i))
-  }
-  function updateFleet(i: number, patch: Partial<FleetState>) {
-    setField('fleet', form.fleet.map((f, idx) => (idx === i ? { ...f, ...patch } : f)))
-  }
-  function addRoute(fi: number) {
-    setField('fleet', form.fleet.map((f, i) => (i === fi ? { ...f, routes: [...f.routes, emptyRoute()] } : f)))
-  }
-  function removeRoute(fi: number, ri: number) {
-    setField('fleet', form.fleet.map((f, i) => i === fi ? { ...f, routes: f.routes.filter((_, idx) => idx !== ri) } : f))
-  }
-  function updateRoute(fi: number, ri: number, patch: Partial<RouteState>) {
-    setField('fleet', form.fleet.map((f, i) => i === fi ? { ...f, routes: f.routes.map((r, idx) => (idx === ri ? { ...r, ...patch } : r)) } : f))
-  }
   function toggleDay(fi: number, ri: number, day: number) {
-    const days = form.fleet[fi].routes[ri].daysOfWeek
-    if (days.includes(day)) {
-      updateRoute(fi, ri, { daysOfWeek: days.filter((d) => d !== day) })
-    } else {
-      setField('fleet', form.fleet.map((f, i) => {
-        if (i !== fi) return f
-        return {
-          ...f,
-          routes: f.routes.map((r, idx) => {
-            if (idx === ri) return { ...r, daysOfWeek: [...r.daysOfWeek, day] }
-            return { ...r, daysOfWeek: r.daysOfWeek.filter((d) => d !== day) }
-          }),
-        }
-      }))
-    }
+    setField('fleet', applyDayToggle(form.fleet, fi, ri, day))
   }
 
   return (
@@ -333,56 +327,44 @@ export function BoatFleetSection({ profile: existing, me, create, update, onClos
       isValid={isValid}
       className="space-y-6"
     >
-      <div>
-        <FormSectionHeader
-          label="Fleet"
-          action={
-            <Button type="button" size="sm" variant="secondary" onClick={addFleet}>
-              <Plus size={14} />
-              Add Vessel
-            </Button>
-          }
-        />
-        <div className="space-y-4 mt-3">
-          {form.fleet.map((vessel, fi) => (
-            <FleetEntryCard
-              key={fi}
-              vessel={vessel}
-              fleetIdx={fi}
-              errors={errors}
-              canRemove={form.fleet.length > 1}
-              venueOptions={venueOptions}
-              onUpdate={(patch) => updateFleet(fi, patch)}
-              onRemove={() => removeFleet(fi)}
-              onAddRoute={() => addRoute(fi)}
-              onRemoveRoute={(ri) => removeRoute(fi, ri)}
-              onUpdateRoute={(ri, patch) => updateRoute(fi, ri, patch)}
-              onToggleDay={(ri, day) => toggleDay(fi, ri, day)}
-            />
-          ))}
-        </div>
-      </div>
+      <EntityCardList<FleetState>
+        label="Fleet"
+        addLabel="Add Vessel"
+        items={form.fleet}
+        emptyItem={emptyFleet}
+        onChange={(next) => setField('fleet', next)}
+        layout="stack"
+        minItems={1}
+        removeAriaLabel={(_v, fi) => `Remove vessel ${fi + 1}`}
+        renderCard={(vessel, update, fi) => (
+          <FleetEntryBody
+            vessel={vessel}
+            fleetIdx={fi}
+            errors={errors}
+            venueOptions={venueOptions}
+            onUpdate={(patch) => update({ ...vessel, ...patch })}
+            onUpdateRoutes={(routes) => update({ ...vessel, routes })}
+            onToggleDay={(ri, day) => toggleDay(fi, ri, day)}
+          />
+        )}
+      />
     </ProfileFormShell>
   )
 }
 
-interface FleetEntryCardProps {
+interface FleetEntryBodyProps {
   vessel: FleetState
   fleetIdx: number
   errors: Record<string, string>
-  canRemove: boolean
   venueOptions: { value: string; label: string }[]
   onUpdate: (patch: Partial<FleetState>) => void
-  onRemove: () => void
-  onAddRoute: () => void
-  onRemoveRoute: (ri: number) => void
-  onUpdateRoute: (ri: number, patch: Partial<RouteState>) => void
+  onUpdateRoutes: (next: RouteState[]) => void
   onToggleDay: (ri: number, day: number) => void
 }
 
-function FleetEntryCard({ vessel, fleetIdx: fi, errors, canRemove, venueOptions, onUpdate, onRemove, onAddRoute, onRemoveRoute, onUpdateRoute, onToggleDay }: FleetEntryCardProps) {
+function FleetEntryBody({ vessel, fleetIdx: fi, errors, venueOptions, onUpdate, onUpdateRoutes, onToggleDay }: FleetEntryBodyProps) {
   return (
-    <ItemCard onRemove={onRemove} canRemove={canRemove} aria-label={`Remove vessel ${fi + 1}`}>
+    <>
       <div className="mb-4">
         <span className="text-body font-medium text-primary">
           Vessel {fi + 1}{vessel.boatName ? ` — ${vessel.boatName}` : ''}
@@ -457,45 +439,46 @@ function FleetEntryCard({ vessel, fleetIdx: fi, errors, canRemove, venueOptions,
         />
       </div>
 
-      <div>
-        <FormSectionHeader
-          label="Routes"
-          action={
-            <Button type="button" size="sm" variant="secondary" onClick={onAddRoute}>
-              <Plus size={14} />
-              Add Route
-            </Button>
-          }
-        />
-        {vessel.routes.length === 0 && (
-          <p className="text-label text-secondary">
-            No routes added. Routes define which dive sites this vessel visits and on which days.
-          </p>
+      <EntityCardList<RouteState>
+        label="Routes"
+        addLabel="Add Route"
+        items={vessel.routes}
+        emptyItem={emptyRoute}
+        onChange={onUpdateRoutes}
+        layout="stack"
+        emptyMessage="No routes added. Routes define which dive sites this vessel visits and on which days."
+        removeAriaLabel={() => 'Remove route'}
+        renderCard={(route, _update, ri) => (
+          <RouteRowBody
+            route={route}
+            fleetIdx={fi}
+            routeIdx={ri}
+            errors={errors}
+            venueOptions={venueOptions}
+            onUpdate={(patch) => {
+              onUpdateRoutes(vessel.routes.map((r, i) => (i === ri ? { ...r, ...patch } : r)))
+            }}
+            onToggleDay={(day) => onToggleDay(ri, day)}
+          />
         )}
-        <div className="space-y-3 mt-2">
-          {vessel.routes.map((route, ri) => (
-            <RouteRow key={ri} route={route} fleetIdx={fi} routeIdx={ri} errors={errors} venueOptions={venueOptions} onUpdate={(patch) => onUpdateRoute(ri, patch)} onRemove={() => onRemoveRoute(ri)} onToggleDay={(day) => onToggleDay(ri, day)} />
-          ))}
-        </div>
-      </div>
-    </ItemCard>
+      />
+    </>
   )
 }
 
-interface RouteRowProps {
+interface RouteRowBodyProps {
   route: RouteState
   fleetIdx: number
   routeIdx: number
   errors: Record<string, string>
   venueOptions: { value: string; label: string }[]
   onUpdate: (patch: Partial<RouteState>) => void
-  onRemove: () => void
   onToggleDay: (day: number) => void
 }
 
-function RouteRow({ route, fleetIdx: fi, routeIdx: ri, errors, venueOptions, onUpdate, onRemove, onToggleDay }: RouteRowProps) {
+function RouteRowBody({ route, fleetIdx: fi, routeIdx: ri, errors, venueOptions, onUpdate, onToggleDay }: RouteRowBodyProps) {
   return (
-    <ItemCard onRemove={onRemove} canRemove={true} aria-label="Remove route">
+    <>
       <CheckboxGroup
         label="Venues"
         required
@@ -514,7 +497,7 @@ function RouteRow({ route, fleetIdx: fi, routeIdx: ri, errors, venueOptions, onU
         }}
         error={errors[`fleet.${fi}.routes.${ri}.daysOfWeek`]}
       />
-    </ItemCard>
+    </>
   )
 }
 

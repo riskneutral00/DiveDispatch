@@ -71,7 +71,7 @@ Each primitive applies a default `field-*` width token internally via `resolveFi
 | `BottomActionBar` | `@/components/ui/bottom-action-bar` | Fixed mobile bottom action bar (primary Save on mobile). |
 | `SectionDivider` | `@/components/ui/section-divider` | Horizontal divider between sections. |
 | `ItemCard` | `@/components/ui/item-card` | Removable card in a list (credentials, routes, fleet entries). Never hand-roll trash buttons. Optional `onSave` + `canSave` + `saving` + `saved` props render a Save icon-button next to the trash icon (used by draft-row-with-Save patterns like the Equipment Gear tab). |
-| `EntityCardList` | `@/components/ui/entity-card-list` | Responsive card grid editor for a list of embedded entities. Handles FormSectionHeader + Add button (inline `Button` with Plus icon), empty state, add/remove wiring, minItems/maxItems enforcement. Consumer supplies `renderCard(item, update, index)` for card interior and `emptyItem()` factory for new entries. Uses `ItemCard` internally. Grid: `grid-cols-1 md:grid-cols-2 xl:grid-cols-3`. Use for any owner-edited array-of-entities pattern (venues, boat fleet, credentials, etc.); do NOT use for directory-pick lists — those use `SortableOverlayList`. |
+| `EntityCardList` | `@/components/ui/entity-card-list` | Responsive card editor for a list of embedded entities. Handles FormSectionHeader + Add button (inline `Button` with Plus icon), empty state, add/remove wiring, minItems/maxItems enforcement. Consumer supplies `renderCard(item, update, index)` for card interior (no ItemCard wrapper — EntityCardList wraps each item in ItemCard itself) and `emptyItem()` factory for new entries. `layout` prop: `'grid'` (default — `grid-cols-1 md:grid-cols-2 xl:grid-cols-3`) for parallel entities like venues/credentials; `'stack'` for tall entities with nested editors like boat fleet vessels (single column, `space-y-3`). `hideEmptyState` for nested usages where the empty message would clutter the parent. Use for any owner-edited array-of-entities pattern; do NOT use for directory-pick lists — those use `SortableOverlayList`. |
 | `ListRow` | `@/components/ui/list-row` | Reusable row with compact variant. |
 
 ## Cards & content headers
@@ -190,7 +190,8 @@ Role-agnostic building blocks for stakeholder profile forms (`PatternLibrary/one
 | `locationToPayload` | `@/lib/profile-form/location` | Serialize `LocationValue` to Convex payload. |
 | `defaultFromMe` | `@/lib/profile-form/location` | Seed form state from current user. |
 | `languages.*` | `@/lib/profile-form/languages` | Language field helpers. |
-| (planned) merged-state factory | `@/lib/profile-form/merged-states` | Contact + languages + access merged-state composition. Drops local `FormState = ContactFormState & {...}` aliases across roles. See plan Tier 1 F1. |
+| `customerLanguagesBlock` / `teachingLanguagesBlock` | `@/lib/profile-form/merged-states` | Reusable form-state blocks (`{ defaults, fromProfile, toPayload }`) for the common Languages composition. Pass directly to `BusinessContactSection` `extras` instead of inlining `languagesFromProfile` / `languagesToPayload` boilerplate. |
+| `composeBlocks` / `FormBlock` | `@/lib/profile-form/merged-states` | Generic factory composing N blocks into one merged `defaults` + `fromProfile` + `toPayload`. Use when a new role adds a novel feature block alongside Contact + Languages. |
 
 ## Canonical hooks (`src/lib/hooks/*`)
 

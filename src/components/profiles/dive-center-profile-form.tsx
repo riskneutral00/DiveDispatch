@@ -15,8 +15,7 @@ import {
   buildParentContactDefaults,
   contactFromProfile,
   contactToPayload,
-  languagesFromProfile,
-  languagesToPayload,
+  customerLanguagesBlock,
   type BaseProfileSectionProps,
 } from '@/lib/profile-form'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
@@ -36,15 +35,11 @@ export type DiveCenterLanguagesFormState = {
 export const INITIAL_LANGUAGES_FORM: DiveCenterLanguagesFormState = INITIAL_CUSTOMER_LANGUAGES
 
 export function languagesFromProfileDC(p: Record<string, unknown>): DiveCenterLanguagesFormState {
-  return {
-    customerLanguages: languagesFromProfile(p.customerLanguages as string[] | undefined),
-  }
+  return customerLanguagesBlock.fromProfile(p) as DiveCenterLanguagesFormState
 }
 
 export function languagesToPayloadDC(f: DiveCenterLanguagesFormState): Record<string, unknown> {
-  return {
-    customerLanguages: languagesToPayload(f.customerLanguages),
-  }
+  return customerLanguagesBlock.toPayload(f)
 }
 
 export function DiveCenterContactSection(props: DiveCenterSectionProps) {

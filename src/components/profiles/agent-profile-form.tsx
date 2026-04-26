@@ -12,8 +12,7 @@ import { BusinessContactSection } from '@/components/profiles/business-contact-s
 import {
   INITIAL_CUSTOMER_LANGUAGES,
   buildParentContactDefaults,
-  languagesFromProfile,
-  languagesToPayload,
+  customerLanguagesBlock,
   type BaseProfileSectionProps,
 } from '@/lib/profile-form'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
@@ -75,13 +74,9 @@ export function AgentContactSection(props: BaseProfileSectionProps) {
       schema={agentContactMergedSchema}
       createOverride={(payload) => props.create({ ...payload, associations: [] })}
       extras={{
-        defaults: { customerLanguages: [] as Language[] },
-        fromProfile: (p) => ({
-          customerLanguages: languagesFromProfile(p.customerLanguages as string[] | undefined),
-        }),
-        toPayload: (f) => ({
-          customerLanguages: languagesToPayload((f.customerLanguages as Language[]) ?? []),
-        }),
+        defaults: customerLanguagesBlock.defaults,
+        fromProfile: (p) => customerLanguagesBlock.fromProfile(p),
+        toPayload: (f) => customerLanguagesBlock.toPayload(f as { customerLanguages: Language[] }),
         divider: 'default',
         render: ({ form, setField }) => (
           <>

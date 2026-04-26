@@ -10,6 +10,7 @@ import {
   type ContactFormState as BoatContactFormState,
 } from '@/lib/profile-form'
 import {
+  applyDayToggle,
   boatFleetFromProfile,
   boatFleetToPayload,
   emptyFleet,
@@ -317,5 +318,57 @@ describe('INITIAL_BOAT_FLEET_FORM', () => {
   it('starts with one empty fleet entry', () => {
     expect(INITIAL_BOAT_FLEET_FORM.fleet).toHaveLength(1)
     expect(INITIAL_BOAT_FLEET_FORM.fleet[0]).toEqual(emptyFleet())
+  })
+})
+
+describe('applyDayToggle (same-day exclusivity within a vessel)', () => {
+  function makeVessel(routes: Array<{ daysOfWeek: number[] }>) {
+    return {
+      ...emptyFleet(),
+      boatName: 'V1',
+      maxPax: 10,
+      boatType: 'day_boat' as const,
+      routes: routes.map((r) => ({ venueIds: [], daysOfWeek: r.daysOfWeek })),
+    }
+  }
+
+  it('adding a day to a route removes it from all other routes on the same vessel', () => {
+    const fleet = [
+      makeVessel([
+        { daysOfWeek: [1] }, // route A: Monday
+        { daysOfWeek: [] },  // route B: empty
+      ]),
+    ]
+    const next = applyDayToggle(fleet, 0, 1, 1) // toggle Monday on route B
+    expect(next[0].routes[0].daysOfWeek).toEqual([])      // A loses Monday
+    expect(next[0].routes[1].daysOfWeek).toEqual([1])     // B gains Monday
+  })
+
+  it('toggling a day already on the target route just removes it (no exclusivity sweep)', () => {
+    const fleet = [
+      makeVessel([
+        { daysOfWeek: [1, 3] }, // A: Mon + Wed
+        { daysOfWeek: [2] },    // B: Tue
+      ]),
+    ]
+    const next = applyDayToggle(fleet, 0, 0, 1) // toggle Monday on A (already there)
+    expect(next[0].routes[0].daysOfWeek).toEqual([3]) // A drops Monday
+    expect(next[0].routes[1].daysOfWeek).toEqual([2]) // B unchanged
+  })
+
+  it('exclusivity does NOT cross vessels — toggling on V1 does not affect V2', () => {
+    const fleet = [
+      makeVessel([{ daysOfWeek: [1] }]),  // V1 route 0: Monday
+      makeVessel([{ daysOfWeek: [1] }]),  // V2 route 0: Monday
+    ]
+    const next = applyDayToggle(fleet, 0, 0, 2) // add Tuesday to V1 route 0
+    expect(next[0].routes[0].daysOfWeek).toEqual([1, 2]) // V1 grows
+    expect(next[1].routes[0].daysOfWeek).toEqual([1])    // V2 untouched
+  })
+
+  it('returns same-shape structure when toggling on a non-existent route index', () => {
+    const fleet = [makeVessel([{ daysOfWeek: [1] }])]
+    const next = applyDayToggle(fleet, 0, 99, 2) // out-of-bounds route
+    expect(next).toEqual(fleet)
   })
 })

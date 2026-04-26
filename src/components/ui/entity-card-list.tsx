@@ -5,6 +5,8 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
 import { ItemCard } from '@/components/ui/item-card'
 
+export type EntityCardListLayout = 'grid' | 'stack'
+
 interface EntityCardListProps<T> {
   label: string
   items: T[]
@@ -21,6 +23,13 @@ interface EntityCardListProps<T> {
   className?: string
   onAdd?: () => void
   onRemove?: (item: T, index: number) => void
+  layout?: EntityCardListLayout
+  hideEmptyState?: boolean
+}
+
+const LAYOUT_CLASS: Record<EntityCardListLayout, string> = {
+  grid: 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3',
+  stack: 'space-y-3',
 }
 
 export function EntityCardList<T>({
@@ -39,6 +48,8 @@ export function EntityCardList<T>({
   className,
   onAdd,
   onRemove,
+  layout = 'grid',
+  hideEmptyState = false,
 }: EntityCardListProps<T>) {
   const canAdd = maxItems === undefined || items.length < maxItems
   const canRemoveAt = items.length > minItems
@@ -69,12 +80,14 @@ export function EntityCardList<T>({
       />
       <div className="mt-3">
         {items.length === 0 ? (
-          <EmptyState
-            message={emptyMessage ?? 'No items yet'}
-            className="glass-container rounded-theme"
-          />
+          hideEmptyState ? null : (
+            <EmptyState
+              message={emptyMessage ?? 'No items yet'}
+              className="glass-container rounded-theme"
+            />
+          )
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+          <div className={LAYOUT_CLASS[layout]}>
             {items.map((item, index) => (
               <ItemCard
                 key={itemKey ? itemKey(item, index) : index}
