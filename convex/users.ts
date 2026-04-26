@@ -22,7 +22,8 @@ import { isAdult, MIN_SIGNUP_AGE_YEARS } from './lib/timeConstants'
 import { normalizeAppLanguageOrThrow, assertPhoneE164 } from './lib/validators'
 import { readOrgClaims } from './lib/activeOrg'
 import { parseTokenIdentifier, isAllowedRebind } from './lib/tokenIdentifier'
-import { insertUserRole, getAllUserRoles } from './lib/userRoleHelpers'
+import { insertUserRole, getAllUserRoles, type PermissionLevel } from './lib/userRoleHelpers'
+import { clerkRoleToPermissionLevel } from './userRoles'
 import { setUserOrganization } from './lib/userOrg'
 import { ensureSystemThemesInline } from './lib/ensureSystemThemes'
 import { ROLE_PRECEDENCE } from './lib/rolePrecedence'
@@ -110,7 +111,7 @@ export const createUser = mutation({
     const email = identity.email ?? ''
     const now = Date.now()
 
-    const { orgId: clerkOrgId } = readOrgClaims(identity)
+    const { orgId: clerkOrgId, orgRole: clerkOrgRole } = readOrgClaims(identity)
     let activeOrgId: Id<'organizations'> | undefined
     if (clerkOrgId) {
       const clerkOrg = await ctx.db
@@ -119,6 +120,9 @@ export const createUser = mutation({
         .unique()
       if (clerkOrg) activeOrgId = clerkOrg._id
     }
+    const jwtPermissionLevel: PermissionLevel = clerkRoleToPermissionLevel(
+      clerkOrgRole === 'admin' ? 'org:admin' : 'org:member',
+    )
 
     if (existing) {
       await ctx.db.patch(existing._id, {
@@ -151,13 +155,15 @@ export const createUser = mutation({
           .collect() // bounded: per-user roles, max ~12
         const existingRoleSet = new Set(existingRoles.map((r) => r.role))
         const uniqueRoles = [...new Set(args.roles)]
+        const permissionLevel: PermissionLevel =
+          activeOrgId && resolvedOrgId === activeOrgId ? jwtPermissionLevel : 'admin'
         for (const role of uniqueRoles) {
           if (!existingRoleSet.has(role)) {
             await insertUserRole(ctx, { // batch-exempt: roles is a tiny bounded array (user-selected roles, max ~5)
               userId: existing._id,
               role,
               organizationId: resolvedOrgId,
-              permissionLevel: 'admin',
+              permissionLevel,
               createdAt: now,
             })
           }
@@ -195,12 +201,14 @@ export const createUser = mutation({
     if (args.roles && args.roles.length > 0) {
       const uniqueRoles = [...new Set(args.roles)]
       const insertAt = Date.now()
+      const permissionLevel: PermissionLevel =
+        activeOrgId && resolvedOrgId === activeOrgId ? jwtPermissionLevel : 'admin'
       for (let i = 0; i < uniqueRoles.length; i++) {
         await insertUserRole(ctx, { // batch-exempt: roles is a tiny bounded array (user-selected roles, max ~5)
           userId,
           role: uniqueRoles[i],
           organizationId: resolvedOrgId,
-          permissionLevel: 'admin',
+          permissionLevel,
           createdAt: insertAt,
         })
       }

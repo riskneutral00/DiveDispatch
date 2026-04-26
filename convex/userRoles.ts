@@ -1,7 +1,7 @@
 import { ConvexError, v } from 'convex/values'
 import { mutation, query, internalMutation } from './_generated/server'
 import { getAuthUser, OPERATOR_ROLE_SET, authorize } from './lib/auth'
-import { getAllUserRoles, getUserRolesInOrg, insertUserRole, type PermissionLevel } from './lib/userRoleHelpers'
+import { getAllUserRoles, getUserRolesInOrg, insertUserRole, findMembership, type PermissionLevel } from './lib/userRoleHelpers'
 import type { QueryCtx, MutationCtx } from './_generated/server'
 import type { Id, Doc } from './_generated/dataModel'
 import { stakeholderTypeValidator as stakeholderType, effectiveResourceType } from './lib/validators'
@@ -139,11 +139,14 @@ export const addRole = mutation({
       throw new ConvexError({ code: ErrorCode.FORBIDDEN, reason: 'no_active_org' })
     }
 
+    const membership = await findMembership(ctx, user._id, user.organizationId)
+    const permissionLevel: PermissionLevel = membership?.permissionLevel ?? 'member'
+
     return insertUserRole(ctx, {
       userId: user._id,
       role,
       organizationId: user.organizationId,
-      permissionLevel: 'admin',
+      permissionLevel,
     })
   },
 })
@@ -307,7 +310,7 @@ async function deleteProfileForRole(
   if (p) await deleteDynamic(ctx.db, p._id)
 }
 
-function clerkRoleToPermissionLevel(role: string | undefined): PermissionLevel {
+export function clerkRoleToPermissionLevel(role: string | undefined): PermissionLevel {
   return role === 'org:admin' ? 'admin' : 'member'
 }
 
@@ -384,6 +387,39 @@ export const deleteFromMembershipWebhook = internalMutation({
     const rows = await getUserRolesInOrg(ctx, found.user._id, found.org._id)
 
     await batchDelete(ctx, rows)
+
+    for (const row of rows) {
+      const resourceType = effectiveResourceType(row.role)
+      if (resourceType === 'Venue') {
+        const venues = await ctx.db
+          .query('venues')
+          .withIndex('by_organizationId', (q) => q.eq('organizationId', row.organizationId))
+          .collect() // bounded: per-org venue count, realistic cap ~20
+        for (const venue of venues) {
+          await cleanupInventoryForOwner(ctx, venue.slug, 'Venue')
+        }
+      } else if (resourceType) {
+        await cleanupInventoryForOwner(ctx, found.user.slug, resourceType)
+      }
+
+      await deleteProfileForRole(ctx, row.role, row.organizationId)
+
+      const prefs = await ctx.db
+        .query('stakeholderPreferences')
+        .withIndex('by_stakeholderId', (q) => q.eq('stakeholderId', found.user.slug))
+        .collect() // bounded: per-user roles, max ~12
+      const rolePrefs = prefs.filter((p) => p.stakeholderType === row.role)
+      await batchDelete(ctx, rolePrefs)
+
+      const blockedDates = await ctx.db
+        .query('stakeholderBlockedDates')
+        .withIndex('by_stakeholderId_roleType', (q) =>
+          q.eq('stakeholderId', found.user.slug).eq('roleType', row.role),
+        )
+        .collect() // bounded: per-user roles, max ~12
+      await batchDelete(ctx, blockedDates)
+    }
+
     return { deleted: rows.length }
   },
 })

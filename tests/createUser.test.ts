@@ -784,4 +784,103 @@ describe('createUser + updateProfile — phone validation at boundary', () => {
         .mutation(api.users.updateProfile, { phone: '' }),
     ).resolves.not.toThrow()
   })
+
+  describe('permissionLevel derivation (no privilege escalation)', () => {
+    it('JWT orgRole=member on existing Clerk-backed org → userRoles.permissionLevel=member', async () => {
+      const t = makeT()
+      const tokenIdentifier = 'clerk|jwt-member'
+      const clerkOrgIdClaim = 'org_existing_clerk'
+
+      await t.run(async (ctx) => {
+        const now = Date.now()
+        await ctx.db.insert('organizations', {
+          slug: 'existing-org',
+          name: 'Existing',
+          clerkOrgId: clerkOrgIdClaim,
+          createdAt: now,
+          updatedAt: now,
+        })
+      })
+
+      vi.useFakeTimers({ now: Date.now() })
+      await t
+        .withIdentity({
+          tokenIdentifier,
+          orgId: clerkOrgIdClaim,
+          orgRole: 'member',
+          orgSlug: 'existing-org',
+        })
+        .mutation(api.users.createUser, {
+          ...createUserDefaults,
+          role: 'Instructor',
+          roles: ['Instructor'],
+        })
+      await t.finishAllScheduledFunctions(vi.runAllTimers)
+      vi.useRealTimers()
+
+      const rows = await t.run(async (ctx) =>
+        ctx.db.query('userRoles').collect(),
+      )
+      expect(rows).toHaveLength(1)
+      expect(rows[0]?.role).toBe('Instructor')
+      expect(rows[0]?.permissionLevel).toBe('member')
+    })
+
+    it('JWT orgRole=admin on existing Clerk-backed org → permissionLevel=admin', async () => {
+      const t = makeT()
+      const tokenIdentifier = 'clerk|jwt-admin'
+      const clerkOrgIdClaim = 'org_admin_clerk'
+
+      await t.run(async (ctx) => {
+        const now = Date.now()
+        await ctx.db.insert('organizations', {
+          slug: 'admin-org',
+          name: 'Admin Org',
+          clerkOrgId: clerkOrgIdClaim,
+          createdAt: now,
+          updatedAt: now,
+        })
+      })
+
+      vi.useFakeTimers({ now: Date.now() })
+      await t
+        .withIdentity({
+          tokenIdentifier,
+          orgId: clerkOrgIdClaim,
+          orgRole: 'admin',
+          orgSlug: 'admin-org',
+        })
+        .mutation(api.users.createUser, {
+          ...createUserDefaults,
+          role: 'DiveCenter',
+          roles: ['DiveCenter'],
+        })
+      await t.finishAllScheduledFunctions(vi.runAllTimers)
+      vi.useRealTimers()
+
+      const rows = await t.run(async (ctx) =>
+        ctx.db.query('userRoles').collect(),
+      )
+      expect(rows[0]?.permissionLevel).toBe('admin')
+    })
+
+    it('Personal-org branch (no clerkOrgId claim) keeps creator as admin', async () => {
+      const t = makeT()
+      vi.useFakeTimers({ now: Date.now() })
+      await t
+        .withIdentity({ tokenIdentifier: 'clerk|personal-admin' })
+        .mutation(api.users.createUser, {
+          ...createUserDefaults,
+          role: 'DiveCenter',
+          roles: ['DiveCenter'],
+        })
+      await t.finishAllScheduledFunctions(vi.runAllTimers)
+      vi.useRealTimers()
+
+      const rows = await t.run(async (ctx) =>
+        ctx.db.query('userRoles').collect(),
+      )
+      expect(rows[0]?.permissionLevel).toBe('admin')
+    })
+  })
 })

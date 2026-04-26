@@ -9,7 +9,12 @@ export async function visibleOrgIds(ctx: DbCtx): Promise<Id<'organizations'>[]> 
   const myOrg = await tryGetActiveOrg(ctx)
   if (!myOrg) return []
   const destinationIds = myOrg.destinationIds ?? []
-  return [...destinationIds, myOrg._id]
+  if (destinationIds.length === 0) return [myOrg._id]
+  const destinations = await batchGet(ctx, destinationIds)
+  const liveIds = destinations
+    .filter((o): o is NonNullable<typeof o> => o !== null && o.deletedAt === undefined)
+    .map((o) => o._id)
+  return [...liveIds, myOrg._id]
 }
 
 export async function assertDestinationOrgsValid(
@@ -21,6 +26,9 @@ export async function assertDestinationOrgsValid(
     const org = orgs[i]
     if (!org) {
       throw new ConvexError({ code: ErrorCode.NOT_FOUND, reason: 'destination_org_not_found' })
+    }
+    if (org.deletedAt !== undefined) {
+      throw new ConvexError({ code: ErrorCode.VALIDATION, reason: 'destination_org_deleted' })
     }
     if (org.isAreaOrg !== true) {
       throw new ConvexError({ code: ErrorCode.VALIDATION, reason: 'not_an_area_org' })

@@ -35,6 +35,12 @@ export const run = mutation({
         reason: `No organization with clerkOrgId '${args.fromClerkOrgId}'`,
       })
     }
+    if (fromOrg.deletedAt !== undefined) {
+      throw new ConvexError({
+        code: ErrorCode.VALIDATION,
+        reason: `Refusing rebind: fromOrg '${fromOrg.slug}' is soft-deleted. Restore it via restoreOrg first.`,
+      })
+    }
 
     const toOrg = await ctx.db
       .query('organizations')

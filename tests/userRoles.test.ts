@@ -193,6 +193,55 @@ describe('userRoles.addRole', () => {
       makeT().mutation(api.userRoles.addRole, { role: 'Boat' }),
     ).rejects.toThrow(/UNAUTHENTICATED/)
   })
+
+  it('inherits permissionLevel=member from caller\'s existing membership row', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => {
+      const userId = await seedUser(ctx, { skipUserRoles: true })
+      const organizationId = await getOrCreateTestOrg(ctx, userId)
+      await ctx.db.insert('userRoles', {
+        userId,
+        role: 'DiveCenter',
+        organizationId,
+        permissionLevel: 'member',
+        createdAt: Date.now(),
+      })
+    })
+
+    await t
+      .withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter })
+      .mutation(api.userRoles.addRole, { role: 'Boat' })
+
+    const rows = await t.run(async (ctx) =>
+      (await ctx.db.query('userRoles').collect()).filter((r) => r.role === 'Boat'),
+    )
+    expect(rows).toHaveLength(1)
+    expect(rows[0]?.permissionLevel).toBe('member')
+  })
+
+  it('inherits permissionLevel=admin when existing membership is admin', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => {
+      const userId = await seedUser(ctx, { skipUserRoles: true })
+      const organizationId = await getOrCreateTestOrg(ctx, userId)
+      await ctx.db.insert('userRoles', {
+        userId,
+        role: 'DiveCenter',
+        organizationId,
+        permissionLevel: 'admin',
+        createdAt: Date.now(),
+      })
+    })
+
+    await t
+      .withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter })
+      .mutation(api.userRoles.addRole, { role: 'Boat' })
+
+    const rows = await t.run(async (ctx) =>
+      (await ctx.db.query('userRoles').collect()).filter((r) => r.role === 'Boat'),
+    )
+    expect(rows[0]?.permissionLevel).toBe('admin')
+  })
 })
 
 // ─── hasAnyOperatorRole ─────────────────────────────────────────────────────
