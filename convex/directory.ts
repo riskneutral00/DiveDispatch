@@ -256,7 +256,9 @@ export const listByRole = query({
           const rows = await queryDynamicTable(ctx.db, table)
             .withIndex('by_organizationId', (q) => q.eq('organizationId', u.organizationId!))
             .collect() // bounded: per-org entity-role row count
-          return rows.map((row) => ({ user: u, row: row as Record<string, unknown> & { _id: string; slug?: string } }))
+          return rows
+            .filter((row) => (row as { archivedAt?: number }).archivedAt === undefined)
+            .map((row) => ({ user: u, row: row as Record<string, unknown> & { _id: string; slug?: string } }))
         }),
       )
 

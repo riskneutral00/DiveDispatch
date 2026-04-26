@@ -246,13 +246,13 @@ export function PreferredInstructorList(props: ListProps) {
   const [showOverlay, setShowOverlay] = useState(false)
 
   const operatorDefaultAgency = useMemo(() => {
-    const assocs = diveCenterProfile?.associations ?? []
+    const assocs = diveCenterProfile?.[0]?.associations ?? []
     return assocs.length === 1 ? assocs[0].agency : null
   }, [diveCenterProfile])
 
   const operatorDefaultLangs = useMemo(() => {
-    return (diveCenterProfile?.customerLanguages ?? [])
-      .map((code) => {
+    return (diveCenterProfile?.[0]?.customerLanguages ?? [])
+      .map((code: string) => {
         const lang = findLanguageByCode(code)
         return lang ? { code: lang.code, label: lang.label } : null
       })
@@ -450,7 +450,7 @@ export function PreferredInstructorList(props: ListProps) {
             onSpecialtyToggle={handleSpecialtyToggle}
             activeLangs={activeLangs}
             onLangsChange={handleLangsChange}
-            customerLanguageCodes={diveCenterProfile?.customerLanguages ?? []}
+            customerLanguageCodes={diveCenterProfile?.[0]?.customerLanguages ?? []}
             currentCount={slugs.length}
           />
 

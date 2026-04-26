@@ -211,9 +211,23 @@ function BasicStepInner({ role, mutations, onSaved, onBack }: BasicStepInnerProp
       : null,
   )
 
+  const existingProfile = Array.isArray(existing) ? existing[0] ?? null : existing
+
+  const updateForRole = async (payload: Record<string, unknown>) => {
+    if (role === 'DiveCenter') {
+      const dcId = (existingProfile as { _id?: string } | null)?._id
+      if (!dcId) return undefined
+      return (updateMutation as unknown as (args: Record<string, unknown>) => Promise<unknown>)({
+        ...payload,
+        entityId: dcId,
+      })
+    }
+    return (updateMutation as unknown as (args: Record<string, unknown>) => Promise<unknown>)(payload)
+  }
+
   const { form, setField, errors, saving, isValid, loading, handleSubmit } =
     useProfileForm({
-      profile: inheritance === undefined ? undefined : existing,
+      profile: inheritance === undefined ? undefined : existingProfile,
       me,
       schema: contactSchema,
       defaults: inheritedDefaults,
@@ -221,7 +235,7 @@ function BasicStepInner({ role, mutations, onSaved, onBack }: BasicStepInnerProp
       fromMe,
       toPayload: contactToPayload,
       create: createWithRoleExtras,
-      update: updateMutation,
+      update: updateForRole,
       onSaved,
       waitForMeBeforeInit: true,
     })

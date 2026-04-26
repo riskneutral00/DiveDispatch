@@ -30,9 +30,9 @@ describe('05: onboarding profile step — save mutation', () => {
       .withIdentity(orgIdentityFor('dc-assoc'))
       .query(api.diveCenters.mine, {})
 
-    expect(profile).not.toBeNull()
-    expect(profile!.associations).toHaveLength(1)
-    expect(profile!.associations[0]).toMatchObject({ agency: 'PADI', number: 'TH-00123' })
+    expect(profile).toHaveLength(1)
+    expect(profile[0].associations).toHaveLength(1)
+    expect(profile[0].associations[0]).toMatchObject({ agency: 'PADI', number: 'TH-00123' })
   })
 
   it('save mutation persists languages', async () => {
@@ -78,8 +78,8 @@ describe('05: onboarding profile step — save mutation', () => {
       .withIdentity(orgIdentityFor('dc-days'))
       .query(api.diveCenters.mine, {})
 
-    expect(profile).not.toBeNull()
-    expect(profile!.associations[0]?.owDays).toBe(4)
-    expect(profile!.associations[0]?.aowDays).toBe(2)
+    expect(profile).toHaveLength(1)
+    expect(profile[0].associations[0]?.owDays).toBe(4)
+    expect(profile[0].associations[0]?.aowDays).toBe(2)
   })
 })

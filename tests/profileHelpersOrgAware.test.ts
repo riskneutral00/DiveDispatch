@@ -95,11 +95,12 @@ describe('profileMine — org-scope query', () => {
     await t.withIdentity(identity).mutation(api.diveCenters.create, BASE_DC_ARGS)
 
     const mine = await t.withIdentity(identity).query(api.diveCenters.mine, {})
-    expect(mine?.organizationId).toBe(orgDocId)
-    expect(mine?.name).toBe('Hug Ocean')
+    expect(mine).toHaveLength(1)
+    expect(mine[0].organizationId).toBe(orgDocId)
+    expect(mine[0].name).toBe('Hug Ocean')
   })
 
-  it('returns null when no record exists for active org', async () => {
+  it('returns empty array when no record exists for active org', async () => {
     const t = makeT()
     await t.run(async (ctx) => { await seedUser(ctx, 'nothing-dc', 'DiveCenter') })
     const nothingOrgId = await seedOrg(t, 'org_nothing', 'nothing-corp')
@@ -112,7 +113,7 @@ describe('profileMine — org-scope query', () => {
       orgSlug: 'nothing-corp',
     }).query(api.diveCenters.mine, {})
 
-    expect(mine).toBeNull()
+    expect(mine).toEqual([])
   })
 })
 
@@ -135,9 +136,10 @@ describe('profileUpdate — organizationId is protected', () => {
 
     await expect(
       t.withIdentity(identity).mutation(api.diveCenters.update, {
+        entityId: dcId as Id<'diveCenters'>,
         name: 'Renamed',
         organizationId: attackerOrgId,
-      } as unknown as { name: string }),
+      } as unknown as { entityId: Id<'diveCenters'>; name: string }),
     ).rejects.toThrow(/organizationId/)
 
     const dc = await t.run(async (ctx) => ctx.db.get(dcId as Id<'diveCenters'>)) as Doc<'diveCenters'> | null

@@ -42,7 +42,7 @@ describe('diveCenters.create (profile setup)', () => {
     expect(profile?.associations[0].agency).toBe('PADI')
   })
 
-  it('is idempotent — returns existing record ID on second call', async () => {
+  it('second call with distinct name mints distinct row (multi-row)', async () => {
     const t = makeT()
     await t.run(async (ctx) => seedUser(ctx, 'profile-dc-02'))
 
@@ -61,7 +61,7 @@ describe('diveCenters.create (profile setup)', () => {
     const id2 = await t.withIdentity(orgIdentityFor('profile-dc-02'))
       .mutation(api.diveCenters.create, { ...args, name: 'Different Name' })
 
-    expect(id1).toBe(id2)
+    expect(id1).not.toBe(id2)
   })
 
   it('rejects callers who are not DiveCenter role', async () => {

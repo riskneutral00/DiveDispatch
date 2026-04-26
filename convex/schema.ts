@@ -358,6 +358,7 @@ export default defineSchema({
     ...accessControlFields,
     verified: v.boolean(),
     profileComplete: v.optional(v.boolean()),
+    archivedAt: v.optional(v.number()),
   })
     .index('by_organizationId', ['organizationId'])
     .index('by_slug', ['slug']),
@@ -415,6 +416,7 @@ export default defineSchema({
     ...accessControlFields,
     verified: v.boolean(),
     profileComplete: v.optional(v.boolean()),
+    archivedAt: v.optional(v.number()),
   })
     .index('by_organizationId', ['organizationId'])
     .index('by_slug', ['slug']),
@@ -432,6 +434,7 @@ export default defineSchema({
     ...accessControlFields,
     verified: v.boolean(),
     profileComplete: v.optional(v.boolean()),
+    archivedAt: v.optional(v.number()),
   })
     .index('by_organizationId', ['organizationId'])
     .index('by_slug', ['slug']),
@@ -453,6 +456,7 @@ export default defineSchema({
     maxDepth: v.optional(v.number()),
     maxCapacity: v.optional(v.number()),
     profileComplete: v.optional(v.boolean()),
+    archivedAt: v.optional(v.number()),
   })
     .index('by_organizationId', ['organizationId'])
     .index('by_slug', ['slug']),
@@ -475,6 +479,7 @@ export default defineSchema({
     ...accessControlFields,
     verified: v.boolean(),
     profileComplete: v.optional(v.boolean()),
+    archivedAt: v.optional(v.number()),
   })
     .index('by_organizationId', ['organizationId'])
     .index('by_slug', ['slug'])

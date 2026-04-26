@@ -262,7 +262,7 @@ export function BoatFleetSection({ profile: existing, me, create, update, onClos
       create: createOverride,
       update,
       afterSuccessfulSave: async (latestForm) => {
-        const boatId = boatProfile?._id ?? newBoatIdRef.current
+        const boatId = boatProfile?.[0]?._id ?? newBoatIdRef.current
         if (!boatId) return
         await reconcileCompressors({
           boatId,

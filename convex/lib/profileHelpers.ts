@@ -17,7 +17,7 @@ import {
   isPersonRole,
   isEntityRole,
 } from '../shared/roleKinds'
-import { deriveDefaultEntitySlug, assertEntitySlug } from './entitySlug'
+import { assertEntitySlug, mintUniqueEntitySlug } from './entitySlug'
 
 const LANGUAGE_ARRAY_FIELDS: readonly string[] = [
   'customerLanguages',
@@ -123,6 +123,10 @@ export async function personProfileBySlug<R extends PersonRole>(
   return doc as Doc<TableForRole<R>> | null
 }
 
+function isActiveRow(row: unknown): boolean {
+  return (row as { archivedAt?: number } | null)?.archivedAt === undefined
+}
+
 export async function entityProfilesMine<R extends EntityRole>(
   ctx: QueryCtx,
   role: R,
@@ -132,7 +136,7 @@ export async function entityProfilesMine<R extends EntityRole>(
   const docs = await queryDynamicTable(ctx.db, ROLE_SPECS[role].table)
     .withIndex('by_organizationId', (q) => q.eq('organizationId', activeOrg._id))
     .collect() // bounded: per-org entity-role row count, realistic cap ~20
-  return docs as Array<Doc<TableForRole<R>>>
+  return (docs as Array<Doc<TableForRole<R>>>).filter(isActiveRow)
 }
 
 export async function entityProfilesByUser<R extends EntityRole>(
@@ -145,7 +149,7 @@ export async function entityProfilesByUser<R extends EntityRole>(
   const docs = await queryDynamicTable(ctx.db, ROLE_SPECS[role].table)
     .withIndex('by_organizationId', (q) => q.eq('organizationId', user.organizationId!))
     .collect() // bounded: per-org entity-role row count
-  return docs as Array<Doc<TableForRole<R>>>
+  return (docs as Array<Doc<TableForRole<R>>>).filter(isActiveRow)
 }
 
 export async function entityProfileBySlug<R extends EntityRole>(
@@ -156,7 +160,9 @@ export async function entityProfileBySlug<R extends EntityRole>(
   const doc = await queryDynamicTable(ctx.db, ROLE_SPECS[role].table)
     .withIndex('by_slug', (q) => q.eq('slug', slug))
     .unique()
-  return doc as Doc<TableForRole<R>> | null
+  if (!doc) return null
+  if (!isActiveRow(doc as { archivedAt?: number })) return null
+  return doc as Doc<TableForRole<R>>
 }
 
 export async function personProfileUpdate<R extends PersonRole>(
@@ -281,17 +287,21 @@ export async function entityProfileCreate<R extends EntityRole>(
     organizationId: activeOrg._id,
     ...extraDefaults,
   }
-  if (ENTITY_SLUG_TABLES.has(tableName) && insertPayload.slug === undefined) {
-    insertPayload.slug = deriveDefaultEntitySlug(tableName, user.slug)
-  }
-  if (typeof insertPayload.slug === 'string') {
-    assertEntitySlug(insertPayload.slug)
-    const existing = await queryDynamicTable(ctx.db, tableName)
-      .withIndex('by_slug', (q) => q.eq('slug', insertPayload.slug as string))
-      .unique()
-    if (existing) {
-      await setRoleProfileComplete(ctx, user._id, role)
-      return existing._id as Id<TableForRole<R>>
+  if (ENTITY_SLUG_TABLES.has(tableName)) {
+    if (insertPayload.slug === undefined) {
+      const baseName = typeof mergedArgs.name === 'string' && mergedArgs.name.length > 0
+        ? mergedArgs.name
+        : `${user.slug}-${role.toLowerCase()}`
+      insertPayload.slug = await mintUniqueEntitySlug(ctx, tableName, baseName)
+    } else if (typeof insertPayload.slug === 'string') {
+      assertEntitySlug(insertPayload.slug)
+      const existing = await queryDynamicTable(ctx.db, tableName)
+        .withIndex('by_slug', (q) => q.eq('slug', insertPayload.slug as string))
+        .unique()
+      if (existing) {
+        await setRoleProfileComplete(ctx, user._id, role)
+        return existing._id as Id<TableForRole<R>>
+      }
     }
   }
 

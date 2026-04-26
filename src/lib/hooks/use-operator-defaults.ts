@@ -58,7 +58,7 @@ export function useOperatorDefaults(): { defaults: OperatorDefaults; isLoading: 
   const defaults = useMemo<OperatorDefaults>(() => {
     if (!prefs) return EMPTY_DEFAULTS
 
-    const firstDcAssoc = dcProfile?.associations?.[0]
+    const firstDcAssoc = dcProfile?.[0]?.associations?.[0]
     const firstAgentAssoc = agentProfile?.associations?.[0]
     const primaryAgency = firstDcAssoc?.agency ?? firstAgentAssoc?.agency ?? ''
 
@@ -81,7 +81,7 @@ export function useOperatorDefaults(): { defaults: OperatorDefaults; isLoading: 
       preferredEquipmentSlug: pe[0] ?? '',
       preferredCompressorSlug: pc[0] ?? '',
     }
-  }, [prefs, dcProfile?.associations, agentProfile?.associations])
+  }, [prefs, dcProfile, agentProfile?.associations])
 
   return { defaults, isLoading }
 }

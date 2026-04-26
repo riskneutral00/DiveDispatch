@@ -268,7 +268,7 @@ describe('equipmentInventory', () => {
       })
 
       const profile = await auth.query(api.equipment.mine, {})
-      expect(profile?.manufacturersByGearType?.wetsuit).toEqual(['ScubaPro'])
+      expect(profile[0]?.manufacturersByGearType?.wetsuit).toEqual(['ScubaPro'])
     })
 
     it('addItem without manufacturer leaves manufacturersByGearType empty for that gearType', async () => {
@@ -282,7 +282,7 @@ describe('equipmentInventory', () => {
       })
 
       const profile = await auth.query(api.equipment.mine, {})
-      expect(profile?.manufacturersByGearType?.mask ?? []).toEqual([])
+      expect(profile[0]?.manufacturersByGearType?.mask ?? []).toEqual([])
     })
 
     it('updateItem manufacturer swap removes old and adds new', async () => {
@@ -298,7 +298,7 @@ describe('equipmentInventory', () => {
       })
 
       const before = await auth.query(api.equipment.mine, {})
-      expect(before?.manufacturersByGearType?.bcd).toEqual(['Mares'])
+      expect(before[0]?.manufacturersByGearType?.bcd).toEqual(['Mares'])
 
       await auth.mutation(api.equipmentInventory.updateItem, {
         inventoryId,
@@ -306,7 +306,7 @@ describe('equipmentInventory', () => {
       })
 
       const after = await auth.query(api.equipment.mine, {})
-      expect(after?.manufacturersByGearType?.bcd).toEqual(['ScubaPro'])
+      expect(after[0]?.manufacturersByGearType?.bcd).toEqual(['ScubaPro'])
     })
 
     it('removeItem clears gearType entry when last manufacturer item removed', async () => {
@@ -322,12 +322,12 @@ describe('equipmentInventory', () => {
       })
 
       const before = await auth.query(api.equipment.mine, {})
-      expect(before?.manufacturersByGearType?.fins).toEqual(['Cressi'])
+      expect(before[0]?.manufacturersByGearType?.fins).toEqual(['Cressi'])
 
       await auth.mutation(api.equipmentInventory.removeItem, { inventoryId })
 
       const after = await auth.query(api.equipment.mine, {})
-      expect(after?.manufacturersByGearType?.fins ?? []).toEqual([])
+      expect(after[0]?.manufacturersByGearType?.fins ?? []).toEqual([])
     })
 
     it('removeItem of one item keeps other manufacturers for same gearType', async () => {
@@ -349,7 +349,7 @@ describe('equipmentInventory', () => {
       await auth.mutation(api.equipmentInventory.removeItem, { inventoryId: second })
 
       const after = await auth.query(api.equipment.mine, {})
-      expect(after?.manufacturersByGearType?.regulator).toEqual(['Atomic'])
+      expect(after[0]?.manufacturersByGearType?.regulator).toEqual(['Atomic'])
     })
   })
 

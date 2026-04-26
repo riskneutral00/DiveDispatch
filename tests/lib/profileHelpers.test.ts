@@ -112,4 +112,72 @@ describe('profileHelpers — typed person vs entity helpers', () => {
     expect(() => assertEntityRole('Instructor')).toThrow()
     expect(() => assertEntityRole('Compressor')).not.toThrow()
   })
+
+  it('entityProfilesMine filters out archived rows', async () => {
+    const t = makeT()
+    const orgId = await t.run(async (ctx) => {
+      const userId = await seedUserWithOrg(ctx, 'arch-filter', 'DiveCenter')
+      const user = await ctx.db.get(userId)
+      const oid = user!.organizationId!
+      await ctx.db.insert('diveCenters', {
+        organizationId: oid,
+        slug: 'dc-active',
+        name: 'Active DC',
+        address: { city: 'Phuket', country: 'TH' },
+        lat: 7.8, lng: 98.3,
+        email: 'a@test.com', phone: '+66110000001',
+        associations: [],
+        verified: false,
+      })
+      await ctx.db.insert('diveCenters', {
+        organizationId: oid,
+        slug: 'dc-archived',
+        name: 'Archived DC',
+        address: { city: 'Phuket', country: 'TH' },
+        lat: 7.8, lng: 98.3,
+        email: 'b@test.com', phone: '+66110000002',
+        associations: [],
+        verified: false,
+        archivedAt: Date.now(),
+      })
+      return oid
+    })
+
+    const rows = await t.run(async (ctx) => entityProfilesByUser(ctx, (await ctx.db.query('users').withIndex('by_organizationId', (q) => q.eq('organizationId', orgId)).collect())[0]._id, 'DiveCenter'))
+    expect(rows).toHaveLength(1)
+    expect(rows[0].slug).toBe('dc-active')
+  })
+})
+
+describe('mintUniqueEntitySlug', () => {
+  it('produces -2 suffix on collision; cross-table same name does not collide', async () => {
+    const t = makeT()
+    const { dcSlug1, dcSlug2, boatSlug } = await t.run(async (ctx) => {
+      const { mintUniqueEntitySlug } = await import('../../convex/lib/entitySlug')
+      const orgId = await ctx.db.insert('organizations', {
+        slug: 'mint-test', name: 'Mint Test', isAreaOrg: false,
+        createdAt: Date.now(), updatedAt: Date.now(),
+      })
+      await ctx.db.insert('diveCenters', {
+        organizationId: orgId, slug: 'reef',
+        name: 'Reef', address: { city: 'X', country: 'TH' },
+        lat: 0, lng: 0, email: 'x@x', phone: '+660000000000',
+        associations: [], verified: false,
+      })
+      const dc1 = await mintUniqueEntitySlug(ctx, 'diveCenters', 'Reef')
+      // Insert the second to verify the -2 path
+      await ctx.db.insert('diveCenters', {
+        organizationId: orgId, slug: dc1,
+        name: 'Reef again', address: { city: 'X', country: 'TH' },
+        lat: 0, lng: 0, email: 'x@x', phone: '+660000000000',
+        associations: [], verified: false,
+      })
+      const dc2 = await mintUniqueEntitySlug(ctx, 'diveCenters', 'Reef')
+      const boat = await mintUniqueEntitySlug(ctx, 'boats', 'Reef')
+      return { dcSlug1: dc1, dcSlug2: dc2, boatSlug: boat }
+    })
+    expect(dcSlug1).toBe('reef-2')
+    expect(dcSlug2).toBe('reef-3')
+    expect(boatSlug).toBe('reef')
+  })
 })

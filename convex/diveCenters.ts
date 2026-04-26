@@ -2,11 +2,12 @@ import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import {
   entityProfilesMine,
-  entityProfilesByUser,
   entityProfileUpdate,
   entityProfileCreate,
 } from './lib/profileHelpers'
-import { authorize } from './lib/auth'
+import { authorize, assertOrgOwnership } from './lib/auth'
+import { getActiveOrg } from './lib/activeOrg'
+import { setRoleProfileComplete } from './lib/setRoleProfileComplete'
 import { ErrorCode } from './lib/errorCodes'
 import { BASE_PROFILE_CREATE_FIELDS, BASE_PROFILE_UPDATE_FIELDS, ACCESS_CONTROL_FIELDS, BUSINESS_NAME_CREATE_FIELD, BUSINESS_NAME_UPDATE_FIELD } from './lib/validators'
 
@@ -33,6 +34,7 @@ export const create = mutation({
 
 export const update = mutation({
   args: {
+    entityId: v.id('diveCenters'),
     ...BASE_PROFILE_UPDATE_FIELDS,
     ...BUSINESS_NAME_UPDATE_FIELD,
     ...ACCESS_CONTROL_FIELDS,
@@ -40,18 +42,25 @@ export const update = mutation({
     customerLanguages: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
-    const actor = await authorize(ctx, null, 'profile:manage', { type: 'profile' })
-    const rows = await entityProfilesByUser(ctx, actor.user._id, 'DiveCenter')
-    const target = rows[0]
-    if (!target) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
-    return entityProfileUpdate(ctx, target._id, args, 'DiveCenter', actor)
+    const { entityId, ...patch } = args
+    return entityProfileUpdate(ctx, entityId, patch, 'DiveCenter')
+  },
+})
+
+export const archive = mutation({
+  args: { entityId: v.id('diveCenters') },
+  handler: async (ctx, { entityId }) => {
+    const { user } = await authorize(ctx, null, 'profile:manage', { type: 'profile' })
+    const row = await ctx.db.get(entityId)
+    if (!row) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
+    const { org: activeOrg } = await getActiveOrg(ctx)
+    assertOrgOwnership(row, activeOrg)
+    await ctx.db.patch(entityId, { archivedAt: Date.now() })
+    await setRoleProfileComplete(ctx, user._id, 'DiveCenter')
   },
 })
 
 export const mine = query({
   args: {},
-  handler: async (ctx) => {
-    const rows = await entityProfilesMine(ctx, 'DiveCenter')
-    return rows[0] ?? null
-  },
+  handler: async (ctx) => entityProfilesMine(ctx, 'DiveCenter'),
 })

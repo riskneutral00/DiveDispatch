@@ -60,7 +60,7 @@ describe('useOperatorDefaults', () => {
   it('returns empty defaults when preferences are null', () => {
     mockSession = { user: { slug: 'test' }, roles: [{ role: 'DiveCenter' }], status: 'ready' }
     mockWizardPrefs = null
-    queryReturns[0] = { associations: [{ agency: 'PADI', number: '123' }] }
+    queryReturns[0] = [{ associations: [{ agency: 'PADI', number: '123' }] }]
 
     const { result } = renderHook(() => useOperatorDefaults())
     expect(result.current.defaults.agency).toBe('')
@@ -76,9 +76,9 @@ describe('useOperatorDefaults', () => {
       preferredEquipmentSlugs: [],
       preferredCompressorSlugs: [],
     }
-    queryReturns[0] = {
+    queryReturns[0] = [{
       associations: [{ agency: 'PADI', number: '12345' }, { agency: 'SSI', number: '999' }],
-    }
+    }]
 
     const { result } = renderHook(() => useOperatorDefaults())
     expect(result.current.defaults.agency).toBe('PADI')
@@ -94,7 +94,7 @@ describe('useOperatorDefaults', () => {
       preferredEquipmentSlugs: ['equip-1'],
       preferredCompressorSlugs: ['comp-1'],
     }
-    queryReturns[0] = { associations: [{ agency: 'PADI', number: '1' }] }
+    queryReturns[0] = [{ associations: [{ agency: 'PADI', number: '1' }] }]
 
     const { result } = renderHook(() => useOperatorDefaults())
     expect(result.current.defaults.preferredInstructorSlug).toBe('instr-a')
@@ -121,7 +121,7 @@ describe('useOperatorDefaults', () => {
       preferredEquipmentSlugs: [],
       preferredCompressorSlugs: [],
     }
-    queryReturns[0] = { associations: [] }
+    queryReturns[0] = [{ associations: [] }]
 
     const { result } = renderHook(() => useOperatorDefaults())
     expect(result.current.isLoading).toBe(false)

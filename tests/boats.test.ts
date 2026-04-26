@@ -46,28 +46,39 @@ describe('boats.create', () => {
     })
   })
 
-  it('returns existing ID on duplicate create', async () => {
+  it('second create with distinct name mints distinct row (multi-row)', async () => {
     const t = makeT()
     await t.run(async (ctx) => { await seedUser(ctx, 'dup-boat', 'Boat') })
     const identity = orgIdentityFor('dup-boat')
 
     const id1 = await t.withIdentity(identity).mutation(api.boats.create, VALID_BOAT_ARGS)
     const id2 = await t.withIdentity(identity).mutation(api.boats.create, { ...VALID_BOAT_ARGS, name: 'Different' })
-    expect(id1).toBe(id2)
+    expect(id1).not.toBe(id2)
   })
 })
 
 describe('boats.update', () => {
   it('rejects unauthenticated callers', async () => {
     const t = makeT()
-    await expect(t.mutation(api.boats.update, { name: 'New' })).rejects.toThrow(/UNAUTHENTICATED/)
+    let boatId: Awaited<ReturnType<typeof seedBoatProfile>> | undefined
+    await t.run(async (ctx) => {
+      const userId = await seedUser(ctx, 'unauth-boat', 'Boat')
+      boatId = await seedBoatProfile(ctx, userId)
+    })
+    await expect(t.mutation(api.boats.update, { entityId: boatId!, name: 'New' })).rejects.toThrow(/UNAUTHENTICATED/)
   })
 
-  it('rejects when no profile exists', async () => {
+  it('rejects when entity does not exist', async () => {
     const t = makeT()
-    await t.run(async (ctx) => { await seedUser(ctx, 'no-profile', 'Boat') })
+    let stranger: Awaited<ReturnType<typeof seedBoatProfile>> | undefined
+    await t.run(async (ctx) => {
+      const ownerId = await seedUser(ctx, 'stranger-boat-owner', 'Boat')
+      stranger = await seedBoatProfile(ctx, ownerId)
+      await ctx.db.delete(stranger)
+      await seedUser(ctx, 'no-profile', 'Boat')
+    })
     await expect(
-      t.withIdentity(orgIdentityFor('no-profile')).mutation(api.boats.update, { name: 'New' }),
+      t.withIdentity(orgIdentityFor('no-profile')).mutation(api.boats.update, { entityId: stranger!, name: 'New' }),
     ).rejects.toThrow(/NOT_FOUND/)
   })
 
@@ -80,7 +91,7 @@ describe('boats.update', () => {
     })
 
     await t.withIdentity(orgIdentityFor('upd-boat'))
-      .mutation(api.boats.update, { name: 'Updated Boat' })
+      .mutation(api.boats.update, { entityId: boatId!, name: 'Updated Boat' })
 
     await t.run(async (ctx) => {
       const boat = await ctx.db.get(boatId!) as Doc<'boats'> | null
@@ -91,17 +102,17 @@ describe('boats.update', () => {
 })
 
 describe('boats.mine', () => {
-  it('returns null for unauthenticated callers', async () => {
+  it('returns empty array for unauthenticated callers', async () => {
     const t = makeT()
-    expect(await t.query(api.boats.mine, {})).toBeNull()
+    expect(await t.query(api.boats.mine, {})).toEqual([])
   })
 
-  it('returns null when no profile exists', async () => {
+  it('returns empty array when no profile exists', async () => {
     const t = makeT()
     await t.run(async (ctx) => { await seedUser(ctx, 'no-boat', 'Boat') })
     expect(
       await t.withIdentity(orgIdentityFor('no-boat')).query(api.boats.mine, {}),
-    ).toBeNull()
+    ).toEqual([])
   })
 
   it('returns boat profile for owner', async () => {
@@ -112,8 +123,8 @@ describe('boats.mine', () => {
     })
 
     const result = await t.withIdentity(orgIdentityFor('my-boat')).query(api.boats.mine, {})
-    expect(result).not.toBeNull()
-    expect(result!.name).toBe('Test Boat')
+    expect(result).toHaveLength(1)
+    expect(result[0].name).toBe('Test Boat')
   })
 })
 

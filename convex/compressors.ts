@@ -13,6 +13,7 @@ import { setRoleProfileComplete } from './lib/setRoleProfileComplete'
 import { cleanupInventoryForOwner } from './lib/inventoryCleanup'
 import { isActiveReservation } from './bookings/_shared'
 import { batchDelete } from './lib/batch'
+import { mintUniqueEntitySlug } from './lib/entitySlug'
 
 function validateNitroxRange(args: { nitroxMin?: number; nitroxMax?: number }) {
   if (args.nitroxMin !== undefined || args.nitroxMax !== undefined) {
@@ -55,21 +56,6 @@ async function assertLocationRefsConsistent(
   }
 }
 
-async function mintUniqueCompressorSlug(ctx: MutationCtx, baseName: string): Promise<string> {
-  const base = baseName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'compressor'
-  let candidate = base
-  let suffix = 1
-  while (true) {
-    const existing = await ctx.db
-      .query('compressors')
-      .withIndex('by_slug', (q) => q.eq('slug', candidate))
-      .unique()
-    if (!existing) return candidate
-    suffix += 1
-    candidate = `${base}-${suffix}`
-  }
-}
-
 export const create = mutation({
   args: {
     ...BASE_PROFILE_CREATE_FIELDS,
@@ -107,7 +93,7 @@ export const create = mutation({
       venueId: args.venueId,
     }, activeOrg)
 
-    const slug = await mintUniqueCompressorSlug(ctx, args.name)
+    const slug = await mintUniqueEntitySlug(ctx, 'compressors', args.name)
 
     const id = await ctx.db.insert('compressors', {
       ...args,
@@ -222,10 +208,11 @@ export const mine = query({
   handler: async (ctx) => {
     const activeOrg = await tryGetActiveOrg(ctx)
     if (!activeOrg) return []
-    return await ctx.db
+    const rows = await ctx.db
       .query('compressors')
       .withIndex('by_organizationId', (q) => q.eq('organizationId', activeOrg._id))
       .collect() // bounded: per-org compressor count, realistic cap ~10
+    return rows.filter((row) => row.archivedAt === undefined)
   },
 })
 
@@ -242,7 +229,7 @@ export const visibleToMe = query({
           .collect(), // bounded: per-org compressor count, realistic cap ~10
       ),
     )
-    return results.flat()
+    return results.flat().filter((row) => row.archivedAt === undefined)
   },
 })
 

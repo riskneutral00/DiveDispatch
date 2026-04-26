@@ -209,10 +209,11 @@ export const mine = query({
   handler: async (ctx) => {
     const activeOrg = await tryGetActiveOrg(ctx)
     if (!activeOrg) return []
-    return await ctx.db
+    const rows = await ctx.db
       .query('venues')
       .withIndex('by_organizationId', (q) => q.eq('organizationId', activeOrg._id))
       .collect() // bounded: per-org venue count, realistic cap ~20
+    return rows.filter((row) => row.archivedAt === undefined)
   },
 })
 
@@ -229,7 +230,7 @@ export const visibleToMe = query({
           .collect(), // bounded: per-org venue count, realistic cap ~20
       ),
     )
-    return results.flat()
+    return results.flat().filter((row) => row.archivedAt === undefined)
   },
 })
 

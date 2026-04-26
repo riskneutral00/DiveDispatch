@@ -10,7 +10,7 @@ type MinimalCompressor = Pick<
 
 type MinimalVenue = Pick<Doc<'venues'>, '_id' | 'name'>
 
-let boatProfile: Pick<Doc<'boats'>, '_id'> | null = null
+let boatProfile: Array<Pick<Doc<'boats'>, '_id'>> = []
 let compressors: MinimalCompressor[] = []
 let venues: MinimalVenue[] = []
 
@@ -86,7 +86,7 @@ const baseProps = {
 
 beforeEach(() => {
   vi.clearAllMocks()
-  boatProfile = null
+  boatProfile = []
   compressors = []
   venues = []
   HTMLDialogElement.prototype.show = vi.fn(function (this: HTMLDialogElement) {
@@ -218,7 +218,7 @@ describe('BoatFleetSection — venue multi-select populates routes[].venueIds', 
 describe('BoatFleetSection — edit path removes onboard compressor when unchecked', () => {
   it('calls removeCompressor for the vessel whose name matches the existing onboard compressor', async () => {
     const existingBoatId = 'boat-existing' as Id<'boats'>
-    boatProfile = { _id: existingBoatId } as Pick<Doc<'boats'>, '_id'>
+    boatProfile = [{ _id: existingBoatId } as Pick<Doc<'boats'>, '_id'>]
 
     const compressorId = 'compressor-onboard' as Id<'compressors'>
     compressors = [

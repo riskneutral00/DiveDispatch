@@ -32,7 +32,7 @@ describe('architecture: new-stakeholder invariants', () => {
     expect([...declared].sort()).toEqual(Object.keys(ROLE_SPECS).sort())
   })
 
-  it('every entity-role table declares slug + by_slug + profileComplete', () => {
+  it('every entity-role table declares slug + by_slug + profileComplete + archivedAt', () => {
     for (const role of ENTITY_ROLES) {
       const tableName = ROLE_SPECS[role].table
       const section = tableSection(tableName)
@@ -40,6 +40,7 @@ describe('architecture: new-stakeholder invariants', () => {
       expect(section, `${tableName}.slug field`).toMatch(/\bslug:\s*v\.string\(\)/)
       expect(section, `${tableName} by_slug index`).toMatch(/\.index\(\s*['"]by_slug['"]\s*,\s*\[['"]slug['"]\]\)/)
       expect(section, `${tableName}.profileComplete field`).toMatch(/profileComplete:\s*v\.optional\(v\.boolean\(\)\)/)
+      expect(section, `${tableName}.archivedAt field`).toMatch(/archivedAt:\s*v\.optional\(v\.number\(\)\)/)
     }
   })
 

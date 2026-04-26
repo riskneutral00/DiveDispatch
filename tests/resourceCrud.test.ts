@@ -36,18 +36,22 @@ const COMMON_LOCATION = {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type CrudApi = { create: any; update: any; mine: any }
 
-const RESOURCE_CONFIGS: Array<{
+type ResourceConfig = {
   name: string
   apiModule: CrudApi
   role: Doc<'userRoles'>['role']
+  kind: 'person' | 'entity'
   createArgs: Record<string, unknown>
   updateArgs: Record<string, unknown>
   uniqueField: string
-}> = [
+}
+
+const RESOURCE_CONFIGS: Array<ResourceConfig> = [
   {
     name: 'equipment',
     apiModule: api.equipment as CrudApi,
     role: 'Equipment',
+    kind: 'entity',
     createArgs: { name: 'Test Equip', ...COMMON_LOCATION },
     updateArgs: { name: 'Updated Equip' },
     uniqueField: 'name',
@@ -56,6 +60,7 @@ const RESOURCE_CONFIGS: Array<{
     name: 'boats',
     apiModule: api.boats as CrudApi,
     role: 'Boat',
+    kind: 'entity',
     createArgs: { name: 'Test Boat', ...COMMON_LOCATION, fleet: [] },
     updateArgs: { name: 'Updated Boat' },
     uniqueField: 'name',
@@ -67,6 +72,7 @@ const RESOURCE_CONFIGS: Array<{
     name: 'diveStaff',
     apiModule: api.diveStaff as CrudApi,
     role: 'Instructor',
+    kind: 'person',
     createArgs: {
       address: { city: 'Koh Tao', country: 'TH' },
       lat: 10.09,
@@ -87,6 +93,7 @@ const RESOURCE_CONFIGS: Array<{
     name: 'diveCenters',
     apiModule: api.diveCenters as CrudApi,
     role: 'DiveCenter',
+    kind: 'entity',
     createArgs: {
       name: 'Test DC',
       ...COMMON_LOCATION,
@@ -144,30 +151,59 @@ for (const config of RESOURCE_CONFIGS) {
         })
       })
 
-      it('returns existing ID on duplicate create (idempotent)', async () => {
-        const t = makeT()
-        const slug = `${config.name}-dup`
-        await t.run(async (ctx) => {
-          await seedUserWithOrg(ctx, slug, config.role)
-        })
+      it(
+        config.kind === 'person'
+          ? 'returns existing ID on duplicate create (idempotent)'
+          : 'second create with distinct unique-field mints distinct row (multi-row entity)',
+        async () => {
+          const t = makeT()
+          const slug = `${config.name}-dup`
+          await t.run(async (ctx) => {
+            await seedUserWithOrg(ctx, slug, config.role)
+          })
 
-        const id1 = await t.withIdentity(orgIdentityFor(slug))
-          .mutation(config.apiModule.create, config.createArgs)
-        const id2 = await t.withIdentity(orgIdentityFor(slug))
-          .mutation(config.apiModule.create, { ...config.createArgs, [config.uniqueField]: 'different-marker-value' })
+          const id1 = await t.withIdentity(orgIdentityFor(slug))
+            .mutation(config.apiModule.create, config.createArgs)
+          const id2 = await t.withIdentity(orgIdentityFor(slug))
+            .mutation(config.apiModule.create, { ...config.createArgs, [config.uniqueField]: 'different-marker-value' })
 
-        expect(id1).toBe(id2)
-      })
+          if (config.kind === 'person') {
+            expect(id1).toBe(id2)
+          } else {
+            expect(id1).not.toBe(id2)
+          }
+        },
+      )
     })
 
     // ── update ──
 
+    const buildUpdateArgs = async (
+      t: ReturnType<typeof makeT>,
+      slug: string,
+    ): Promise<Record<string, unknown>> => {
+      if (config.kind === 'person') return config.updateArgs
+      const id = await t.withIdentity(orgIdentityFor(slug))
+        .mutation(config.apiModule.create, config.createArgs)
+      return { ...config.updateArgs, entityId: id }
+    }
+
     describe(`${config.name}.update`, () => {
       it('rejects unauthenticated caller', async () => {
         const t = makeT()
-        await expect(
-          t.mutation(config.apiModule.update, config.updateArgs),
-        ).rejects.toThrow(/UNAUTHENTICATED/)
+        if (config.kind === 'entity') {
+          // Need a real id for the validator to accept the call before auth check.
+          const slug = `${config.name}-unauth`
+          await t.run(async (ctx) => {
+            await seedUserWithOrg(ctx, slug, config.role)
+          })
+          const args = await buildUpdateArgs(t, slug)
+          await expect(t.mutation(config.apiModule.update, args)).rejects.toThrow(/UNAUTHENTICATED/)
+        } else {
+          await expect(
+            t.mutation(config.apiModule.update, config.updateArgs),
+          ).rejects.toThrow(/UNAUTHENTICATED/)
+        }
       })
 
       it('rejects when no profile exists', async () => {
@@ -177,10 +213,27 @@ for (const config of RESOURCE_CONFIGS) {
           await seedUserWithOrg(ctx, slug, config.role)
         })
 
-        await expect(
-          t.withIdentity(orgIdentityFor(slug))
-            .mutation(config.apiModule.update, config.updateArgs),
-        ).rejects.toThrow(/NOT_FOUND/)
+        if (config.kind === 'entity') {
+          const otherSlug = `${config.name}-otherowner`
+          let strangerId: unknown
+          await t.run(async (ctx) => {
+            await seedUserWithOrg(ctx, otherSlug, config.role)
+          })
+          strangerId = await t.withIdentity(orgIdentityFor(otherSlug))
+            .mutation(config.apiModule.create, config.createArgs)
+          await t.run(async (ctx) => {
+            await ctx.db.delete(strangerId as Id<'diveCenters'>)
+          })
+          await expect(
+            t.withIdentity(orgIdentityFor(slug))
+              .mutation(config.apiModule.update, { ...config.updateArgs, entityId: strangerId }),
+          ).rejects.toThrow(/NOT_FOUND/)
+        } else {
+          await expect(
+            t.withIdentity(orgIdentityFor(slug))
+              .mutation(config.apiModule.update, config.updateArgs),
+          ).rejects.toThrow(/NOT_FOUND/)
+        }
       })
 
       it('updates profile fields', async () => {
@@ -190,13 +243,14 @@ for (const config of RESOURCE_CONFIGS) {
           await seedUserWithOrg(ctx, slug, config.role)
         })
 
-        // Create first
         const id = await t.withIdentity(orgIdentityFor(slug))
           .mutation(config.apiModule.create, config.createArgs)
 
-        // Update
+        const updateArgs = config.kind === 'entity'
+          ? { ...config.updateArgs, entityId: id }
+          : config.updateArgs
         await t.withIdentity(orgIdentityFor(slug))
-          .mutation(config.apiModule.update, config.updateArgs)
+          .mutation(config.apiModule.update, updateArgs)
 
         await t.run(async (ctx) => {
           const record = await ctx.db.get(id) as Record<string, unknown> | null
@@ -213,12 +267,15 @@ for (const config of RESOURCE_CONFIGS) {
           await seedUserWithOrg(ctx, slug, config.role)
         })
 
-        await t.withIdentity(orgIdentityFor(slug))
+        const id = await t.withIdentity(orgIdentityFor(slug))
           .mutation(config.apiModule.create, config.createArgs)
 
+        const updateArgs = config.kind === 'entity'
+          ? { ...config.updateArgs, entityId: id, verified: true }
+          : { ...config.updateArgs, verified: true }
         await expect(
           t.withIdentity(orgIdentityFor(slug))
-            .mutation(config.apiModule.update, { ...config.updateArgs, verified: true }),
+            .mutation(config.apiModule.update, updateArgs),
         ).rejects.toThrow(/verified/)
       })
     })
@@ -226,23 +283,37 @@ for (const config of RESOURCE_CONFIGS) {
     // ── mine ──
 
     describe(`${config.name}.mine`, () => {
-      it('returns null for unauthenticated caller', async () => {
-        const t = makeT()
-        const result = await t.query(config.apiModule.mine, {})
-        expect(result).toBeNull()
-      })
+      it(
+        config.kind === 'person' ? 'returns null for unauthenticated caller' : 'returns empty array for unauthenticated caller',
+        async () => {
+          const t = makeT()
+          const result = await t.query(config.apiModule.mine, {})
+          if (config.kind === 'person') {
+            expect(result).toBeNull()
+          } else {
+            expect(result).toEqual([])
+          }
+        },
+      )
 
-      it('returns null when no profile exists', async () => {
-        const t = makeT()
-        const slug = `${config.name}-nomine`
-        await t.run(async (ctx) => {
-          await seedUserWithOrg(ctx, slug, config.role)
-        })
+      it(
+        config.kind === 'person' ? 'returns null when no profile exists' : 'returns empty array when no profile exists',
+        async () => {
+          const t = makeT()
+          const slug = `${config.name}-nomine`
+          await t.run(async (ctx) => {
+            await seedUserWithOrg(ctx, slug, config.role)
+          })
 
-        const result = await t.withIdentity(orgIdentityFor(slug))
-          .query(config.apiModule.mine, {})
-        expect(result).toBeNull()
-      })
+          const result = await t.withIdentity(orgIdentityFor(slug))
+            .query(config.apiModule.mine, {})
+          if (config.kind === 'person') {
+            expect(result).toBeNull()
+          } else {
+            expect(result).toEqual([])
+          }
+        },
+      )
 
       it('returns own profile when it exists', async () => {
         const t = makeT()
@@ -256,8 +327,11 @@ for (const config of RESOURCE_CONFIGS) {
 
         const result = await t.withIdentity(orgIdentityFor(slug))
           .query(config.apiModule.mine, {})
-        expect(result).not.toBeNull()
-        expect((result as Record<string, unknown>)[config.uniqueField]).toBe(config.createArgs[config.uniqueField])
+        const row = config.kind === 'person'
+          ? (result as Record<string, unknown>)
+          : ((result as Array<Record<string, unknown>>)[0])
+        expect(row).toBeDefined()
+        expect(row[config.uniqueField]).toBe(config.createArgs[config.uniqueField])
       })
     })
 

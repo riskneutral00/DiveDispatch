@@ -1,6 +1,6 @@
 import { ConvexError } from 'convex/values'
 import { ErrorCode } from './errorCodes'
-import type { QueryCtx } from '../_generated/server'
+import type { QueryCtx, MutationCtx } from '../_generated/server'
 import type { TableNames } from '../_generated/dataModel'
 import { queryDynamicTable } from './typedDb'
 
@@ -48,5 +48,24 @@ export async function assertEntitySlugUnique(
     .first()
   if (existing) {
     throw new ConvexError({ code: ErrorCode.VALIDATION, reason: 'slug_taken' })
+  }
+}
+
+export async function mintUniqueEntitySlug(
+  ctx: MutationCtx,
+  table: TableNames,
+  baseName: string,
+): Promise<string> {
+  const prefix = ENTITY_SLUG_PREFIX[table] ?? 'row'
+  const base = normalizeSlugComponent(baseName) || prefix
+  let candidate = base
+  let suffix = 1
+  while (true) {
+    const existing = await queryDynamicTable(ctx.db, table)
+      .withIndex('by_slug', (q) => q.eq('slug', candidate))
+      .unique()
+    if (!existing) return candidate
+    suffix += 1
+    candidate = `${base}-${suffix}`
   }
 }
