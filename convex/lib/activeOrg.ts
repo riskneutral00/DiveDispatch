@@ -3,6 +3,8 @@ import type { UserIdentity } from 'convex/server'
 import type { Doc } from '../_generated/dataModel'
 import type { DbCtx } from './auth'
 import { ErrorCode } from './errorCodes'
+import { log } from './logger'
+import { findMembership } from './userRoleHelpers'
 
 type OrgIdentityClaims = {
   orgId?: string
@@ -19,6 +21,53 @@ export function readOrgClaims(identity: UserIdentity): OrgIdentityClaims {
   }
 }
 
+function membershipOrgRole(row: Doc<'userRoles'>): 'admin' | 'member' {
+  return row.permissionLevel ?? 'admin'
+}
+
+async function resolveOrgFromMembership(
+  ctx: DbCtx,
+  identity: UserIdentity,
+): Promise<{ org: Doc<'organizations'>; orgRole: 'admin' | 'member' } | null> {
+  const user = await ctx.db
+    .query('users')
+    .withIndex('by_tokenIdentifier', (q) => q.eq('tokenIdentifier', identity.tokenIdentifier))
+    .unique()
+  if (!user?.organizationId) return null
+  const membership = await findMembership(ctx, user._id, user.organizationId)
+  if (!membership) return null
+  const org = await ctx.db.get(user.organizationId)
+  if (!org) return null
+  if (org.deletedAt !== undefined) return null
+  return { org, orgRole: membershipOrgRole(membership) }
+}
+
+async function resolveOrgFromJwtClaim(
+  ctx: DbCtx,
+  identity: UserIdentity,
+  clerkOrgId: string,
+  jwtOrgRole: string | undefined,
+): Promise<{ org: Doc<'organizations'>; orgRole: 'admin' | 'member' } | null> {
+  const org = await ctx.db
+    .query('organizations')
+    .withIndex('by_clerkOrgId', (q) => q.eq('clerkOrgId', clerkOrgId))
+    .unique()
+  if (!org) return null
+  if (org.deletedAt !== undefined) return null
+  const user = await ctx.db
+    .query('users')
+    .withIndex('by_tokenIdentifier', (q) => q.eq('tokenIdentifier', identity.tokenIdentifier))
+    .unique()
+  if (!user) return null
+  const membership = await findMembership(ctx, user._id, org._id)
+  if (!membership) return null
+  const membershipRole = membershipOrgRole(membership)
+  const claimRole: 'admin' | 'member' = jwtOrgRole === 'admin' ? 'admin' : 'member'
+  const orgRole: 'admin' | 'member' =
+    membershipRole === 'admin' && claimRole === 'admin' ? 'admin' : 'member'
+  return { org, orgRole }
+}
+
 export async function getActiveOrg(
   ctx: DbCtx,
 ): Promise<{ org: Doc<'organizations'>; orgRole: 'admin' | 'member' }> {
@@ -27,33 +76,26 @@ export async function getActiveOrg(
 
   const { orgId: clerkOrgId, orgRole } = readOrgClaims(identity)
 
-  if (!clerkOrgId) {
-    const user = await ctx.db
-      .query('users')
-      .withIndex('by_tokenIdentifier', (q) => q.eq('tokenIdentifier', identity.tokenIdentifier))
-      .unique()
-    if (user?.organizationId) {
-      const membership = await ctx.db
-        .query('userRoles')
-        .withIndex('by_userId', (q) => q.eq('userId', user._id))
-        .filter((q) => q.eq(q.field('organizationId'), user.organizationId))
-        .first()
-      if (membership) {
-        const org = await ctx.db.get(user.organizationId)
-        if (org) return { org, orgRole: 'admin' }
-      }
-    }
-    throw new ConvexError({ code: ErrorCode.FORBIDDEN, reason: 'no_active_org' })
+  if (clerkOrgId) {
+    const resolved = await resolveOrgFromJwtClaim(ctx, identity, clerkOrgId, orgRole)
+    if (resolved) return resolved
   }
 
-  const org = await ctx.db
-    .query('organizations')
-    .withIndex('by_clerkOrgId', (q) => q.eq('clerkOrgId', clerkOrgId))
-    .unique()
-  if (!org) throw new ConvexError({ code: ErrorCode.NOT_FOUND, reason: 'org_not_synced' })
+  const fallback = await resolveOrgFromMembership(ctx, identity)
+  if (fallback) {
+    if (clerkOrgId) {
+      log.warn('active-org JWT claim did not resolve; granting access via membership fallback', {
+        tokenIdentifier: identity.tokenIdentifier,
+        jwtClerkOrgId: clerkOrgId,
+        fallbackOrgId: fallback.org._id,
+        fallbackClerkOrgId: fallback.org.clerkOrgId,
+        fallbackOrgRole: fallback.orgRole,
+      })
+    }
+    return fallback
+  }
 
-  const normalizedRole = orgRole === 'admin' ? 'admin' : 'member'
-  return { org, orgRole: normalizedRole }
+  throw new ConvexError({ code: ErrorCode.FORBIDDEN, reason: 'no_active_org' })
 }
 
 export async function requireOrgAdmin(
@@ -71,23 +113,13 @@ export async function tryGetActiveOrg(
 ): Promise<Doc<'organizations'> | null> {
   const identity = await ctx.auth.getUserIdentity()
   if (!identity) return null
-  const { orgId: clerkOrgId } = readOrgClaims(identity)
-  if (!clerkOrgId) {
-    const user = await ctx.db
-      .query('users')
-      .withIndex('by_tokenIdentifier', (q) => q.eq('tokenIdentifier', identity.tokenIdentifier))
-      .unique()
-    if (!user?.organizationId) return null
-    const membership = await ctx.db
-      .query('userRoles')
-      .withIndex('by_userId', (q) => q.eq('userId', user._id))
-      .filter((q) => q.eq(q.field('organizationId'), user.organizationId))
-      .first()
-    if (!membership) return null
-    return await ctx.db.get(user.organizationId)
+  const { orgId: clerkOrgId, orgRole } = readOrgClaims(identity)
+
+  if (clerkOrgId) {
+    const resolved = await resolveOrgFromJwtClaim(ctx, identity, clerkOrgId, orgRole)
+    if (resolved) return resolved.org
   }
-  return await ctx.db
-    .query('organizations')
-    .withIndex('by_clerkOrgId', (q) => q.eq('clerkOrgId', clerkOrgId))
-    .unique()
+
+  const fallback = await resolveOrgFromMembership(ctx, identity)
+  return fallback ? fallback.org : null
 }

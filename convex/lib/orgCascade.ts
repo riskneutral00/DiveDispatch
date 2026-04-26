@@ -3,7 +3,9 @@ import type { Doc, Id } from '../_generated/dataModel'
 import { batchDelete, batchPatch } from './batch'
 import { cleanupInventoryForOwner } from './inventoryCleanup'
 
-const ROLE_TABLES = [
+export const SOFT_DELETE_TTL_MS = 7 * 24 * 60 * 60 * 1000
+
+export const ORG_CHILD_TABLES = [
   'diveCenters',
   'diveStaff',
   'agents',
@@ -12,6 +14,8 @@ const ROLE_TABLES = [
   'compressors',
   'venues',
 ] as const
+
+export type OrgChildTable = (typeof ORG_CHILD_TABLES)[number]
 
 type InventoryOwnerType = Doc<'inventoryUnits'>['ownerType']
 
@@ -52,7 +56,7 @@ export async function cascadeOrgDelete(
 
   const venueSlugs: string[] = []
 
-  for (const tableName of ROLE_TABLES) {
+  for (const tableName of ORG_CHILD_TABLES) {
     const rows = await ctx.db
       .query(tableName)
       .withIndex('by_organizationId', (q) => q.eq('organizationId', orgId))

@@ -135,6 +135,7 @@ function buildEquipmentLines(
 export const seedAll = internalAction({
   args: {},
   handler: async (ctx) => {
+    await ctx.runMutation(internal.seed.pruneOrphanOrgs)
     await ctx.runMutation(internal.seed.seedStakeholders)
     await ctx.runMutation(internal.seed.seedInstructors)
     await ctx.runMutation(internal.seed.seedUserRoles)
@@ -204,10 +205,9 @@ async function getOrCreateSeedOrg(
   orgName: string,
   extras?: { isAreaOrg?: boolean; destinationIds?: Id<'organizations'>[] },
 ): Promise<Id<'organizations'>> {
-  const clerkOrgId = `seed_org_${orgSlug}`
   const existing = await ctx.db
     .query('organizations')
-    .withIndex('by_clerkOrgId', (q) => q.eq('clerkOrgId', clerkOrgId))
+    .withIndex('by_slug', (q) => q.eq('slug', orgSlug))
     .unique()
   const now = Date.now()
   const destinationPatch = extras?.destinationIds && extras.destinationIds.length > 0
@@ -215,11 +215,10 @@ async function getOrCreateSeedOrg(
     : {}
   const areaPatch = extras?.isAreaOrg !== undefined ? { isAreaOrg: extras.isAreaOrg } : {}
   if (existing) {
-    await ctx.db.patch(existing._id, { name: orgName, slug: orgSlug, updatedAt: now, ...areaPatch, ...destinationPatch })
+    await ctx.db.patch(existing._id, { name: orgName, updatedAt: now, ...areaPatch, ...destinationPatch })
     return existing._id
   }
   return ctx.db.insert('organizations', {
-    clerkOrgId,
     name: orgName,
     slug: orgSlug,
     createdAt: now,
@@ -228,6 +227,74 @@ async function getOrCreateSeedOrg(
     ...destinationPatch,
   })
 }
+
+const ORPHAN_PROBE_TABLES = [
+  'diveCenters', 'diveStaff', 'agents', 'boats', 'equipment', 'compressors', 'venues',
+] as const
+
+export const pruneOrphanOrgs = internalMutation({
+  args: {},
+  returns: v.object({
+    deleted: v.array(v.string()),
+    skipped: v.array(v.object({ slug: v.string(), childTable: v.string() })),
+  }),
+  handler: async (ctx) => {
+    const validSlugs = new Set(
+      ALL_STAKEHOLDERS.map((s) => s.organization?.slug ?? s.user.slug),
+    )
+
+    const orgs = await ctx.db.query('organizations').collect() // bounded: organizations is one-row-per-operator (≤low-thousands single-tenant DB)
+
+    const deleted: string[] = []
+    const skipped: { slug: string; childTable: string }[] = []
+
+    for (const org of orgs) {
+      if (validSlugs.has(org.slug)) continue
+
+      let blocker: string | null = null
+
+      for (const table of ORPHAN_PROBE_TABLES) {
+        const child = await ctx.db
+          .query(table)
+          .withIndex('by_organizationId', (q) => q.eq('organizationId', org._id))
+          .first()
+        if (child) { blocker = table; break }
+      }
+
+      if (!blocker) {
+        const role = await ctx.db
+          .query('userRoles')
+          .withIndex('by_organizationId', (q) => q.eq('organizationId', org._id))
+          .first()
+        if (role) blocker = 'userRoles'
+      }
+
+      if (!blocker) {
+        const user = await ctx.db
+          .query('users')
+          .withIndex('by_organizationId', (q) => q.eq('organizationId', org._id))
+          .first()
+        if (user) blocker = 'users'
+      }
+
+      if (blocker) {
+        log.warn('seed-prune: skipped non-empty orphan', {
+          slug: org.slug,
+          name: org.name,
+          childTable: blocker,
+        })
+        skipped.push({ slug: org.slug, childTable: blocker })
+        continue
+      }
+
+      await ctx.db.delete(org._id)
+      log.info('seed-prune: deleted orphan org', { slug: org.slug, name: org.name })
+      deleted.push(org.slug)
+    }
+
+    return { deleted, skipped }
+  },
+})
 
 export const seedStakeholders = internalMutation({
   args: {},
@@ -285,8 +352,8 @@ export const seedStakeholders = internalMutation({
         await ctx.db.insert('equipment', { organizationId, ...equipmentProfile }) // batch-exempt
       }
       for (const compressor of s.compressors ?? []) {
-        const { boatSlug, venueSlug, ...compressorData } = compressor
-        const boatId = boatSlug ? userSlugToBoatId.get(boatSlug) : undefined
+        const { boatOwnerUserSlug, venueSlug, ...compressorData } = compressor
+        const boatId = boatOwnerUserSlug ? userSlugToBoatId.get(boatOwnerUserSlug) : undefined
         const venueId = venueSlug ? venueSlugToId.get(venueSlug) : undefined
         await ctx.db.insert('compressors', { organizationId, ...compressorData, ...(boatId && { boatId }), ...(venueId && { venueId }) }) // batch-exempt
       }
@@ -324,6 +391,7 @@ export const seedUserRoles = internalMutation({
           userId: user._id,
           role: r.role,
           organizationId: user.organizationId,
+          permissionLevel: 'admin',
         })
       }
     }
@@ -486,78 +554,6 @@ export const seedStakeholderPreferences = internalMutation({
     await dedupeStakeholderPreferencesTable(ctx)
 
     const OPERATOR_PREFERRED: Record<string, { instructors?: string[]; boats?: string[]; venues?: string[]; compressors?: string[]; equipment?: string[] }> = {
-      'n7rq5j': { // Hug Ocean — zh-CN, zh-TW, th, en — owns boat, pool, gear
-        instructors: ['wei-chen', 'nicole-tam', 'mike-chen', 'xiao-lei', 'zhen-liu'],
-        boats: ['n7rq5j'], venues: ['n7rq5j'], compressors: ['x4kp2m'], equipment: ['n7rq5j'],
-      },
-      'z8mv4c': { // Neptune — zh-CN, zh-TW, en, th — owns pool, gear
-        instructors: ['wei-chen', 'zhang-yong', 'mike-chen', 'xiao-lei', 'wanchai-pong'],
-        boats: ['p5ky3w', 'n7rq5j'], venues: ['z8mv4c'], compressors: ['x4kp2m'], equipment: ['z8mv4c'],
-      },
-      'p5ky3w': { // Phuket DC — th, en, zh-CN, ko — owns boat, gear
-        instructors: ['ryan-clarke', 'nattaya-srisuk', 'somphon-kaew', 'kim-ji-soo', 'hiroshi-kato'],
-        boats: ['p5ky3w'], venues: ['b3wt9f'], compressors: ['x4kp2m'], equipment: ['p5ky3w'],
-      },
-      'q9bz7r': { // Nicole DC — zh-TW, zh-CN, en, th — owns gear (open)
-        instructors: ['nicole-tam', 'wei-chen', 'mike-chen', 'zhang-yong', 'xiao-lei'],
-        boats: ['sirolo', 'p5ky3w'], venues: ['b3wt9f'], compressors: ['x4kp2m'], equipment: ['q9bz7r'],
-      },
-      'v6js2t': { // Manta DC — fr, en, th
-        instructors: ['pierre-dubois', 'rachel-nguyen', 'camille-moreau', 'stefan-braun', 'ryan-clarke'],
-        boats: ['n7rq5j', 'sirolo'], venues: ['n7rq5j'], compressors: ['x4kp2m'], equipment: ['q9bz7r'],
-      },
-      'm4fx8d': { // ScubaNicks — en, th, zh-CN — owns gear
-        instructors: ['ryan-clarke', 'nattaya-srisuk', 'li-ming', 'mike-chen', 'wei-chen'],
-        boats: ['p5ky3w', 'sirolo'], venues: ['g2hn6x'], compressors: ['x4kp2m'], equipment: ['m4fx8d'],
-      },
-      'h3cp6n': { // Scuba Deep — en, th, zh-CN, fr — owns gear
-        instructors: ['ryan-clarke', 'wei-chen', 'mike-chen', 'rachel-nguyen', 'pierre-dubois'],
-        boats: ['n7rq5j', 'p5ky3w'], venues: ['g2hn6x'], compressors: ['x4kp2m'], equipment: ['h3cp6n'],
-      },
-      'sirolo': { // Sirolo — th, en, zh-CN, zh-TW — owns boat, gear
-        instructors: ['wei-chen', 'nicole-tam', 'mike-chen', 'xiao-lei', 'zhen-liu'],
-        boats: ['sirolo'], venues: ['g2hn6x'], compressors: ['x4kp2m'], equipment: ['sirolo'],
-      },
-      't7gw1k': { // Pray DC — en, th, fr, de
-        instructors: ['pierre-dubois', 'stefan-braun', 'camille-moreau', 'ryan-clarke', 'nattaya-srisuk'],
-        boats: ['sirolo', 'n7rq5j'], venues: ['kata-beach'], compressors: ['q7sm3k'], equipment: ['q9bz7r'],
-      },
-      'r5yz4q': { // Amanda (Agent) — zh-CN, zh-TW, en, th
-        instructors: ['wei-chen', 'zhang-yong', 'nicole-tam', 'mike-chen', 'xiao-lei'],
-        boats: ['n7rq5j', 'p5ky3w'], venues: ['b3wt9f'], compressors: ['x4kp2m'], equipment: ['q9bz7r'],
-      },
-      'w3kn7p': { // Hanul Dive — ko
-        instructors: ['kim-ji-soo', 'park-soo-jin', 'hiroshi-kato', 'lee-min-ho', 'seo-min-ji'],
-        boats: ['p5ky3w', 'n7rq5j'], venues: ['kata-beach'], compressors: ['q7sm3k'], equipment: ['v8sr2p'],
-      },
-      'b6um4j': { // Umi Dive — ja
-        instructors: ['yuki-tanaka', 'hiroshi-kato', 'yuko-yamamoto', 'aiko-fujita', 'seo-min-ji'],
-        boats: ['sirolo', 'p5ky3w'], venues: ['kata-beach'], compressors: ['q7sm3k'], equipment: ['v8sr2p'],
-      },
-      'r9aq5v': { // Aqua Pro Dive — ru
-        instructors: ['alexei-volkov', 'natasha-ivanova', 'dmitri-petrov', 'stefan-braun', 'hans-weber'],
-        boats: ['n7rq5j', 'sirolo'], venues: ['kata-beach'], compressors: ['q7sm3k'], equipment: ['v8sr2p'],
-      },
-      'c2pd8x': { // Pacific Divers — ko, ja, es
-        instructors: ['kim-ji-soo', 'hiroshi-kato', 'yuki-tanaka', 'seo-min-ji', 'david-schmidt'],
-        boats: ['p5ky3w', 'n7rq5j'], venues: ['z8mv4c'], compressors: ['x4kp2m'], equipment: ['v8sr2p'],
-      },
-      'f7bp3g': { // Blue Planet Diving — ru, id, nl
-        instructors: ['alexei-volkov', 'natasha-ivanova', 'dmitri-petrov', 'budi-santoso', 'andi-firmansyah'],
-        boats: ['sirolo', 'p5ky3w'], venues: ['z8mv4c'], compressors: ['x4kp2m'], equipment: ['v8sr2p'],
-      },
-      'k4ko9j': { // Ji-Yeon (Agent) — ko, en
-        instructors: ['kim-ji-soo', 'park-soo-jin', 'lee-min-ho', 'seo-min-ji', 'oh-sang-hoon'],
-        boats: ['p5ky3w', 'sirolo'], venues: ['g2hn6x'], compressors: ['x4kp2m'], equipment: ['v8sr2p'],
-      },
-      'a7ja2m': { // Kenji (Agent) — ja, en
-        instructors: ['yuki-tanaka', 'hiroshi-kato', 'yuko-yamamoto', 'aiko-fujita', 'ryan-clarke'],
-        boats: ['sirolo', 'n7rq5j'], venues: ['b3wt9f'], compressors: ['x4kp2m'], equipment: ['v8sr2p'],
-      },
-      'e6eu5z': { // Eva (Agent) — de, fr, nl
-        instructors: ['stefan-braun', 'pierre-dubois', 'camille-moreau', 'sophie-laurent', 'hans-weber'],
-        boats: ['n7rq5j', 'p5ky3w'], venues: ['z8mv4c'], compressors: ['x4kp2m'], equipment: ['v8sr2p'],
-      },
       'sea-fun': {
         instructors: ['sea-fun'],
         boats: ['sea-fun'],
@@ -567,15 +563,10 @@ export const seedStakeholderPreferences = internalMutation({
       },
     }
 
-    const AGENT_PREFERRED_OPERATOR: Record<string, string> = {
-      'r5yz4q': 'q9bz7r',
-      'k4ko9j': 'w3kn7p',
-      'a7ja2m': 'b6um4j',
-      'e6eu5z': 't7gw1k',
-    }
-
     const allStakeholders: { slug: string; role: StakeholderRole }[] = [
-      ...ALL_STAKEHOLDERS.map((s) => ({ slug: s.user.slug, role: s.roles?.[0]?.role ?? 'DiveCenter' })),
+      ...ALL_STAKEHOLDERS
+        .filter((s) => !s.organization?.isAreaOrg)
+        .map((s) => ({ slug: s.user.slug, role: s.roles?.[0]?.role ?? 'DiveCenter' })),
       ...ALL_INSTRUCTORS.map((s) => ({ slug: s.user.slug, role: s.roles?.[0]?.role ?? 'Instructor' })),
     ]
 
@@ -610,9 +601,6 @@ export const seedStakeholderPreferences = internalMutation({
         }),
         ...(OPERATOR_PREFERRED[slug]?.equipment && {
           preferredEquipmentSlugs: OPERATOR_PREFERRED[slug].equipment,
-        }),
-        ...(AGENT_PREFERRED_OPERATOR[slug] && {
-          preferredOperatorSlug: AGENT_PREFERRED_OPERATOR[slug],
         }),
       })
     }

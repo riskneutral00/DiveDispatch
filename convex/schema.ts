@@ -82,6 +82,7 @@ export default defineSchema({
     lng: v.optional(v.number()),
     isAreaOrg: v.optional(v.boolean()),
     destinationIds: v.optional(v.array(v.id('organizations'))),
+    deletedAt: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -518,6 +519,7 @@ export default defineSchema({
     createdAt: v.number(),
     profileComplete: v.optional(v.boolean()),
     organizationId: v.id('organizations'),
+    permissionLevel: v.optional(v.union(v.literal('admin'), v.literal('member'))),
   })
     .index('by_userId', ['userId'])
     .index('by_userId_role', ['userId', 'role'])
@@ -589,13 +591,29 @@ export default defineSchema({
     eventType: v.union(
       v.literal('user_rebind'),
       v.literal('user_rebind_rejected'),
+      v.literal('org_cascade_initiated'),
+      v.literal('org_cascade_restored'),
     ),
     userId: v.optional(v.id('users')),
-    oldTokenIdentifier: v.string(),
-    newTokenIdentifier: v.string(),
-    oldIssuer: v.string(),
-    newIssuer: v.string(),
-    email: v.string(),
+    oldTokenIdentifier: v.optional(v.string()),
+    newTokenIdentifier: v.optional(v.string()),
+    oldIssuer: v.optional(v.string()),
+    newIssuer: v.optional(v.string()),
+    email: v.optional(v.string()),
+    orgId: v.optional(v.id('organizations')),
+    orgName: v.optional(v.string()),
+    orgSlug: v.optional(v.string()),
+    manifestCounts: v.optional(v.object({
+      diveCenters: v.number(),
+      diveStaff: v.number(),
+      agents: v.number(),
+      boats: v.number(),
+      equipment: v.number(),
+      compressors: v.number(),
+      venues: v.number(),
+      userRoles: v.number(),
+      users: v.number(),
+    })),
     at: v.number(),
   })
     .index('by_userId', ['userId'])

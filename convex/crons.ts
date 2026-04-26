@@ -15,4 +15,6 @@ crons.interval('purge-expired-drafts', { hours: 6 }, internal.bookings.inventory
 
 crons.interval('reconcile-snapshots', { hours: 12 }, internal.reconciliation.reconcileSnapshots)
 
+crons.interval('purge-soft-deleted-orgs', { hours: 24 }, internal.organizations.purgeSoftDeletedOrgs)
+
 export default crons

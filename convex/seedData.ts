@@ -145,7 +145,7 @@ interface CompressorProfile {
   slug: string
   name: string
   location: CompressorLocation
-  boatSlug?: string
+  boatOwnerUserSlug?: string
   venueSlug?: string
   address: SeedAddress
   lat: number
@@ -1035,15 +1035,16 @@ export const PHUKET_ADMIN: SeedStakeholder = {
   },
   organization: { name: 'South Andaman', slug: 'south-andaman', isAreaOrg: true },
   roles: [{ role: 'Venue' }],
+  // seed-edit-ok comments-ok: 2026-04-25 features backfilled to match real-world site signatures
   venues: [
-    { slug: 'racha-yai',    name: 'Racha Yai',          kind: 'dive_site', features: [], address: PHUKET_TH_ADDRESS, lat: 7.6018, lng: 98.3633, verified: true },
-    { slug: 'racha-noi',    name: 'Racha Noi',          kind: 'dive_site', features: [], address: PHUKET_TH_ADDRESS, lat: 7.5367, lng: 98.3461, verified: true },
-    { slug: 'ko-bida-nok',  name: 'Ko Bida Nok',        kind: 'dive_site', features: [], address: PHUKET_TH_ADDRESS, lat: 7.6558, lng: 98.7647, verified: true },
-    { slug: 'ko-bida-nai',  name: 'Ko Bida Nai',        kind: 'dive_site', features: [], address: PHUKET_TH_ADDRESS, lat: 7.6631, lng: 98.7686, verified: true },
-    { slug: 'king-cruiser', name: 'King Cruiser Wreck', kind: 'dive_site', features: [], address: PHUKET_TH_ADDRESS, lat: 7.8067, lng: 98.6167, verified: true },
-    { slug: 'shark-point',  name: 'Shark Point',        kind: 'dive_site', features: [], address: PHUKET_TH_ADDRESS, lat: 7.7844, lng: 98.6167, verified: true },
-    { slug: 'kata-beach',   name: 'Kata Beach',         kind: 'dive_site', features: [], address: PHUKET_TH_ADDRESS, lat: 7.8167, lng: 98.2972, verified: true },
-    { slug: 'merlin-beach', name: 'Merlin Beach',       kind: 'dive_site', features: [], address: PHUKET_TH_ADDRESS, lat: 7.9019, lng: 98.2744, verified: true, isAllowed: ['sea-fun-divers'] },
+    { slug: 'racha-yai',    name: 'Racha Yai',          kind: 'dive_site', features: ['reef'],          address: PHUKET_TH_ADDRESS, lat: 7.6018, lng: 98.3633, verified: true },
+    { slug: 'racha-noi',    name: 'Racha Noi',          kind: 'dive_site', features: ['reef'],          address: PHUKET_TH_ADDRESS, lat: 7.5367, lng: 98.3461, verified: true },
+    { slug: 'ko-bida-nok',  name: 'Ko Bida Nok',        kind: 'dive_site', features: ['reef', 'drift'], address: PHUKET_TH_ADDRESS, lat: 7.6558, lng: 98.7647, verified: true },
+    { slug: 'ko-bida-nai',  name: 'Ko Bida Nai',        kind: 'dive_site', features: ['reef', 'drift'], address: PHUKET_TH_ADDRESS, lat: 7.6631, lng: 98.7686, verified: true },
+    { slug: 'king-cruiser', name: 'King Cruiser Wreck', kind: 'dive_site', features: ['wreck'],         address: PHUKET_TH_ADDRESS, lat: 7.8067, lng: 98.6167, verified: true },
+    { slug: 'shark-point',  name: 'Shark Point',        kind: 'dive_site', features: ['reef', 'drift'], address: PHUKET_TH_ADDRESS, lat: 7.7844, lng: 98.6167, verified: true },
+    { slug: 'kata-beach',   name: 'Kata Beach',         kind: 'dive_site', features: [],                address: PHUKET_TH_ADDRESS, lat: 7.8167, lng: 98.2972, verified: true },
+    { slug: 'merlin-beach', name: 'Merlin Beach',       kind: 'dive_site', features: [],                address: PHUKET_TH_ADDRESS, lat: 7.9019, lng: 98.2744, verified: true, isAllowed: ['sea-fun-divers'] },
   ],
 }
 
@@ -1055,7 +1056,7 @@ export const RENE_SEA_FUN: SeedStakeholder = {
     firstName: 'Rene',
     lastName: 'Balot',
     appLanguage: 'en',
-    phone: '+12345678910',
+    phone: '+6676330345',
     dateOfBirth: '1977-04-04',
   },
   organization: { name: 'Sea Fun Divers', slug: 'sea-fun-divers', destinationSlugs: ['south-andaman'] },
@@ -1189,7 +1190,7 @@ export const RENE_SEA_FUN: SeedStakeholder = {
       slug: 'sea-fun-boat',
       name: 'M.V. Sea Fun Divers Compressor',
       location: 'boat',
-      boatSlug: 'sea-fun',
+      boatOwnerUserSlug: 'sea-fun',
       address: { street: '29 Soi Karon Nui', city: 'Karon', state: 'Phuket', country: 'TH', postalCode: '83100' },
       lat: 7.8569,
       lng: 98.2859,

@@ -1,6 +1,7 @@
 import type { MutationCtx } from '../_generated/server'
 import type { Id } from '../_generated/dataModel'
 import { batchPatch } from './batch'
+import { getAllUserRoles } from './userRoleHelpers'
 
 export async function setUserOrganization(
   ctx: MutationCtx,
@@ -8,10 +9,7 @@ export async function setUserOrganization(
   organizationId: Id<'organizations'>,
 ): Promise<void> {
   await ctx.db.patch(userId, { organizationId })
-  const roles = await ctx.db
-    .query('userRoles')
-    .withIndex('by_userId', (q) => q.eq('userId', userId))
-    .collect() // bounded: per-user roles, max ~12
+  const roles = await getAllUserRoles(ctx, userId)
   const stale = roles.filter((r) => r.organizationId !== organizationId)
   if (stale.length === 0) return
   await batchPatch(

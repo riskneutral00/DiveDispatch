@@ -1,17 +1,19 @@
 import { ConvexError, v } from 'convex/values'
-import { mutation, query } from './_generated/server'
+import { mutation, query, internalMutation } from './_generated/server'
 import { getAuthUser, OPERATOR_ROLE_SET, authorize } from './lib/auth'
-import { getAllUserRoles, insertUserRole } from './lib/userRoleHelpers'
+import { getAllUserRoles, getUserRolesInOrg, insertUserRole, type PermissionLevel } from './lib/userRoleHelpers'
 import type { QueryCtx, MutationCtx } from './_generated/server'
 import type { Id, Doc } from './_generated/dataModel'
 import { stakeholderTypeValidator as stakeholderType, effectiveResourceType } from './lib/validators'
 import { ErrorCode } from './lib/errorCodes'
 import { deriveDefaultRole, ROLE_PRECEDENCE } from './lib/rolePrecedence'
-import { batchGet, batchDelete } from './lib/batch'
+import { batchGet, batchDelete, batchPatch } from './lib/batch'
 import { ROLE_TABLE_MAP } from './lib/profileHelpers'
 import { queryDynamicTable, deleteDynamic } from './lib/typedDb'
 import { checkProfileCompleteness } from './lib/profileCompleteness'
 import { cleanupInventoryForOwner } from './lib/inventoryCleanup'
+import { checkIdempotency } from './lib/idempotency'
+import { log } from './lib/logger'
 
 export { getAllUserRoles } from './lib/userRoleHelpers'
 
@@ -141,6 +143,7 @@ export const addRole = mutation({
       userId: user._id,
       role,
       organizationId: user.organizationId,
+      permissionLevel: 'admin',
     })
   },
 })
@@ -303,3 +306,84 @@ async function deleteProfileForRole(
     .unique()
   if (p) await deleteDynamic(ctx.db, p._id)
 }
+
+function clerkRoleToPermissionLevel(role: string | undefined): PermissionLevel {
+  return role === 'org:admin' ? 'admin' : 'member'
+}
+
+async function findUserAndOrgForMembership(
+  ctx: MutationCtx,
+  tokenIdentifier: string,
+  clerkOrgId: string,
+): Promise<{ user: Doc<'users'>; org: Doc<'organizations'> } | null> {
+  const user = await ctx.db
+    .query('users')
+    .withIndex('by_tokenIdentifier', (q) => q.eq('tokenIdentifier', tokenIdentifier))
+    .unique()
+  if (!user) return null
+  const org = await ctx.db
+    .query('organizations')
+    .withIndex('by_clerkOrgId', (q) => q.eq('clerkOrgId', clerkOrgId))
+    .unique()
+  if (!org) return null
+  return { user, org }
+}
+
+export const upsertFromMembershipWebhook = internalMutation({
+  args: {
+    tokenIdentifier: v.string(),
+    clerkOrgId: v.string(),
+    clerkRole: v.optional(v.string()),
+    svixId: v.optional(v.string()),
+  },
+  returns: v.object({ patched: v.number(), unmatched: v.boolean() }),
+  handler: async (ctx, args) => {
+    if (args.svixId) {
+      const isDuplicate = await checkIdempotency(ctx, args.svixId, 'clerk_membership_upsert')
+      if (isDuplicate) return { patched: 0, unmatched: false }
+    }
+
+    const found = await findUserAndOrgForMembership(ctx, args.tokenIdentifier, args.clerkOrgId)
+    if (!found) {
+      log.warn('membership-webhook: no matching Convex user or org', {
+        tokenIdentifier: args.tokenIdentifier,
+        clerkOrgId: args.clerkOrgId,
+      })
+      return { patched: 0, unmatched: true }
+    }
+
+    const permissionLevel = clerkRoleToPermissionLevel(args.clerkRole)
+
+    const rows = await getUserRolesInOrg(ctx, found.user._id, found.org._id)
+
+    const updates = rows
+      .filter((r) => r.permissionLevel !== permissionLevel)
+      .map((r) => [r._id, { permissionLevel }] as const)
+    await batchPatch(ctx, updates as never)
+
+    return { patched: updates.length, unmatched: false }
+  },
+})
+
+export const deleteFromMembershipWebhook = internalMutation({
+  args: {
+    tokenIdentifier: v.string(),
+    clerkOrgId: v.string(),
+    svixId: v.optional(v.string()),
+  },
+  returns: v.object({ deleted: v.number() }),
+  handler: async (ctx, args) => {
+    if (args.svixId) {
+      const isDuplicate = await checkIdempotency(ctx, args.svixId, 'clerk_membership_delete')
+      if (isDuplicate) return { deleted: 0 }
+    }
+
+    const found = await findUserAndOrgForMembership(ctx, args.tokenIdentifier, args.clerkOrgId)
+    if (!found) return { deleted: 0 }
+
+    const rows = await getUserRolesInOrg(ctx, found.user._id, found.org._id)
+
+    await batchDelete(ctx, rows)
+    return { deleted: rows.length }
+  },
+})

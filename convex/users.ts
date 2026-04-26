@@ -157,6 +157,7 @@ export const createUser = mutation({
               userId: existing._id,
               role,
               organizationId: resolvedOrgId,
+              permissionLevel: 'admin',
               createdAt: now,
             })
           }
@@ -199,6 +200,7 @@ export const createUser = mutation({
           userId,
           role: uniqueRoles[i],
           organizationId: resolvedOrgId,
+          permissionLevel: 'admin',
           createdAt: insertAt,
         })
       }

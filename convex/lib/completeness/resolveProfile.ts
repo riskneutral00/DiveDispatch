@@ -2,6 +2,7 @@ import type { QueryCtx } from '../../_generated/server'
 import type { Doc, Id, TableNames } from '../../_generated/dataModel'
 import { ROLE_TABLE_MAP } from '../profileHelpers'
 import { queryDynamicTable } from '../typedDb'
+import { findMembership } from '../userRoleHelpers'
 import { str } from './types'
 
 type ProfileDoc = Record<string, unknown>
@@ -88,11 +89,7 @@ export async function resolveRoleProfile(
     return { profile: null, activeOrgId }
   }
 
-  const membership = await ctx.db
-    .query('userRoles')
-    .withIndex('by_userId', (q) => q.eq('userId', userDoc._id))
-    .filter((q) => q.eq(q.field('organizationId'), activeOrgId))
-    .first()
+  const membership = await findMembership(ctx, userDoc._id, activeOrgId)
   if (!membership) {
     return { profile: null, activeOrgId: null }
   }

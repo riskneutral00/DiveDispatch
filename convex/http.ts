@@ -192,6 +192,32 @@ http.route({
         clerkOrgId: orgData.id,
         svixId,
       })
+    } else if (
+      event.type === 'organizationMembership.created' ||
+      event.type === 'organizationMembership.updated'
+    ) {
+      const membershipData = event.data as ClerkMembershipPayload
+      const clerkUserId = membershipData.public_user_data?.user_id
+      const clerkOrgId = membershipData.organization?.id
+      if (clerkUserId && clerkOrgId) {
+        await ctx.runMutation(internal.userRoles.upsertFromMembershipWebhook, {
+          tokenIdentifier: `${issuerUrl}|${clerkUserId}`,
+          clerkOrgId,
+          clerkRole: membershipData.role,
+          svixId,
+        })
+      }
+    } else if (event.type === 'organizationMembership.deleted') {
+      const membershipData = event.data as ClerkMembershipPayload
+      const clerkUserId = membershipData.public_user_data?.user_id
+      const clerkOrgId = membershipData.organization?.id
+      if (clerkUserId && clerkOrgId) {
+        await ctx.runMutation(internal.userRoles.deleteFromMembershipWebhook, {
+          tokenIdentifier: `${issuerUrl}|${clerkUserId}`,
+          clerkOrgId,
+          svixId,
+        })
+      }
     }
 
     return new Response(null, { status: 200 })

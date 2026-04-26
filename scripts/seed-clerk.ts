@@ -6,11 +6,7 @@ import { join } from 'path'
 import { spawnSync } from 'child_process'
 import { ALL_STAKEHOLDERS, type SeedUser } from '../convex/seedData'
 import { ALL_INSTRUCTORS } from '../convex/seedInstructorData'
-import {
-  SEED_USER_TO_ORG_SLUG,
-  SEED_ORG_NAME_BY_SLUG,
-  SEED_CLERK_ORG_ID_HINTS,
-} from '../convex/shared/seedSlugs.generated'
+import { SEED_USER_TO_ORG_SLUG } from '../convex/shared/seedSlugs.generated'
 
 const SEED_PASSWORD = 'divedispatch123'
 const DELAY_MS = 500 // spacing between Clerk API calls to avoid rate limits
@@ -289,50 +285,66 @@ async function main(): Promise<void> {
   }
 
   const orgResult: OrgResult = { created: [], updated: [], skipped: [], pruned: 0, failed: [], slugToClerkId: new Map() }
-  const seedOrgSlugs = new Set(Object.keys(SEED_CLERK_ORG_ID_HINTS))
+
+  type CanonicalSeedOrg = { slug: string; name: string; adminUserSlug: string }
+  const seedOrgsCanonical: CanonicalSeedOrg[] = ALL_STAKEHOLDERS
+    .filter((s) => s.organization?.slug || s.user.slug)
+    .map((s) => ({
+      slug: s.organization?.slug ?? s.user.slug,
+      name: s.organization?.name ?? `${s.user.firstName} ${s.user.lastName}`.trim(),
+      adminUserSlug: s.user.slug,
+    }))
+  const seedOrgSlugs = new Set(seedOrgsCanonical.map((o) => o.slug))
 
   if (force) {
     orgResult.pruned = await pruneOrphanSeedOrgs(seedOrgSlugs)
   }
 
-  console.log(`\nSeeding ${seedOrgSlugs.size} Clerk orgs${force ? ' (--force)' : ''}...`)
-  const userToOrg = SEED_USER_TO_ORG_SLUG as Record<string, string>
-  const orgSlugToAdminUserSlug = new Map<string, string>()
-  for (const [userSlug, orgSlug] of Object.entries(userToOrg)) {
-    if (!orgSlugToAdminUserSlug.has(orgSlug)) {
-      orgSlugToAdminUserSlug.set(orgSlug, userSlug)
-    }
-  }
-
-  const orgNames = SEED_ORG_NAME_BY_SLUG as Record<string, string>
-  for (const orgSlug of seedOrgSlugs) {
-    const adminUserSlug = orgSlugToAdminUserSlug.get(orgSlug)
-    const createdBy = adminUserSlug ? userSlugToClerkId.get(adminUserSlug) : undefined
+  console.log(`\nSeeding ${seedOrgsCanonical.length} Clerk orgs${force ? ' (--force)' : ''}...`)
+  for (const o of seedOrgsCanonical) {
+    const createdBy = userSlugToClerkId.get(o.adminUserSlug)
     if (!createdBy) {
-      console.error(`  ${orgSlug} — SKIPPED (no admin user found in seeded users)`)
-      orgResult.skipped.push(orgSlug)
+      console.error(`  ${o.slug} — SKIPPED (no admin user '${o.adminUserSlug}' in seeded users)`)
+      orgResult.skipped.push(o.slug)
       continue
     }
-    const orgName = orgNames[orgSlug] ?? orgSlug
     try {
-      const clerkOrgId = await seedOrg(orgSlug, orgName, createdBy, orgResult)
+      const clerkOrgId = await seedOrg(o.slug, o.name, createdBy, orgResult)
       if (clerkOrgId) {
-        orgResult.slugToClerkId.set(orgSlug, clerkOrgId)
-        const status = orgResult.created.includes(orgSlug) ? 'created' : orgResult.updated.includes(orgSlug) ? 'updated' : 'skipped'
-        console.log(`  ${orgSlug} (${orgName}) — ${status}`)
+        orgResult.slugToClerkId.set(o.slug, clerkOrgId)
+        const status = orgResult.created.includes(o.slug) ? 'created' : orgResult.updated.includes(o.slug) ? 'updated' : 'skipped'
+        console.log(`  ${o.slug} (${o.name}) — ${status} → ${clerkOrgId}`)
       }
       await sleep(DELAY_MS)
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
-      orgResult.failed.push({ slug: orgSlug, error: message })
-      console.error(`  ${orgSlug} — FAILED: ${message}`)
+      orgResult.failed.push({ slug: o.slug, error: message })
+      console.error(`  ${o.slug} — FAILED: ${message}`)
     }
   }
 
   console.log(`\nOrgs — Created: ${orgResult.created.length}, Updated: ${orgResult.updated.length}, Skipped: ${orgResult.skipped.length}, Pruned: ${orgResult.pruned}, Failed: ${orgResult.failed.length}`)
 
+  console.log(`\nBinding Clerk org_id → Convex organizations...`)
+  let bindCount = 0
+  for (const [orgSlug, clerkOrgId] of orgResult.slugToClerkId.entries()) {
+    const bindResult = spawnSync(
+      'npx',
+      ['convex', 'run', 'admin/bindOrgClerkOrgId:run', JSON.stringify({ orgSlug, clerkOrgId })],
+      { stdio: 'inherit', encoding: 'utf-8' },
+    )
+    if (bindResult.status !== 0) {
+      console.error(`  ${orgSlug} — bind FAILED (status ${bindResult.status})`)
+      orgResult.failed.push({ slug: orgSlug, error: 'bindOrgClerkOrgId failed' })
+    } else {
+      bindCount++
+    }
+  }
+  console.log(`Convex bindings: ${bindCount}`)
+
   console.log(`\nCreating org memberships...`)
   let membershipCount = 0
+  const userToOrg = SEED_USER_TO_ORG_SLUG as Record<string, string>
   for (const [userSlug, orgSlug] of Object.entries(userToOrg)) {
     const clerkUserId = userSlugToClerkId.get(userSlug)
     const clerkOrgId = orgResult.slugToClerkId.get(orgSlug)
