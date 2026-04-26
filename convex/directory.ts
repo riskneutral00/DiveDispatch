@@ -259,42 +259,6 @@ export const listByRole = query({
   },
 })
 
-export const listOperators = query({
-  args: {},
-  handler: async (ctx): Promise<{ slug: string; name: string; role: 'DiveCenter' | 'Agent' }[]> => {
-    await requireAuth(ctx)
-
-    const result: { slug: string; name: string; role: 'DiveCenter' | 'Agent' }[] = []
-
-    for (const role of ['DiveCenter', 'Agent'] as const) {
-      const roleEntries = await ctx.db
-        .query('userRoles')
-        .withIndex('by_role', (q) => q.eq('role', role))
-        .take(DIRECTORY_LIST_LIMIT)
-      const users = await Promise.all(roleEntries.map((r) => ctx.db.get(r.userId)))
-      for (const u of users) {
-        if (!u) continue
-        if (!(await isUserRoleComplete(ctx, u._id, role))) continue
-        const tableName = role === 'DiveCenter' ? 'diveCenters' : 'agents'
-        const org = await ctx.db
-          .query('organizations')
-          .withIndex('by_slug', (q) => q.eq('slug', u.slug))
-          .unique()
-        if (!org) continue
-        const profile = await queryDynamicTable(ctx.db, tableName)
-          .withIndex('by_organizationId', (q) => q.eq('organizationId', org._id))
-          .unique()
-        if (!profile) continue
-        const name = (profile as { name?: string }).name ?? u.slug
-        result.push({ slug: u.slug, name, role })
-      }
-    }
-
-    result.sort((a, b) => a.name.localeCompare(b.name))
-    return result
-  },
-})
-
 export const togglePreferredInstructor = mutation({
   args: {
     activeRole: stakeholderTypeValidator,

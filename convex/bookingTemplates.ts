@@ -1,7 +1,7 @@
 import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import type { Doc } from './_generated/dataModel'
-import { authorize, authorizeWithRole, getAuthUser, OPERATOR_ROLE_SET } from './lib/auth'
+import { authorizeWithRole, getAuthUser, OPERATOR_ROLE_SET } from './lib/auth'
 import { requireActiveRole } from './userRoles'
 import { courseCodeValidator as courseCode } from './shared/courseCodes'
 import { ErrorCode } from './lib/errorCodes'
@@ -59,14 +59,3 @@ export const create = mutation({
   },
 })
 
-export const remove = mutation({
-  args: { id: v.id('bookingTemplates') },
-  handler: async (ctx, args) => {
-    const template = await ctx.db.get(args.id)
-    if (!template) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
-
-    await authorize(ctx, null, 'resource:manage', { type: 'resource', ownerId: template.ownerId })
-
-    await ctx.db.delete(args.id)
-  },
-})

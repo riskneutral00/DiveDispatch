@@ -247,12 +247,3 @@ export const visibleToMe = query({
   },
 })
 
-export const bySlug = query({
-  args: { slug: v.string() },
-  handler: async (ctx, { slug }) => {
-    return await ctx.db
-      .query('compressors')
-      .withIndex('by_slug', (q) => q.eq('slug', slug))
-      .unique()
-  },
-})

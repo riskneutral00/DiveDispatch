@@ -1,5 +1,4 @@
 import { ConvexError, v } from 'convex/values'
-import type { MutationCtx } from './_generated/server'
 import { mutation } from './_generated/server'
 import { authorize } from './lib/auth'
 import { checkRateLimit } from './lib/rateLimiter'
@@ -12,19 +11,6 @@ const supportCategoryValidator = v.union(
   v.literal('Question'),
   v.literal('Account Issue'),
 )
-
-export async function _generateUploadUrlHandler(ctx: MutationCtx): Promise<string> {
-  const { user: caller } = await authorize(ctx, null, 'profile:manage', { type: 'settings' })
-
-  await checkRateLimit(ctx, 'generateUploadUrl', caller.slug)
-
-  return await ctx.storage.generateUploadUrl()
-}
-
-export const generateUploadUrl = mutation({
-  args: {},
-  handler: _generateUploadUrlHandler,
-})
 
 export const submitSupportRequest = mutation({
   args: {
