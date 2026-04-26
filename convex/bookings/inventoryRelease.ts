@@ -244,7 +244,7 @@ export const purgeOneDraft = internalMutation({
   },
 })
 
-import { extractErrorCode, ISOLATABLE_ERRORS } from '../lib/errorClassification'
+import { extractErrorCode, ISOLATABLE_ERRORS } from '../lib/errorCodes'
 
 export const purgeExpiredDrafts = internalAction({
   args: {},

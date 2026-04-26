@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { ConvexError } from 'convex/values'
-import { extractErrorCode, ISOLATABLE_ERRORS } from '../../convex/lib/errorClassification'
-import { ErrorCode } from '../../convex/lib/errorCodes'
+import { extractErrorCode, ISOLATABLE_ERRORS, ErrorCode } from '../../convex/lib/errorCodes'
 
 describe('extractErrorCode', () => {
   it('extracts code from ConvexError with object data', () => {
