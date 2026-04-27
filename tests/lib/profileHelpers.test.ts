@@ -49,7 +49,6 @@ describe('profileHelpers — typed person vs entity helpers', () => {
           organizationId: user.organizationId,
           slug,
           name: `${slug} comp`,
-          location: 'fixed',
           address: { city: 'Phuket', country: 'TH' },
           lat: 7.8,
           lng: 98.3,

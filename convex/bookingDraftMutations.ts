@@ -145,11 +145,8 @@ export const createDraftShell = mutation({
         const boatRows = await entityProfilesByUser(ctx, boatUser._id, 'Boat')
         const boat = boatRows[0]
         if (!boat) return null
-        const onboardCompressors = await ctx.db
-          .query('compressors')
-          .withIndex('by_boatId', (q) => q.eq('boatId', boat._id))
-          .collect() // bounded: per-boat compressor count ≤ 2
-        return { slug, hasCompressor: onboardCompressors.length > 0 } as const
+        const hasCompressor = (boat.gasMixes ?? []).length > 0
+        return { slug, hasCompressor } as const
       }),
     )
     for (const entry of boatEntries) {

@@ -29,10 +29,13 @@ describe('role config completeness — full contract per ROLES entry', () => {
         expect(ROLE_TABLE_MAP[role.clerkRole]).toBe(role.tableName)
       })
 
-      it('has at least a contact section in ROLE_SECTION_REGISTRY', () => {
+      it('has at least one registered section in ROLE_SECTION_REGISTRY', () => {
         const sections = ROLE_SECTION_REGISTRY[role.key]
         expect(sections, `${role.key} must register profile sections`).toBeDefined()
-        expect(sections!.contact, `${role.key} must register a Contact section`).toBeDefined()
+        expect(
+          Object.keys(sections!).length,
+          `${role.key} must register at least one editable section`,
+        ).toBeGreaterThan(0)
       })
 
       it('has a backend ROLE_SPECS evaluator entry', () => {

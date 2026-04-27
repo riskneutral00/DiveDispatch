@@ -20,7 +20,7 @@ async function seedCompleteCompressor(ctx: SeedCtx, slug: string) {
   // seedProfiles doesn't export seedCompressorProfile — inline insert + mark complete
   const user = await ctx.db.get(userId)
   if (!user?.organizationId) throw new Error('no org')
-  await ctx.db.insert('compressors', { slug: 'test-c-' + Math.random().toString(36).slice(2,8), location: 'fixed' as const,
+  await ctx.db.insert('compressors', { slug: 'test-c-' + Math.random().toString(36).slice(2,8),
     organizationId: user.organizationId,
     name: slug,
     address: { city: 'Koh Tao', country: 'TH' },

@@ -4,8 +4,8 @@ import type { EvaluatorContext } from '../../convex/lib/completeness/types'
 import { seedStakeholderPreferences } from '../fixtures/seedStakeholders'
 import { makeT } from '../helpers/convex-helpers'
 
-describe('operatorCoverage — preferred-boat compressor lookup', () => {
-  it('finds compressor on preferred boat when org slug differs from user slug', async () => {
+describe('operatorCoverage — boat/venue OR logic', () => {
+  it('boat preference satisfies venue+boat requirement even when org slug differs from user slug', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
       const dcUserId = await ctx.db.insert('users', {
@@ -35,7 +35,7 @@ describe('operatorCoverage — preferred-boat compressor lookup', () => {
         createdAt: Date.now(),
       })
 
-      const boatUserId = await ctx.db.insert('users', {
+      await ctx.db.insert('users', {
         tokenIdentifier: 'clerk|boat-cov-mismatch',
         originalTokenIdentifier: 'clerk|boat-cov-mismatch',
         slug: 'boat-cov-mismatch',
@@ -46,39 +46,6 @@ describe('operatorCoverage — preferred-boat compressor lookup', () => {
         phone: '+66812345679',
         dateOfBirth: '1990-01-01',
         appLanguage: 'en',
-      })
-      const boatOrgId = await ctx.db.insert('organizations', {
-        clerkOrgId: 'org_boat_cov_mismatch',
-        name: 'Boat Co Corp',
-        slug: 'boat-co-corp-slug',
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-      })
-      await ctx.db.patch(boatUserId, { organizationId: boatOrgId })
-      const boatId = await ctx.db.insert('boats', {
-        organizationId: boatOrgId,
-        slug: 'boat-compressor',
-        name: 'Compressor Boat',
-        address: { city: 'Koh Tao', country: 'TH' },
-        lat: 10.0957,
-        lng: 99.8408,
-        email: 'boat@test.com',
-        phone: '+66812345679',
-        fleet: [{ boatName: 'MV Test', maxPax: 20, boatType: 'day_boat' }],
-        verified: true,
-      })
-      await ctx.db.insert('compressors', {
-        organizationId: boatOrgId,
-        slug: 'boat-cov-mismatch-compressor',
-        name: 'Onboard Compressor',
-        location: 'boat',
-        boatId,
-        address: { city: 'Koh Tao', country: 'TH' },
-        lat: 10.0957,
-        lng: 99.8408,
-        email: 'boat@test.com',
-        phone: '+66812345679',
-        verified: true,
       })
 
       await seedStakeholderPreferences(ctx, 'dc-cov-mismatch', {
@@ -97,12 +64,12 @@ describe('operatorCoverage — preferred-boat compressor lookup', () => {
         activeOrgId: dcOrgId,
       } as EvaluatorContext)
 
-      expect(result.incomplete).not.toContain('preferredCompressor')
       expect(result.incomplete).not.toContain('preferredBoat')
+      expect(result.incomplete).not.toContain('preferredVenue')
     })
   })
 
-  it('still reports preferredCompressor incomplete when no preferred boat has a linked compressor row', async () => {
+  it('preferredCompressor IS in incomplete when no compressor source exists (no slug, no boat with gasMixes)', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
       const dcUserId = await ctx.db.insert('users', {
@@ -132,7 +99,7 @@ describe('operatorCoverage — preferred-boat compressor lookup', () => {
         createdAt: Date.now(),
       })
 
-      const boatUserId = await ctx.db.insert('users', {
+      await ctx.db.insert('users', {
         tokenIdentifier: 'clerk|boat-no-comp',
         originalTokenIdentifier: 'clerk|boat-no-comp',
         slug: 'boat-no-comp',
@@ -143,26 +110,6 @@ describe('operatorCoverage — preferred-boat compressor lookup', () => {
         phone: '+66812345679',
         dateOfBirth: '1990-01-01',
         appLanguage: 'en',
-      })
-      const boatOrgId = await ctx.db.insert('organizations', {
-        clerkOrgId: 'org_boat_no_comp',
-        name: 'Boat Co',
-        slug: 'boat-co-no-comp',
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-      })
-      await ctx.db.patch(boatUserId, { organizationId: boatOrgId })
-      await ctx.db.insert('boats', {
-        organizationId: boatOrgId,
-        slug: 'boat-no-compressor',
-        name: 'No Compressor Boat',
-        address: { city: 'Koh Tao', country: 'TH' },
-        lat: 10.0957,
-        lng: 99.8408,
-        email: 'boat@test.com',
-        phone: '+66812345679',
-        fleet: [{ boatName: 'MV Test', maxPax: 20, boatType: 'day_boat' }],
-        verified: true,
       })
 
       await seedStakeholderPreferences(ctx, 'dc-no-comp', {

@@ -36,7 +36,6 @@ describe('directory.listByRole — survives multi-row entity roles', () => {
           organizationId: op.organizationId,
           slug,
           name: `${slug} Compressor`,
-          location: 'fixed',
           address: baseAddr,
           lat: 7.8,
           lng: 98.3,

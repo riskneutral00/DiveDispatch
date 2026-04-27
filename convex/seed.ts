@@ -71,6 +71,7 @@ function buildEquipmentLines(
   const lines: InventoryLine[] = []
 
   for (const [gearType, brands] of Object.entries(manufacturers)) {
+    if (gearType !== 'wetsuit' && gearType !== 'bcd') continue
     for (const brand of brands) {
       const sizes = gearType === 'wetsuit' ? wetsuitSizesFor(brand) : bcdSizesFor(brand)
       for (const entry of sizes) {
@@ -305,7 +306,6 @@ export const seedStakeholders = internalMutation({
     if (existing) return 'Already seeded'
 
     const venueSlugToId = new Map<string, Id<'venues'>>()
-    const userSlugToBoatId = new Map<string, Id<'boats'>>()
     const orgSlugToId = new Map<string, Id<'organizations'>>()
 
     for (const s of ALL_STAKEHOLDERS) {
@@ -346,18 +346,14 @@ export const seedStakeholders = internalMutation({
             venueIds: r.venueSlugs.map((slug) => venueSlugToId.get(slug)).filter((id): id is Id<'venues'> => id !== undefined),
           })),
         }))
-        const boatId = await ctx.db.insert('boats', { organizationId, slug: `boat-${s.user.slug}`, ...s.boat, fleet: resolvedFleet }) // batch-exempt
-        userSlugToBoatId.set(s.user.slug, boatId)
+        await ctx.db.insert('boats', { organizationId, slug: `boat-${s.user.slug}`, ...s.boat, fleet: resolvedFleet }) // batch-exempt
       }
       if (s.equipment) {
         const { inventoryOverrides: _overrides, ...equipmentProfile } = s.equipment
         await ctx.db.insert('equipment', { organizationId, slug: `eq-${s.user.slug}`, ...equipmentProfile }) // batch-exempt
       }
       for (const compressor of s.compressors ?? []) {
-        const { boatOwnerUserSlug, venueSlug, ...compressorData } = compressor
-        const boatId = boatOwnerUserSlug ? userSlugToBoatId.get(boatOwnerUserSlug) : undefined
-        const venueId = venueSlug ? venueSlugToId.get(venueSlug) : undefined
-        await ctx.db.insert('compressors', { organizationId, ...compressorData, ...(boatId && { boatId }), ...(venueId && { venueId }) }) // batch-exempt
+        await ctx.db.insert('compressors', { organizationId, ...compressor }) // batch-exempt
       }
       if (s.instructor) {
         await ctx.db.insert('diveStaff', { organizationId, ...s.instructor }) // batch-exempt

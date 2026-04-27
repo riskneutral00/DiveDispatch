@@ -481,6 +481,18 @@ export const acceptByBookingForCaller = mutation({
       note: `Bulk accepted ${pendingForCaller.length} reservation(s) for caller`,
     })
 
+    const booking = await ctx.db.get(args.bookingId)
+    if (booking) {
+      await notify(ctx, {
+        userId: booking.ownerId,
+        type: NOTIFICATION_TYPE.ReservationAccepted,
+        bookingId: args.bookingId,
+        code: 'reservation_accepted',
+        params: { count: String(pendingForCaller.length), actorSlug: caller.slug },
+        message: `${pendingForCaller.length} reservation(s) accepted by ${caller.slug}.`,
+      })
+    }
+
     await tryAutoAdvance(ctx, args.bookingId)
   },
 })

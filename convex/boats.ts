@@ -11,6 +11,14 @@ import { setRoleProfileComplete } from './lib/setRoleProfileComplete'
 import { ErrorCode } from './lib/errorCodes'
 import { visibleOrgIds } from './lib/destinationScope'
 import { BASE_PROFILE_CREATE_FIELDS, BASE_PROFILE_UPDATE_FIELDS, ACCESS_CONTROL_FIELDS, BUSINESS_NAME_CREATE_FIELD, BUSINESS_NAME_UPDATE_FIELD } from './lib/validators'
+import { gasMixValidator } from './shared/gasMixes'
+import { validateNitroxRange } from './lib/gasMixValidation'
+
+const GAS_MIX_FIELDS = {
+  gasMixes: v.optional(v.array(gasMixValidator)),
+  nitroxMin: v.optional(v.number()),
+  nitroxMax: v.optional(v.number()),
+}
 
 const boatTypeValidator = v.union(
   v.literal('day_boat'),
@@ -44,8 +52,10 @@ export const create = mutation({
     ...BUSINESS_NAME_CREATE_FIELD,
     ...ACCESS_CONTROL_FIELDS,
     fleet: v.array(fleetEntryValidator),
+    ...GAS_MIX_FIELDS,
   },
   handler: async (ctx, args) => {
+    validateNitroxRange(args)
     return entityProfileCreate(ctx, args, 'Boat', { verified: false })
   },
 })
@@ -57,8 +67,10 @@ export const update = mutation({
     ...BUSINESS_NAME_UPDATE_FIELD,
     ...ACCESS_CONTROL_FIELDS,
     fleet: v.optional(v.array(fleetEntryValidator)),
+    ...GAS_MIX_FIELDS,
   },
   handler: async (ctx, args) => {
+    validateNitroxRange(args)
     const { entityId, ...patch } = args
     return entityProfileUpdate(ctx, entityId, patch, 'Boat')
   },

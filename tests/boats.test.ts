@@ -203,3 +203,100 @@ describe('boats.visibleToMe — destination-scoped discovery', () => {
     expect(await t.query(api.boats.visibleToMe, {})).toEqual([])
   })
 })
+
+describe('boats.archive', () => {
+  async function readBoatRoleComplete(t: ReturnType<typeof makeT>, slug: string): Promise<boolean | undefined> {
+    return await t.run(async (ctx) => {
+      const user = await ctx.db
+        .query('users')
+        .withIndex('by_slug', (q) => q.eq('slug', slug))
+        .unique()
+      if (!user) return undefined
+      const row = await ctx.db
+        .query('userRoles')
+        .withIndex('by_userId_role', (q) => q.eq('userId', user._id).eq('role', 'Boat'))
+        .unique()
+      return row?.profileComplete
+    })
+  }
+
+  it('sets archivedAt on the row', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedUser(ctx, 'archive-boat-owner', 'Boat') })
+    const identity = orgIdentityFor('archive-boat-owner')
+
+    const boatId = await t.withIdentity(identity).mutation(api.boats.create, VALID_BOAT_ARGS)
+    await t.withIdentity(identity).mutation(api.boats.archive, { entityId: boatId })
+
+    await t.run(async (ctx) => {
+      const row = await ctx.db.get(boatId as Id<'boats'>) as Doc<'boats'> | null
+      expect(row?.archivedAt).toBeTypeOf('number')
+    })
+  })
+
+  it('archiving the last active boat re-evaluates userRoles.profileComplete', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedUser(ctx, 'archive-last-boat', 'Boat') })
+    const identity = orgIdentityFor('archive-last-boat')
+
+    const boatId = await t.withIdentity(identity).mutation(api.boats.create, VALID_BOAT_ARGS)
+
+    await t.run(async (ctx) => {
+      const user = await ctx.db
+        .query('users')
+        .withIndex('by_slug', (q) => q.eq('slug', 'archive-last-boat'))
+        .unique()
+      const role = await ctx.db
+        .query('userRoles')
+        .withIndex('by_userId_role', (q) => q.eq('userId', user!._id).eq('role', 'Boat'))
+        .unique()
+      await ctx.db.patch(role!._id, { profileComplete: true })
+      await ctx.db.patch(boatId as Id<'boats'>, { profileComplete: true })
+    })
+
+    expect(await readBoatRoleComplete(t, 'archive-last-boat')).toBe(true)
+
+    await t.withIdentity(identity).mutation(api.boats.archive, { entityId: boatId })
+    expect(await readBoatRoleComplete(t, 'archive-last-boat')).not.toBe(true)
+  })
+
+  it('throws NOT_FOUND for unknown entityId', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedUser(ctx, 'archive-not-found', 'Boat') })
+    const identity = orgIdentityFor('archive-not-found')
+
+    const realId = await t.withIdentity(identity).mutation(api.boats.create, VALID_BOAT_ARGS)
+    await t.run(async (ctx) => { await ctx.db.delete(realId as Id<'boats'>) })
+
+    await expect(
+      t.withIdentity(identity).mutation(api.boats.archive, { entityId: realId }),
+    ).rejects.toThrow(/NOT_FOUND/)
+  })
+
+  it('throws FORBIDDEN when archiving a boat owned by a different org', async () => {
+    const t = makeT()
+    let strangerBoatId: Id<'boats'> | null = null
+    await t.run(async (ctx) => {
+      const ownerId = await seedUser(ctx, 'cross-org-boat-owner', 'Boat')
+      const ownerUser = await ctx.db.get(ownerId)
+      strangerBoatId = await ctx.db.insert('boats', {
+        organizationId: ownerUser!.organizationId!,
+        slug: 'foreign-boat',
+        name: 'Foreign Boat',
+        address: { city: 'Phuket', country: 'TH' },
+        lat: 7.9,
+        lng: 98.4,
+        email: 'foreign@test.com',
+        phone: '+66999999999',
+        fleet: [],
+        verified: true,
+      })
+      await seedUser(ctx, 'archive-cross-org', 'Boat')
+    })
+
+    await expect(
+      t.withIdentity(orgIdentityFor('archive-cross-org'))
+        .mutation(api.boats.archive, { entityId: strangerBoatId! }),
+    ).rejects.toThrow(/FORBIDDEN/)
+  })
+})

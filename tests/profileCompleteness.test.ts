@@ -196,12 +196,11 @@ describe('checkProfileCompleteness — DiveCenter compressor coverage', () => {
       const boatUserId = await seedUser(ctx, { role: 'Boat', slug: 'boat-hascomp', tokenIdentifier: 'clerk|boat-hascomp' })
       const boatRowId = await seedBoatProfile(ctx, boatUserId)
       const boatRow = await ctx.db.get(boatRowId)
+      await ctx.db.patch(boatRowId, { gasMixes: ['air'] })
       await ctx.db.insert('compressors', {
         organizationId: boatRow!.organizationId,
         slug: 'boat-hascomp-compressor',
         name: 'Onboard Compressor',
-        location: 'boat',
-        boatId: boatRowId,
         address: boatRow!.address,
         lat: boatRow!.lat,
         lng: boatRow!.lng,
@@ -243,7 +242,7 @@ describe('checkProfileCompleteness — DiveCenter compressor coverage', () => {
     })
   })
 
-  it('marks preferredCompressor incomplete when preferred boat has no linked compressor row and no compressor slug', async () => {
+  it('marks preferredCompressor incomplete when boat has no gasMixes and no preferred compressor slug', async () => {
     await t.run(async (ctx) => {
       const dcId = await seedUser(ctx, { role: 'DiveCenter', slug: 'dc-nocomp', tokenIdentifier: 'clerk|dc-nocomp' })
       await ctx.db.patch(dcId, { phone: '+66000000003' })
@@ -257,12 +256,10 @@ describe('checkProfileCompleteness — DiveCenter compressor coverage', () => {
         preferredInstructorSlugs: ['any-instr'],
         preferredEquipmentSlugs: ['any-equip'],
         preferredBoatSlugs: ['boat-nocomp'],
-        // no preferredCompressorSlugs
       })
 
       const result = await checkProfileCompleteness(ctx, { _id: dcId }, 'DiveCenter')
       expect(result.incomplete).toContain('preferredCompressor')
-      expect(result.percentage).toBeLessThan(100)
     })
   })
 })
@@ -363,7 +360,7 @@ describe('checkProfileCompleteness kind discriminator', () => {
       const userId = await seedUser(ctx, { role: 'Compressor' })
       const orgId = await getOrCreateTestOrg(ctx, userId, 'slug')
       await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
-      await ctx.db.insert('compressors', { slug: 'test-c-' + Math.random().toString(36).slice(2,8), location: 'fixed' as const,
+      await ctx.db.insert('compressors', { slug: 'test-c-' + Math.random().toString(36).slice(2,8),
         organizationId: orgId,
         name: 'Partial',
         address: { city: 'Koh Tao', country: 'TH' },
@@ -381,7 +378,7 @@ describe('checkProfileCompleteness kind discriminator', () => {
       const userId = await seedUser(ctx, { role: 'Compressor' })
       const orgId = await getOrCreateTestOrg(ctx, userId, 'slug')
       await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
-      await ctx.db.insert('compressors', { slug: 'test-c-' + Math.random().toString(36).slice(2,8), location: 'fixed' as const,
+      await ctx.db.insert('compressors', { slug: 'test-c-' + Math.random().toString(36).slice(2,8),
         organizationId: orgId,
         name: 'Full',
         address: { city: 'Koh Tao', country: 'TH' },

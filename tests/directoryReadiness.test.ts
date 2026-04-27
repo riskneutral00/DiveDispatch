@@ -6,7 +6,7 @@ import { makeT, orgIdentityFor } from './helpers/convex-helpers'
 async function seedIncompleteCompressor(ctx: SeedCtx, slug: string) {
   const userId = await seedUser(ctx, { tokenIdentifier: `clerk|${slug}`, slug, role: 'Compressor', email: `${slug}@test.com` })
   const orgId = await getOrCreateTestOrg(ctx, userId, slug)
-  await ctx.db.insert('compressors', { slug, location: 'fixed' as const,
+  await ctx.db.insert('compressors', { slug,
     organizationId: orgId,
     name: slug,
     address: { city: 'Koh Tao', country: 'TH' },

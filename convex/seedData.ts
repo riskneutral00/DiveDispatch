@@ -28,8 +28,6 @@ export type VenueFeature =
   | 'lake' | 'river' | 'quarry'
   | 'night' | 'deep'
 
-export type CompressorLocation = 'fixed' | 'boat' | 'venue'
-
 export interface SeedAddress {
   street?: string
   city: string
@@ -144,9 +142,6 @@ interface EquipmentProfile {
 interface CompressorProfile {
   slug: string
   name: string
-  location: CompressorLocation
-  boatOwnerUserSlug?: string
-  venueSlug?: string
   address: SeedAddress
   lat: number
   lng: number
@@ -1017,7 +1012,7 @@ export const RENE_SEA_FUN: SeedStakeholder = {
       owDays: 3,
       aowDays: 2,
       oaDays: 4,
-      selectedSpecialties: ['deep', 'nitrox', 'night', 'wreck', 'navigation'],
+      selectedSpecialties: ['Deep', 'Enriched Air', 'Night', 'Wreck', 'Navigation'],
     }],
     isAllowed: ['sea-fun-divers'],
     verified: false,
@@ -1071,7 +1066,7 @@ export const RENE_SEA_FUN: SeedStakeholder = {
       agency: 'PADI',
       level: 'MSDT',
       agencyID: 'I-234567',
-      specialtyRatings: ['deep', 'nitrox', 'night', 'wreck'],
+      specialtyRatings: ['Deep', 'Enriched Air', 'Night', 'Wreck', 'PPB'],
     }],
     teachingLanguages: ['en'],
     isAllowed: ['sea-fun-divers'],
@@ -1096,7 +1091,6 @@ export const RENE_SEA_FUN: SeedStakeholder = {
     {
       slug: 'scuba-market',
       name: 'Scuba Market',
-      location: 'fixed',
       address: { street: '51 Patak Road', city: 'Tambon Karon', state: 'Chang Wat Phuket', country: 'TH', postalCode: '83100' },
       lat: 7.820196400000013,
       lng: 98.30618609999999,
@@ -1106,35 +1100,6 @@ export const RENE_SEA_FUN: SeedStakeholder = {
       gasMixes: ['air', 'nitrox'],
       nitroxMin: 22,
       nitroxMax: 40,
-      verified: false,
-    },
-    {
-      slug: 'sea-fun-shop',
-      name: 'Sea Fun Shop Compressor',
-      location: 'fixed',
-      address: { street: '29 Soi Karon Nui', city: 'Karon', state: 'Phuket', country: 'TH', postalCode: '83100' },
-      lat: 7.8569,
-      lng: 98.2859,
-      email: 'rene_balot+clerk_test@seafundivers.com',
-      phone: '+6676330345',
-      gasMixes: ['air'],
-      isAllowed: ['sea-fun-divers'],
-      verified: false,
-    },
-    {
-      slug: 'sea-fun-boat',
-      name: 'M.V. Sea Fun Divers Compressor',
-      location: 'boat',
-      boatOwnerUserSlug: 'sea-fun',
-      address: { street: '29 Soi Karon Nui', city: 'Karon', state: 'Phuket', country: 'TH', postalCode: '83100' },
-      lat: 7.8569,
-      lng: 98.2859,
-      email: 'rene_balot+clerk_test@seafundivers.com',
-      phone: '+6676330345',
-      gasMixes: ['air', 'nitrox'],
-      nitroxMin: 28,
-      nitroxMax: 28,
-      isAllowed: ['sea-fun-divers'],
       verified: false,
     },
   ],

@@ -84,4 +84,73 @@ describe('admin/rebindOrgClerkOrgId — soft-delete guard', () => {
     )
     expect(stillBound?.deletedAt).toBeDefined()
   })
+
+  it('throws CONFLICT when target org is referenced by another orgs destinationIds', async () => {
+    const t = makeT()
+
+    await t.run(async (ctx) => {
+      const now = Date.now()
+      await ctx.db.insert('organizations', {
+        slug: 'live-from-dest',
+        name: 'Live From',
+        clerkOrgId: 'org_from_dest',
+        createdAt: now,
+        updatedAt: now,
+      })
+      const targetId = await ctx.db.insert('organizations', {
+        slug: 'target-dest',
+        name: 'Target',
+        clerkOrgId: 'org_target_dest',
+        createdAt: now,
+        updatedAt: now,
+      })
+      await ctx.db.insert('organizations', {
+        slug: 'consumer-dest',
+        name: 'Consumer',
+        clerkOrgId: 'org_consumer_dest',
+        createdAt: now,
+        updatedAt: now,
+        destinationIds: [targetId],
+      })
+    })
+
+    await expectConvexError(
+      t.mutation(api.admin.rebindOrgClerkOrgId.run, {
+        fromClerkOrgId: 'org_from_dest',
+        toClerkOrgId: 'org_target_dest',
+      }),
+      'CONFLICT',
+    )
+
+    const target = await t.run(async (ctx) =>
+      ctx.db
+        .query('organizations')
+        .withIndex('by_clerkOrgId', (q) => q.eq('clerkOrgId', 'org_target_dest'))
+        .unique(),
+    )
+    expect(target).not.toBeNull()
+    expect(target?.deletedAt).toBeUndefined()
+  })
+
+  it('throws VALIDATION when fromClerkOrgId equals toClerkOrgId', async () => {
+    const t = makeT()
+    await expectConvexError(
+      t.mutation(api.admin.rebindOrgClerkOrgId.run, {
+        fromClerkOrgId: 'org_same',
+        toClerkOrgId: 'org_same',
+      }),
+      'VALIDATION',
+    )
+  })
+
+  it('throws when not in development environment', async () => {
+    vi.stubEnv('ENVIRONMENT', 'production')
+    const t = makeT()
+    await expect(
+      t.mutation(api.admin.rebindOrgClerkOrgId.run, {
+        fromClerkOrgId: 'org_a',
+        toClerkOrgId: 'org_b',
+      }),
+    ).rejects.toThrow()
+  })
 })

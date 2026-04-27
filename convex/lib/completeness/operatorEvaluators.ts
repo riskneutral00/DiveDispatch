@@ -1,5 +1,6 @@
 import type { Evaluator } from './types'
 import { str } from './types'
+import { entityProfilesByUser } from '../profileHelpers'
 
 export function operatorAcceptanceMode(): Evaluator {
   return async ({ ctx, userDoc }) => {
@@ -25,7 +26,7 @@ export function operatorCoverage(): Evaluator {
     const equipSlugs = (p?.preferredEquipmentSlugs ?? []) as string[]
     const venueSlugs = (p?.preferredVenueSlugs ?? []) as string[]
     const boatSlugs = (p?.preferredBoatSlugs ?? []) as string[]
-    const compSlugs = (p?.preferredCompressorSlugs ?? []) as string[]
+    const compressorSlugs = (p?.preferredCompressorSlugs ?? []) as string[]
 
     if (instrSlugs.length === 0) incomplete.push('preferredInstructor')
     if (equipSlugs.length === 0) incomplete.push('preferredEquipment')
@@ -34,39 +35,36 @@ export function operatorCoverage(): Evaluator {
       incomplete.push('preferredBoat')
     }
 
-    let hasCompressor = compSlugs.length > 0
-    if (!hasCompressor && boatSlugs.length > 0) {
-      const owners = await Promise.all(
-        boatSlugs.map((slug) =>
-          ctx.db
-            .query('users')
-            .withIndex('by_slug', (q) => q.eq('slug', slug))
-            .unique(),
-        ),
-      )
-      const orgIds = owners
-        .map((o) => o?.organizationId)
-        .filter((id): id is NonNullable<typeof id> => id != null)
-      const boatsByOrg = await Promise.all(
-        orgIds.map((orgId) =>
-          ctx.db
-            .query('boats')
-            .withIndex('by_organizationId', (q) => q.eq('organizationId', orgId))
-            .collect(), // bounded: one org's boat profile rows, ~1-2 per org in v0.1
-        ),
-      )
-      const boatIds = boatsByOrg.flat().map((b) => b._id)
-      const compressorLookups = await Promise.all(
-        boatIds.map((boatId) =>
-          ctx.db
-            .query('compressors')
-            .withIndex('by_boatId', (q) => q.eq('boatId', boatId))
-            .collect(), // bounded: compressors per boat, realistic cap ~2
-        ),
-      )
-      hasCompressor = compressorLookups.some((rows) => rows.length > 0)
+    let hasCompressorCoverage = compressorSlugs.length > 0
+    if (!hasCompressorCoverage && boatSlugs.length > 0) {
+      for (const slug of boatSlugs) {
+        const boatOwner = await ctx.db
+          .query('users')
+          .withIndex('by_slug', (q) => q.eq('slug', slug))
+          .unique()
+        if (!boatOwner) continue
+        const boatRows = await entityProfilesByUser(ctx, boatOwner._id, 'Boat')
+        if (boatRows.some((row) => ((row.gasMixes as string[] | undefined) ?? []).length > 0)) {
+          hasCompressorCoverage = true
+          break
+        }
+      }
     }
-    if (!hasCompressor) incomplete.push('preferredCompressor')
+    if (!hasCompressorCoverage && venueSlugs.length > 0) {
+      for (const slug of venueSlugs) {
+        const venueOwner = await ctx.db
+          .query('users')
+          .withIndex('by_slug', (q) => q.eq('slug', slug))
+          .unique()
+        if (!venueOwner) continue
+        const venueRows = await entityProfilesByUser(ctx, venueOwner._id, 'Venue')
+        if (venueRows.some((row) => ((row.gasMixes as string[] | undefined) ?? []).length > 0)) {
+          hasCompressorCoverage = true
+          break
+        }
+      }
+    }
+    if (!hasCompressorCoverage) incomplete.push('preferredCompressor')
 
     return { slots: 4, incomplete }
   }

@@ -233,6 +233,36 @@ describe('acceptByBookingForCaller', () => {
     )
   })
 
+  it('notifies the booking owner when bulk-confirming reservations', async () => {
+    const t = makeT()
+    let bookingId: any
+
+    await t.run(async (ctx) => {
+      await seedUser(ctx)
+      await seedUser(ctx, { tokenIdentifier: TEST_TOKENS.instructor, slug: TEST_SLUGS.instructor, role: 'Instructor' })
+      await seedReadyInstructorBySlug(ctx, TEST_SLUGS.instructor, 'instructor@test.com', 'Test Instructor')
+      bookingId = await seedBooking(ctx)
+      const unitId = await seedInventoryUnit(ctx)
+      const sessionId = await seedSession(ctx, bookingId, unitId)
+      await seedReservation(ctx, bookingId, unitId, sessionId)
+    })
+
+    await t.withIdentity({ tokenIdentifier: TEST_TOKENS.instructor })
+      .mutation(api.reservationsMutations.acceptByBookingForCaller, { bookingId })
+
+    await t.run(async (ctx) => {
+      const booking = await ctx.db.get(bookingId) as Doc<'bookings'> | null
+      const ownerId = booking!.ownerId
+      const notifications = await ctx.db
+        .query('notifications')
+        .withIndex('by_userId_createdAt', (q) => q.eq('userId', ownerId))
+        .collect()
+      const acceptedNotifs = notifications.filter((n) => n.type === 'reservation_accepted')
+      expect(acceptedNotifs.length).toBeGreaterThan(0)
+      expect(acceptedNotifs[0].bookingId).toBe(bookingId)
+    })
+  })
+
   it('only confirms PendingAcceptance (skips already Confirmed)', async () => {
     const t = makeT()
     let bookingId: any

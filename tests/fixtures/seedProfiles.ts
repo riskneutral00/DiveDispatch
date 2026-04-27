@@ -302,8 +302,6 @@ export async function seedCompressorForBoat(
     organizationId: args.organizationId,
     slug: args.slug,
     name: args.name ?? `${args.slug} Compressor`,
-    location: 'boat',
-    boatId: args.boatId,
     address,
     lat: 10.0957,
     lng: 99.8408,

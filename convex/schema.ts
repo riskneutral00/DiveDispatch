@@ -8,7 +8,6 @@ import { boatTypeValidator as boatTypeUnion } from './shared/boatTypes'
 import { gasMixValidator as gasMix } from './shared/gasMixes'
 import { venueKindValidator } from './shared/venueTypes'
 import { venueFeatureValidator } from './shared/venueFeatures'
-import { compressorLocationValidator } from './shared/compressorTypes'
 import { capacityModelValidator as capacityModel, genderValidator as gender, shoeSizeUnitValidator as shoeSizeUnit, acceptanceModeValidator as acceptanceMode } from './shared/schemaEnums'
 import { stakeholderTypeValidator as stakeholderType, gearTypeValidator as gearType, finSizeSystemValidator, rentalChecklistValidator } from './lib/validators'
 import { bookingStatusValidator as bookingStatus, reservationStatusValidator as reservationStatus, bagStatusValidator, notificationTypeValidator as notificationType, vacatedReasonValidator } from './shared/statuses'
@@ -413,6 +412,9 @@ export default defineSchema({
         cutoffHours: v.optional(v.number()),
       }),
     ),
+    gasMixes: v.optional(v.array(gasMix)),
+    nitroxMin: v.optional(v.number()),
+    nitroxMax: v.optional(v.number()),
     ...accessControlFields,
     verified: v.boolean(),
     profileComplete: v.optional(v.boolean()),
@@ -455,6 +457,9 @@ export default defineSchema({
     confinedCapable: v.optional(v.boolean()),
     maxDepth: v.optional(v.number()),
     maxCapacity: v.optional(v.number()),
+    gasMixes: v.optional(v.array(gasMix)),
+    nitroxMin: v.optional(v.number()),
+    nitroxMax: v.optional(v.number()),
     profileComplete: v.optional(v.boolean()),
     archivedAt: v.optional(v.number()),
   })
@@ -465,9 +470,6 @@ export default defineSchema({
     organizationId: v.id('organizations'),
     slug: v.string(),
     name: v.string(),
-    location: compressorLocationValidator,
-    boatId: v.optional(v.id('boats')),
-    venueId: v.optional(v.id('venues')),
     ...structuredLocationFields,
     lat: v.number(),
     lng: v.number(),
@@ -482,9 +484,7 @@ export default defineSchema({
     archivedAt: v.optional(v.number()),
   })
     .index('by_organizationId', ['organizationId'])
-    .index('by_slug', ['slug'])
-    .index('by_boatId', ['boatId'])
-    .index('by_venueId', ['venueId']),
+    .index('by_slug', ['slug']),
 
   equipmentBags: defineTable({
     bagNumber: v.string(),

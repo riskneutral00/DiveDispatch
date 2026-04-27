@@ -11,6 +11,14 @@ import {
   type VenueKind,
 } from './shared/venueTypes'
 import { venueFeatureValidator } from './shared/venueFeatures'
+import { gasMixValidator } from './shared/gasMixes'
+import { validateNitroxRange } from './lib/gasMixValidation'
+
+const GAS_MIX_FIELDS = {
+  gasMixes: v.optional(v.array(gasMixValidator)),
+  nitroxMin: v.optional(v.number()),
+  nitroxMax: v.optional(v.number()),
+}
 import { cleanupInventoryForOwner } from './lib/inventoryCleanup'
 import { isActiveReservation } from './bookings/_shared'
 import { setRoleProfileComplete } from './lib/setRoleProfileComplete'
@@ -44,6 +52,7 @@ export const create = mutation({
     confinedCapable: v.optional(v.boolean()),
     maxDepth: v.optional(v.number()),
     maxCapacity: v.optional(v.number()),
+    ...GAS_MIX_FIELDS,
   },
   handler: async (ctx, args) => {
     const { user } = await authorize(ctx, null, 'resource:manage', { type: 'resource' })
@@ -52,6 +61,7 @@ export const create = mutation({
     const confinedCapable = args.confinedCapable
     assertVenueKindConsistent(kind, confinedCapable)
     assertVenueRange(kind, args.maxDepth, args.maxCapacity)
+    validateNitroxRange(args)
 
     if (args.phone !== undefined && args.phone !== '') {
       assertPhoneE164(args.phone, 'phone')
@@ -108,9 +118,11 @@ export const update = mutation({
     confinedCapable: v.optional(v.boolean()),
     maxDepth: v.optional(v.number()),
     maxCapacity: v.optional(v.number()),
+    ...GAS_MIX_FIELDS,
   },
   handler: async (ctx, args) => {
     const { user } = await authorize(ctx, null, 'resource:manage', { type: 'resource' })
+    validateNitroxRange(args)
 
     const venue = await ctx.db.get(args.venueId)
     if (!venue) throw new ConvexError({ code: ErrorCode.NOT_FOUND })

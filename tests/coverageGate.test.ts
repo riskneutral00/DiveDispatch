@@ -17,7 +17,6 @@ import {
   seedDiveCenterProfile,
   seedBookingTemplate,
   seedVenue,
-  seedCompressorForBoat,
   getOrCreateTestOrg,
   type SeedCtx, findProfileByUser } from './fixtures'
 
@@ -50,13 +49,7 @@ async function seedBoatUser(ctx: SeedCtx, slug: string, hasCompressor: boolean) 
     verified: true,
   })
   if (hasCompressor) {
-    await seedCompressorForBoat(ctx, {
-      organizationId,
-      boatId,
-      slug: `${slug}-compressor`,
-      name: `${slug} Onboard Compressor`,
-      email: `${slug}@test.com`,
-    })
+    await ctx.db.patch(boatId, { gasMixes: ['air'] })
   }
 }
 
@@ -73,7 +66,7 @@ async function seedDCProfile(ctx: SeedCtx, userId: Id<'users'>, slug: string) {
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
 describe('createDraftShell — coverage gate', () => {
-  it('rejects with PROFILE_INCOMPLETE when only instructor is in preferences (missing equipment/venue/compressor)', async () => {
+  it('rejects with PROFILE_INCOMPLETE when only instructor is in preferences (missing equipment/venue)', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
       const userId = await seedUserBySlug(ctx, 'dc-noprofs', 'DiveCenter')
@@ -93,7 +86,7 @@ describe('createDraftShell — coverage gate', () => {
     )
   })
 
-  it('rejects with PROFILE_INCOMPLETE listing 3 missing resources when only instructor pref is set', async () => {
+  it('rejects with PROFILE_INCOMPLETE listing missing equipment and venue when only instructor pref is set', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
       const userId = await seedUserBySlug(ctx, 'dc-empty', 'DiveCenter')
@@ -127,7 +120,7 @@ describe('createDraftShell — coverage gate', () => {
     })
   })
 
-  it('rejects when only instructor is preferred (missing equipment, venue, compressor)', async () => {
+  it('rejects when only instructor is preferred (missing equipment, venue)', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
       const userId = await seedUserBySlug(ctx, 'dc-partial', 'DiveCenter')

@@ -63,6 +63,7 @@ export const NOTIFICATION_TYPE = {
   NoshowMarked: 'noshow_marked',
   NoshowReverted: 'noshow_reverted',
   PortalComplete: 'portal_complete',
+  ReservationAccepted: 'reservation_accepted',
 } as const
 
 export type NotificationType = (typeof NOTIFICATION_TYPE)[keyof typeof NOTIFICATION_TYPE]
@@ -82,6 +83,7 @@ export const notificationTypeValidator = v.union(
   v.literal(NOTIFICATION_TYPE.NoshowMarked),
   v.literal(NOTIFICATION_TYPE.NoshowReverted),
   v.literal(NOTIFICATION_TYPE.PortalComplete),
+  v.literal(NOTIFICATION_TYPE.ReservationAccepted),
 )
 
 export const clientNotificationTypeValidator = v.union(

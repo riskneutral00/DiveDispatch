@@ -1,12 +1,11 @@
 import { describe, it, expect } from 'vitest'
 import { api } from '../convex/_generated/api'
 import type { Doc, Id } from '../convex/_generated/dataModel'
-import { seedUser as _seedUser, seedUserWithOrg as seedUser, getOrCreateTestOrg, seedBoatProfile, seedVenue, seedBooking, seedBookingResource, seedSession, seedReservation, seedInventoryUnit, seedSnapshot } from './fixtures'
+import { seedUserWithOrg as seedUser, seedBooking, seedBookingResource, seedSession, seedReservation, seedInventoryUnit, seedSnapshot } from './fixtures'
 import { makeT, orgIdentityFor } from './helpers/convex-helpers'
 
 const VALID_ARGS = {
   name: 'Sairee Compressor',
-  location: 'fixed' as const,
   address: { city: 'Koh Tao', country: 'TH' },
   lat: 10.09,
   lng: 99.84,
@@ -28,7 +27,7 @@ describe('compressors.create', () => {
     ).rejects.toThrow(/FORBIDDEN/)
   })
 
-  it('creates compressor with slug and location', async () => {
+  it('creates compressor with slug', async () => {
     const t = makeT()
     await t.run(async (ctx) => { await seedUser(ctx, 'comp-owner', 'Compressor') })
 
@@ -39,7 +38,6 @@ describe('compressors.create', () => {
       const comp = await ctx.db.get(compId as Id<'compressors'>) as Doc<'compressors'> | null
       expect(comp).not.toBeNull()
       expect(comp!.name).toBe('Sairee Compressor')
-      expect(comp!.location).toBe('fixed')
       expect(comp!.slug).toBe('sairee-compressor')
       expect(comp!.verified).toBe(false)
     })
@@ -175,7 +173,6 @@ describe('compressors.visibleToMe — destination-scoped discovery', () => {
         organizationId: areaId,
         slug: 'area-comp',
         name: 'Area Compressor',
-        location: 'fixed',
         address: { city: 'Phuket', country: 'TH' },
         lat: 7.8,
         lng: 98.3,
@@ -191,7 +188,6 @@ describe('compressors.visibleToMe — destination-scoped discovery', () => {
         organizationId: user.organizationId,
         slug: 'rene-comp',
         name: 'Rene Compressor',
-        location: 'fixed',
         address: { city: 'Phuket', country: 'TH' },
         lat: 7.8,
         lng: 98.3,
@@ -215,7 +211,6 @@ describe('compressors.visibleToMe — destination-scoped discovery', () => {
         organizationId: user.organizationId,
         slug: 'solo-comp',
         name: 'Solo Compressor',
-        location: 'fixed',
         address: { city: 'Koh Tao', country: 'TH' },
         lat: 10,
         lng: 99,
@@ -235,100 +230,6 @@ describe('compressors.visibleToMe — destination-scoped discovery', () => {
   })
 })
 
-describe('compressors.update — location transition clears stale FKs', () => {
-  it('clears boatId when transitioning boat → fixed even if caller omits boatId arg', async () => {
-    const t = makeT()
-    const seed = await t.run(async (ctx) => {
-      const userId = await _seedUser(ctx, { tokenIdentifier: `clerk|loc-b2f`, slug: 'loc-b2f', email: 'loc-b2f@test.com', name: 'loc-b2f', firstName: 'Loc', lastName: 'B2F', role: 'Compressor' })
-      const orgId = await getOrCreateTestOrg(ctx, userId, 'loc-b2f')
-      const boatId = await seedBoatProfile(ctx, userId, { organizationId: orgId })
-      await seedVenue(ctx, { userId, organizationId: orgId, name: 'Loc Venue' })
-      return { boatId }
-    })
-    const identity = orgIdentityFor('loc-b2f')
-    const compId = await t.withIdentity(identity).mutation(api.compressors.create, {
-      ...VALID_ARGS,
-      name: 'B2F Compressor',
-      location: 'boat',
-      boatId: seed.boatId,
-    }) as Id<'compressors'>
-
-    await t.withIdentity(identity).mutation(api.compressors.update, {
-      compressorId: compId,
-      location: 'fixed',
-    })
-
-    await t.run(async (ctx) => {
-      const comp = await ctx.db.get(compId) as Doc<'compressors'> | null
-      expect(comp).not.toBeNull()
-      expect(comp!.location).toBe('fixed')
-      expect(comp!.boatId).toBeUndefined()
-      expect(comp!.venueId).toBeUndefined()
-    })
-  })
-
-  it('clears venueId when transitioning venue → boat even if caller omits venueId arg', async () => {
-    const t = makeT()
-    const seed = await t.run(async (ctx) => {
-      const userId = await _seedUser(ctx, { tokenIdentifier: `clerk|loc-v2b`, slug: 'loc-v2b', email: 'loc-v2b@test.com', name: 'loc-v2b', firstName: 'Loc', lastName: 'V2B', role: 'Compressor' })
-      const orgId = await getOrCreateTestOrg(ctx, userId, 'loc-v2b')
-      const boatId = await seedBoatProfile(ctx, userId, { organizationId: orgId })
-      const venueId = await seedVenue(ctx, { userId, organizationId: orgId, name: 'Loc Venue' })
-      return { boatId, venueId }
-    })
-    const identity = orgIdentityFor('loc-v2b')
-    const compId = await t.withIdentity(identity).mutation(api.compressors.create, {
-      ...VALID_ARGS,
-      name: 'V2B Compressor',
-      location: 'venue',
-      venueId: seed.venueId,
-    }) as Id<'compressors'>
-
-    await t.withIdentity(identity).mutation(api.compressors.update, {
-      compressorId: compId,
-      location: 'boat',
-      boatId: seed.boatId,
-    })
-
-    await t.run(async (ctx) => {
-      const comp = await ctx.db.get(compId) as Doc<'compressors'> | null
-      expect(comp!.location).toBe('boat')
-      expect(comp!.boatId).toBe(seed.boatId)
-      expect(comp!.venueId).toBeUndefined()
-    })
-  })
-
-  it('clears boatId when transitioning boat → venue even if caller omits boatId arg', async () => {
-    const t = makeT()
-    const seed = await t.run(async (ctx) => {
-      const userId = await _seedUser(ctx, { tokenIdentifier: `clerk|loc-b2v`, slug: 'loc-b2v', email: 'loc-b2v@test.com', name: 'loc-b2v', firstName: 'Loc', lastName: 'B2V', role: 'Compressor' })
-      const orgId = await getOrCreateTestOrg(ctx, userId, 'loc-b2v')
-      const boatId = await seedBoatProfile(ctx, userId, { organizationId: orgId })
-      const venueId = await seedVenue(ctx, { userId, organizationId: orgId, name: 'Loc Venue' })
-      return { boatId, venueId }
-    })
-    const identity = orgIdentityFor('loc-b2v')
-    const compId = await t.withIdentity(identity).mutation(api.compressors.create, {
-      ...VALID_ARGS,
-      name: 'B2V Compressor',
-      location: 'boat',
-      boatId: seed.boatId,
-    }) as Id<'compressors'>
-
-    await t.withIdentity(identity).mutation(api.compressors.update, {
-      compressorId: compId,
-      location: 'venue',
-      venueId: seed.venueId,
-    })
-
-    await t.run(async (ctx) => {
-      const comp = await ctx.db.get(compId) as Doc<'compressors'> | null
-      expect(comp!.location).toBe('venue')
-      expect(comp!.venueId).toBe(seed.venueId)
-      expect(comp!.boatId).toBeUndefined()
-    })
-  })
-})
 
 describe('compressors.remove — cascade + active-reservation guard', () => {
   it('rejects unauthenticated callers', async () => {

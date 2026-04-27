@@ -66,6 +66,7 @@ describe('PROFILE_REGISTRY', () => {
     expect(PROFILE_REGISTRY.compressor.tabs).not.toBeNull()
     expect(PROFILE_REGISTRY.compressor.tabs?.map((t) => t.id)).toEqual([
       'contact',
+      'gas-mixes',
       'booking',
     ])
   })

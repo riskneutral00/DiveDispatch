@@ -1,6 +1,5 @@
 import { ConvexError, v } from 'convex/values'
-import { mutation, query, type MutationCtx } from './_generated/server'
-import type { Id } from './_generated/dataModel'
+import { mutation, query } from './_generated/server'
 import { authorize, assertOrgOwnership } from './lib/auth'
 import { getActiveOrg, tryGetActiveOrg } from './lib/activeOrg'
 import { visibleOrgIds } from './lib/destinationScope'
@@ -8,62 +7,18 @@ import { checkHasRole } from './userRoles'
 import { ErrorCode } from './lib/errorCodes'
 import { BASE_PROFILE_CREATE_FIELDS, BASE_PROFILE_UPDATE_FIELDS, ACCESS_CONTROL_FIELDS, BUSINESS_NAME_CREATE_FIELD, BUSINESS_NAME_UPDATE_FIELD, assertPhoneE164, assertCountryCode } from './lib/validators'
 import { gasMixValidator } from './shared/gasMixes'
-import { compressorLocationValidator } from './shared/compressorTypes'
 import { setRoleProfileComplete } from './lib/setRoleProfileComplete'
 import { cleanupInventoryForOwner } from './lib/inventoryCleanup'
 import { isActiveReservation } from './bookings/_shared'
 import { batchDelete } from './lib/batch'
 import { mintUniqueEntitySlug } from './lib/entitySlug'
-
-function validateNitroxRange(args: { nitroxMin?: number; nitroxMax?: number }) {
-  if (args.nitroxMin !== undefined || args.nitroxMax !== undefined) {
-    const min = args.nitroxMin ?? 21
-    const max = args.nitroxMax ?? 40
-    if (min < 21 || max > 40 || min > max) {
-      throw new ConvexError({ code: ErrorCode.VALIDATION, reason: 'nitroxMin must be 21–40, nitroxMax must be 21–40, min ≤ max' })
-    }
-  }
-}
-
-async function assertLocationRefsConsistent(
-  ctx: MutationCtx,
-  args: { location: 'fixed' | 'boat' | 'venue'; boatId?: Id<'boats'>; venueId?: Id<'venues'> },
-  activeOrg: { _id: Id<'organizations'> },
-) {
-  if (args.location === 'fixed') {
-    if (args.boatId || args.venueId) {
-      throw new ConvexError({ code: ErrorCode.VALIDATION, reason: 'location=fixed must not reference boatId or venueId' })
-    }
-    return
-  }
-  if (args.location === 'boat') {
-    if (!args.boatId || args.venueId) {
-      throw new ConvexError({ code: ErrorCode.VALIDATION, reason: 'location=boat requires boatId and must not set venueId' })
-    }
-    const boat = await ctx.db.get(args.boatId)
-    if (!boat) throw new ConvexError({ code: ErrorCode.NOT_FOUND, reason: 'boatId' })
-    assertOrgOwnership(boat, activeOrg)
-    return
-  }
-  if (args.location === 'venue') {
-    if (!args.venueId || args.boatId) {
-      throw new ConvexError({ code: ErrorCode.VALIDATION, reason: 'location=venue requires venueId and must not set boatId' })
-    }
-    const venue = await ctx.db.get(args.venueId)
-    if (!venue) throw new ConvexError({ code: ErrorCode.NOT_FOUND, reason: 'venueId' })
-    assertOrgOwnership(venue, activeOrg)
-    return
-  }
-}
+import { validateNitroxRange } from './lib/gasMixValidation'
 
 export const create = mutation({
   args: {
     ...BASE_PROFILE_CREATE_FIELDS,
     ...BUSINESS_NAME_CREATE_FIELD,
     ...ACCESS_CONTROL_FIELDS,
-    location: compressorLocationValidator,
-    boatId: v.optional(v.id('boats')),
-    venueId: v.optional(v.id('venues')),
     gasMixes: v.optional(v.array(gasMixValidator)),
     nitroxMin: v.optional(v.number()),
     nitroxMax: v.optional(v.number()),
@@ -87,12 +42,6 @@ export const create = mutation({
 
     const { org: activeOrg } = await getActiveOrg(ctx)
 
-    await assertLocationRefsConsistent(ctx, {
-      location: args.location,
-      boatId: args.boatId,
-      venueId: args.venueId,
-    }, activeOrg)
-
     const slug = await mintUniqueEntitySlug(ctx, 'compressors', args.name)
 
     const id = await ctx.db.insert('compressors', {
@@ -114,9 +63,6 @@ export const update = mutation({
     ...BASE_PROFILE_UPDATE_FIELDS,
     ...BUSINESS_NAME_UPDATE_FIELD,
     ...ACCESS_CONTROL_FIELDS,
-    location: v.optional(compressorLocationValidator),
-    boatId: v.optional(v.id('boats')),
-    venueId: v.optional(v.id('venues')),
     gasMixes: v.optional(v.array(gasMixValidator)),
     nitroxMin: v.optional(v.number()),
     nitroxMax: v.optional(v.number()),
@@ -130,23 +76,6 @@ export const update = mutation({
     const { org: activeOrg } = await getActiveOrg(ctx)
     assertOrgOwnership(compressor, activeOrg)
 
-    const nextLocation = args.location ?? compressor.location
-    let nextBoatId = args.boatId !== undefined ? args.boatId : compressor.boatId
-    let nextVenueId = args.venueId !== undefined ? args.venueId : compressor.venueId
-    if (nextLocation === 'fixed') {
-      nextBoatId = undefined
-      nextVenueId = undefined
-    } else if (nextLocation === 'boat') {
-      nextVenueId = undefined
-    } else if (nextLocation === 'venue') {
-      nextBoatId = undefined
-    }
-    await assertLocationRefsConsistent(ctx, {
-      location: nextLocation,
-      boatId: nextBoatId,
-      venueId: nextVenueId,
-    }, activeOrg)
-
     validateNitroxRange(args)
 
     if (args.phone !== undefined && args.phone !== '') {
@@ -157,10 +86,7 @@ export const update = mutation({
     }
 
     const { compressorId: _cid, ...rest } = args
-    const patch: Record<string, unknown> = { ...rest }
-    patch.boatId = nextBoatId
-    patch.venueId = nextVenueId
-    await ctx.db.patch(args.compressorId, patch)
+    await ctx.db.patch(args.compressorId, rest)
 
     await setRoleProfileComplete(ctx, user._id, 'Compressor')
   },

@@ -97,7 +97,6 @@ export const ROLE_SPECS: Record<string, Evaluator[]> = {
     scalarString('name'),
     scalarString('email'),
     scalarString('phone'),
-    scalarString('location'),
     nestedAddress(),
     arrayNonEmpty('gasMixes'),
   ],

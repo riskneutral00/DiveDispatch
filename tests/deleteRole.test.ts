@@ -415,7 +415,7 @@ describe('userRoles.deleteRole', () => {
         createdAt: Date.now(),
       })
 
-      await ctx.db.insert('compressors', { slug: 'test-c-' + Math.random().toString(36).slice(2,8), location: 'fixed' as const,
+      await ctx.db.insert('compressors', { slug: 'test-c-' + Math.random().toString(36).slice(2,8),
         organizationId: orgId,
         name: 'Scuba Market',
         address: { city: 'Phuket', country: 'TH' },
@@ -545,7 +545,7 @@ describe('userRoles.deleteRole', () => {
       roleId = await ctx.db.insert('userRoles', { userId: aliceId, role: 'Compressor', organizationId: orgId, createdAt: Date.now() })
       await ctx.db.insert('userRoles', { userId: bobId, role: 'Compressor', organizationId: orgId, createdAt: Date.now() })
 
-      await ctx.db.insert('compressors', { slug: 'test-c-' + Math.random().toString(36).slice(2,8), location: 'fixed' as const,
+      await ctx.db.insert('compressors', { slug: 'test-c-' + Math.random().toString(36).slice(2,8),
         organizationId: orgId,
         name: 'Shared Compressor',
         address: { city: 'Koh Tao', country: 'TH' },
