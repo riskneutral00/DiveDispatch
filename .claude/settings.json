@@ -122,6 +122,12 @@
             "command": "bash .claude/hooks/seed-venue-edit-guard.sh",
             "timeout": 5,
             "statusMessage": "Checking seed venue edit…"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/cosmetic-edit-blocker.sh",
+            "timeout": 5,
+            "statusMessage": "Checking for cosmetic-only edit…"
           }
         ]
       },
@@ -163,6 +169,12 @@
             "command": "bash .claude/hooks/seed-venue-edit-guard.sh",
             "timeout": 5,
             "statusMessage": "Checking seed venue edit…"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/cosmetic-edit-blocker.sh",
+            "timeout": 5,
+            "statusMessage": "Checking for cosmetic-only edit…"
           }
         ]
       }

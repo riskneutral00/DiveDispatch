@@ -19,6 +19,9 @@
 .vitest-last-pass
 .last-summary-ts
 
+# scope-drift observations (in-session, ephemeral; surfaced at end-of-turn)
+.observations
+
 
 # dependencies
 /node_modules
