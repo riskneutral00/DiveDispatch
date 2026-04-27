@@ -20,6 +20,7 @@ const LocationPickerModal = dynamic(
 interface LocationPickerProps {
   value: LocationValue | null
   onChange: (location: LocationValue | null) => void
+  onBlur?: () => void
   error?: string
   label?: string
   required?: boolean
@@ -105,29 +106,33 @@ function LocationPickerTrigger({ value, onOpen, onClear, error, label, required,
   )
 }
 
-export function LocationPicker({ value, onChange, error, label, required, className }: LocationPickerProps) {
+export function LocationPicker({ value, onChange, onBlur, error, label, required, className }: LocationPickerProps) {
   const t = useTranslations('portal')
   const [open, setOpen] = useState(false)
+  const closeAndBlur = () => {
+    setOpen(false)
+    onBlur?.()
+  }
   return (
     <>
       <LocationPickerTrigger
         value={value}
         onOpen={() => setOpen(true)}
-        onClear={() => onChange(null)}
+        onClear={() => { onChange(null); onBlur?.() }}
         error={error}
         label={label}
         required={required}
         className={className}
       />
-      <Dialog open={open} onClose={() => setOpen(false)} title={t('setLocation')} fullScreen>
+      <Dialog open={open} onClose={closeAndBlur} title={t('setLocation')} fullScreen>
         {open && (
           <LocationPickerModal
             value={value}
             onConfirm={(loc) => {
               onChange(loc)
-              setOpen(false)
+              closeAndBlur()
             }}
-            onCancel={() => setOpen(false)}
+            onCancel={closeAndBlur}
           />
         )}
       </Dialog>

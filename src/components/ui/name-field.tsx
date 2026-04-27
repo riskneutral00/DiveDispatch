@@ -19,6 +19,7 @@ interface NameFieldProps {
   label: string
   value: string
   onChange: (value: string) => void
+  onBlur?: () => void
   required?: boolean
   error?: string
   helperText?: string
@@ -33,6 +34,7 @@ export function NameField({
   label,
   value,
   onChange,
+  onBlur,
   required,
   error,
   helperText,
@@ -48,7 +50,7 @@ export function NameField({
       label={label}
       value={value}
       onChange={(e) => onChange(e.target.value.slice(0, NAME_MAX_LENGTH))}
-      onBlur={() => onChange(value.trim())}
+      onBlur={() => { onChange(value.trim()); onBlur?.() }}
       autoComplete={AUTOCOMPLETE_MAP[scope]}
       autoCapitalize={scope === 'nickname' ? 'none' : 'words'}
       spellCheck={false}

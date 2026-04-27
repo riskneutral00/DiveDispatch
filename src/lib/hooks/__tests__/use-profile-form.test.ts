@@ -379,6 +379,172 @@ function makeOptimisticOptions(overrides: {
   }
 }
 
+describe('useProfileForm validateField (on-blur)', () => {
+  const blurSchema = z.object({
+    name: z.string().min(1, 'Name required'),
+    email: z.string().email('Invalid email'),
+  })
+
+  function blurOptions(overrides?: Partial<UseProfileFormOptions<TestForm, TestPayload>>) {
+    return makeOptions({ profile: null, schema: blurSchema, ...overrides })
+  }
+
+  it('validateField does NOT surface an error when field is untouched', () => {
+    const { result } = renderHook(() => useProfileForm(blurOptions()))
+    act(() => { result.current.validateField('name') })
+    expect(result.current.errors.name).toBe('Name required')
+  })
+
+  it('validateField surfaces error when blurring an invalid touched field', () => {
+    const { result } = renderHook(() => useProfileForm(blurOptions()))
+    act(() => { result.current.setField('email', 'not-an-email') })
+    act(() => { result.current.validateField('email') })
+    expect(result.current.errors.email).toBe('Invalid email')
+  })
+
+  it('validateField clears error when a touched field becomes valid', () => {
+    const { result } = renderHook(() => useProfileForm(blurOptions()))
+    act(() => { result.current.setField('email', 'bad') })
+    act(() => { result.current.validateField('email') })
+    expect(result.current.errors.email).toBe('Invalid email')
+    act(() => { result.current.setField('email', 'good@test.com') })
+    act(() => { result.current.validateField('email') })
+    expect(result.current.errors.email).toBeUndefined()
+  })
+
+  it('cross-field sweep clears a stale superRefine error after sibling fix', () => {
+    const refineSchema = z
+      .object({ name: z.string(), email: z.string() })
+      .superRefine((data, ctx) => {
+        if (data.name && data.email && data.name === data.email) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Name must differ from email',
+            path: ['email'],
+          })
+        }
+      })
+    const { result } = renderHook(() => useProfileForm(blurOptions({ schema: refineSchema })))
+    act(() => { result.current.setField('name', 'same@x.com') })
+    act(() => { result.current.setField('email', 'same@x.com') })
+    act(() => { result.current.validateField('email') })
+    expect(result.current.errors.email).toBe('Name must differ from email')
+    act(() => { result.current.setField('name', 'different') })
+    act(() => { result.current.validateField('name') })
+    expect(result.current.errors.email).toBeUndefined()
+  })
+
+  it('cross-field sweep does not introduce errors on silent untouched fields', () => {
+    const { result } = renderHook(() => useProfileForm(blurOptions()))
+    act(() => { result.current.setField('email', 'good@test.com') })
+    act(() => { result.current.validateField('email') })
+    expect(result.current.errors.name).toBeUndefined()
+  })
+
+  it('cross-field sweep preserves errors._form (G1 reserved-key regression)', () => {
+    const refineSchema = z
+      .object({ name: z.string().min(1), email: z.string().email() })
+      .superRefine((data, ctx) => {
+        if (data.name === '__BAD__') {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Form-level issue',
+            path: ['_form'],
+          })
+        }
+      })
+    const { result } = renderHook(() => useProfileForm(blurOptions({ schema: refineSchema })))
+    act(() => { result.current.setField('name', '__BAD__') })
+    act(() => { result.current.setField('email', 'good@test.com') })
+    act(() => {
+      const fakeEvent = { preventDefault: vi.fn() } as unknown as React.FormEvent
+      result.current.handleSubmit(fakeEvent)
+    })
+    expect(result.current.errors._form).toBe('Form-level issue')
+    act(() => { result.current.validateField('email') })
+    expect(result.current.errors._form).toBe('Form-level issue')
+  })
+
+  it('composite path: validateField(parent) surfaces issue at parent.child via prefix match (G2)', () => {
+    const compositeSchema = z.object({
+      location: z.object({
+        address: z.object({
+          street: z.string().min(1, 'Street required'),
+        }),
+      }),
+    })
+    type CForm = { location: { address: { street: string } } }
+    const opts: UseProfileFormOptions<CForm, CForm> = {
+      profile: null,
+      schema: compositeSchema,
+      defaults: { location: { address: { street: '' } } },
+      fromProfile: () => ({ location: { address: { street: '' } } }),
+      toPayload: (f) => f,
+      create: vi.fn().mockResolvedValue(undefined),
+      update: vi.fn().mockResolvedValue(undefined),
+    }
+    const { result } = renderHook(() => useProfileForm(opts))
+    act(() => { result.current.setField('location', { address: { street: '' } }) })
+    act(() => { result.current.validateField('location') })
+    expect(result.current.errors.location).toBe('Street required')
+  })
+
+  it('handleSubmit on success preserves touched state (G3 sticky)', async () => {
+    const createMock = vi.fn().mockResolvedValue(undefined)
+    const { result } = renderHook(() => useProfileForm(blurOptions({ create: createMock })))
+    act(() => { result.current.setField('name', 'Hug') })
+    act(() => { result.current.setField('email', 'hug@x.com') })
+    const fakeEvent = { preventDefault: vi.fn() } as unknown as React.FormEvent
+    await act(async () => { await result.current.handleSubmit(fakeEvent) })
+    expect(result.current.saved).toBe(true)
+    act(() => { result.current.setField('email', 'bad') })
+    act(() => { result.current.validateField('email') })
+    expect(result.current.errors.email).toBe('Invalid email')
+  })
+
+  it('setForm does NOT mark fields touched (G4)', () => {
+    const { result } = renderHook(() => useProfileForm(blurOptions()))
+    act(() => { result.current.setForm({ name: '', email: 'not-email' }) })
+    act(() => { result.current.validateField('email') })
+    expect(result.current.errors.name).toBeUndefined()
+  })
+
+  it('resetToBaseline clears touched and errors', () => {
+    const { result } = renderHook(() =>
+      useProfileForm(blurOptions({ profile: { name: 'Original', email: 'orig@test.com' } })),
+    )
+    act(() => { result.current.setField('email', 'bad') })
+    act(() => { result.current.validateField('email') })
+    expect(result.current.errors.email).toBe('Invalid email')
+    act(() => { result.current.resetToBaseline() })
+    expect(result.current.errors.email).toBeUndefined()
+    act(() => { result.current.validateField('email') })
+    expect(result.current.errors.email).toBeUndefined()
+  })
+
+  it('fieldProps returns value, onChange, onBlur, error and onBlur triggers validation', () => {
+    const { result } = renderHook(() => useProfileForm(blurOptions()))
+    const props = result.current.fieldProps('email')
+    expect(props.value).toBe('')
+    expect(typeof props.onChange).toBe('function')
+    expect(typeof props.onBlur).toBe('function')
+    expect(props.error).toBeUndefined()
+    act(() => { result.current.setField('email', 'bad') })
+    act(() => { result.current.fieldProps('email').onBlur() })
+    expect(result.current.errors.email).toBe('Invalid email')
+  })
+
+  it('full schema runs on submit regardless of touched state', async () => {
+    const createMock = vi.fn()
+    const { result } = renderHook(() => useProfileForm(blurOptions({ create: createMock })))
+    const fakeEvent = { preventDefault: vi.fn() } as unknown as React.FormEvent
+    await act(async () => { await result.current.handleSubmit(fakeEvent) })
+    expect(result.current.errors.name).toBe('Name required')
+    expect(result.current.errors.email).toBe('Invalid email')
+    expect(createMock).not.toHaveBeenCalled()
+  })
+})
+
 describe('useProfileForm optimistic save', () => {
   beforeEach(() => {
     vi.clearAllMocks()

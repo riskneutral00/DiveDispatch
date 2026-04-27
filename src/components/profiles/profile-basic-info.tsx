@@ -9,18 +9,22 @@ interface ProfileBasicInfoProps {
   nameValue?: string
   nameError?: string
   onNameChange?: (value: string) => void
+  onNameBlur?: () => void
 
   locationValue: LocationValue | null
   locationError?: string
   onLocationChange: (value: LocationValue | null) => void
+  onLocationBlur?: () => void
 
   phoneValue: string
   phoneError?: string
   onPhoneChange: (value: string) => void
+  onPhoneBlur?: () => void
 
   emailValue?: string
   emailError?: string
   onEmailChange?: (value: string) => void
+  onEmailBlur?: () => void
 
   nameRequired?: boolean
   locationRequired?: boolean
@@ -35,15 +39,19 @@ export function ProfileBasicInfo({
   nameValue,
   nameError,
   onNameChange,
+  onNameBlur,
   locationValue,
   locationError,
   onLocationChange,
+  onLocationBlur,
   phoneValue,
   phoneError,
   onPhoneChange,
+  onPhoneBlur,
   emailValue,
   emailError,
   onEmailChange,
+  onEmailBlur,
   nameRequired,
   locationRequired,
   phoneRequired,
@@ -58,6 +66,7 @@ export function ProfileBasicInfo({
           label={nameLabel}
           value={nameValue ?? ''}
           onChange={onNameChange}
+          onBlur={onNameBlur}
           error={nameError}
           required={nameRequired}
         />
@@ -66,6 +75,7 @@ export function ProfileBasicInfo({
         label="Location"
         value={locationValue}
         onChange={onLocationChange}
+        onBlur={onLocationBlur}
         error={locationError}
         required={locationRequired}
         className="field-md"
@@ -74,6 +84,7 @@ export function ProfileBasicInfo({
         label="Phone"
         value={phoneValue}
         onChange={onPhoneChange}
+        onBlur={onPhoneBlur}
         error={phoneError}
         required={phoneRequired}
       />
@@ -82,6 +93,7 @@ export function ProfileBasicInfo({
           label="Email"
           value={emailValue ?? ''}
           onChange={onEmailChange}
+          onBlur={onEmailBlur}
           error={emailError}
           required={emailRequired}
         />

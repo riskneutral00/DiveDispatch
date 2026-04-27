@@ -28,7 +28,7 @@ export function VenueContactSection({ onSaved, onClose }: BaseProfileSectionProp
     ? { ...INITIAL_CONTACT_FORM, ...contactFromProfile(inheritance as unknown as Record<string, unknown>) }
     : INITIAL_CONTACT_FORM
 
-  const { form, setField, errors, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit, resetToBaseline } =
+  const { form, setField, errors, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit, resetToBaseline, validateField } =
     useProfileForm({
       profile: inheritance === undefined ? undefined : org,
       me,
@@ -94,19 +94,23 @@ export function VenueContactSection({ onSaved, onClose }: BaseProfileSectionProp
         <ProfileBasicInfo
           nameValue={form.name}
           onNameChange={(val) => setField('name', val)}
+          onNameBlur={() => validateField('name')}
           nameError={errors.name}
           nameLabel={t('businessName')}
           nameRequired
           locationValue={form.location}
           onLocationChange={(loc) => setField('location', loc)}
+          onLocationBlur={() => validateField('location')}
           locationError={errors.location}
           locationRequired
           emailValue={form.email}
           onEmailChange={(val) => setField('email', val)}
+          onEmailBlur={() => validateField('email')}
           emailError={errors.email}
           emailRequired
           phoneValue={form.phone}
           onPhoneChange={(val) => setField('phone', val)}
+          onPhoneBlur={() => validateField('phone')}
           phoneError={errors.phone}
           phoneRequired
         />

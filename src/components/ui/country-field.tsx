@@ -10,6 +10,7 @@ interface CountryFieldProps {
   label: string
   value: string
   onChange: (value: string) => void
+  onBlur?: () => void
   required?: boolean
   error?: string
   placeholder?: string
@@ -22,6 +23,7 @@ export function CountryField({
   label,
   value,
   onChange,
+  onBlur,
   required,
   error,
   placeholder,
@@ -45,6 +47,7 @@ export function CountryField({
       label={label}
       value={value}
       onChange={onChange}
+      onBlur={onBlur}
       options={options}
       required={required}
       error={error}

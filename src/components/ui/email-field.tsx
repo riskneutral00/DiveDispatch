@@ -7,6 +7,7 @@ interface EmailFieldProps {
   label: string
   value: string
   onChange: (value: string) => void
+  onBlur?: () => void
   required?: boolean
   error?: string
   helperText?: string
@@ -21,6 +22,7 @@ export function EmailField({
   label,
   value,
   onChange,
+  onBlur,
   required,
   error,
   helperText,
@@ -37,7 +39,7 @@ export function EmailField({
       label={label}
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      onBlur={() => onChange(value.trim().toLowerCase())}
+      onBlur={() => { onChange(value.trim().toLowerCase()); onBlur?.() }}
       autoComplete="email"
       inputMode="email"
       autoCapitalize="none"

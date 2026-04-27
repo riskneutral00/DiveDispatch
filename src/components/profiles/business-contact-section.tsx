@@ -92,7 +92,7 @@ export function BusinessContactSection({
 
   const waitingForInheritance = inheritFromOtherRoles !== undefined && inheritance === undefined
 
-  const { form, setField, errors, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit, resetToBaseline } =
+  const { form, setField, errors, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit, resetToBaseline, validateField } =
     useProfileForm<BusinessContactForm>({
       profile: waitingForInheritance ? undefined : existing,
       me,
@@ -158,6 +158,7 @@ export function BusinessContactSection({
             ? {
                 nameValue: form.name,
                 onNameChange: (val: string) => setField('name', val),
+                onNameBlur: () => validateField('name'),
                 nameError: errors.name,
                 nameLabel,
                 nameRequired: true,
@@ -165,14 +166,17 @@ export function BusinessContactSection({
             : {})}
           locationValue={form.location}
           onLocationChange={onLocationChange}
+          onLocationBlur={() => validateField('location')}
           locationError={errors.location}
           locationRequired
           emailValue={form.email}
           onEmailChange={(val) => setField('email', val)}
+          onEmailBlur={() => validateField('email')}
           emailError={errors.email}
           emailRequired
           phoneValue={form.phone}
           onPhoneChange={(val) => setField('phone', val)}
+          onPhoneBlur={() => validateField('phone')}
           phoneError={errors.phone}
           phoneRequired
         />

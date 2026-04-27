@@ -6,7 +6,7 @@ interface DayPickerProps {
   min: number;
   max: number;
   onChange: (value: number) => void;
-  /** When false, plain select without field-underline (gray fill + bottom line). */
+  onBlur?: () => void;
   underline?: boolean;
 }
 
@@ -16,6 +16,7 @@ export function DayPicker({
   min,
   max,
   onChange,
+  onBlur,
   underline = true,
 }: DayPickerProps) {
   const options: { value: string; label: string }[] = [];
@@ -28,6 +29,7 @@ export function DayPicker({
         label={label}
         value={String(value)}
         onChange={(v) => onChange(Number(v))}
+        onBlur={onBlur}
         options={options}
         underline={underline}
       />

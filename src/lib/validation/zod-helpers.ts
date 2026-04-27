@@ -8,3 +8,21 @@ export function zodIssuesToFieldErrors(issues: ZodIssue[]): Record<string, strin
   }
   return errors
 }
+
+export function zodIssuesForField(issues: ZodIssue[], field: string): string | undefined {
+  for (const issue of issues) {
+    const path = issue.path.join('.')
+    if (path === field) return issue.message
+  }
+  return undefined
+}
+
+export function zodIssuesForFieldOrChild(issues: ZodIssue[], field: string): string | undefined {
+  for (const issue of issues) {
+    const path = issue.path.join('.')
+    if (path === field || path.startsWith(`${field}.`)) return issue.message
+  }
+  return undefined
+}
+
+export const RESERVED_ERROR_KEYS: ReadonlySet<string> = new Set(['_form', ''])

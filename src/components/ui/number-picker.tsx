@@ -8,6 +8,7 @@ interface NumberPickerProps {
   label?: string
   value: number | undefined
   onChange: (value: number | undefined) => void
+  onBlur?: () => void
   min: number
   max: number
   step?: number
@@ -26,6 +27,7 @@ export function NumberPicker({
   label,
   value,
   onChange,
+  onBlur,
   min,
   max,
   step = 1,
@@ -58,6 +60,7 @@ export function NumberPicker({
       label={label}
       value={value !== undefined ? String(value) : ''}
       onChange={(v) => onChange(v === '' ? undefined : Number(v))}
+      onBlur={onBlur}
       options={options}
       required={required}
       error={error}

@@ -198,7 +198,7 @@ Role-agnostic building blocks for stakeholder profile forms (`PatternLibrary/one
 
 | Hook | Purpose |
 |---|---|
-| `use-profile-form` | Profile form state machine (dirty, saving, errors). |
+| `use-profile-form` | Profile form state machine (dirty, saving, errors, on-blur via `validateField` / `fieldProps`). |
 | `use-floating-label` | Floating-label behavior for Input/Select. |
 | `use-click-outside` | Dismiss on outside click. |
 | `use-focus-trap` | Modal focus containment. |

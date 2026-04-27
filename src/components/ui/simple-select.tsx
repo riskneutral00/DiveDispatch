@@ -16,6 +16,7 @@ interface SimpleSelectProps {
   label?: string;
   value: string;
   onChange: (value: string) => void;
+  onBlur?: () => void;
   options: readonly string[] | readonly OptionItem[];
   error?: string;
   placeholder?: string;
@@ -31,6 +32,7 @@ export function SimpleSelect({
   label,
   value,
   onChange,
+  onBlur,
   options,
   error,
   placeholder,
@@ -71,7 +73,7 @@ export function SimpleSelect({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
+        onBlur={() => { setFocused(false); onBlur?.(); }}
         required={required}
         disabled={disabled}
         aria-label={ariaLabel}

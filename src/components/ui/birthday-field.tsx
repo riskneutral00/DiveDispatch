@@ -13,6 +13,7 @@ interface BirthdayFieldProps {
   label: string
   value: string | null
   onChange: (value: string | null) => void
+  onBlur?: () => void
   required?: boolean
   error?: string
   helperText?: string
@@ -43,6 +44,7 @@ export function BirthdayField({
   label,
   value,
   onChange,
+  onBlur,
   required,
   error,
   helperText,
@@ -109,7 +111,18 @@ export function BirthdayField({
   }
 
   return (
-    <fieldset id={fieldsetId} className={resolveFieldWidth('field-md', className)} disabled={disabled} aria-invalid={!!error}>
+    <fieldset
+      id={fieldsetId}
+      className={resolveFieldWidth('field-md', className)}
+      disabled={disabled}
+      aria-invalid={!!error}
+      onBlur={(e) => {
+        if (!onBlur) return
+        const next = e.relatedTarget as Node | null
+        if (next && e.currentTarget.contains(next)) return
+        onBlur()
+      }}
+    >
       <legend className="text-label text-secondary mb-1">
         {label}
         {required && <RequiredAsterisk />}

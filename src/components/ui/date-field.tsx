@@ -18,6 +18,7 @@ interface DateFieldProps {
   label: string
   value: string | null
   onChange: (value: string | null) => void
+  onBlur?: () => void
   required?: boolean
   error?: string
   helperText?: string
@@ -34,6 +35,7 @@ export function DateField({
   label,
   value,
   onChange,
+  onBlur,
   required,
   error,
   helperText,
@@ -57,6 +59,7 @@ export function DateField({
       id={id}
       value={dateValue}
       onChange={(d) => onChange(d ? d.toString() : null)}
+      onBlur={onBlur}
       isRequired={required}
       isDisabled={disabled}
       isInvalid={!!error}

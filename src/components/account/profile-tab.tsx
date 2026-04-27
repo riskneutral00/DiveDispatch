@@ -84,6 +84,7 @@ export function ProfileTab({ onClose }: { onClose?: () => void }) {
   const {
     form,
     setField,
+    errors,
     footerErrorMessage,
     saving,
     saved,
@@ -93,6 +94,7 @@ export function ProfileTab({ onClose }: { onClose?: () => void }) {
     handleSubmit,
     loading,
     resetToBaseline,
+    validateField,
   } = useProfileForm<ProfileValues, ReturnType<typeof profileToPayload>>({
     profile: user as Record<string, unknown> | null | undefined,
     schema: profileTabSchema,
@@ -129,6 +131,8 @@ export function ProfileTab({ onClose }: { onClose?: () => void }) {
             label={t('firstName')}
             value={form.firstName}
             onChange={(v) => setField('firstName', v)}
+            onBlur={() => validateField('firstName')}
+            error={errors.firstName}
             required
           />
           <NameField
@@ -136,6 +140,8 @@ export function ProfileTab({ onClose }: { onClose?: () => void }) {
             label={t('lastName')}
             value={form.lastName}
             onChange={(v) => setField('lastName', v)}
+            onBlur={() => validateField('lastName')}
+            error={errors.lastName}
             required
           />
           <NameField
@@ -143,23 +149,31 @@ export function ProfileTab({ onClose }: { onClose?: () => void }) {
             label={t('nickname')}
             value={form.nickname}
             onChange={(v) => setField('nickname', v)}
+            onBlur={() => validateField('nickname')}
+            error={errors.nickname}
           />
           <PhoneField
             label={t('phone')}
             value={form.phone}
             onChange={(v) => setField('phone', v)}
+            onBlur={() => validateField('phone')}
+            error={errors.phone}
             required
           />
           <EmailField
             label={t('email')}
             value={form.email}
             onChange={(v) => setField('email', v)}
+            onBlur={() => validateField('email')}
+            error={errors.email}
             required
           />
           <BirthdayField
             label={t('dateOfBirth')}
             value={form.dateOfBirth || null}
             onChange={(v) => setField('dateOfBirth', v ?? '')}
+            onBlur={() => validateField('dateOfBirth')}
+            error={errors.dateOfBirth}
             required
           />
         </FieldRow>

@@ -144,7 +144,8 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
     // eslint-disable-next-line react-hooks/exhaustive-deps -- comments-ok keyed on joined activityType
     [activityTypeKey],
   )
-  const { validate, errors, clearError } = useFormValidation(schema)
+  const { validate, validateField, errors, clearError } = useFormValidation(schema)
+  const blurField = (key: keyof CustomerContactData) => () => validateField(key as string, form)
 
   useEffect(() => {
     if (!context) return
@@ -312,6 +313,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             placeholder={t('placeholderPassport')}
             value={form.legalFirstName}
             onChange={(v) => setField('legalFirstName', v)}
+            onBlur={blurField('legalFirstName')}
             error={errors.legalFirstName}
           />
           <NameField
@@ -320,6 +322,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             placeholder={t('placeholderPassport')}
             value={form.legalLastName}
             onChange={(v) => setField('legalLastName', v)}
+            onBlur={blurField('legalLastName')}
             error={errors.legalLastName}
           />
           <NameField
@@ -328,12 +331,14 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             placeholder={t('placeholderNickname')}
             value={form.preferredName ?? ''}
             onChange={(v) => setField('preferredName', v)}
+            onBlur={blurField('preferredName')}
             error={errors.preferredName}
           />
           <PhoneField
             label={t('phone')}
             value={form.phone}
             onChange={(v) => setField('phone', v)}
+            onBlur={blurField('phone')}
             error={errors.phone}
             helperText={t('helperCountryCode')}
           />
@@ -342,6 +347,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             placeholder={t('placeholderEmail')}
             value={form.email}
             onChange={(v) => setField('email', v)}
+            onBlur={blurField('email')}
             error={errors.email}
           />
           <div className="field-md">
@@ -349,6 +355,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
               label={t('dateOfBirth')}
               value={form.dateOfBirth || null}
               onChange={(v) => setField('dateOfBirth', v ?? '')}
+              onBlur={blurField('dateOfBirth')}
               error={errors.dateOfBirth}
             />
             <div aria-live="polite">
@@ -362,6 +369,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             data-testid="portal-gender-select"
             value={form.gender}
             onChange={(v) => setField('gender', v as CustomerContactData['gender'])}
+            onBlur={blurField('gender')}
             options={['M', 'F', 'Other']}
             error={errors.gender}
             required
@@ -371,6 +379,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             label={t('nationality')}
             value={form.nationality}
             onChange={(v) => setField('nationality', v)}
+            onBlur={blurField('nationality')}
             placeholder={t('placeholderSelect')}
             error={errors.nationality}
             required
@@ -385,6 +394,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
           required
           value={form.languages}
           onChange={(v) => setField('languages', v)}
+          onBlur={blurField('languages')}
         />
         {errors.languages && (
           <InlineError>{errors.languages}</InlineError>
@@ -399,6 +409,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             placeholder={t('placeholderPassportNum')}
             value={form.passportNumber}
             onChange={(e) => setField('passportNumber', e.target.value)}
+            onBlur={blurField('passportNumber')}
             error={errors.passportNumber}
             className="field-md"
           />
@@ -406,6 +417,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             label={t('issuingCountry')}
             value={form.passportIssuingCountry}
             onChange={(v) => setField('passportIssuingCountry', v)}
+            onBlur={blurField('passportIssuingCountry')}
             placeholder={t('placeholderSelect')}
             error={errors.passportIssuingCountry}
             required
@@ -415,6 +427,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
               label={t('expiryDate')}
               value={form.passportExpirationDate || null}
               onChange={(v) => setField('passportExpirationDate', v ?? '')}
+              onBlur={blurField('passportExpirationDate')}
               error={errors.passportExpirationDate}
               required
             />
@@ -436,12 +449,14 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             placeholder={t('placeholderFullName')}
             value={form.emergencyContactName}
             onChange={(v) => setField('emergencyContactName', v)}
+            onBlur={blurField('emergencyContactName')}
             error={errors.emergencyContactName}
           />
           <PhoneField
             label={t('phone')}
             value={form.emergencyContactPhone}
             onChange={(v) => setField('emergencyContactPhone', v)}
+            onBlur={blurField('emergencyContactPhone')}
             error={errors.emergencyContactPhone}
             helperText={t('helperCountryCode')}
           />
@@ -450,6 +465,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             placeholder={t('placeholderRelationship')}
             value={form.emergencyContactRelation}
             onChange={(e) => setField('emergencyContactRelation', e.target.value)}
+            onBlur={blurField('emergencyContactRelation')}
             error={errors.emergencyContactRelation}
             className="field-md"
           />
@@ -464,6 +480,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
               label={t('certifyingAgency')}
               value={form.agency ?? ''}
               onChange={(v) => setField('agency', v)}
+              onBlur={blurField('agency')}
               options={DIVE_AGENCIES}
               placeholder={t('placeholderSelect')}
               error={errors.agency}
@@ -476,6 +493,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
               placeholder={t('placeholderDiverID')}
               value={form.agencyID ?? ''}
               onChange={(e) => setField('agencyID', e.target.value)}
+              onBlur={blurField('agencyID')}
               error={errors.agencyID}
             />
           </FieldRow>

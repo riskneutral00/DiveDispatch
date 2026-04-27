@@ -39,9 +39,10 @@ interface OrganizerContactFieldsProps {
   form: ContactFormState
   setField: <K extends keyof ContactFormState>(key: K, value: ContactFormState[K]) => void
   errors: Partial<Record<keyof ContactFormState, string>>
+  validateField: (field: string) => void
 }
 
-function OrganizerContactFields({ form, setField, errors }: OrganizerContactFieldsProps) {
+function OrganizerContactFields({ form, setField, errors, validateField }: OrganizerContactFieldsProps) {
   const t = useTranslations('common')
   return (
     <div className="space-y-4" data-testid="wizard-content">
@@ -49,6 +50,7 @@ function OrganizerContactFields({ form, setField, errors }: OrganizerContactFiel
         label={t('businessName')}
         value={form.name}
         onChange={(e) => setField('name', e.target.value)}
+        onBlur={() => validateField('name')}
         required
         error={errors.name}
       />
@@ -56,6 +58,7 @@ function OrganizerContactFields({ form, setField, errors }: OrganizerContactFiel
         label={t('location')}
         value={form.location as LocationValue | null}
         onChange={(loc) => setField('location', loc)}
+        onBlur={() => validateField('location')}
         error={errors.location}
       />
       <FieldRow>
@@ -63,6 +66,7 @@ function OrganizerContactFields({ form, setField, errors }: OrganizerContactFiel
           label={t('contactEmail')}
           value={form.email}
           onChange={(v) => setField('email', v)}
+          onBlur={() => validateField('email')}
           required
           error={errors.email}
         />
@@ -70,6 +74,7 @@ function OrganizerContactFields({ form, setField, errors }: OrganizerContactFiel
           label={t('contactPhone')}
           value={form.phone}
           onChange={(v) => setField('phone', v)}
+          onBlur={() => validateField('phone')}
           required
           error={errors.phone}
         />
@@ -114,7 +119,7 @@ function VenueBasicStep({ onSaved, onBack }: { onSaved: () => void; onBack?: () 
   const { user: me } = useSessionIdentity()
   const updateMutation = useMutation(api.organizations.updateBusinessMetadata)
 
-  const { form, setField, errors, saving, isValid, loading, handleSubmit } =
+  const { form, setField, errors, saving, isValid, loading, handleSubmit, validateField } =
     useProfileForm({
       profile: org,
       me,
@@ -167,7 +172,7 @@ function VenueBasicStep({ onSaved, onBack }: { onSaved: () => void; onBack?: () 
       loading={saving}
       disabled={!isValid}
     >
-      <OrganizerContactFields form={form} setField={setField} errors={errors} />
+      <OrganizerContactFields form={form} setField={setField} errors={errors} validateField={validateField} />
     </OrganizerStepCard>
   )
 }
@@ -225,7 +230,7 @@ function BasicStepInner({ role, mutations, onSaved, onBack }: BasicStepInnerProp
     return (updateMutation as unknown as (args: Record<string, unknown>) => Promise<unknown>)(payload)
   }
 
-  const { form, setField, errors, saving, isValid, loading, handleSubmit } =
+  const { form, setField, errors, saving, isValid, loading, handleSubmit, validateField } =
     useProfileForm({
       profile: inheritance === undefined ? undefined : existingProfile,
       me,
@@ -259,7 +264,7 @@ function BasicStepInner({ role, mutations, onSaved, onBack }: BasicStepInnerProp
       loading={saving}
       disabled={!isValid}
     >
-      <OrganizerContactFields form={form} setField={setField} errors={errors} />
+      <OrganizerContactFields form={form} setField={setField} errors={errors} validateField={validateField} />
     </OrganizerStepCard>
   )
 }
