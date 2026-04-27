@@ -6,6 +6,7 @@ All auth skills (`clerk-signin`, `clerk-switch`, navigator agent) reference this
 
 | Name | Slug | RoleSlug | Role | Email |
 |------|------|----------|------|-------|
+| Sea Fun (Rene) | `sea-fun` | `dive-center` | DC + Compressor + Equipment + Boat + Instructor + Venue | `rene_balot+clerk_test@seafundivers.com` |
 | Hug Ocean | `n7rq5j` | `dive-center` | DC + Boat + Pool + Equipment | `hug-ocean+clerk_test@divedispatch.dev` |
 | Nicole | `q9bz7r` | `dive-center` | DC + Equipment | `nicole-dive-center+clerk_test@divedispatch.dev` |
 | Sirolo | `sirolo` | `dive-center` | DC + Boat + Equipment | `sirolo+clerk_test@divedispatch.dev` |
@@ -26,6 +27,7 @@ Match the search term against Name, Slug, or Email. Use the first match. Common 
 
 | Request | Resolves To |
 |---------|-------------|
+| `sea-fun`, `seafun`, `rene` | Sea Fun (Rene) |
 | `hug`, `ocean`, `default` | Hug Ocean |
 | `nicole` | Nicole |
 | `sirolo` | Sirolo |
