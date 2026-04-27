@@ -1,4 +1,4 @@
-import { ConvexError, v } from 'convex/values'
+import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import {
   personProfileMine,
@@ -8,7 +8,6 @@ import {
 import { authorize } from './lib/auth'
 import { visibleOrgIds } from './lib/destinationScope'
 import { BASE_PROFILE_CREATE_FIELDS, BASE_PROFILE_UPDATE_FIELDS, ACCESS_CONTROL_FIELDS } from './lib/validators'
-import { ErrorCode } from './lib/errorCodes'
 
 const credentialValidator = v.object({
   agency: v.string(),
@@ -29,9 +28,6 @@ export const create = mutation({
     teachingLanguages: v.array(v.string()),
   },
   handler: async (ctx, args) => {
-    if (args.teachingLanguages.length === 0) {
-      throw new ConvexError({ code: ErrorCode.TEACHING_LANGUAGES_REQUIRED })
-    }
     const actor = await authorize(ctx, null, 'profile:manage', { type: 'profile' })
     const name = deriveStaffName(actor.user)
     return personProfileCreate(
@@ -52,9 +48,6 @@ export const update = mutation({
     teachingLanguages: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
-    if (args.teachingLanguages !== undefined && args.teachingLanguages.length === 0) {
-      throw new ConvexError({ code: ErrorCode.TEACHING_LANGUAGES_REQUIRED })
-    }
     const actor = await authorize(ctx, null, 'profile:manage', { type: 'profile' })
     const name = deriveStaffName(actor.user)
     return personProfileUpdate(ctx, { ...args, ...(name ? { name } : {}) }, 'Instructor', actor)

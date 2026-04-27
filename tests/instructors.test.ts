@@ -143,28 +143,46 @@ describe('directory.listByRole — Instructor picker gate', () => {
   })
 })
 
-describe('instructors.create — teachingLanguages empty-array gate (P0-20)', () => {
-  it('rejects empty teachingLanguages on create', async () => {
+describe('instructors.create / update — empty arrays accepted; completeness enforces non-empty', () => {
+  it('accepts empty teachingLanguages on create; profileComplete stays false', async () => {
     const t = makeT()
     await t.run(async (ctx) => { await seedUser(ctx, 'empty-lang', 'Instructor') })
 
-    await expect(
-      t.withIdentity(orgIdentityFor('empty-lang'))
-        .mutation(api.diveStaff.create, { ...VALID_INSTRUCTOR_ARGS, teachingLanguages: [] }),
-    ).rejects.toThrow(/TEACHING_LANGUAGES_REQUIRED/)
+    await t.withIdentity(orgIdentityFor('empty-lang'))
+      .mutation(api.diveStaff.create, { ...VALID_INSTRUCTOR_ARGS, teachingLanguages: [] })
+
+    const role = await t.run(async (ctx) => {
+      const user = await ctx.db.query('users').withIndex('by_slug', (q) => q.eq('slug', 'empty-lang')).unique()
+      if (!user) throw new Error('user missing')
+      return ctx.db
+        .query('userRoles')
+        .withIndex('by_userId', (q) => q.eq('userId', user._id))
+        .filter((q) => q.eq(q.field('role'), 'Instructor'))
+        .unique()
+    })
+    expect(role?.profileComplete).toBe(false)
   })
 
-  it('rejects empty teachingLanguages on update', async () => {
+  it('accepts empty teachingLanguages on update; profileComplete flips to false', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx, 'regress-lang', 'Instructor')
       await seedInstructorProfile(ctx, userId)
     })
 
-    await expect(
-      t.withIdentity(orgIdentityFor('regress-lang'))
-        .mutation(api.diveStaff.update, { teachingLanguages: [] }),
-    ).rejects.toThrow(/TEACHING_LANGUAGES_REQUIRED/)
+    await t.withIdentity(orgIdentityFor('regress-lang'))
+      .mutation(api.diveStaff.update, { teachingLanguages: [] })
+
+    const role = await t.run(async (ctx) => {
+      const user = await ctx.db.query('users').withIndex('by_slug', (q) => q.eq('slug', 'regress-lang')).unique()
+      if (!user) throw new Error('user missing')
+      return ctx.db
+        .query('userRoles')
+        .withIndex('by_userId', (q) => q.eq('userId', user._id))
+        .filter((q) => q.eq(q.field('role'), 'Instructor'))
+        .unique()
+    })
+    expect(role?.profileComplete).toBe(false)
   })
 })
 
