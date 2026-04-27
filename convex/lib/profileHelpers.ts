@@ -29,7 +29,7 @@ export function validateContactInput(args: Record<string, unknown>): void {
   const address = args.address
   if (address && typeof address === 'object' && address !== null) {
     const country = (address as { country?: unknown }).country
-    if (typeof country === 'string') {
+    if (typeof country === 'string' && country.length > 0) {
       assertCountryCode(country, 'address.country')
     }
   }

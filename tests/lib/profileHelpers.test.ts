@@ -9,6 +9,7 @@ import {
   entityProfileBySlug,
   assertPersonRole,
   assertEntityRole,
+  validateContactInput,
 } from '../../convex/lib/profileHelpers'
 
 describe('profileHelpers — typed person vs entity helpers', () => {
@@ -145,6 +146,37 @@ describe('profileHelpers — typed person vs entity helpers', () => {
     const rows = await t.run(async (ctx) => entityProfilesByUser(ctx, (await ctx.db.query('users').withIndex('by_organizationId', (q) => q.eq('organizationId', orgId)).collect())[0]._id, 'DiveCenter'))
     expect(rows).toHaveLength(1)
     expect(rows[0].slug).toBe('dc-active')
+  })
+})
+
+describe('validateContactInput — per-tab independent save', () => {
+  it('accepts empty address.country (sibling tab owns the field)', () => {
+    expect(() =>
+      validateContactInput({ address: { city: '', country: '' }, phone: '' }),
+    ).not.toThrow()
+  })
+
+  it('accepts valid address.country', () => {
+    expect(() =>
+      validateContactInput({ address: { city: 'Phuket', country: 'TH' } }),
+    ).not.toThrow()
+  })
+
+  it('still throws on malformed (non-empty) country', () => {
+    expect(() =>
+      validateContactInput({ address: { city: 'X', country: 'th' } }),
+    ).toThrow(/invalid_country_code/)
+    expect(() =>
+      validateContactInput({ address: { city: 'X', country: 'ZZ' } }),
+    ).toThrow(/invalid_country_code/)
+  })
+
+  it('accepts empty phone (already correct)', () => {
+    expect(() => validateContactInput({ phone: '' })).not.toThrow()
+  })
+
+  it('still throws on malformed (non-empty) phone', () => {
+    expect(() => validateContactInput({ phone: '12345' })).toThrow(/invalid_phone/)
   })
 })
 
