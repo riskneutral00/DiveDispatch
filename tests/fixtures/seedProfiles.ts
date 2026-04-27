@@ -189,7 +189,7 @@ export async function seedDiveMasterProfile(
     address?: AddressOverride
     email?: string
     phone?: string
-    credential?: Array<{ agency: string; level: string; agencyID: string }>
+    credential?: Array<{ agency: string; level: string; agencyID: string; specialtyRatings: string[] }>
     verified?: boolean
     teachingLanguages?: string[]
     organizationId?: Id<'organizations'>
@@ -207,7 +207,7 @@ export async function seedDiveMasterProfile(
     email: overrides.email ?? 'dm@test.com',
     phone: overrides.phone ?? '+66123456789',
     credential: overrides.credential ?? [
-      { agency: 'PADI', level: 'DM', agencyID: '67890' },
+      { agency: 'PADI', level: 'DM', agencyID: '67890', specialtyRatings: [] },
     ],
     verified: overrides.verified ?? true,
     teachingLanguages: overrides.teachingLanguages ?? ['en'],

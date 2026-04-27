@@ -128,8 +128,8 @@ export const ROLES: RoleConfig[] = [
     bookingPresence: 'itinerary',
     description: 'Dive professionals — Divemaster through Course Director. Lead courses, guide dives, and assist at operator-organized trips.',
     profileTabs: [
-      { id: 'contact', label: 'Contact', fields: ['name', 'email', 'phone', 'address'] },
-      { id: 'credentials', label: 'Credentials', fields: ['credential', 'teachingLanguages'] },
+      { id: 'contact', label: 'Contact', fields: ['name', 'email', 'phone', 'address', 'teachingLanguages'] },
+      { id: 'credentials', label: 'Credentials', fields: ['credential'] },
       { id: 'booking', label: 'Booking' },
     ],
   },

@@ -376,7 +376,7 @@ export default defineSchema({
         agency: v.string(),
         level: v.string(),
         agencyID: v.string(),
-        specialtyRatings: v.optional(v.array(v.string())),
+        specialtyRatings: v.array(v.string()),
       }),
     ),
     teachingLanguages: v.array(v.string()),

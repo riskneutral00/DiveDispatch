@@ -14,7 +14,7 @@ const credentialValidator = v.object({
   agency: v.string(),
   level: v.string(),
   agencyID: v.string(),
-  specialtyRatings: v.optional(v.array(v.string())),
+  specialtyRatings: v.array(v.string()),
 })
 
 function deriveStaffName(user: { firstName?: string; lastName?: string }): string {

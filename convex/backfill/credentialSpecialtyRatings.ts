@@ -3,11 +3,18 @@ import { internalMutation } from '../_generated/server'
 import { ErrorCode } from '../lib/errorCodes'
 import { isDevEnvironment } from '../lib/devGuard'
 
-type CredentialEntry = {
+type CredentialEntryIn = {
   agency: string
   level: string
   agencyID: string
   specialtyRatings?: string[]
+}
+
+type CredentialEntryNormalized = {
+  agency: string
+  level: string
+  agencyID: string
+  specialtyRatings: string[]
 }
 
 export const backfillCredentialSpecialtyRatings = internalMutation({
@@ -25,17 +32,17 @@ export const backfillCredentialSpecialtyRatings = internalMutation({
     let entriesNormalized = 0
 
     for (const row of rows) {
-      const credential = row.credential as CredentialEntry[]
+      const credential = row.credential as CredentialEntryIn[]
       totalCredentialEntriesInspected += credential.length
 
       let needsPatch = false
-      const normalized = credential.map((entry) => {
+      const normalized: CredentialEntryNormalized[] = credential.map((entry) => {
         if (!Array.isArray(entry.specialtyRatings)) {
           needsPatch = true
           entriesNormalized += 1
-          return { ...entry, specialtyRatings: [] }
+          return { agency: entry.agency, level: entry.level, agencyID: entry.agencyID, specialtyRatings: [] }
         }
-        return entry
+        return { agency: entry.agency, level: entry.level, agencyID: entry.agencyID, specialtyRatings: entry.specialtyRatings }
       })
 
       if (needsPatch) {

@@ -24,7 +24,7 @@ describe('diveStaff.visibleToMe — destination-scoped discovery', () => {
         lng: 98.3,
         email: 'area-i@test.com',
         phone: '+66110000000',
-        credential: [{ agency: 'PADI', level: 'OWSI', agencyID: 'I-AREA' }],
+        credential: [{ agency: 'PADI', level: 'OWSI', agencyID: 'I-AREA', specialtyRatings: [] }],
         teachingLanguages: ['en'],
         verified: true,
       })
@@ -41,7 +41,7 @@ describe('diveStaff.visibleToMe — destination-scoped discovery', () => {
         lng: 98.3,
         email: 'rene-i@test.com',
         phone: '+66120000000',
-        credential: [{ agency: 'PADI', level: 'MSDT', agencyID: 'I-RENE' }],
+        credential: [{ agency: 'PADI', level: 'MSDT', agencyID: 'I-RENE', specialtyRatings: [] }],
         teachingLanguages: ['en'],
         verified: true,
       })
@@ -66,7 +66,7 @@ describe('diveStaff.visibleToMe — destination-scoped discovery', () => {
         lng: 99,
         email: 'solo-i@test.com',
         phone: '+66130000000',
-        credential: [{ agency: 'PADI', level: 'OWSI', agencyID: 'I-SOLO' }],
+        credential: [{ agency: 'PADI', level: 'OWSI', agencyID: 'I-SOLO', specialtyRatings: [] }],
         teachingLanguages: ['en'],
         verified: true,
       })

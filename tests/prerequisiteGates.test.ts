@@ -167,7 +167,7 @@ describe('prerequisite gate: Instructor w/ DM credential — credential depth', 
         lng: 99.8408,
         email: 'dm@test.com',
         phone: '+66123456789',
-        credential: [{ agency: '', level: '', agencyID: '' }],
+        credential: [{ agency: '', level: '', agencyID: '', specialtyRatings: [] }],
         verified: true,
         teachingLanguages: ['en'],
       })
