@@ -75,6 +75,12 @@
             "command": "bash .claude/hooks/checkpoint-commit-blocker.sh",
             "timeout": 5,
             "statusMessage": "Checking for checkpoint-style commit on main…"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/two-push-migration-guard.sh",
+            "timeout": 5,
+            "statusMessage": "Checking two-push migration contract…"
           }
         ]
       },
