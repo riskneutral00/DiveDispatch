@@ -1,6 +1,6 @@
 import { ConvexError } from 'convex/values'
 import { ErrorCode } from './errorCodes'
-import type { QueryCtx, MutationCtx } from '../_generated/server'
+import type { MutationCtx } from '../_generated/server'
 import type { TableNames } from '../_generated/dataModel'
 import { queryDynamicTable } from './typedDb'
 
@@ -35,19 +35,6 @@ export function assertEntitySlug(slug: string, field = 'slug'): void {
   }
   if (!SLUG_REGEX.test(slug)) {
     throw new ConvexError({ code: ErrorCode.VALIDATION, reason: `${field}_format` })
-  }
-}
-
-export async function assertEntitySlugUnique(
-  ctx: QueryCtx,
-  table: TableNames,
-  slug: string,
-): Promise<void> {
-  const existing = await queryDynamicTable(ctx.db, table)
-    .withIndex('by_slug', (q) => q.eq('slug', slug))
-    .first()
-  if (existing) {
-    throw new ConvexError({ code: ErrorCode.VALIDATION, reason: 'slug_taken' })
   }
 }
 
