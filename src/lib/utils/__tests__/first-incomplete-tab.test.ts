@@ -85,10 +85,10 @@ describe('firstIncompleteTab', () => {
     })
   })
 
-  it('routes Compressor gasMixes to contact tab', () => {
+  it('routes Compressor gasMixes to gas-mixes tab', () => {
     expect(firstIncompleteTab('compressor', ['gasMixes'])).toEqual({
       tab: 'role:compressor',
-      section: 'contact',
+      section: 'gas-mixes',
     })
   })
 

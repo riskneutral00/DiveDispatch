@@ -118,9 +118,24 @@ const boatFleetEntrySchema = z.object({
   { message: 'Each day can only be assigned to one route per vessel', path: ['routes'] },
 )
 
-export const boatFleetSchema = z.object({
-  fleet: z.array(boatFleetEntrySchema),
-})
+export const boatFleetSchema = z
+  .object({
+    fleet: z.array(boatFleetEntrySchema),
+    hasCompressor: z.boolean().optional(),
+    gasMixes: z.array(z.enum(GAS_MIXES)).optional(),
+    nitroxMin: z.number().int().min(22).max(40).optional(),
+    nitroxMax: z.number().int().min(22).max(40).optional(),
+  })
+  .refine(
+    (data) => {
+      if (!data.hasCompressor) return true
+      if (!data.gasMixes || data.gasMixes.length === 0) return false
+      if (!data.gasMixes.includes('nitrox')) return true
+      if (data.nitroxMin === undefined || data.nitroxMax === undefined) return false
+      return data.nitroxMin <= data.nitroxMax
+    },
+    { message: 'Select at least one gas mix; nitrox range required (min ≤ max, 22–40%)', path: ['gasMixes'] },
+  )
 
 export const compressorGasMixesSchema = z
   .object({

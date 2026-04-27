@@ -9,7 +9,7 @@ import { SimpleSelect } from '@/components/ui/simple-select'
 import { Checkbox } from '@/components/ui/checkbox'
 import { CheckboxGroup } from '@/components/ui/checkbox-group'
 import { LocationPicker, type LocationValue } from '@/components/profiles/location-picker'
-import { CompressorGasMixFields } from '@/components/profiles/compressor-gas-mix-fields'
+import { GasMixFields } from '@/components/capabilities/gas-mix-fields'
 import {
   AccessControlSection,
   type AccessControlState,
@@ -177,7 +177,7 @@ export function VenueEditDialog({ open, onClose, mode, initialValue, onSubmit }:
           onChange={(values) => setForm((prev) => ({ ...prev, features: values as VenueFeature[] }))}
           columns={3}
         />
-        <CompressorGasMixFields
+        <GasMixFields
           checkboxLabel={t('hasCompressorOnSite')}
           value={{
             hasCompressor: form.hasCompressorOnSite,

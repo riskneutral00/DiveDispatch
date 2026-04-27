@@ -152,7 +152,6 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
               min={COURSE_DAY_RANGES.OW.min}
               max={COURSE_DAY_RANGES.OW.max}
               onChange={(v) => handleUpdate(idx, { owDays: v })}
-              underline={false}
             />
             <DayPicker
               label={
@@ -164,7 +163,6 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
               min={COURSE_DAY_RANGES.AOW.min}
               max={COURSE_DAY_RANGES.AOW.max}
               onChange={(v) => handleUpdate(idx, { aowDays: v })}
-              underline={false}
             />
             <DayPicker
               label={agencyPrefix?.combinedLabel ?? "O+A"}
@@ -172,7 +170,6 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
               min={COURSE_DAY_RANGES.combined.min}
               max={COURSE_DAY_RANGES.combined.max}
               onChange={(v) => handleUpdate(idx, { oaDays: v })}
-              underline={false}
             />
           </div>
         </div>

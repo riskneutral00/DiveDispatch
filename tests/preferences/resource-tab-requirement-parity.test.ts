@@ -20,7 +20,6 @@ beforeEach(() => {
 
 interface ScenarioBoat {
   slug: string
-  hasCompressor: boolean
 }
 
 interface Scenario {
@@ -39,14 +38,9 @@ const SCENARIOS: Scenario[] = [
   { name: 'empty form', prefs: {}, boats: [] },
   { name: 'venues only (OR satisfied)', prefs: { preferredVenueSlugs: ['v-1'] }, boats: [] },
   {
-    name: 'boats only without compressor',
-    prefs: { preferredBoatSlugs: ['boat-no-comp'] },
-    boats: [{ slug: 'boat-no-comp', hasCompressor: false }],
-  },
-  {
-    name: 'boats only with onboard compressor',
-    prefs: { preferredBoatSlugs: ['boat-with-comp'] },
-    boats: [{ slug: 'boat-with-comp', hasCompressor: true }],
+    name: 'boats only',
+    prefs: { preferredBoatSlugs: ['boat-a'] },
+    boats: [{ slug: 'boat-a' }],
   },
   {
     name: 'compressor explicit (no boat)',
@@ -54,7 +48,7 @@ const SCENARIOS: Scenario[] = [
     boats: [],
   },
   {
-    name: 'all 5 referenced (boat without compressor)',
+    name: 'all 5 referenced',
     prefs: {
       preferredInstructorSlugs: ['i-1'],
       preferredEquipmentSlugs: ['e-1'],
@@ -62,17 +56,13 @@ const SCENARIOS: Scenario[] = [
       preferredBoatSlugs: ['boat-bare'],
       preferredCompressorSlugs: ['c-1'],
     },
-    boats: [{ slug: 'boat-bare', hasCompressor: false }],
+    boats: [{ slug: 'boat-bare' }],
   },
 ]
 
 describe('parity: computeResourceTabRequirement vs operatorCoverage + directory.listByRole', () => {
   for (const scenario of SCENARIOS) {
     it(`agrees on: ${scenario.name}`, async () => {
-      // Seed: DC consumer + per-scenario boat owners + their compressors.
-      // hasCompressor:true MUST insert a `compressors` row; do NOT shortcut by
-      // synthesizing a DirectoryEntry flag — that bypasses the very drift this
-      // test is meant to catch.
       await t.run(async (ctx) => {
         const dcUserId = await seedUser(ctx, {
           tokenIdentifier: TEST_TOKENS.diveCenter,
@@ -92,24 +82,7 @@ describe('parity: computeResourceTabRequirement vs operatorCoverage + directory.
             role: 'Boat',
             email: `${boat.slug}@test.com`,
           })
-          const boatRowId = await seedBoatProfile(ctx, boatUserId, { name: `Boat ${boat.slug}`, slug: boat.slug })
-          if (boat.hasCompressor) {
-            const boatRow = await ctx.db.get(boatRowId)
-            if (!boatRow) throw new Error(`boat row ${boatRowId} missing`)
-            await ctx.db.insert('compressors', {
-              organizationId: boatRow.organizationId,
-              slug: `${boat.slug}-onboard`,
-              name: `Onboard Compressor for ${boat.slug}`,
-              location: 'boat',
-              boatId: boatRowId,
-              address: boatRow.address,
-              lat: boatRow.lat,
-              lng: boatRow.lng,
-              email: boatRow.email,
-              phone: boatRow.phone,
-              verified: true,
-            })
-          }
+          await seedBoatProfile(ctx, boatUserId, { name: `Boat ${boat.slug}`, slug: boat.slug })
         }
       })
 

@@ -5,7 +5,7 @@ import type { Doc, Id } from '@/lib/convex-generated'
 
 type MinimalCompressor = Pick<
   Doc<'compressors'>,
-  '_id' | 'name' | 'location' | 'boatId' | 'gasMixes' | 'nitroxMin' | 'nitroxMax'
+  '_id' | 'name' | 'gasMixes' | 'nitroxMin' | 'nitroxMax'
 >
 
 type MinimalVenue = Pick<Doc<'venues'>, '_id' | 'name'>
@@ -111,65 +111,6 @@ function fillVesselBasics(name: string) {
   fireEvent.change(maxPaxInput, { target: { value: '10' } })
 }
 
-describe('BoatFleetSection — has-compressor checkbox', () => {
-  it('renders the checkbox unchecked by default, with gas-mix fields hidden', () => {
-    render(<BoatFleetSection {...baseProps} />)
-
-    const checkbox = screen.getByLabelText(/has compressor onboard/i) as HTMLInputElement
-    expect(checkbox.checked).toBe(false)
-
-    expect(screen.queryByRole('group', { name: /gas mixes available/i })).toBeNull()
-  })
-
-  it('reveals gas-mix fields when the checkbox is toggled on', () => {
-    render(<BoatFleetSection {...baseProps} />)
-
-    const checkbox = screen.getByLabelText(/has compressor onboard/i)
-    fireEvent.click(checkbox)
-
-    expect(screen.getByRole('group', { name: /gas mixes available/i })).toBeTruthy()
-    const airBox = screen.getByRole('checkbox', { name: /^air$/i }) as HTMLInputElement
-    expect(airBox.checked).toBe(true)
-  })
-})
-
-describe('BoatFleetSection — submit creates compressor row linked by boatId', () => {
-  it('calls createCompressor with location=boat, boatId, and selected gas mixes', async () => {
-    render(<BoatFleetSection {...baseProps} />)
-
-    fillVesselBasics('M.V. Sea Fun Divers')
-
-    fireEvent.click(screen.getByLabelText(/has compressor onboard/i))
-
-    const form = document.querySelector('form')!
-    fireEvent.submit(form)
-
-    await waitFor(
-      () => {
-        expect(createBoat).toHaveBeenCalledTimes(1)
-      },
-      { timeout: 3000 },
-    )
-    await waitFor(
-      () => {
-        expect(createCompressor).toHaveBeenCalledTimes(1)
-      },
-      { timeout: 3000 },
-    )
-
-    const payload = createCompressor.mock.calls[0]![0] as {
-      name: string
-      location: string
-      boatId: string
-      gasMixes: string[]
-    }
-    expect(payload.name).toBe('M.V. Sea Fun Divers')
-    expect(payload.location).toBe('boat')
-    expect(payload.boatId).toBe('boat-1')
-    expect(payload.gasMixes).toEqual(['air'])
-  })
-})
-
 describe('BoatFleetSection — venue multi-select populates routes[].venueIds', () => {
   it('submits payload with routes[].venueIds when venues are picked', async () => {
     venues = [
@@ -215,58 +156,3 @@ describe('BoatFleetSection — venue multi-select populates routes[].venueIds', 
   })
 })
 
-describe('BoatFleetSection — edit path removes onboard compressor when unchecked', () => {
-  it('calls removeCompressor for the vessel whose name matches the existing onboard compressor', async () => {
-    const existingBoatId = 'boat-existing' as Id<'boats'>
-    boatProfile = [{ _id: existingBoatId } as Pick<Doc<'boats'>, '_id'>]
-
-    const compressorId = 'compressor-onboard' as Id<'compressors'>
-    compressors = [
-      {
-        _id: compressorId,
-        name: 'M.V. Sea Fun Divers',
-        location: 'boat',
-        boatId: existingBoatId,
-        gasMixes: ['air'],
-      },
-    ]
-
-    const existingBoatProfile = {
-      fleet: [
-        {
-          boatName: 'M.V. Sea Fun Divers',
-          maxPax: 25,
-          boatType: 'day_boat',
-          routes: [],
-        },
-      ],
-    }
-
-    render(
-      <BoatFleetSection
-        {...baseProps}
-        profile={existingBoatProfile}
-      />,
-    )
-
-    await waitFor(() => {
-      const checkbox = screen.getByLabelText(/has compressor onboard/i) as HTMLInputElement
-      expect(checkbox.checked).toBe(true)
-    })
-
-    const checkbox = screen.getByLabelText(/has compressor onboard/i)
-    fireEvent.click(checkbox)
-
-    const form = document.querySelector('form')!
-    fireEvent.submit(form)
-
-    await waitFor(() => {
-      expect(updateBoat).toHaveBeenCalled()
-    })
-    await waitFor(() => {
-      expect(removeCompressor).toHaveBeenCalledTimes(1)
-    })
-
-    expect(removeCompressor.mock.calls[0]![0]).toEqual({ compressorId })
-  })
-})

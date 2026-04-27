@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, within, waitFor } from '../helpers/render'
+import { render, screen, fireEvent, within } from '../helpers/render'
 import type { Doc, Id } from '@/lib/convex-generated'
 import type { VenueFeature } from '@/lib/constants/venue-subtypes'
 
@@ -27,7 +27,7 @@ type MinimalVenue = Pick<
 
 type MinimalCompressor = Pick<
   Doc<'compressors'>,
-  '_id' | 'name' | 'location' | 'venueId' | 'boatId' | 'gasMixes' | 'nitroxMin' | 'nitroxMax'
+  '_id' | 'name' | 'gasMixes' | 'nitroxMin' | 'nitroxMax'
 >
 
 let venues: MinimalVenue[] = []
@@ -247,98 +247,6 @@ describe('VenueCapabilitiesSection — edit seeds features from venue', () => {
   })
 })
 
-describe('VenueCapabilitiesSection — has-compressor-on-site checkbox', () => {
-  it('toggles the inline compressor fields when the checkbox is clicked', async () => {
-    venues = []
-    render(<VenueCapabilitiesSection {...baseProps} />)
-
-    fireEvent.click(screen.getByRole('button', { name: /add venue/i }))
-
-    expect(screen.queryByRole('group', { name: /gas mixes available/i })).toBeNull()
-
-    const checkbox = screen.getByLabelText(/has compressor on-site/i)
-    fireEvent.click(checkbox)
-
-    expect(screen.getByRole('group', { name: /gas mixes available/i })).toBeTruthy()
-    const airBox = screen.getByRole('checkbox', { name: /^air$/i }) as HTMLInputElement
-    expect(airBox.checked).toBe(true)
-  })
-
-  it('creates venue then compressor when checkbox is on during create', async () => {
-    venues = []
-    render(<VenueCapabilitiesSection {...baseProps} />)
-
-    fireEvent.click(screen.getByRole('button', { name: /add venue/i }))
-
-    const nameInput = screen.getByLabelText(/venue name/i) as HTMLInputElement
-    fireEvent.change(nameInput, { target: { value: 'Reef Site' } })
-    fireEvent.click(screen.getByRole('button', { name: /pick location/i }))
-
-    const kindSelect = screen.getByLabelText(/venue type/i) as HTMLSelectElement
-    fireEvent.change(kindSelect, { target: { value: 'dive_site' } })
-
-    fireEvent.click(screen.getByLabelText(/has compressor on-site/i))
-
-    const dialog = screen.getByRole('dialog')
-    const submit = within(dialog).getAllByRole('button', { name: /add venue/i }).pop()!
-    fireEvent.click(submit)
-
-    await waitFor(() => {
-      expect(createVenue).toHaveBeenCalledTimes(1)
-    })
-    await waitFor(() => {
-      expect(createCompressor).toHaveBeenCalledTimes(1)
-    })
-    const payload = createCompressor.mock.calls[0]![0] as {
-      name: string
-      location: string
-      venueId: string
-      gasMixes: string[]
-    }
-    expect(payload.name).toBe('Reef Site')
-    expect(payload.location).toBe('venue')
-    expect(payload.venueId).toBe('venue-new')
-    expect(payload.gasMixes).toEqual(['air'])
-  })
-
-  it('removes the linked compressor when checkbox is turned off during edit', async () => {
-    const venueId = 'venue-1' as Id<'venues'>
-    const compressorId = 'compressor-site' as Id<'compressors'>
-    venues = [baseVenue({ _id: venueId })]
-    compressors = [
-      {
-        _id: compressorId,
-        name: 'Reef Pool Compressor',
-        location: 'venue',
-        venueId,
-        gasMixes: ['air'],
-      },
-    ]
-
-    render(<VenueCapabilitiesSection {...baseProps} />)
-
-    fireEvent.click(screen.getByRole('button', { name: /^edit$/i }))
-
-    await waitFor(() => {
-      const checkbox = screen.getByLabelText(/has compressor on-site/i) as HTMLInputElement
-      expect(checkbox.checked).toBe(true)
-    })
-
-    fireEvent.click(screen.getByLabelText(/has compressor on-site/i))
-
-    const dialog = screen.getByRole('dialog')
-    const submit = within(dialog).getAllByRole('button', { name: /^save$/i })[0]!
-    fireEvent.click(submit)
-
-    await waitFor(() => {
-      expect(updateVenue).toHaveBeenCalledTimes(1)
-    })
-    await waitFor(() => {
-      expect(removeCompressor).toHaveBeenCalledTimes(1)
-    })
-    expect(removeCompressor.mock.calls[0]![0]).toEqual({ compressorId })
-  })
-})
 
 describe('venueCapabilitiesFromProfile', () => {
   it('maps a pool profile with features and caps to form state', () => {

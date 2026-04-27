@@ -142,7 +142,9 @@ export function ConnectedEquipmentGear() {
     const out = {} as Record<GearType, 'complete' | 'incomplete'>
     for (const gt of GEAR_TYPES) {
       const gearItems = grouped?.[gt] ?? []
-      out[gt] = gearItems.some((item) => isGearItemComplete(item, gt)) ? 'complete' : 'incomplete'
+      out[gt] = gearItems.length > 0 && gearItems.every((item) => isGearItemComplete(item, gt))
+        ? 'complete'
+        : 'incomplete'
     }
     return out
   }, [grouped])

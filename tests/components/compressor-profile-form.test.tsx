@@ -3,237 +3,199 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, within, waitFor } from '../helpers/render'
 import type { Doc, Id } from '@/lib/convex-generated'
 
+import {
+  CompressorGasMixesSection,
+  compressorGasMixesFromProfile,
+  compressorGasMixesToPayload,
+  INITIAL_COMPRESSOR_GAS_MIXES_FORM,
+} from '@/components/profiles/compressor-profile-form'
+
 type MinimalCompressor = Pick<
   Doc<'compressors'>,
-  '_id' | 'name' | 'location' | 'boatId' | 'venueId' | 'gasMixes' | 'nitroxMin' | 'nitroxMax' | 'address' | 'placeId' | 'lat' | 'lng'
+  '_id' | 'name' | 'gasMixes' | 'nitroxMin' | 'nitroxMax'
 >
 
-let compressors: MinimalCompressor[] = []
-let boats: Pick<Doc<'boats'>, '_id' | 'fleet'> | null = null
-let venues: Pick<Doc<'venues'>, '_id' | 'name'>[] = []
-
-const createCompressor = vi.fn().mockResolvedValue(undefined)
-const updateCompressor = vi.fn().mockResolvedValue(undefined)
-const removeCompressor = vi.fn().mockResolvedValue(undefined)
-
-const { API_REFS } = vi.hoisted(() => ({
-  API_REFS: {
-    boats: { mine: { _tag: 'boats.mine' } },
-    venues: { mine: { _tag: 'venues.mine' } },
-    compressors: {
-      mine: { _tag: 'compressors.mine' },
-      create: { _tag: 'compressors.create' },
-      update: { _tag: 'compressors.update' },
-      remove: { _tag: 'compressors.remove' },
-    },
-    users: {
-      inheritedContactDefaults: { _tag: 'users.inheritedContactDefaults' },
-    },
-  },
-}))
-
-vi.mock('@/lib/convex-generated', () => ({
-  api: API_REFS,
-}))
-
-// mock-ok: component-level jsdom render. Backend behavior of api.compressors.* is covered by tests/compressors.test.ts (convex-test). This suite asserts UI wiring: multi-row list, add/edit/remove invoke correct mutations.
-vi.mock('convex/react', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('convex/react')>()
-  return {
-    ...actual,
-    useQuery: (ref: unknown) => {
-      const tag = (ref as { _tag?: string } | null)?._tag
-      if (tag === 'boats.mine') return boats
-      if (tag === 'venues.mine') return venues
-      if (tag === 'compressors.mine') return compressors
-      return null
-    },
-    useMutation: (ref: unknown) => {
-      const tag = (ref as { _tag?: string } | null)?._tag
-      if (tag === 'compressors.create') return createCompressor
-      if (tag === 'compressors.update') return updateCompressor
-      if (tag === 'compressors.remove') return removeCompressor
-      return vi.fn()
-    },
-  }
-})
-
-vi.mock('@/components/profiles/location-picker', () => ({
-  LocationPicker: ({
-    value,
-    onChange,
-  }: {
-    value: unknown
-    onChange: (v: unknown) => void
-  }) => (
-    <button
-      data-testid="location-picker"
-      data-has-value={value !== null ? 'yes' : 'no'}
-      onClick={() =>
-        onChange({ address: { city: 'Koh Tao', country: 'TH' }, lat: 10, lng: 99 })
-      }
-    >
-      Pick Location
-    </button>
-  ),
-}))
-
-import { CompressorContactSection } from '@/components/profiles/compressor-profile-form'
-
-const baseProps = {
-  profile: null,
-  me: null,
-  create: vi.fn(),
-  update: vi.fn(),
-  onSaved: vi.fn(),
-  onClose: vi.fn(),
-}
-
-function baseCompressor(overrides: Partial<MinimalCompressor> = {}): MinimalCompressor {
-  return {
-    _id: 'c1' as Id<'compressors'>,
-    name: 'Scuba Market',
-    location: 'fixed',
-    gasMixes: ['air'],
-    address: { city: 'Phuket', country: 'TH' },
-    lat: 7.82,
-    lng: 98.3,
-    ...overrides,
-  }
-}
+const create = vi.fn().mockResolvedValue(undefined)
+const update = vi.fn().mockResolvedValue(undefined)
+const onSaved = vi.fn()
+const onClose = vi.fn()
 
 beforeEach(() => {
   vi.clearAllMocks()
-  compressors = []
-  boats = null
-  venues = []
-  HTMLDialogElement.prototype.show = vi.fn(function (this: HTMLDialogElement) {
-    this.setAttribute('open', '')
+})
+
+function mountWith(profile: MinimalCompressor | null) {
+  return render(
+    <CompressorGasMixesSection
+      profile={profile as Record<string, unknown> | null}
+      me={null}
+      create={create}
+      update={update}
+      onSaved={onSaved}
+      onClose={onClose}
+    />,
+  )
+}
+
+function airOnlyCompressor(): MinimalCompressor {
+  return {
+    _id: 'c1' as Id<'compressors'>,
+    name: 'Scuba Market',
+    gasMixes: ['air'],
+  }
+}
+
+function nitroxCompressor(): MinimalCompressor {
+  return {
+    _id: 'c2' as Id<'compressors'>,
+    name: 'Scuba Market',
+    gasMixes: ['air', 'nitrox'],
+    nitroxMin: 32,
+    nitroxMax: 36,
+  }
+}
+
+describe('CompressorGasMixesSection — initial render', () => {
+  it('renders Air + Nitrox checkboxes', () => {
+    mountWith(null)
+    const group = screen.getByRole('group', { name: /gas mixes/i })
+    expect(within(group).getByRole('checkbox', { name: /^air$/i })).toBeTruthy()
+    expect(within(group).getByRole('checkbox', { name: /^nitrox$/i })).toBeTruthy()
   })
-  HTMLDialogElement.prototype.showModal = vi.fn(function (this: HTMLDialogElement) {
-    this.setAttribute('open', '')
+
+  it('does not render Min/Max inputs before Nitrox is selected', () => {
+    mountWith(airOnlyCompressor())
+    expect(screen.queryByLabelText(/nitrox min/i)).toBeNull()
+    expect(screen.queryByLabelText(/nitrox max/i)).toBeNull()
   })
-  HTMLDialogElement.prototype.close = vi.fn(function (this: HTMLDialogElement) {
-    this.removeAttribute('open')
+
+  it('preloads Air checked from profile.gasMixes', () => {
+    mountWith(airOnlyCompressor())
+    const group = screen.getByRole('group', { name: /gas mixes/i })
+    const air = within(group).getByRole('checkbox', { name: /^air$/i }) as HTMLInputElement
+    expect(air.checked).toBe(true)
   })
 })
 
-describe('CompressorContactSection — list rendering', () => {
-  it('renders each compressor as a card with its location label and gas mix badges', () => {
-    compressors = [
-      baseCompressor({ _id: 'c1' as Id<'compressors'>, name: 'Scuba Market', location: 'fixed', gasMixes: ['air', 'nitrox'], nitroxMin: 22, nitroxMax: 40 }),
-      baseCompressor({ _id: 'c2' as Id<'compressors'>, name: 'Sea Fun Shop Compressor', location: 'fixed', gasMixes: ['air'] }),
-    ]
+describe('CompressorGasMixesSection — Nitrox toggle', () => {
+  it('checking Nitrox reveals Min/Max with default 32/36', () => {
+    mountWith(airOnlyCompressor())
+    const group = screen.getByRole('group', { name: /gas mixes/i })
+    const nitrox = within(group).getByRole('checkbox', { name: /^nitrox$/i })
+    fireEvent.click(nitrox)
 
-    render(<CompressorContactSection {...baseProps} />)
-
-    expect(screen.getByText('Scuba Market')).toBeTruthy()
-    expect(screen.getByText('Sea Fun Shop Compressor')).toBeTruthy()
-    expect(screen.getAllByText(/Fixed/)).toHaveLength(2)
-    expect(screen.getByText(/Nitrox 22–40%/)).toBeTruthy()
+    const min = screen.getByLabelText(/nitrox min/i) as HTMLSelectElement
+    const max = screen.getByLabelText(/nitrox max/i) as HTMLSelectElement
+    expect(min.value).toBe('32')
+    expect(max.value).toBe('36')
   })
 
-  it('renders empty-state message when no compressors exist', () => {
-    compressors = []
-    render(<CompressorContactSection {...baseProps} />)
-    expect(screen.getByText(/No compressors yet/i)).toBeTruthy()
-  })
-})
+  it('unchecking Nitrox unmounts Min/Max row', () => {
+    mountWith(nitroxCompressor())
+    expect(screen.getByLabelText(/nitrox min/i)).toBeTruthy()
 
-describe('CompressorContactSection — add flow', () => {
-  it('invokes compressors.create with location=fixed + gas mixes when submitted', async () => {
-    compressors = []
+    const group = screen.getByRole('group', { name: /gas mixes/i })
+    const nitrox = within(group).getByRole('checkbox', { name: /^nitrox$/i })
+    fireEvent.click(nitrox)
 
-    render(<CompressorContactSection {...baseProps} />)
-
-    fireEvent.click(screen.getByRole('button', { name: /add compressor/i }))
-
-    const nameInput = screen.getByLabelText(/compressor name/i) as HTMLInputElement
-    fireEvent.change(nameInput, { target: { value: 'New Compressor' } })
-
-    const gasGroup = screen.getByRole('group', { name: /gas mixes/i })
-    const airCheckbox = within(gasGroup).getByRole('checkbox', { name: /^air$/i })
-    fireEvent.click(airCheckbox)
-
-    const dialog = screen.getByRole('dialog')
-    const submitBtn = within(dialog).getAllByRole('button', { name: /add compressor/i }).pop()!
-    fireEvent.click(submitBtn)
-
-    await waitFor(() => {
-      expect(createCompressor).toHaveBeenCalledTimes(1)
-    })
-
-    const payload = createCompressor.mock.calls[0]![0] as {
-      name: string
-      location: string
-      gasMixes: string[]
-    }
-    expect(payload.name).toBe('New Compressor')
-    expect(payload.location).toBe('fixed')
-    expect(payload.gasMixes).toEqual(['air'])
+    expect(screen.queryByLabelText(/nitrox min/i)).toBeNull()
+    expect(screen.queryByLabelText(/nitrox max/i)).toBeNull()
   })
 })
 
-describe('CompressorContactSection — edit flow', () => {
-  it('opens dialog pre-populated with compressor data and submits update via compressors.update', async () => {
-    const compressorId = 'c-edit' as Id<'compressors'>
-    compressors = [
-      baseCompressor({
-        _id: compressorId,
-        name: 'Scuba Market',
-        location: 'fixed',
-        gasMixes: ['air', 'nitrox'],
-        nitroxMin: 22,
-        nitroxMax: 40,
-      }),
-    ]
+describe('CompressorGasMixesSection — submit', () => {
+  it('calls update with { gasMixes, nitroxMin, nitroxMax } when nitrox + profile exists', async () => {
+    mountWith(nitroxCompressor())
 
-    render(<CompressorContactSection {...baseProps} />)
+    const min = screen.getByLabelText(/nitrox min/i) as HTMLSelectElement
+    fireEvent.change(min, { target: { value: '28' } })
 
-    fireEvent.click(screen.getByRole('button', { name: /^edit$/i }))
-
-    const nameInput = screen.getByLabelText(/compressor name/i) as HTMLInputElement
-    expect(nameInput.value).toBe('Scuba Market')
-    fireEvent.change(nameInput, { target: { value: 'Scuba Market Renamed' } })
-
-    const dialog = screen.getByRole('dialog')
-    const saveBtn = within(dialog).getAllByRole('button', { name: /^save$/i })[0]!
+    const saveBtn = screen.getByRole('button', { name: /^save$/i })
     fireEvent.click(saveBtn)
 
     await waitFor(() => {
-      expect(updateCompressor).toHaveBeenCalledTimes(1)
+      expect(update).toHaveBeenCalledTimes(1)
     })
+    const payload = update.mock.calls[0]![0] as Record<string, unknown>
+    expect(payload.gasMixes).toEqual(['air', 'nitrox'])
+    expect(payload.nitroxMin).toBe(28)
+    expect(payload.nitroxMax).toBe(36)
+  })
 
-    const payload = updateCompressor.mock.calls[0]![0] as {
-      compressorId: string
-      name: string
-      location: string
-    }
-    expect(payload.compressorId).toBe(compressorId)
-    expect(payload.name).toBe('Scuba Market Renamed')
-    expect(payload.location).toBe('fixed')
+  it('calls create with { gasMixes: [air] } only when profile is null and air-only', async () => {
+    mountWith(null)
+
+    const group = screen.getByRole('group', { name: /gas mixes/i })
+    const air = within(group).getByRole('checkbox', { name: /^air$/i })
+    fireEvent.click(air)
+
+    const saveBtn = screen.getByRole('button', { name: /^save$/i })
+    fireEvent.click(saveBtn)
+
+    await waitFor(() => {
+      expect(create).toHaveBeenCalledTimes(1)
+    })
+    const payload = create.mock.calls[0]![0] as Record<string, unknown>
+    expect(payload.gasMixes).toEqual(['air'])
+    expect(payload).not.toHaveProperty('nitroxMin')
+    expect(payload).not.toHaveProperty('nitroxMax')
+  })
+
+  it('Save is disabled while gasMixes is empty (required)', () => {
+    mountWith(null)
+    const saveBtn = screen.getByRole('button', { name: /^save$/i }) as HTMLButtonElement
+    expect(saveBtn.disabled).toBe(true)
   })
 })
 
-describe('CompressorContactSection — remove flow', () => {
-  it('opens a confirm dialog and calls compressors.remove when confirmed', async () => {
-    const compressorId = 'c-remove' as Id<'compressors'>
-    compressors = [
-      baseCompressor({ _id: compressorId, name: 'To Be Removed' }),
-    ]
-
-    render(<CompressorContactSection {...baseProps} />)
-
-    const removeButton = screen.getByRole('button', { name: /remove to be removed/i })
-    fireEvent.click(removeButton)
-
-    const confirmDialog = await screen.findByRole('dialog', { name: /remove compressor/i })
-    const confirmBtn = within(confirmDialog).getByRole('button', { name: /^remove$/i })
-    fireEvent.click(confirmBtn)
-
-    await waitFor(() => {
-      expect(removeCompressor).toHaveBeenCalledTimes(1)
+describe('compressorGasMixesFromProfile', () => {
+  it('maps a profile with air + nitrox into form state', () => {
+    expect(
+      compressorGasMixesFromProfile({ gasMixes: ['air', 'nitrox'], nitroxMin: 22, nitroxMax: 40 }),
+    ).toEqual({
+      gasMixes: ['air', 'nitrox'],
+      nitroxMin: 22,
+      nitroxMax: 40,
     })
-    expect(removeCompressor.mock.calls[0]![0]).toEqual({ compressorId })
+  })
+
+  it('falls back to empty defaults for an empty profile', () => {
+    expect(compressorGasMixesFromProfile({})).toEqual({
+      gasMixes: [],
+      nitroxMin: undefined,
+      nitroxMax: undefined,
+    })
+  })
+})
+
+describe('compressorGasMixesToPayload', () => {
+  it('round-trips air-only without nitrox fields', () => {
+    expect(compressorGasMixesToPayload({ gasMixes: ['air'], nitroxMin: undefined, nitroxMax: undefined })).toEqual({
+      gasMixes: ['air'],
+    })
+  })
+
+  it('includes nitrox min/max when nitrox is selected', () => {
+    expect(compressorGasMixesToPayload({ gasMixes: ['air', 'nitrox'], nitroxMin: 28, nitroxMax: 36 })).toEqual({
+      gasMixes: ['air', 'nitrox'],
+      nitroxMin: 28,
+      nitroxMax: 36,
+    })
+  })
+
+  it('drops nitrox min/max when nitrox is NOT selected even if values are present', () => {
+    expect(compressorGasMixesToPayload({ gasMixes: ['air'], nitroxMin: 28, nitroxMax: 36 })).toEqual({
+      gasMixes: ['air'],
+    })
+  })
+})
+
+describe('INITIAL_COMPRESSOR_GAS_MIXES_FORM', () => {
+  it('defaults to empty gas mixes and undefined nitrox bounds', () => {
+    expect(INITIAL_COMPRESSOR_GAS_MIXES_FORM).toEqual({
+      gasMixes: [],
+      nitroxMin: undefined,
+      nitroxMax: undefined,
+    })
   })
 })

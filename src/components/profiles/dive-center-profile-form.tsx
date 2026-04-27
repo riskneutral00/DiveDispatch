@@ -47,7 +47,7 @@ export function DiveCenterContactSection(props: DiveCenterSectionProps) {
   return (
     <BusinessContactSection
       {...props}
-      nameLabel="Business Name"
+      nameLabel={tCommon('businessName')}
       schema={diveCenterContactMergedSchema}
       createOverride={(payload) => props.create({ ...payload, associations: [] })}
       extras={{

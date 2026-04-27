@@ -20,42 +20,73 @@ function asLooseMut<T>(
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Convex FunctionReference generics are opaque at this abstraction level // comments-ok
 type RoleApiModule = { mine: any; create: any; update: any }
 
-const ROLE_API_MODULES: Partial<Record<RoleKey, RoleApiModule>> = {
-  'dive-center': api.diveCenters,
-  instructor:    api.diveStaff,
-  boat:          api.boats,
-  compressor:    api.compressors,
-  equipment:     api.equipment,
-  venue:         api.venues,
-  agent:         api.agents,
+interface RoleApiBinding {
+  apiModule: RoleApiModule
+  entityIdKey: 'entityId' | 'venueId' | 'compressorId' | null
+}
+
+const ROLE_API_BINDINGS: Partial<Record<RoleKey, RoleApiBinding>> = {
+  'dive-center': { apiModule: api.diveCenters, entityIdKey: 'entityId' },
+  instructor:    { apiModule: api.diveStaff,   entityIdKey: null },
+  boat:          { apiModule: api.boats,       entityIdKey: 'entityId' },
+  compressor:    { apiModule: api.compressors, entityIdKey: 'compressorId' },
+  equipment:     { apiModule: api.equipment,   entityIdKey: 'entityId' },
+  venue:         { apiModule: api.venues,      entityIdKey: 'venueId' },
+  agent:         { apiModule: api.agents,      entityIdKey: null },
+}
+
+function pickEditableRow(
+  raw: unknown,
+): { row: Record<string, unknown> | null; loading: boolean } {
+  if (raw === undefined) return { row: null, loading: true }
+  if (raw === null) return { row: null, loading: false }
+  if (Array.isArray(raw)) {
+    return { row: (raw[0] as Record<string, unknown> | undefined) ?? null, loading: false }
+  }
+  return { row: raw as Record<string, unknown>, loading: false }
 }
 
 function StandardConnectedForm({
-  apiModule,
+  binding,
   Section,
   onClose,
 }: {
-  apiModule: RoleApiModule
+  binding: RoleApiBinding
   Section: ProfileSectionComponent
   onClose?: () => void
 }) {
-  const profile = useQuery(apiModule.mine)
+  const raw = useQuery(binding.apiModule.mine)
   const { user: me } = useSessionIdentity()
-  const create = useMutation(apiModule.create)
-  const update = useMutation(apiModule.update)
+  const create = useMutation(binding.apiModule.create)
+  const update = useMutation(binding.apiModule.update)
+
+  const { row, loading } = pickEditableRow(raw)
+  const idKey = binding.entityIdKey
+
+  const looseUpdate = asLooseMut(update)
+  const wrappedUpdate = idKey
+    ? (payload: Record<string, unknown>) => {
+        const id = row?._id
+        if (!id) {
+          return Promise.reject(new Error(`Cannot update before row exists for ${idKey}`))
+        }
+        return looseUpdate({ [idKey]: id, ...payload })
+      }
+    : looseUpdate
+
   return (
     <Section
-      profile={profile}
+      profile={loading ? undefined : row}
       me={me}
       create={asLooseMut(create)}
-      update={asLooseMut(update)}
+      update={wrappedUpdate}
       onClose={onClose}
     />
   )
 }
 
 export function hasConnectedForm(roleKey: RoleKey): boolean {
-  return roleKey in ROLE_SECTION_REGISTRY && roleKey in ROLE_API_MODULES
+  return roleKey in ROLE_SECTION_REGISTRY && roleKey in ROLE_API_BINDINGS
 }
 
 export function RoleProfileForm({
@@ -67,9 +98,9 @@ export function RoleProfileForm({
   section?: string
   onClose?: () => void
 }) {
-  const apiModule = ROLE_API_MODULES[roleSlug]
+  const binding = ROLE_API_BINDINGS[roleSlug]
   const sections = ROLE_SECTION_REGISTRY[roleSlug]
-  if (!apiModule || !sections) return null
+  if (!binding || !sections) return null
 
   const sectionKey = (section ?? Object.keys(sections)[0]) as ProfileSectionId
   const Section = sections[sectionKey]
@@ -77,7 +108,7 @@ export function RoleProfileForm({
 
   return (
     <StandardConnectedForm
-      apiModule={apiModule}
+      binding={binding}
       Section={Section}
       onClose={onClose}
     />

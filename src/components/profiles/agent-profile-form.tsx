@@ -70,7 +70,7 @@ export function AgentContactSection(props: BaseProfileSectionProps) {
   return (
     <BusinessContactSection
       {...props}
-      nameLabel="Business Name"
+      nameLabel={tCommon('businessName')}
       schema={agentContactMergedSchema}
       createOverride={(payload) => props.create({ ...payload, associations: [] })}
       extras={{

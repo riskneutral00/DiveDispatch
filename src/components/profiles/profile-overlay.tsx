@@ -18,6 +18,8 @@ import { PreferencesEditor } from '@/components/account/preferences-editor'
 
 export type { ProfileOverlayTab }
 
+const DIALOG_EDGE_PADDING = 'px-4 md:px-6'
+
 interface ProfileOverlayProps {
   open: boolean
   onClose: () => void
@@ -112,7 +114,7 @@ export function ProfileOverlay({ open, onClose, initialTab = 'profile', initialS
 
         <Tabs
           variant="pill"
-          className="px-4 py-2 md:px-6 flex-shrink-0 border-b border-glass-border"
+          className={`${DIALOG_EDGE_PADDING} py-2 flex-shrink-0 border-b border-glass-border`}
           activeTab={activeTab}
           onChange={(id) => {
             setActiveTab(id)
@@ -138,22 +140,25 @@ export function ProfileOverlay({ open, onClose, initialTab = 'profile', initialS
           className="flex-1 overflow-y-auto overflow-x-hidden"
           role="tabpanel"
         >
-          <DashboardPageFrame className="px-4 pt-2 pb-28 md:pb-6 md:px-6">
+          {activeRoleKey && roleSectionTabs && roleSectionTabs.length > 0 && (
+            <div className={`${DIALOG_EDGE_PADDING} pt-2`}>
+              <ProfileSectionTabBar
+                tabs={roleSectionTabs}
+                activeTab={activeSection ?? roleSectionTabs[0].id}
+                onChange={setRoleProfileSection}
+              />
+            </div>
+          )}
+          <DashboardPageFrame
+            maxWidth="4xl"
+            className="px-4 pt-2 pb-28 md:pb-6 md:px-6"
+          >
             {activeTab === 'profile' && <ProfileTab onClose={onClose} />}
             {activeTab === 'roles' && (
               <ManageRolesConnected
                 onNavigateToRole={(roleKey) => setActiveTab(`role:${roleKey}`)}
                 activeClerkRole={activeClerkRole}
               />
-            )}
-            {activeRoleKey && roleSectionTabs && roleSectionTabs.length > 0 && (
-              <div className="max-w-2xl mx-auto">
-                <ProfileSectionTabBar
-                  tabs={roleSectionTabs}
-                  activeTab={activeSection ?? roleSectionTabs[0].id}
-                  onChange={setRoleProfileSection}
-                />
-              </div>
             )}
             {activeRoleKey && renderRoleContent()}
           </DashboardPageFrame>

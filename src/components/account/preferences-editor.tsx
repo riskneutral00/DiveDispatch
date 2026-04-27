@@ -276,12 +276,12 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp,
       disableSaveWhenInvalid
       isValid={isValid}
       hideFooter={section === 'resources'}
-      className="max-w-2xl mx-auto w-full px-4 pb-28 md:pb-10"
+      className="w-full pb-28 md:pb-10"
     >
       <div id={`tabpanel-${section}`} role="tabpanel" aria-labelledby={`tab-${section}`} className="space-y-6">
 
         {section === 'booking' && (
-          <>
+          <div className="max-w-2xl mx-auto space-y-6">
             <Card padding="sm" className="reading-plane">
               <AccessControlSection value={INITIAL_ACCESS_CONTROL} onChange={() => {}} />
             </Card>
@@ -353,12 +353,12 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp,
                 ))}
               </div>
             </Card>
-          </>
+          </div>
         )}
 
         {section === 'resources' && showResourcePrefs && (
           <>
-            <div className="max-w-xl mx-auto">
+            <div>
               <div className="flex sm:hidden mb-4">
                 <SimpleSelect
                   aria-label="Resource section"
@@ -381,7 +381,7 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp,
               id={`tabpanel-${resourceSubTab}`}
               role="tabpanel"
               aria-labelledby={`tab-${resourceSubTab}`}
-              className="space-y-4"
+              className="max-w-2xl mx-auto space-y-4"
             >
               {resourceSubTab === 'instructors' && (
                 <Card padding="sm">

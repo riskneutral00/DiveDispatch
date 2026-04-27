@@ -158,7 +158,7 @@ describe('PreferencesEditor — Row 3 dynamic asterisk transitions', () => {
     return screen.getAllByRole('tab').find((t) => (t.textContent ?? '').replace('*', '').trim() === label)
   }
 
-  it('marks all 5 sub-tabs as required when no preferences are set', () => {
+  it('marks all 5 resource tabs required when no preferences are set (compressors required when no compressor source)', () => {
     mockPrefs = {
       acceptanceMode: 'Auto',
       preferredInstructorSlugs: [],
@@ -178,7 +178,7 @@ describe('PreferencesEditor — Row 3 dynamic asterisk transitions', () => {
     expect(getResourceSubTab('Compressors')).toHaveAttribute('aria-required', 'true')
   })
 
-  it('clears Venues + Boats when at least one venue is set (OR substitution)', () => {
+  it('clears Venues + Boats when at least one venue is set (OR substitution); Compressors still required without a compressor source', () => {
     mockPrefs = {
       acceptanceMode: 'Auto',
       preferredInstructorSlugs: [],
@@ -193,7 +193,6 @@ describe('PreferencesEditor — Row 3 dynamic asterisk transitions', () => {
     render(<PreferencesEditor section="resources" roleSlug="dive-center" />)
     expect(getResourceSubTab('Venues')).not.toHaveAttribute('aria-required', 'true')
     expect(getResourceSubTab('Boats')).not.toHaveAttribute('aria-required', 'true')
-    // Other sub-tabs remain required
     expect(getResourceSubTab('Instructors')).toHaveAttribute('aria-required', 'true')
     expect(getResourceSubTab('Equipment')).toHaveAttribute('aria-required', 'true')
     expect(getResourceSubTab('Compressors')).toHaveAttribute('aria-required', 'true')
@@ -219,7 +218,7 @@ describe('PreferencesEditor — Row 3 dynamic asterisk transitions', () => {
     expect(getResourceSubTab('Compressors')).not.toHaveAttribute('aria-required', 'true')
   })
 
-  it('keeps Compressors required when preferred boat lacks hasCompressor', () => {
+  it('boat without hasCompressor leaves Compressors required (no compressor source)', () => {
     mockBoatDirectory = [{ slug: 'boat-bare', hasCompressor: false }]
     mockPrefs = {
       acceptanceMode: 'Auto',

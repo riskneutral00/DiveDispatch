@@ -18,23 +18,27 @@ export interface PreferenceResourceSlugs {
 
 export function computeResourceTabRequirement(
   slugs: PreferenceResourceSlugs,
-  boatDirectory: DirectoryEntry[] | undefined,
+  hostDirectory: DirectoryEntry[] | undefined,
 ): Record<ResourceSubTab, boolean> {
   const venueCount = slugs.preferredVenueSlugs?.length ?? 0
   const boatCount = slugs.preferredBoatSlugs?.length ?? 0
-  const compCount = slugs.preferredCompressorSlugs?.length ?? 0
   const hasVenueOrBoat = venueCount > 0 || boatCount > 0
 
-  const boatSlugSet = new Set(slugs.preferredBoatSlugs ?? [])
-  const boatProvidesCompressor = (boatDirectory ?? [])
-    .some((e) => boatSlugSet.has(e.slug) && e.hasCompressor === true)
+  const compressorCount = slugs.preferredCompressorSlugs?.length ?? 0
+  const preferredBoatSlugs = new Set(slugs.preferredBoatSlugs ?? [])
+  const preferredVenueSlugs = new Set(slugs.preferredVenueSlugs ?? [])
+  const hasHostWithCompressor = (hostDirectory ?? []).some((entry) => {
+    if (entry.hasCompressor !== true) return false
+    return preferredBoatSlugs.has(entry.slug) || preferredVenueSlugs.has(entry.slug)
+  })
+  const hasCompressorCoverage = compressorCount > 0 || hasHostWithCompressor
 
   return {
     instructors: (slugs.preferredInstructorSlugs?.length ?? 0) === 0,
     equipment: (slugs.preferredEquipmentSlugs?.length ?? 0) === 0,
     venues: !hasVenueOrBoat,
     boats: !hasVenueOrBoat,
-    compressors: compCount === 0 && !boatProvidesCompressor,
+    compressors: !hasCompressorCoverage,
     operator: false,
   }
 }

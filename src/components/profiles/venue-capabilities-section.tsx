@@ -10,13 +10,11 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { LoadingCard } from '@/components/ui/loading-card'
 import {
-  buildParentContactDefaults,
   useInheritedContactDefaults,
   type BaseProfileSectionProps,
 } from '@/lib/profile-form'
-import { compressorGasMixesToPayload } from '@/components/profiles/compressor-profile-form'
-import type { GasMix } from '@/lib/constants/gas-mixes'
 import type { VenueKind, VenueFeature } from '@/lib/constants/venue-subtypes'
+import type { GasMix } from '@/lib/constants/gas-mixes'
 import {
   VenueEditDialog,
   EMPTY_VENUE_EDIT,
@@ -65,13 +63,9 @@ type VenueCapabilitiesSectionProps = BaseProfileSectionProps
 export function VenueCapabilitiesSection({ me }: VenueCapabilitiesSectionProps) {
   const t = useTranslations('common')
   const venues = useQuery(api.venues.mine)
-  const compressors = useQuery(api.compressors.mine)
   const createVenue = useMutation(api.venues.create)
   const updateVenue = useMutation(api.venues.update)
   const removeVenue = useMutation(api.venues.remove)
-  const createCompressor = useMutation(api.compressors.create)
-  const updateCompressor = useMutation(api.compressors.update)
-  const removeCompressor = useMutation(api.compressors.remove)
   const venueInheritedDefaults = useInheritedContactDefaults('Venue', me)
 
   const [dialogState, setDialogState] = useState<
@@ -84,46 +78,21 @@ export function VenueCapabilitiesSection({ me }: VenueCapabilitiesSectionProps) 
     return <LoadingCard />
   }
 
-  const linkedForVenue = (venueId: Id<'venues'>) =>
-    (compressors ?? []).filter((c) => c.location === 'venue' && c.venueId === venueId)
-
-  const reconcileVenueCompressor = async (venueId: Id<'venues'>, value: VenueEditValue) => {
-    const linked = linkedForVenue(venueId)
-    if (linked.length > 1) {
-      throw new Error(t('multipleCompressorsLinkedVenue'))
+  const buildGasMixPayload = (value: VenueEditValue) => {
+    if (!value.hasCompressorOnSite || !value.compressorGasMixes?.length) {
+      return { gasMixes: [] as GasMix[] }
     }
-    const existing = linked[0]
-    const gasPayload = compressorGasMixesToPayload({
-      gasMixes: (value.compressorGasMixes ?? []) as GasMix[],
-      nitroxMin: value.compressorNitroxMin,
-      nitroxMax: value.compressorNitroxMax,
-    })
-    if (value.hasCompressorOnSite) {
-      if (existing) {
-        await updateCompressor({
-          compressorId: existing._id,
-          location: 'venue',
-          venueId,
-          ...gasPayload,
-        } as never)
-      } else {
-        const parentDefaults = buildParentContactDefaults(me) as Record<string, unknown>
-        await createCompressor({
-          ...parentDefaults,
-          name: value.name,
-          location: 'venue',
-          venueId,
-          ...gasPayload,
-        } as never)
-      }
-    } else if (existing) {
-      await removeCompressor({ compressorId: existing._id })
+    const includesNitrox = value.compressorGasMixes.includes('nitrox')
+    return {
+      gasMixes: value.compressorGasMixes,
+      ...(includesNitrox && value.compressorNitroxMin !== undefined ? { nitroxMin: value.compressorNitroxMin } : {}),
+      ...(includesNitrox && value.compressorNitroxMax !== undefined ? { nitroxMax: value.compressorNitroxMax } : {}),
     }
   }
 
   const handleCreate = async (value: VenueEditValue) => {
     if (!value.location) return
-    const venueId = await createVenue({
+    await createVenue({
       name: value.name,
       address: value.location.address,
       placeId: value.location.placeId,
@@ -138,10 +107,8 @@ export function VenueCapabilitiesSection({ me }: VenueCapabilitiesSectionProps) 
       maxCapacity: value.maxCapacity > 0 ? value.maxCapacity : undefined,
       isAllowed: value.isAllowed,
       notAllowed: value.notAllowed,
+      ...buildGasMixPayload(value),
     })
-    if (value.hasCompressorOnSite && venueId) {
-      await reconcileVenueCompressor(venueId, value)
-    }
   }
 
   const handleEdit = async (venueId: Id<'venues'>, value: VenueEditValue) => {
@@ -160,8 +127,8 @@ export function VenueCapabilitiesSection({ me }: VenueCapabilitiesSectionProps) 
       maxCapacity: value.maxCapacity > 0 ? value.maxCapacity : undefined,
       isAllowed: value.isAllowed,
       notAllowed: value.notAllowed,
+      ...buildGasMixPayload(value),
     })
-    await reconcileVenueCompressor(venueId, value)
   }
 
   const handleRemove = async (venueId: Id<'venues'>) => {
@@ -169,8 +136,7 @@ export function VenueCapabilitiesSection({ me }: VenueCapabilitiesSectionProps) 
   }
 
   const openEditFor = (venue: (typeof venues)[number]) => {
-    const linked = linkedForVenue(venue._id)
-    const linkedOne = linked.length === 1 ? linked[0] : undefined
+    const existingGasMixes = (venue.gasMixes ?? []) as GasMix[]
     setDialogState({
       open: true,
       mode: 'edit',
@@ -190,10 +156,10 @@ export function VenueCapabilitiesSection({ me }: VenueCapabilitiesSectionProps) 
         features: (venue.features ?? []) as VenueFeature[],
         isAllowed: venue.isAllowed ?? [],
         notAllowed: venue.notAllowed ?? [],
-        hasCompressorOnSite: linked.length === 1,
-        compressorGasMixes: (linkedOne?.gasMixes ?? []) as GasMix[],
-        compressorNitroxMin: linkedOne?.nitroxMin,
-        compressorNitroxMax: linkedOne?.nitroxMax,
+        hasCompressorOnSite: existingGasMixes.length > 0,
+        compressorGasMixes: existingGasMixes,
+        compressorNitroxMin: venue.nitroxMin ?? undefined,
+        compressorNitroxMax: venue.nitroxMax ?? undefined,
       },
     })
   }

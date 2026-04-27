@@ -1,6 +1,7 @@
 'use client'
 
 import { useMutation, useQuery } from 'convex/react'
+import { useTranslations } from 'next-intl'
 import { api } from '@/lib/convex-generated'
 import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
@@ -17,6 +18,7 @@ import { useSessionIdentity } from '@/lib/hooks/use-session-identity'
 import type { BaseProfileSectionProps } from '@/lib/profile-form'
 
 export function VenueContactSection({ onSaved, onClose }: BaseProfileSectionProps) {
+  const t = useTranslations('common')
   const org = useQuery(api.organizations.mine)
   const { user: me } = useSessionIdentity()
   const inheritance = useQuery(api.users.inheritedContactDefaults, { excludeRole: 'Venue' })
@@ -93,7 +95,7 @@ export function VenueContactSection({ onSaved, onClose }: BaseProfileSectionProp
           nameValue={form.name}
           onNameChange={(val) => setField('name', val)}
           nameError={errors.name}
-          nameLabel="Business Name"
+          nameLabel={t('businessName')}
           nameRequired
           locationValue={form.location}
           onLocationChange={(loc) => setField('location', loc)}

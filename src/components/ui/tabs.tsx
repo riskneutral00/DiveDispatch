@@ -52,7 +52,7 @@ export function Tabs(props: TabsProps) {
   const activeTabRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
-    activeTabRef.current?.scrollIntoView?.({ inline: 'center', block: 'nearest', behavior: 'smooth' })
+    activeTabRef.current?.scrollIntoView?.({ inline: 'nearest', block: 'nearest', behavior: 'smooth' })
   }, [activeTab])
 
   const handleKeyDown = useCallback(

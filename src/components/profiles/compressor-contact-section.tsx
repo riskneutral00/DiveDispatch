@@ -5,17 +5,14 @@ import { BusinessContactSection } from '@/components/profiles/business-contact-s
 import { contactSchema } from '@/lib/schemas/profile-shared'
 import { type BaseProfileSectionProps } from '@/lib/profile-form'
 
-export type EquipmentProfileSection = 'contact'
-
-export function EquipmentContactSection(props: BaseProfileSectionProps) {
+export function CompressorContactSection(props: BaseProfileSectionProps) {
   const t = useTranslations('common')
   return (
     <BusinessContactSection
       {...props}
       nameLabel={t('businessName')}
       schema={contactSchema}
-      inheritFromOtherRoles="Equipment"
+      inheritFromOtherRoles="Compressor"
     />
   )
 }
-

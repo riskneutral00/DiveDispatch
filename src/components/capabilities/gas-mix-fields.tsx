@@ -22,13 +22,21 @@ export interface GasMixFieldsValue {
 }
 
 export interface GasMixFieldsProps {
-  checkboxLabel: string
+  checkboxLabel?: string
+  groupLabel?: string
+  alwaysOn?: boolean
+  required?: boolean
+  error?: string
   value: GasMixFieldsValue
   onChange: (next: GasMixFieldsValue) => void
 }
 
 export function GasMixFields({
   checkboxLabel,
+  groupLabel,
+  alwaysOn = false,
+  required = false,
+  error,
   value,
   onChange,
 }: GasMixFieldsProps) {
@@ -55,17 +63,23 @@ export function GasMixFields({
     })
   }
 
+  const showFields = alwaysOn || value.hasCompressor
+
   return (
     <div>
-      <Checkbox label={checkboxLabel} checked={value.hasCompressor} onChange={handleToggle} />
-      {value.hasCompressor && (
-        <div className="mt-3 space-y-3">
+      {!alwaysOn && (
+        <Checkbox label={checkboxLabel ?? ''} checked={value.hasCompressor} onChange={handleToggle} />
+      )}
+      {showFields && (
+        <div className={alwaysOn ? 'space-y-3' : 'mt-3 space-y-3'}>
           <CheckboxGroup
-            label={t('gasMixesAvailable')}
+            label={groupLabel ?? t('gasMixesAvailable')}
             items={GAS_MIX_OPTIONS.map(({ value: v, label }) => ({ value: v, label }))}
             selected={value.gasMixes}
             onChange={handleGasMixes}
             columns={2}
+            required={required}
+            error={error}
           />
           {value.gasMixes.includes('nitrox') && (
             <FieldRow density="compact">
