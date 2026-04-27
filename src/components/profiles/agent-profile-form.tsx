@@ -72,6 +72,7 @@ export function AgentContactSection(props: BaseProfileSectionProps) {
       {...props}
       nameLabel={tCommon('businessName')}
       schema={agentContactMergedSchema}
+      languageKey="customerLanguages"
       createOverride={(payload) => props.create({ ...payload, associations: [] })}
       extras={{
         defaults: customerLanguagesBlock.defaults,

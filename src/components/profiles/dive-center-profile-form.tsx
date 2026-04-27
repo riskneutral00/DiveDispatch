@@ -49,6 +49,7 @@ export function DiveCenterContactSection(props: DiveCenterSectionProps) {
       {...props}
       nameLabel={tCommon('businessName')}
       schema={diveCenterContactMergedSchema}
+      languageKey="customerLanguages"
       createOverride={(payload) => props.create({ ...payload, associations: [] })}
       extras={{
         defaults: { customerLanguages: [] },

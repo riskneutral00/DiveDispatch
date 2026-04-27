@@ -52,6 +52,7 @@ interface BusinessContactSectionProps extends BaseProfileSectionProps {
   inheritFromOtherRoles?: ClerkRole
   extras?: BusinessContactExtras
   afterSuccessfulSave?: (form: Record<string, unknown>) => Promise<void>
+  languageKey?: 'customerLanguages' | 'teachingLanguages'
 }
 
 export function BusinessContactSection({
@@ -68,6 +69,7 @@ export function BusinessContactSection({
   inheritFromOtherRoles,
   extras,
   afterSuccessfulSave,
+  languageKey,
 }: BusinessContactSectionProps) {
   const showName = nameLabel !== undefined
 
@@ -102,14 +104,16 @@ export function BusinessContactSection({
         ...(extras?.fromProfile(p) ?? {}),
       }),
       fromMe: (u, defaults) => {
-        const base = (fromMeOverride ?? defaultFromMe)(u, defaults as ContactFormState)
+        const base = fromMeOverride
+          ? fromMeOverride(u, defaults as ContactFormState)
+          : defaultFromMe(u, defaults, languageKey ? { languageKey } : undefined)
         return {
           ...defaults,
           ...base,
-          name: (defaults.name as string) || base.name,
-          location: defaults.location ?? base.location,
-          email: (defaults.email as string) || base.email,
-          phone: (defaults.phone as string) || base.phone,
+          name: (defaults.name as string) || (base as ContactFormState).name,
+          location: defaults.location ?? (base as ContactFormState).location,
+          email: (defaults.email as string) || (base as ContactFormState).email,
+          phone: (defaults.phone as string) || (base as ContactFormState).phone,
           access: defaults.access,
         } as BusinessContactForm
       },

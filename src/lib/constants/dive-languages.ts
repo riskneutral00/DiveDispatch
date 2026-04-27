@@ -195,6 +195,17 @@ export function resolveLanguages(codes: string[]): { code: string; label: string
     .map((l) => ({ code: l.code, label: CHINESE_SCRIPT_LABELS[l.code as LanguageCode] ?? l.label }))
 }
 
+import type { SupportedLocale } from './locales'
+
+export const APP_LANGUAGE_TO_LOCALE: Record<SupportedLocale, LanguageCode> = {
+  'en': 'en-GB',
+  'zh-CN': 'zh-CN',
+  'zh-TW': 'zh-TW',
+  'th': 'th-TH',
+  'fr': 'fr-FR',
+  'ko': 'ko-KR',
+}
+
 export const POPULAR_ROW1_CODES: LanguageCode[] = ['zh-CN', 'th-TH', 'ja-JP', 'ko-KR', 'id-ID', 'ru-RU', 'dv-MV', 'vi-VN']
 export const POPULAR_ROW2_CODES: LanguageCode[] = ['zh-TW', 'en-GB', 'fr-FR', 'de-DE', 'es-ES', 'it-IT', 'nl-NL', 'nb-NO']
 

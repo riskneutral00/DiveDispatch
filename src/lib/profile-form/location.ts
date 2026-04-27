@@ -1,6 +1,9 @@
 import countries from 'i18n-iso-countries'
 import enCountries from 'i18n-iso-countries/langs/en.json'
 import { addressLocationSchema, type AddressLocationValue } from '@/lib/schemas/location'
+import { APP_LANGUAGE_TO_LOCALE, findLanguageByCode, CHINESE_SCRIPT_LABELS } from '@/lib/constants/dive-languages'
+import type { SupportedLocale } from '@/lib/constants/locales'
+import type { LanguageCode } from '@/lib/constants/dive-languages'
 
 countries.registerLocale(enCountries as unknown as Parameters<typeof countries.registerLocale>[0])
 
@@ -79,15 +82,42 @@ export function contactFieldsFromProfile(p: Record<string, unknown>): {
   }
 }
 
+export type DefaultFromMeOptions = {
+  languageKey?: 'customerLanguages' | 'teachingLanguages'
+}
+
+function defaultLanguageFromAppLanguage(appLanguage: unknown): { code: string; label: string } | null {
+  if (typeof appLanguage !== 'string' || !appLanguage) return null
+  const localeCode = APP_LANGUAGE_TO_LOCALE[appLanguage as SupportedLocale]
+  if (!localeCode) return null
+  const language = findLanguageByCode(localeCode)
+  if (!language) return null
+  return {
+    code: language.code,
+    label: CHINESE_SCRIPT_LABELS[language.code as LanguageCode] ?? language.label,
+  }
+}
+
 export function defaultFromMe<T extends Record<string, unknown>>(
   u: Record<string, unknown>,
   defaults: T,
+  options?: DefaultFromMeOptions,
 ): T {
-  return {
+  const out: Record<string, unknown> = {
     ...defaults,
     email: (u.email as string) ?? '',
     phone: (u.phone as string) ?? '',
-  } as T
+  }
+
+  if (options?.languageKey) {
+    const current = out[options.languageKey]
+    if (Array.isArray(current) && current.length === 0) {
+      const language = defaultLanguageFromAppLanguage(u.appLanguage)
+      if (language) out[options.languageKey] = [language]
+    }
+  }
+
+  return out as T
 }
 
 export function locationToPayload(loc: ProfileLocationValue): Record<string, unknown> {

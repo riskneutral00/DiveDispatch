@@ -83,6 +83,7 @@ export function PersonalContactSection(props: BaseProfileSectionProps) {
     <BusinessContactSection
       {...props}
       schema={personalContactMergedSchema}
+      languageKey="teachingLanguages"
       inheritFromOtherRoles="Instructor"
       createOverride={(payload) => props.create({ ...payload, credential: [] })}
       extras={{
