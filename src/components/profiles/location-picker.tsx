@@ -1,6 +1,7 @@
 'use client'
 
 import { useId, useState } from 'react'
+import { flushSync } from 'react-dom'
 import dynamic from 'next/dynamic'
 import { useTranslations } from 'next-intl'
 import { X } from 'lucide-react'
@@ -118,7 +119,10 @@ export function LocationPicker({ value, onChange, onBlur, error, label, required
       <LocationPickerTrigger
         value={value}
         onOpen={() => setOpen(true)}
-        onClear={() => { onChange(null); onBlur?.() }}
+        onClear={() => {
+          flushSync(() => onChange(null))
+          onBlur?.()
+        }}
         error={error}
         label={label}
         required={required}
@@ -129,7 +133,7 @@ export function LocationPicker({ value, onChange, onBlur, error, label, required
           <LocationPickerModal
             value={value}
             onConfirm={(loc) => {
-              onChange(loc)
+              flushSync(() => onChange(loc))
               closeAndBlur()
             }}
             onCancel={closeAndBlur}
