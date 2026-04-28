@@ -7,7 +7,8 @@ import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { api } from '@/lib/convex-generated'
 import { type RoleConfig } from '@/lib/constants/roles'
-import { useSessionIdentity } from '@/lib/hooks/use-session-identity'
+import { useDashboardSession } from '@/lib/hooks/use-dashboard-session'
+import { useGuardedRedirect } from '@/lib/hooks/use-guarded-redirect'
 import { ErrorAlert } from '@/components/ui/error-alert'
 import { Spinner } from '@/components/ui/spinner'
 import { StepIndicator } from '@/components/ui/step-indicator'
@@ -40,13 +41,9 @@ export default function SignUpPage() {
   const t = useTranslations('common')
   const tAuth = useTranslations('auth')
   const tErr = useTranslations('errors')
-  const {
-    user,
-    roles: userRoles,
-    defaultRoleKey,
-    isAuthLoading: authLoading,
-    isAuthenticated,
-  } = useSessionIdentity()
+  const session = useDashboardSession()
+  const { user, roles: userRoles, redirectPath, status, identity } = session
+  const { isAuthLoading: authLoading, isAuthenticated } = identity
   const createUser = useMutation(api.users.createUser)
   const router = useRouter()
   const { organization: activeOrg, isLoaded: orgLoaded } = useOrganization()
@@ -85,16 +82,10 @@ export default function SignUpPage() {
     setAppLanguageState(readInitialAppLanguage())
   }, [])
 
-  useEffect(() => {
-    if (!user) return
-    if (!userRoles || userRoles.length === 0) return
-    if (!orgRow) return
-    if (defaultRoleKey) {
-      router.replace(`/${user.slug}/${defaultRoleKey}/dashboard`)
-    } else {
-      router.replace('/dashboard')
-    }
-  }, [user, userRoles, defaultRoleKey, orgRow, router])
+  useGuardedRedirect({
+    to: redirectPath,
+    enabled: status === 'ready' && Boolean(orgRow),
+  })
 
   function changeAppLanguage(code: string) {
     const cookieLocale = normalizeLocale(code)
