@@ -55,9 +55,22 @@ describe('component catalog', () => {
   })
 
   it('does not reference files that have been deleted', () => {
+    const listSubdirsWithIndex = (dir: string): string[] =>
+      readdirSync(dir)
+        .filter((entry) => statSync(join(dir, entry)).isDirectory())
+        .filter((entry) => entry !== '__tests__')
+        .filter((entry) => {
+          try {
+            return readdirSync(join(dir, entry)).some((f) => f === 'index.ts' || f === 'index.tsx')
+          } catch {
+            return false
+          }
+        })
     const allFiles = new Set<string>([
       ...listTsx(UI_DIR, () => false).map((n) => `/ui/${n}`),
       ...listTsx(PROFILES_DIR, () => false).map((n) => `/profiles/${n}`),
+      ...listSubdirsWithIndex(UI_DIR).map((n) => `/ui/${n}`),
+      ...listSubdirsWithIndex(PROFILES_DIR).map((n) => `/profiles/${n}`),
     ])
     const importPattern = /@\/components\/(ui|profiles)\/([a-z0-9-]+)/g
     const referenced = new Set<string>()

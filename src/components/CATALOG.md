@@ -71,7 +71,11 @@ Each primitive applies a default `field-*` width token internally via `resolveFi
 | `BottomActionBar` | `@/components/ui/bottom-action-bar` | Fixed mobile bottom action bar (primary Save on mobile). |
 | `SectionDivider` | `@/components/ui/section-divider` | Horizontal divider between sections. |
 | `ItemCard` | `@/components/ui/item-card` | Removable card in a list (credentials, routes, fleet entries). Never hand-roll trash buttons. Optional `onSave` + `canSave` + `saving` + `saved` props render a Save icon-button next to the trash icon (used by draft-row-with-Save patterns like the Equipment Gear tab). |
-| `EntityCardList` | `@/components/ui/entity-card-list` | Responsive card editor for a list of embedded entities. Handles FormSectionHeader + Add button (inline `Button` with Plus icon), empty state, add/remove wiring, minItems/maxItems enforcement. Consumer supplies `renderCard(item, update, index)` for card interior (no ItemCard wrapper — EntityCardList wraps each item in ItemCard itself) and `emptyItem()` factory for new entries. `layout` prop: `'grid'` (default — `grid-cols-1 md:grid-cols-2 xl:grid-cols-3`) for parallel entities like venues/credentials; `'stack'` for tall entities with nested editors like boat fleet vessels (single column, `space-y-3`). `hideEmptyState` for nested usages where the empty message would clutter the parent. Use for any owner-edited array-of-entities pattern; do NOT use for directory-pick lists — those use `SortableOverlayList`. |
+| `EntityCardList` | `@/components/ui/entity-card-list` | **Legacy.** Responsive card editor for embedded-entities lists. Still consumed by `VenueCapabilitiesSection` (Phase 8 of Wave-2 deferred). New code prefers `InlineRowList` or `ExpandingCardList`. |
+| `InlineRowList` | `@/components/profiles/collection-editors` | Generic add/remove row list for owner-edited inline-array shapes. Always-expanded rows (1–3 fields each). Caller supplies `renderRow(item, update, index)`. Drop-in replacement for ad-hoc `<ItemCard>+map+Add` patterns. Anchor consumers: `PersonalCredentialsSection`, `BoatFleetSection.routes` (nested inside ExpandingCardList). |
+| `ExpandingCardList` | `@/components/profiles/collection-editors` | Collapsible card list — each row is a header that expands in place to reveal a form body. `itemKey` is required (use stable identifier or `String(index)`). Built-in optional `getCompleteness` badge, `onSave` per-row spinner, `saveErrors`/`removeErrors` keyed by item key, `defaultExpandFirst`. Anchor consumer: `BoatFleetSection`. Use for medium-complexity entities (4–8 fields) where collapse-by-default reduces scroll. |
+| `SettingBlock` | `@/components/profiles/collection-editors` | Section wrapper: `FormSectionHeader` + content slot + optional `surface='glass'` chrome. Reach for when a form section needs a header + action button + content cluster. Use sparingly — most form sections don't need it. |
+| `CredentialFields` | `@/components/profiles/credential-fields` | Module-scope row body for instructor credentials inside `InlineRowList`. Renders Agency / Level / AgencyID + conditional specialty-instructor-ratings checkbox. Use only via `PersonalCredentialsSection`; not a standalone primitive. |
 | `ListRow` | `@/components/ui/list-row` | Reusable row with compact variant. |
 
 ## Cards & content headers
@@ -204,8 +208,10 @@ Role-agnostic building blocks for stakeholder profile forms (`PatternLibrary/one
 | `use-focus-trap` | Modal focus containment. |
 | `use-debounce` | Debounce a value. |
 | `use-copy-feedback` | Copy-to-clipboard with success state. |
-| `use-mutation-with-feedback` | Convex mutation + toast + error parsing. |
+| `use-mutation-with-feedback` | Convex mutation + toast + error parsing. Anchor consumers: `organizer-languages-step`, `manage-roles-connected.handleSelectRole`. Boundary: NOT a substitute for `use-profile-form` — that hook owns full form orchestration; this one is for one-shot mutations. |
 | `use-stable-query` | Stable reference for Convex queries. |
+| `use-dashboard-session` | Dashboard-policy wrapper around `use-session-identity`. Exposes `status` (`loading`/`unauthenticated`/`no-role`/`ready`), `redirectPath`, `validateSlug`, `validateRoleKey`, `hasRole`. **Wrapper-only — never call `api.users.me` directly.** Architecture guard at `tests/architecture/dashboard-session-boundary.test.ts`. |
+| `use-guarded-redirect` | Declarative `useEffect`-replacement for `if (cond) router.replace(to)`. Pairs with `use-dashboard-session.redirectPath`. |
 | `use-current-user` | Session user accessor. |
 | `use-locale-sync` | Sync next-intl locale cookie. |
 | `use-booking-*` | Booking wizard data/model/effects/DnD/actions. |
