@@ -17,6 +17,7 @@ import type * as admin_restoreOrg from "../admin/restoreOrg.js";
 import type * as admin_upsertVenue from "../admin/upsertVenue.js";
 import type * as agents from "../agents.js";
 import type * as availability from "../availability.js";
+import type * as backfill_credentialSpecialtyRatings from "../backfill/credentialSpecialtyRatings.js";
 import type * as backfill_entityProfileComplete from "../backfill/entityProfileComplete.js";
 import type * as backfill_entitySlugs from "../backfill/entitySlugs.js";
 import type * as backfill_personalOrgs from "../backfill/personalOrgs.js";
@@ -76,6 +77,7 @@ import type * as lib_equipmentGearCompleteness from "../lib/equipmentGearComplet
 import type * as lib_equipmentManufacturersSync from "../lib/equipmentManufacturersSync.js";
 import type * as lib_errorCodes from "../lib/errorCodes.js";
 import type * as lib_fsm from "../lib/fsm.js";
+import type * as lib_gasMixValidation from "../lib/gasMixValidation.js";
 import type * as lib_idempotency from "../lib/idempotency.js";
 import type * as lib_inventoryCleanup from "../lib/inventoryCleanup.js";
 import type * as lib_languageMatch from "../lib/languageMatch.js";
@@ -120,7 +122,6 @@ import type * as shared_aowSelection from "../shared/aowSelection.js";
 import type * as shared_boatTypes from "../shared/boatTypes.js";
 import type * as shared_bookingExpiry from "../shared/bookingExpiry.js";
 import type * as shared_capabilityGate from "../shared/capabilityGate.js";
-import type * as shared_compressorTypes from "../shared/compressorTypes.js";
 import type * as shared_courseCodes from "../shared/courseCodes.js";
 import type * as shared_coverageValidation from "../shared/coverageValidation.js";
 import type * as shared_dateRange from "../shared/dateRange.js";
@@ -164,6 +165,7 @@ declare const fullApi: ApiFromModules<{
   "admin/upsertVenue": typeof admin_upsertVenue;
   agents: typeof agents;
   availability: typeof availability;
+  "backfill/credentialSpecialtyRatings": typeof backfill_credentialSpecialtyRatings;
   "backfill/entityProfileComplete": typeof backfill_entityProfileComplete;
   "backfill/entitySlugs": typeof backfill_entitySlugs;
   "backfill/personalOrgs": typeof backfill_personalOrgs;
@@ -223,6 +225,7 @@ declare const fullApi: ApiFromModules<{
   "lib/equipmentManufacturersSync": typeof lib_equipmentManufacturersSync;
   "lib/errorCodes": typeof lib_errorCodes;
   "lib/fsm": typeof lib_fsm;
+  "lib/gasMixValidation": typeof lib_gasMixValidation;
   "lib/idempotency": typeof lib_idempotency;
   "lib/inventoryCleanup": typeof lib_inventoryCleanup;
   "lib/languageMatch": typeof lib_languageMatch;
@@ -267,7 +270,6 @@ declare const fullApi: ApiFromModules<{
   "shared/boatTypes": typeof shared_boatTypes;
   "shared/bookingExpiry": typeof shared_bookingExpiry;
   "shared/capabilityGate": typeof shared_capabilityGate;
-  "shared/compressorTypes": typeof shared_compressorTypes;
   "shared/courseCodes": typeof shared_courseCodes;
   "shared/coverageValidation": typeof shared_coverageValidation;
   "shared/dateRange": typeof shared_dateRange;
