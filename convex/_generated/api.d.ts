@@ -34,6 +34,7 @@ import type * as bookings_create from "../bookings/create.js";
 import type * as bookings_dev from "../bookings/dev.js";
 import type * as bookings_edit from "../bookings/edit.js";
 import type * as bookings_inventoryRelease from "../bookings/inventoryRelease.js";
+import type * as bookings_snapshotKeys from "../bookings/snapshotKeys.js";
 import type * as bookings_stateMachine from "../bookings/stateMachine.js";
 import type * as bookings_status from "../bookings/status.js";
 import type * as completeness from "../completeness.js";
@@ -182,6 +183,7 @@ declare const fullApi: ApiFromModules<{
   "bookings/dev": typeof bookings_dev;
   "bookings/edit": typeof bookings_edit;
   "bookings/inventoryRelease": typeof bookings_inventoryRelease;
+  "bookings/snapshotKeys": typeof bookings_snapshotKeys;
   "bookings/stateMachine": typeof bookings_stateMachine;
   "bookings/status": typeof bookings_status;
   completeness: typeof completeness;
