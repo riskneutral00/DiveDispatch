@@ -234,10 +234,10 @@ describe('stakeholderPreferences.upsert — preferred resource arrays', () => {
       {},
     )
     expect(prefs!.preferredInstructorSlugs).toEqual(['inst-1'])
-    expect(prefs!.preferredVenueSlugs).toBeUndefined()
-    expect(prefs!.preferredEquipmentSlugs).toBeUndefined()
-    expect(prefs!.preferredBoatSlugs).toBeUndefined()
-    expect(prefs!.preferredCompressorSlugs).toBeUndefined()
+    expect(prefs!.preferredVenueSlugs).toEqual([])
+    expect(prefs!.preferredEquipmentSlugs).toEqual([])
+    expect(prefs!.preferredBoatSlugs).toEqual([])
+    expect(prefs!.preferredCompressorSlugs).toEqual([])
   })
 
   it('second upsert updates arrays without losing existing data', async () => {

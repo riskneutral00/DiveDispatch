@@ -1,11 +1,48 @@
 import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
+import type { MutationCtx } from './_generated/server'
+import type { Doc, Id } from './_generated/dataModel'
 import { authorize, getAuthUser, requireAuth } from './lib/auth'
+import { tryGetActiveOrg } from './lib/activeOrg'
 import { requireActiveRole } from './userRoles'
 import { stakeholderTypeValidator as stakeholderType } from './lib/validators'
 import { setRoleProfileComplete, isRoleProfileComplete } from './lib/setRoleProfileComplete'
+import { getAllUserRoles } from './lib/userRoleHelpers'
+import { entityProfilesByUser } from './lib/profileHelpers'
+import type { StakeholderRole } from './shared/roleKinds'
 import { ConvexError } from 'convex/values'
 import { ErrorCode } from './lib/errorCodes'
+
+type SelfOwnedSlugs = {
+  preferredInstructorSlugs: string[]
+  preferredVenueSlugs: string[]
+  preferredBoatSlugs: string[]
+  preferredEquipmentSlugs: string[]
+  preferredCompressorSlugs: string[]
+}
+
+export async function selfOwnedResourceSlugs(
+  ctx: MutationCtx,
+  user: Doc<'users'>,
+  activeOrgId: Id<'organizations'>,
+): Promise<SelfOwnedSlugs> {
+  const roles = await getAllUserRoles(ctx, user._id)
+  const has = (r: StakeholderRole) =>
+    roles.some((row) => row.role === r && row.organizationId === activeOrgId)
+
+  const venues = has('Venue') ? await entityProfilesByUser(ctx, user._id, 'Venue') : []
+  const boats = has('Boat') ? await entityProfilesByUser(ctx, user._id, 'Boat') : []
+  const equipment = has('Equipment') ? await entityProfilesByUser(ctx, user._id, 'Equipment') : []
+  const compressors = has('Compressor') ? await entityProfilesByUser(ctx, user._id, 'Compressor') : []
+
+  return {
+    preferredInstructorSlugs: has('Instructor') ? [user.slug] : [],
+    preferredVenueSlugs: venues.map((r) => r.slug).filter((s): s is string => Boolean(s)),
+    preferredBoatSlugs: boats.map((r) => r.slug).filter((s): s is string => Boolean(s)),
+    preferredEquipmentSlugs: equipment.map((r) => r.slug).filter((s): s is string => Boolean(s)),
+    preferredCompressorSlugs: compressors.map((r) => r.slug).filter((s): s is string => Boolean(s)),
+  }
+}
 
 const acceptanceModeValidator = v.union(
   v.literal('Auto'),
@@ -86,11 +123,27 @@ export const upsert = mutation({
       await ctx.db.patch(existing._id, payload)
       prefsId = existing._id
     } else {
+      const activeOrg = await tryGetActiveOrg(ctx)
+      const selfOwned = activeOrg
+        ? await selfOwnedResourceSlugs(ctx, user, activeOrg._id)
+        : null
+
+      const initial = (
+        explicit: string[] | undefined,
+        selfKey: keyof SelfOwnedSlugs,
+      ): string[] | undefined =>
+        explicit !== undefined ? explicit : selfOwned?.[selfKey]
+
       prefsId = await ctx.db.insert('stakeholderPreferences', {
         stakeholderId: user.slug,
         stakeholderType: args.activeRole,
         useNamedUnits: false,
         ...payload,
+        preferredInstructorSlugs: initial(args.preferredInstructorSlugs, 'preferredInstructorSlugs'),
+        preferredVenueSlugs: initial(args.preferredVenueSlugs, 'preferredVenueSlugs'),
+        preferredBoatSlugs: initial(args.preferredBoatSlugs, 'preferredBoatSlugs'),
+        preferredEquipmentSlugs: initial(args.preferredEquipmentSlugs, 'preferredEquipmentSlugs'),
+        preferredCompressorSlugs: initial(args.preferredCompressorSlugs, 'preferredCompressorSlugs'),
         autoAssignPreferred: args.autoAssignPreferred ?? true,
       })
     }
