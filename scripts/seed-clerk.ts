@@ -200,7 +200,7 @@ async function seedUser(user: SeedUser, result: Result): Promise<string | null> 
         firstName,
         lastName,
         skipPasswordChecks: true,
-        publicMetadata: { slug: user.slug, role: user.role },
+        publicMetadata: { slug: user.slug },
       })
       result.updated.push(email)
       return existingUser.id
@@ -216,7 +216,7 @@ async function seedUser(user: SeedUser, result: Result): Promise<string | null> 
     firstName,
     lastName,
     skipPasswordChecks: true,
-    publicMetadata: { slug: user.slug, role: user.role },
+    publicMetadata: { slug: user.slug },
   })
   result.created.push(email)
   return created.id

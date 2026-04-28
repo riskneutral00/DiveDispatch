@@ -1,6 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
-import { ROLE_BY_CLERK_ROLE, ROLE_BY_KEY, type ClerkRole, type RoleKey } from '@/lib/constants/roles'
+import { ROLE_BY_KEY, type RoleKey } from '@/lib/constants/roles'
 
 const isPublicRoute = createRouteMatcher([
   '/',
@@ -30,17 +30,7 @@ export default clerkMiddleware(async (auth, req) => {
     )
   }
 
-  const meta = sessionClaims?.publicMetadata as { slug?: string; role?: string } | undefined
-  const claimsSlug = meta?.slug
-  const claimsRole = meta?.role as ClerkRole | undefined
-  const claimsRoleConfig = claimsRole ? ROLE_BY_CLERK_ROLE[claimsRole] : undefined
-
-  if (req.nextUrl.pathname === '/dashboard') {
-    if (claimsSlug && claimsRoleConfig) {
-      return NextResponse.redirect(new URL(`/${claimsSlug}/${claimsRoleConfig.key}/dashboard`, req.url))
-    }
-    return NextResponse.redirect(new URL('/sign-up', req.url))
-  }
+  const claimsSlug = (sessionClaims?.publicMetadata as { slug?: string } | undefined)?.slug
 
   const dashboardPath = /^\/([^/]+)\/([^/]+)(\/.*)?$/.exec(req.nextUrl.pathname)
 
