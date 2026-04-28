@@ -4,15 +4,12 @@ import { useQuery } from 'convex/react'
 import { useTranslations } from 'next-intl'
 import { api } from '@/lib/convex-generated'
 import { ProfileAgencyInfo } from '@/components/profiles/profile-agency-info'
-import { SectionDivider } from '@/components/ui/section-divider'
-import { LanguageField } from '@/components/ui/language-field'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import { BusinessContactSection } from '@/components/profiles/business-contact-section'
 import {
   INITIAL_CUSTOMER_LANGUAGES,
   buildParentContactDefaults,
-  customerLanguagesBlock,
   type BaseProfileSectionProps,
 } from '@/lib/profile-form'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
@@ -21,7 +18,6 @@ import {
   agentAssociationsSchema,
   associationSchema,
 } from '@/lib/schemas/profile-shared'
-import type { Language } from '@/lib/types/language'
 import { z } from 'zod'
 
 export type AgentProfileSection = 'contact' | 'associations'
@@ -75,27 +71,19 @@ export function AgentContactSection(props: BaseProfileSectionProps) {
       languageKey="customerLanguages"
       createOverride={(payload) => props.create({ ...payload, associations: [] })}
       extras={{
-        defaults: customerLanguagesBlock.defaults,
-        fromProfile: (p) => customerLanguagesBlock.fromProfile(p),
-        toPayload: (f) => customerLanguagesBlock.toPayload(f as { customerLanguages: Language[] }),
+        defaults: {},
+        fromProfile: () => ({}),
+        toPayload: () => ({}),
         divider: 'default',
-        render: ({ form, setField }) => (
-          <>
-            <div>
-              <FormSectionHeader label="Default Referral" />
-              <p className="text-label mt-2 text-secondary">
-                {preferredOperatorSlug
-                  ? 'Bookings cascade from your preferred operator. Change in Preferences → Resources → Operator.'
-                  : 'You create and manage bookings independently.'}
-              </p>
-            </div>
-            <SectionDivider variant="soft" />
-            <LanguageField
-              label={tCommon('customerLanguages')}
-              value={(form.customerLanguages as Language[]) ?? []}
-              onChange={(langs) => setField('customerLanguages', langs)}
-            />
-          </>
+        render: () => (
+          <div>
+            <FormSectionHeader label={tCommon('agentReferralHeader')} />
+            <p className="text-label mt-2 text-secondary">
+              {preferredOperatorSlug
+                ? tCommon('agentReferralCascade')
+                : tCommon('agentReferralIndependent')}
+            </p>
+          </div>
         ),
       }}
     />

@@ -1,16 +1,11 @@
 'use client'
 
-import { useTranslations } from 'next-intl'
 import { ProfileAgencyInfo } from '@/components/profiles/profile-agency-info'
-import { LanguageField } from '@/components/ui/language-field'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import { BusinessContactSection } from '@/components/profiles/business-contact-section'
 import {
   type PersonalContactFormState,
-  INITIAL_TEACHING_LANGUAGES,
   buildParentContactDefaults,
-  languagesFromProfile,
-  languagesToPayload,
   type BaseProfileSectionProps,
 } from '@/lib/profile-form'
 import {
@@ -19,7 +14,6 @@ import {
   instructorCredentialSchema,
 } from '@/lib/schemas/profile-shared'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
-import type { Language } from '@/lib/types/language'
 import { z } from 'zod'
 
 export type PersonalSection = 'contact' | 'credentials'
@@ -27,22 +21,6 @@ export type PersonalSection = 'contact' | 'credentials'
 export type PersonalCredential = z.infer<typeof instructorCredentialSchema>
 
 export type { PersonalContactFormState }
-
-export type PersonalLanguagesFormState = { teachingLanguages: Language[] }
-
-export const INITIAL_LANGUAGES_FORM = INITIAL_TEACHING_LANGUAGES
-
-export function languagesFromProfilePersonal(p: Record<string, unknown>): { teachingLanguages: Language[] } {
-  return {
-    teachingLanguages: languagesFromProfile(p.teachingLanguages as string[] | undefined),
-  }
-}
-
-export function languagesToPayloadPersonal(f: { teachingLanguages: Language[] }): Record<string, unknown> {
-  return {
-    teachingLanguages: languagesToPayload(f.teachingLanguages),
-  }
-}
 
 export type PersonalCredentialsFormState = {
   credential: PersonalCredential[]
@@ -78,7 +56,6 @@ export function credentialsToPayload(f: PersonalCredentialsFormState): Record<st
 }
 
 export function PersonalContactSection(props: BaseProfileSectionProps) {
-  const tCommon = useTranslations('common')
   return (
     <BusinessContactSection
       {...props}
@@ -86,18 +63,6 @@ export function PersonalContactSection(props: BaseProfileSectionProps) {
       languageKey="teachingLanguages"
       inheritFromOtherRoles="Instructor"
       createOverride={(payload) => props.create({ ...payload, credential: [] })}
-      extras={{
-        defaults: { teachingLanguages: [] },
-        fromProfile: (p) => languagesFromProfilePersonal(p) as Record<string, unknown>,
-        toPayload: (f) => languagesToPayloadPersonal({ teachingLanguages: (f.teachingLanguages as Language[]) ?? [] }),
-        render: ({ form, setField }) => (
-          <LanguageField
-            label={tCommon('teachingLanguages')}
-            value={(form.teachingLanguages as Language[]) ?? []}
-            onChange={(langs) => setField('teachingLanguages', langs)}
-          />
-        ),
-      }}
     />
   )
 }

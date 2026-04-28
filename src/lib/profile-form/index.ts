@@ -1,6 +1,6 @@
 export type { BaseProfileSectionProps } from './types'
 
-export type { ProfileLocationValue, ContactFormState, PersonalContactFormState } from './location'
+export type { ProfileLocationValue, ContactFormState, PersonalContactFormState, LanguageKey } from './location'
 export {
   nullableProfileLocation,
   locationFromProfileDoc,

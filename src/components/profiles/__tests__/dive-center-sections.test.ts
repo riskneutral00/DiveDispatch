@@ -13,11 +13,8 @@ import {
 import {
   affiliationsFromProfile,
   affiliationsToPayload,
-  languagesFromProfileDC,
-  languagesToPayloadDC,
   makeDefaultAssoc,
   INITIAL_AFFILIATIONS_FORM,
-  INITIAL_LANGUAGES_FORM,
 } from '../dive-center-profile-form'
 import type { DiveCenterAffiliationsFormState } from '../dive-center-profile-form'
 
@@ -277,34 +274,6 @@ describe('affiliationsToPayload', () => {
   })
 })
 
-describe('languagesFromProfileDC', () => {
-  it('resolves language codes to Language objects', () => {
-    const form = languagesFromProfileDC({ customerLanguages: ['en'] })
-    expect(form.customerLanguages).toHaveLength(1)
-    expect(form.customerLanguages[0].code).toBe('en-GB')
-  })
-
-  it('returns empty array when customerLanguages is absent', () => {
-    const form = languagesFromProfileDC({})
-    expect(form.customerLanguages).toEqual([])
-  })
-})
-
-describe('languagesToPayloadDC', () => {
-  it('maps Language objects back to code strings', () => {
-    const payload = languagesToPayloadDC({
-      customerLanguages: [{ code: 'en', label: 'English' }],
-    })
-    expect(payload.customerLanguages).toEqual(['en'])
-  })
-
-  it('does not include contact or affiliations fields', () => {
-    const payload = languagesToPayloadDC({ customerLanguages: [] })
-    expect(payload).not.toHaveProperty('name')
-    expect(payload).not.toHaveProperty('associations')
-  })
-})
-
 describe('INITIAL_CONTACT_FORM', () => {
   it('has empty string defaults', () => {
     expect(INITIAL_CONTACT_FORM.name).toBe('')
@@ -337,8 +306,3 @@ describe('INITIAL_AFFILIATIONS_FORM', () => {
   })
 })
 
-describe('INITIAL_LANGUAGES_FORM', () => {
-  it('starts with empty customerLanguages', () => {
-    expect(INITIAL_LANGUAGES_FORM.customerLanguages).toEqual([])
-  })
-})

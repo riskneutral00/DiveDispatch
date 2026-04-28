@@ -82,8 +82,10 @@ export function contactFieldsFromProfile(p: Record<string, unknown>): {
   }
 }
 
+export type LanguageKey = 'customerLanguages' | 'teachingLanguages'
+
 export type DefaultFromMeOptions = {
-  languageKey?: 'customerLanguages' | 'teachingLanguages'
+  languageKey?: LanguageKey
 }
 
 function defaultLanguageFromAppLanguage(appLanguage: unknown): { code: string; label: string } | null {

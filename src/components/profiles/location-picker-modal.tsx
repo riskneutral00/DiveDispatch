@@ -11,6 +11,7 @@ import { MapPin, Locate } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { autocompleteKeyboardReducer, INITIAL_STATE } from '@/components/ui/autocomplete-keyboard'
 import type { AddressLocationValue } from '@/lib/schemas/location'
+import { AUTOCOMPLETE_DISMISS_MS } from '@/lib/constants/ui-timings'
 
 countries.registerLocale(enCountries as unknown as Parameters<typeof countries.registerLocale>[0])
 
@@ -350,7 +351,7 @@ function LocationPickerModalInner({ value, onConfirm, onCancel }: ModalInnerProp
               }}
               onBlur={() => {
                 if (blurTimerRef.current) clearTimeout(blurTimerRef.current)
-                blurTimerRef.current = setTimeout(() => { setSuggestionsOpen(false); kbDispatch({ type: 'CLOSE' }) }, 150)
+                blurTimerRef.current = setTimeout(() => { setSuggestionsOpen(false); kbDispatch({ type: 'CLOSE' }) }, AUTOCOMPLETE_DISMISS_MS)
               }}
               className="field-underline w-full text-body py-2.5 px-0 placeholder:opacity-60 text-primary caret-accent"
             />

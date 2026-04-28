@@ -2,10 +2,12 @@
 
 import type { ReactNode } from 'react'
 import { useQuery } from 'convex/react'
+import { useTranslations } from 'next-intl'
 import { api } from '@/lib/convex-generated'
 import { type LocationValue } from '@/components/profiles/location-picker'
 import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
+import { LanguageField } from '@/components/ui/language-field'
 import { SectionDivider } from '@/components/ui/section-divider'
 import {
   INITIAL_ACCESS_CONTROL,
@@ -19,10 +21,14 @@ import {
   contactFromProfile,
   contactToPayload,
   defaultFromMe,
+  customerLanguagesBlock,
+  teachingLanguagesBlock,
   type BaseProfileSectionProps,
+  type LanguageKey,
 } from '@/lib/profile-form'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 import type { ClerkRole } from '@/lib/constants/roles'
+import type { Language } from '@/lib/types/language'
 import type { ZodType } from 'zod'
 
 type BusinessContactForm = ContactFormState & { access: AccessControlState } & Record<string, unknown>
@@ -44,6 +50,11 @@ export interface BusinessContactExtras {
   divider?: 'soft' | 'default' | 'none'
 }
 
+const LANGUAGE_BLOCK = {
+  customerLanguages: customerLanguagesBlock,
+  teachingLanguages: teachingLanguagesBlock,
+} as const
+
 interface BusinessContactSectionProps extends BaseProfileSectionProps {
   nameLabel?: string
   schema: ZodType
@@ -52,7 +63,7 @@ interface BusinessContactSectionProps extends BaseProfileSectionProps {
   inheritFromOtherRoles?: ClerkRole
   extras?: BusinessContactExtras
   afterSuccessfulSave?: (form: Record<string, unknown>) => Promise<void>
-  languageKey?: 'customerLanguages' | 'teachingLanguages'
+  languageKey?: LanguageKey
 }
 
 export function BusinessContactSection({
@@ -71,6 +82,7 @@ export function BusinessContactSection({
   afterSuccessfulSave,
   languageKey,
 }: BusinessContactSectionProps) {
+  const tCommon = useTranslations('common')
   const showName = nameLabel !== undefined
 
   const inheritance = useQuery(
@@ -78,8 +90,11 @@ export function BusinessContactSection({
     inheritFromOtherRoles ? { excludeRole: inheritFromOtherRoles } : 'skip',
   )
 
+  const languageBlock = languageKey ? LANGUAGE_BLOCK[languageKey] : null
+
   const mergedDefaults: BusinessContactForm = {
     ...INITIAL_BUSINESS_CONTACT,
+    ...(languageBlock?.defaults ?? {}),
     ...(extras?.defaults ?? {}),
   }
 
@@ -101,6 +116,7 @@ export function BusinessContactSection({
       fromProfile: (p) => ({
         ...contactFromProfile(p),
         access: accessFromProfile(p),
+        ...(languageBlock?.fromProfile(p) ?? {}),
         ...(extras?.fromProfile(p) ?? {}),
       }),
       fromMe: (u, defaults) => {
@@ -121,6 +137,7 @@ export function BusinessContactSection({
         const payload: Record<string, unknown> = {
           ...contactToPayload(f),
           ...accessToPayload(f.access),
+          ...(languageBlock?.toPayload(f as never) ?? {}),
           ...(extras?.toPayload(f) ?? {}),
         }
         if (!showName) delete payload.name
@@ -137,6 +154,8 @@ export function BusinessContactSection({
     setField(key as keyof BusinessContactForm, value as BusinessContactForm[keyof BusinessContactForm])
 
   const dividerVariant = extras?.divider ?? 'soft'
+  const showLanguageDivider = languageKey !== undefined
+  const showExtrasDivider = extras !== undefined && dividerVariant !== 'none'
 
   return (
     <ProfileFormShell
@@ -180,7 +199,15 @@ export function BusinessContactSection({
           phoneError={errors.phone}
           phoneRequired
         />
-        {extras && dividerVariant !== 'none' && <SectionDivider variant={dividerVariant} />}
+        {showLanguageDivider && <SectionDivider variant="soft" />}
+        {languageKey && (
+          <LanguageField
+            label={tCommon(languageKey)}
+            value={(form[languageKey] as Language[]) ?? []}
+            onChange={(langs) => setField(languageKey, langs)}
+          />
+        )}
+        {showExtrasDivider && <SectionDivider variant={dividerVariant} />}
         {extras?.render({ form, setField: extrasSetField, errors })}
       </div>
     </ProfileFormShell>

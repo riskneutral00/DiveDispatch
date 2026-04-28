@@ -15,18 +15,12 @@ import {
   type PersonalContactFormState,
 } from '@/lib/profile-form'
 import {
-  languagesFromProfilePersonal,
-  languagesToPayloadPersonal,
   credentialsFromProfile,
   credentialsToPayload,
   makeEmptyCredential,
   getInitialCredentialsForm,
-  INITIAL_LANGUAGES_FORM,
 } from '../personal-profile-form'
-import type {
-  PersonalLanguagesFormState,
-  PersonalCredentialsFormState,
-} from '../personal-profile-form'
+import type { PersonalCredentialsFormState } from '../personal-profile-form'
 
 const VALID_LOCATION = {
   address: { city: 'Koh Tao', country: 'TH' },
@@ -240,35 +234,6 @@ describe('contactToPayload', () => {
   })
 })
 
-describe('languagesFromProfilePersonal', () => {
-  it('resolves teachingLanguages codes to Language objects', () => {
-    const form = languagesFromProfilePersonal({ teachingLanguages: ['en'] })
-    expect(form.teachingLanguages).toHaveLength(1)
-    expect(form.teachingLanguages[0].code).toBe('en-GB')
-  })
-
-  it('returns empty array when teachingLanguages is absent', () => {
-    const form = languagesFromProfilePersonal({})
-    expect(form.teachingLanguages).toEqual([])
-  })
-})
-
-describe('languagesToPayloadPersonal', () => {
-  it('maps Language objects back to code strings', () => {
-    const form: PersonalLanguagesFormState = {
-      teachingLanguages: [{ code: 'en', label: 'English' }],
-    }
-    const payload = languagesToPayloadPersonal(form)
-    expect(payload.teachingLanguages).toEqual(['en'])
-  })
-
-  it('does not include contact or credential fields', () => {
-    const form: PersonalLanguagesFormState = { teachingLanguages: [] }
-    const payload = languagesToPayloadPersonal(form)
-    expect(payload).not.toHaveProperty('name')
-    expect(payload).not.toHaveProperty('credential')
-  })
-})
 
 describe('credentialsFromProfile', () => {
   it('maps credential array from profile', () => {
@@ -367,12 +332,6 @@ describe('INITIAL_CONTACT_FORM', () => {
     expect(INITIAL_CONTACT_FORM.email).toBe('')
     expect(INITIAL_CONTACT_FORM.phone).toBe('')
     expect(INITIAL_CONTACT_FORM.location).toBeNull()
-  })
-})
-
-describe('INITIAL_LANGUAGES_FORM', () => {
-  it('starts with empty teachingLanguages', () => {
-    expect(INITIAL_LANGUAGES_FORM.teachingLanguages).toEqual([])
   })
 })
 

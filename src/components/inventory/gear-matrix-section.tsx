@@ -17,6 +17,7 @@ import {
   type FinSizeSystem,
 } from '@/lib/constants/gear-sizing'
 import { DIOPTER_VALUES, PLANO_KEY, diopterCellKey } from '@/lib/constants/diopters'
+import { INLINE_SAVED_FLASH_MS } from '@/lib/constants/ui-timings'
 
 export interface InventoryCellRow {
   _id: string
@@ -143,7 +144,7 @@ export function ManufacturerMatrixSection({
         cells: payloadCells,
       })
       setSaved(true)
-      setTimeout(() => setSaved(false), 1500)
+      setTimeout(() => setSaved(false), INLINE_SAVED_FLASH_MS)
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : String(err))
     } finally {

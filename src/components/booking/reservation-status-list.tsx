@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import type { BookingDetailReservation } from '../../../convex/bookings'
 import { ROLE_BY_CLERK_ROLE, type ClerkRole } from '@/lib/constants/roles'
 import { reservationVariant } from '@/lib/booking/booking-display'
+import { enumToDisplayLabel } from '@/lib/utils/strings'
 import {
   ResourceStatusList,
   type ResourceStatusItem,
@@ -42,7 +43,7 @@ export function ReservationStatusList({
             dot: true,
           },
           destructiveNote: res.vacatedBy
-            ? `Reason: ${res.vacatedBy.replace(/_/g, ' ')}`
+            ? `Reason: ${enumToDisplayLabel(res.vacatedBy)}`
             : undefined,
         }
       }),

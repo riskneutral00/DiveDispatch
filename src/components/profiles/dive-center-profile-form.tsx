@@ -3,7 +3,6 @@
 import { Plus } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { ProfileAgencyInfo } from '@/components/profiles/profile-agency-info'
-import { LanguageField } from '@/components/ui/language-field'
 import { Button } from '@/components/ui/button'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import { BusinessContactSection } from '@/components/profiles/business-contact-section'
@@ -11,15 +10,12 @@ import { diveCenterAffiliationsSchema, diveCenterContactMergedSchema } from '@/l
 import {
   type ContactFormState as DiveCenterContactFormState,
   INITIAL_CONTACT_FORM,
-  INITIAL_CUSTOMER_LANGUAGES,
   buildParentContactDefaults,
   contactFromProfile,
   contactToPayload,
-  customerLanguagesBlock,
   type BaseProfileSectionProps,
 } from '@/lib/profile-form'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
-import type { Language } from '@/lib/types/language'
 
 export type DiveCenterProfileSection = 'contact' | 'associations'
 
@@ -27,20 +23,6 @@ type DiveCenterSectionProps = BaseProfileSectionProps
 
 export type { DiveCenterContactFormState }
 export { INITIAL_CONTACT_FORM, contactFromProfile, contactToPayload }
-
-export type DiveCenterLanguagesFormState = {
-  customerLanguages: Language[]
-}
-
-export const INITIAL_LANGUAGES_FORM: DiveCenterLanguagesFormState = INITIAL_CUSTOMER_LANGUAGES
-
-export function languagesFromProfileDC(p: Record<string, unknown>): DiveCenterLanguagesFormState {
-  return customerLanguagesBlock.fromProfile(p) as DiveCenterLanguagesFormState
-}
-
-export function languagesToPayloadDC(f: DiveCenterLanguagesFormState): Record<string, unknown> {
-  return customerLanguagesBlock.toPayload(f)
-}
 
 export function DiveCenterContactSection(props: DiveCenterSectionProps) {
   const tCommon = useTranslations('common')
@@ -51,18 +33,6 @@ export function DiveCenterContactSection(props: DiveCenterSectionProps) {
       schema={diveCenterContactMergedSchema}
       languageKey="customerLanguages"
       createOverride={(payload) => props.create({ ...payload, associations: [] })}
-      extras={{
-        defaults: { customerLanguages: [] },
-        fromProfile: (p) => languagesFromProfileDC(p) as Record<string, unknown>,
-        toPayload: (f) => languagesToPayloadDC({ customerLanguages: (f.customerLanguages as Language[]) ?? [] }),
-        render: ({ form, setField }) => (
-          <LanguageField
-            label={tCommon('customerLanguages')}
-            value={(form.customerLanguages as Language[]) ?? []}
-            onChange={(langs) => setField('customerLanguages', langs)}
-          />
-        ),
-      }}
     />
   )
 }

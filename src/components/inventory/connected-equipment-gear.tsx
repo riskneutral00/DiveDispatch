@@ -18,6 +18,7 @@ import {
 } from '@/lib/constants/gear-sizing'
 import { PLANO_KEY, diopterCellKey } from '@/lib/constants/diopters'
 import { GEAR_REQUIRED_FIELDS, isGearItemComplete } from '@/lib/constants/gear-required-fields'
+import { INLINE_SAVED_FLASH_MS } from '@/lib/constants/ui-timings'
 import { Tabs, type TabItem } from '@/components/ui/tabs'
 import { ItemCard } from '@/components/ui/item-card'
 import { SimpleSelect } from '@/components/ui/simple-select'
@@ -702,7 +703,7 @@ function GearItemCard({ kind, gearType, recentManufacturers, initial, onCommit, 
       }
       await onCommit(patch)
       setSaved(true)
-      setTimeout(() => setSaved(false), 1500)
+      setTimeout(() => setSaved(false), INLINE_SAVED_FLASH_MS)
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : String(err))
     } finally {
