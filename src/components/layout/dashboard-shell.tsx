@@ -1,16 +1,14 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useQuery } from 'convex/react'
-import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { useEffect } from 'react'
 import { api } from '@/lib/convex-generated'
-import { type RoleKey, type ClerkRole, ROLE_BY_KEY, ROLE_BY_CLERK_ROLE } from '@/lib/constants/roles'
+import { type RoleKey, ROLE_BY_KEY } from '@/lib/constants/roles'
 import { DASHBOARD_CONTENT_GUTTER_X } from '@/lib/constants/dashboard-layout'
-import { deriveDefaultRole } from '@/lib/utils/role'
 import { cn } from '@/lib/utils/cn'
-import { useSessionIdentity } from '@/lib/hooks/use-session-identity'
+import { useDashboardSession } from '@/lib/hooks/use-dashboard-session'
+import { useGuardedRedirect } from '@/lib/hooks/use-guarded-redirect'
 import { FullPageSpinner } from '@/components/ui/full-page-spinner'
 import { ProfileOverlay, type ProfileOverlayTab } from '../profiles/profile-overlay'
 import { HierarchySubBar } from './hierarchy-sub-bar'
@@ -24,11 +22,11 @@ interface DashboardShellProps {
 
 export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps) {
   const t = useTranslations('common')
-  const { user, roles: myRoles, status } = useSessionIdentity()
+  const session = useDashboardSession()
+  const { user, roles: myRoles, status } = session
   const clerkRole = ROLE_BY_KEY[roleSlug]?.clerkRole ?? 'DiveCenter'
   const profileCompletion = useQuery(api.users.getProfileCompletionForRole, { role: clerkRole })
   const roleComplete = myRoles?.some((r) => r.role === clerkRole && r.profileComplete === true) ?? false
-  const router = useRouter()
 
   const [overlayOpen, setOverlayOpen] = useState(false)
   const [overlayTab, setOverlayTab] = useState<ProfileOverlayTab>('profile')
@@ -44,31 +42,22 @@ export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps
     setOverlayOpen(false)
   }, [])
 
-  useEffect(() => {
-    if (status === 'loading') return
-    if (status === 'unauthenticated' || !user) {
-      router.replace('/sign-up')
-      return
+  const redirectTo = useMemo<string | null>(() => {
+    if (status === 'loading') return null
+    if (status !== 'ready') return '/sign-up'
+    if (session.validateSlug(slug) === 'mismatch' && session.slug) {
+      return `/${session.slug}/${roleSlug}/dashboard`
     }
-    if (!myRoles) return
-    if (user.slug !== slug) {
-      router.replace(`/${user.slug}/${roleSlug}/dashboard`)
-      return
-    }
-    const holdsRole = myRoles.some((r) => r.role === clerkRole)
-    if (!holdsRole) {
-      const heldRoles = myRoles.map((r) => r.role)
-      if (heldRoles.length > 0) {
-        const defaultRole = deriveDefaultRole(heldRoles)
-        const defaultCfg = ROLE_BY_CLERK_ROLE[defaultRole as ClerkRole]
-        if (defaultCfg) {
-          router.replace(`/${user.slug}/${defaultCfg.key}/dashboard`)
-          return
-        }
+    if (!session.hasRole(clerkRole)) {
+      if (session.defaultRoleKey && session.slug) {
+        return `/${session.slug}/${session.defaultRoleKey}/dashboard`
       }
-      router.replace('/sign-up')
+      return '/sign-up'
     }
-  }, [user, status, myRoles, router, slug, roleSlug, clerkRole])
+    return null
+  }, [status, session, slug, roleSlug, clerkRole])
+
+  useGuardedRedirect({ to: redirectTo, enabled: redirectTo !== null })
 
   if (status !== 'ready' || !user || !myRoles) {
     return <FullPageSpinner label={t('loading')} />
