@@ -13,7 +13,7 @@ import { RoleOnboarding } from './role-onboarding'
 import { Spinner } from '@/components/ui/spinner'
 import type { ClerkRole } from '@/lib/constants/roles'
 import { ROLE_BY_CLERK_ROLE } from '@/lib/constants/roles'
-import { useSessionIdentity } from '@/lib/hooks/use-session-identity'
+import { useDashboardSession } from '@/lib/hooks/use-dashboard-session'
 import { ErrorCode } from '@/lib/errors'
 
 interface ManageRolesConnectedProps {
@@ -25,7 +25,7 @@ export function ManageRolesConnected({ onNavigateToRole, activeClerkRole }: Mana
   const tErr = useTranslations('errors')
   const tCommon = useTranslations('common')
   const tBooking = useTranslations('booking')
-  const { roles } = useSessionIdentity()
+  const { roles } = useDashboardSession()
   const bookingCounts = useQuery(api.userRoles.bookingCountsForMyRoles)
   const roleCompleteness = useQuery(api.users.getAllRolesCompleteness)
   const addRole = useMutation(api.userRoles.addRole)

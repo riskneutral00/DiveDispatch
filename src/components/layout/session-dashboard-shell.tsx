@@ -1,11 +1,11 @@
 'use client'
 
-import { createContext, useContext, useEffect, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
+import { createContext, useContext, useMemo } from 'react'
 import { useTranslations } from 'next-intl'
 import type { RoleKey } from '@/lib/constants/roles'
 import { FullPageSpinner } from '@/components/ui/full-page-spinner'
-import { useSessionIdentity } from '@/lib/hooks/use-session-identity'
+import { useDashboardSession } from '@/lib/hooks/use-dashboard-session'
+import { useGuardedRedirect } from '@/lib/hooks/use-guarded-redirect'
 import { DashboardShell } from './dashboard-shell'
 
 export interface SessionRoleContextValue {
@@ -21,19 +21,17 @@ export function useSessionRoleContext(): SessionRoleContextValue | null {
 
 export function SessionDashboardShell({ children }: { children: React.ReactNode }) {
   const t = useTranslations('common')
-  const { defaultRoleKey, slug, status } = useSessionIdentity()
-  const router = useRouter()
+  const { defaultRoleKey, slug, status } = useDashboardSession()
+
+  useGuardedRedirect({
+    to: '/sign-up',
+    enabled: status === 'unauthenticated',
+  })
 
   const contextValue = useMemo(
     () => (defaultRoleKey && slug ? { slug, roleSlug: defaultRoleKey } : null),
     [slug, defaultRoleKey],
   )
-
-  useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.replace('/sign-up')
-    }
-  }, [status, router])
 
   if (status === 'loading') {
     return <FullPageSpinner label={t('loading')} />

@@ -6,7 +6,7 @@ import { useTranslations } from 'next-intl'
 import { Button, Menu, MenuItem, MenuTrigger, Popover } from 'react-aria-components'
 import { ROLE_BY_CLERK_ROLE, type ClerkRole, type RoleKey } from '@/lib/constants/roles'
 import { ICON_BUTTON_SIZE } from '@/lib/constants/button-sizes'
-import { useSessionIdentity } from '@/lib/hooks/use-session-identity'
+import { useDashboardSession } from '@/lib/hooks/use-dashboard-session'
 import { firstIncompleteTab } from '@/lib/utils/first-incomplete-tab'
 import { ProfileCompletionBadge } from '../profiles/profile-completion-badge'
 import type { ProfileOverlayTab } from '../profiles/profile-overlay'
@@ -27,7 +27,7 @@ const MENU_ITEM_CLASS =
 export function TopNav({ onOpenOverlay, profileCompletion, roleComplete, roleSlug }: TopNavProps) {
   const tNav = useTranslations('nav')
   const { user: clerkUser } = useUser()
-  const { user: convexUser, roles: userRoles } = useSessionIdentity()
+  const { user: convexUser, roles: userRoles } = useDashboardSession()
   const { signOut } = useClerk()
   const roleConfigs = (userRoles ?? [])
     .map((r) => ROLE_BY_CLERK_ROLE[r.role as ClerkRole])

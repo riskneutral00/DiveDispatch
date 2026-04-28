@@ -20,6 +20,7 @@ export interface DashboardSession {
   identity: SessionIdentity
   status: DashboardStatus
   user: SessionIdentity['user']
+  roles: SessionIdentity['roles']
   slug: string | null
   defaultRoleKey: RoleKey | null
   defaultClerkRole: ClerkRole | null
@@ -65,6 +66,7 @@ export function useDashboardSession(): DashboardSession {
       identity,
       status,
       user: identity.user,
+      roles: identity.roles,
       slug: identity.slug,
       defaultRoleKey: identity.defaultRoleKey,
       defaultClerkRole: identity.defaultRole,

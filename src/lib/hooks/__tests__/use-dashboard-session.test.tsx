@@ -154,6 +154,7 @@ describe('useDashboardSession', () => {
     const { result } = renderHook(() => useDashboardSession())
     expect(result.current.identity).toBe(identity)
     expect(result.current.user).toBe(fakeUser)
+    expect(result.current.roles).toBe(identity.roles)
     expect(result.current.slug).toBe('matt-lee')
     expect(result.current.defaultRoleKey).toBe('dive-center')
     expect(result.current.defaultClerkRole).toBe('DiveCenter')

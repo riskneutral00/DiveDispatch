@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl'
 import { Dialog, Tabs, type TabItem } from '@/components/ui'
 import { ROLE_BY_CLERK_ROLE, type ClerkRole, type RoleKey } from '@/lib/constants/roles'
 import type { ProfileOverlayTab } from '@/lib/utils/first-incomplete-tab'
-import { useSessionIdentity } from '@/lib/hooks/use-session-identity'
+import { useDashboardSession } from '@/lib/hooks/use-dashboard-session'
 import { ProfileTab } from '@/components/account/profile-tab'
 import { ProfileSectionTabBar } from '@/components/account/profile-section-tab-bar'
 import { OVERLAY_ONLY_SECTIONS } from '@/lib/constants/profile-registry'
@@ -38,7 +38,7 @@ export function ProfileOverlay({ open, onClose, initialTab = 'profile', initialS
   const tNav = useTranslations('nav')
   const [activeTab, setActiveTab] = useState<string>(initialTab)
   const [roleProfileSection, setRoleProfileSection] = useState<string>(initialSection ?? '')
-  const { roles: userRoles } = useSessionIdentity()
+  const { roles: userRoles } = useDashboardSession()
   const activeClerkRole = ROLE_BY_KEY[roleSlug]?.clerkRole
 
   const roleConfigs = Array.from(
