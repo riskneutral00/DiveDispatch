@@ -86,13 +86,15 @@ function stripKeys<T extends Record<string, unknown>>(obj: T, strip: Set<string>
   return out
 }
 
-function deriveLabel(firstName: string, slug: string): string {
-  const upper = firstName
+function deriveLabel(orgName: string | null, slug: string): string {
+  const base = orgName ?? slug
+  const upper = base
     .toUpperCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^A-Z0-9]/g, '')
-  return upper.length > 0 ? `PARKED_${upper}` : `PARKED_${slug.toUpperCase()}`
+    .replace(/[^A-Z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+  return `PARKED_${upper.length > 0 ? upper : slug.toUpperCase()}`
 }
 
 async function main(): Promise<void> {
@@ -136,8 +138,8 @@ async function main(): Promise<void> {
     literal[block] = cleaned
   }
 
-  const firstName = typeof user.firstName === 'string' ? user.firstName : slug
-  const label = name ?? deriveLabel(firstName, slug)
+  const orgName = organization && typeof organization.name === 'string' ? organization.name : null
+  const label = name ?? deriveLabel(orgName, slug)
 
   const body = JSON.stringify(literal, null, 2)
   const output = `export const ${label}: SeedStakeholder = ${body}\n`

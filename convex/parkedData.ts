@@ -1,6 +1,5 @@
 import {
   PHUKET,
-  PHUKET_TH_ADDRESS,
   CHALONG,
   VERIFIED,
   PADI_PREFS,
@@ -689,32 +688,6 @@ export const SHARK_BITES: SeedStakeholder = {
   }],
 }
 
-export const SCUBA_REVOLUTION: SeedStakeholder = {
-  user: {
-    slug: 'v8sr2p',
-    email: 'scuba-revolution+clerk_test@divedispatch.dev',
-    firstName: 'Anong',
-    lastName: 'Petcharat',
-    appLanguage: 'th',
-    phone: '+6676330678',
-    dateOfBirth: '1985-01-01',
-  },
-  roles: [{ role: 'Equipment' }],
-  equipment: {
-    name: 'Scuba Revolution Phuket',
-    address: PHUKET_TH_ADDRESS,
-    lat: 7.8207,
-    lng: 98.3425,
-    email: 'scuba-revolution@divedispatch.dev',
-    phone: '+6676330678',
-    manufacturersByGearType: {
-      wetsuit: ['ScubaPro', 'Aqua Lung', 'Mares'],
-      bcd: ['ScubaPro', 'Aqua Lung', 'Mares'],
-    },
-    verified: VERIFIED,
-  },
-}
-
 export const PARKED_STAKEHOLDERS: SeedStakeholder[] = [
   HUG_OCEAN,
   NEPTUNE,
@@ -736,6 +709,5 @@ export const PARKED_STAKEHOLDERS: SeedStakeholder[] = [
   BLUE_PLANET,
   WATER_PRO,
   SHARK_BITES,
-  SCUBA_REVOLUTION,
 ]
 

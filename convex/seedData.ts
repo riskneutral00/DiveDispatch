@@ -115,6 +115,7 @@ interface EquipmentProfile {
   address: SeedAddress
   lat: number
   lng: number
+  placeId?: string
   email: string
   phone: string
   manufacturersByGearType?: Record<string, string[]>
@@ -213,7 +214,7 @@ export const PHUKET_ADMIN: SeedStakeholder = {
   ],
 }
 
-export const RENE_SEA_FUN: SeedStakeholder = {
+export const SEA_FUN: SeedStakeholder = {
   user: {
     slug: 'sea-fun',
     email: 'rene_balot+clerk_test@seafundivers.com',
@@ -340,7 +341,7 @@ export const RENE_SEA_FUN: SeedStakeholder = {
 }
 
 
-export const KAMON_COMPRESSOR_SHOP: SeedStakeholder = {
+export const COMPRESSOR_SHOP_CHALONG: SeedStakeholder = {
   user: {
     slug: 'otud5m',
     email: 'compressor1+clerk_test@divedispatch.dev',
@@ -373,7 +374,34 @@ export const KAMON_COMPRESSOR_SHOP: SeedStakeholder = {
   ],
 }
 
-export const ALL_STAKEHOLDERS: SeedStakeholder[] = [PHUKET_ADMIN, RENE_SEA_FUN, KAMON_COMPRESSOR_SHOP]
+export const SCUBA_REVOLUTION: SeedStakeholder = {
+  user: {
+    slug: '9973pc',
+    email: 'scuba_revolution+clerk_test@divedispatch.dev',
+    firstName: 'Anong',
+    lastName: 'Petcharat',
+    nickname: 'Ta',
+    appLanguage: 'en',
+    phone: '+66834966746',
+    dateOfBirth: '2004-04-07',
+  },
+  organization: { name: 'Scuba Revolution', slug: 'scuba-revolution' },
+  roles: [{ role: 'Equipment' }],
+  equipment: {
+    name: 'Scuba Revolution',
+    address: { street: '43/50', city: 'ตำบล ราไวย์', state: 'ภูเก็ต', country: 'TH', postalCode: '83100' },
+    lat: 7.820681100000017,
+    lng: 98.34251750000003,
+    placeId: 'ChIJW5C1AO8vUDARqPlSwdK2TFk',
+    email: 'scuba_revolution+clerk_test@divedispatch.dev',
+    phone: '+66834966746',
+    isAllowed: [],
+    notAllowed: [],
+    verified: false,
+  },
+}
+
+export const ALL_STAKEHOLDERS: SeedStakeholder[] = [PHUKET_ADMIN, SEA_FUN, COMPRESSOR_SHOP_CHALONG, SCUBA_REVOLUTION]
 
 export const PIERRE_DUBOIS: SeedStakeholder = {
   user: {
