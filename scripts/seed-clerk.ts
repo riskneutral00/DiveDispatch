@@ -6,7 +6,6 @@ import { join } from 'path'
 import { spawnSync } from 'child_process'
 import { ALL_STAKEHOLDERS, type SeedUser } from '../convex/seedData'
 import { ALL_INSTRUCTORS } from '../convex/seedInstructorData'
-import { SEED_USER_TO_ORG_SLUG } from '../convex/shared/seedSlugs.generated'
 
 const SEED_PASSWORD = 'divedispatch123'
 const DELAY_MS = 500 // spacing between Clerk API calls to avoid rate limits
@@ -103,25 +102,36 @@ async function pruneOrphanClerkUsers(seedEmails: Set<string>): Promise<number> {
   return pruned
 }
 
-async function pruneOrphanSeedOrgs(seedOrgSlugs: Set<string>): Promise<number> {
-  console.log('Pruning orphaned seed Clerk orgs...')
-  let pruned = 0
+async function listAllSeedTaggedOrgs(): Promise<{ id: string; seedOrgSlug: string | null; clerkSlug: string | null }[]> {
+  const all: { id: string; seedOrgSlug: string | null; clerkSlug: string | null }[] = []
   let offset = 0
   const PAGE = 100
   while (true) {
     const page = await clerk.organizations.getOrganizationList({ limit: PAGE, offset })
     if (page.data.length === 0) break
     for (const org of page.data) {
-      const tag = (org.publicMetadata as Record<string, unknown>)?.seedTag
-      if (tag !== 'dd_seed') continue
-      if (seedOrgSlugs.has(org.slug ?? '')) continue
-      await clerk.organizations.deleteOrganization(org.id)
-      console.log(`  ${org.slug} — pruned (not in seed data)`)
-      pruned++
-      await sleep(DELAY_MS)
+      const meta = org.publicMetadata as Record<string, unknown> | undefined
+      if (meta?.seedTag !== 'dd_seed') continue
+      const seedOrgSlug = typeof meta?.seedOrgSlug === 'string' ? meta.seedOrgSlug : null
+      all.push({ id: org.id, seedOrgSlug, clerkSlug: org.slug ?? null })
     }
     if (page.data.length < PAGE) break
     offset += PAGE
+  }
+  return all
+}
+
+async function pruneOrphanSeedOrgs(seedOrgSlugs: Set<string>): Promise<number> {
+  console.log('Pruning orphaned seed Clerk orgs...')
+  let pruned = 0
+  const tagged = await listAllSeedTaggedOrgs()
+  for (const org of tagged) {
+    const identity = org.seedOrgSlug ?? org.clerkSlug
+    if (identity && seedOrgSlugs.has(identity)) continue
+    await clerk.organizations.deleteOrganization(org.id)
+    console.log(`  ${identity ?? org.id} — pruned (not in seed data)`)
+    pruned++
+    await sleep(DELAY_MS)
   }
   console.log(`Pruned ${pruned} orphaned seed Clerk org${pruned === 1 ? '' : 's'}.`)
   return pruned
@@ -132,14 +142,16 @@ async function seedOrg(
   orgName: string,
   adminClerkUserId: string,
   result: OrgResult,
+  taggedOrgsCache: { id: string; seedOrgSlug: string | null; clerkSlug: string | null }[],
 ): Promise<string | null> {
-  const existing = await clerk.organizations.getOrganizationList({ query: orgSlug, limit: 10 })
-  const match = existing.data.find((o) => o.slug === orgSlug)
+  const match = taggedOrgsCache.find((o) =>
+    (o.seedOrgSlug ?? o.clerkSlug) === orgSlug,
+  )
   if (match) {
     if (force) {
       await clerk.organizations.updateOrganization(match.id, {
         name: orgName,
-        publicMetadata: { seedTag: 'dd_seed' },
+        publicMetadata: { seedTag: 'dd_seed', seedOrgSlug: orgSlug },
       })
       result.updated.push(orgSlug)
       return match.id
@@ -149,9 +161,8 @@ async function seedOrg(
   }
   const created = await clerk.organizations.createOrganization({
     name: orgName,
-    slug: orgSlug,
     createdBy: adminClerkUserId,
-    publicMetadata: { seedTag: 'dd_seed' },
+    publicMetadata: { seedTag: 'dd_seed', seedOrgSlug: orgSlug },
   })
   result.created.push(orgSlug)
   return created.id
@@ -300,6 +311,8 @@ async function main(): Promise<void> {
     orgResult.pruned = await pruneOrphanSeedOrgs(seedOrgSlugs)
   }
 
+  const taggedOrgsCache = await listAllSeedTaggedOrgs()
+
   console.log(`\nSeeding ${seedOrgsCanonical.length} Clerk orgs${force ? ' (--force)' : ''}...`)
   for (const o of seedOrgsCanonical) {
     const createdBy = userSlugToClerkId.get(o.adminUserSlug)
@@ -309,7 +322,7 @@ async function main(): Promise<void> {
       continue
     }
     try {
-      const clerkOrgId = await seedOrg(o.slug, o.name, createdBy, orgResult)
+      const clerkOrgId = await seedOrg(o.slug, o.name, createdBy, orgResult, taggedOrgsCache)
       if (clerkOrgId) {
         orgResult.slugToClerkId.set(o.slug, clerkOrgId)
         const status = orgResult.created.includes(o.slug) ? 'created' : orgResult.updated.includes(o.slug) ? 'updated' : 'skipped'
@@ -344,12 +357,14 @@ async function main(): Promise<void> {
 
   console.log(`\nCreating org memberships...`)
   let membershipCount = 0
-  const userToOrg = SEED_USER_TO_ORG_SLUG as Record<string, string>
-  for (const [userSlug, orgSlug] of Object.entries(userToOrg)) {
+  const stakeholderMemberships: { userSlug: string; orgSlug: string }[] = ALL_STAKEHOLDERS
+    .filter((s) => s.organization?.slug)
+    .map((s) => ({ userSlug: s.user.slug, orgSlug: s.organization!.slug }))
+  for (const { userSlug, orgSlug } of stakeholderMemberships) {
     const clerkUserId = userSlugToClerkId.get(userSlug)
     const clerkOrgId = orgResult.slugToClerkId.get(orgSlug)
     if (!clerkUserId || !clerkOrgId) {
-      console.error(`  ${userSlug} -> ${orgSlug} — SKIPPED (missing clerk ids)`)
+      console.error(`  ${userSlug} -> ${orgSlug} — SKIPPED (missing clerk ids; org will bind on first signin via creator-rebind)`)
       continue
     }
     try {

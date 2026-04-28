@@ -205,7 +205,7 @@ describe('organizations.upsertFromWebhook', () => {
     expect(allMatching[0].slug).toBe('sea-fun-divers')
   })
 
-  it('rebinds via name match when Clerk auto-suffixes the slug', async () => {
+  it('does NOT rebind via name match when Clerk auto-suffixes the slug — inserts a new row instead', async () => {
     const t = makeT()
     const seedOrgId = await t.run(async (ctx) => {
       const now = Date.now()
@@ -225,14 +225,182 @@ describe('organizations.upsertFromWebhook', () => {
       svixId: makeSvixId(),
     })
 
-    expect(returnedId).toBe(seedOrgId)
+    expect(returnedId).not.toBe(seedOrgId)
 
     const allByName = await t.run(async (ctx) =>
       ctx.db.query('organizations').filter((q) => q.eq(q.field('name'), 'Dive Co')).collect(),
     )
-    expect(allByName.length).toBe(1)
-    expect(allByName[0].clerkOrgId).toBe(realClerkOrgId)
-    expect(allByName[0].slug).toBe('dive-co-1234567890')
+    expect(allByName.length).toBe(2)
+
+    const seed = allByName.find((o) => o._id === seedOrgId)
+    expect(seed?.clerkOrgId).toBeUndefined()
+    expect(seed?.slug).toBe('dive-co')
+
+    const fresh = allByName.find((o) => o._id === returnedId)
+    expect(fresh?.clerkOrgId).toBe(realClerkOrgId)
+    expect(fresh?.slug).toBe('dive-co-1234567890')
+  })
+
+  it('rebinds via creatorTokenIdentifier when the creator user owns a Convex org with no clerkOrgId', async () => {
+    const t = makeT()
+    const tokenIdentifier = 'clerk|creator-rebind-user'
+    const realClerkOrgId = makeClerkOrgId('creator-rebind')
+
+    const { userId, orgId: seedOrgId } = await t.run(async (ctx) => {
+      const now = Date.now()
+      const orgId = await ctx.db.insert('organizations', {
+        name: 'Zhang Yong',
+        slug: 'zy9ng2',
+        createdAt: now,
+        updatedAt: now,
+      })
+      const userId = await ctx.db.insert('users', {
+        tokenIdentifier,
+        originalTokenIdentifier: tokenIdentifier,
+        slug: 'zy9ng2',
+        email: 'zhang@test.com',
+        name: 'Zhang Yong',
+        firstName: 'Zhang',
+        lastName: 'Yong',
+        appLanguage: 'en',
+        organizationId: orgId,
+      })
+      return { userId, orgId }
+    })
+
+    const returnedId = await t.mutation(internal.organizations.upsertFromWebhook, {
+      clerkOrgId: realClerkOrgId,
+      name: 'My Organization 1234567890',
+      slug: 'my-organization-1234567890',
+      svixId: makeSvixId(),
+      creatorTokenIdentifier: tokenIdentifier,
+    })
+
+    expect(returnedId).toBe(seedOrgId)
+
+    const bound = await t.run(async (ctx) => ctx.db.get(seedOrgId))
+    expect(bound?.clerkOrgId).toBe(realClerkOrgId)
+    expect(bound?.slug).toBe('zy9ng2')
+    expect(bound?.name).toBe('Zhang Yong')
+
+    const allOrgs = await t.run(async (ctx) =>
+      ctx.db.query('organizations').filter((q) => q.eq(q.field('clerkOrgId'), realClerkOrgId)).collect(),
+    )
+    expect(allOrgs.length).toBe(1)
+
+    const auditEntries = await t.run(async (ctx) =>
+      (await ctx.db.query('webhookAuditLog').collect()).filter(
+        (e) => e.eventType === 'org_creator_rebind' && e.orgId === seedOrgId,
+      ),
+    )
+    expect(auditEntries.length).toBe(1)
+    expect(auditEntries[0].userId).toBe(userId)
+
+    const user = await t.run(async (ctx) => ctx.db.get(userId))
+    expect(user?.organizationId).toBe(seedOrgId)
+  })
+
+  it('does NOT rebind via creatorTokenIdentifier when creator owns a soft-deleted Convex org', async () => {
+    const t = makeT()
+    const tokenIdentifier = 'clerk|creator-deleted-org'
+    const newClerkOrgId = makeClerkOrgId('post-delete')
+
+    const { userId, deletedOrgId } = await t.run(async (ctx) => {
+      const now = Date.now()
+      const orgId = await ctx.db.insert('organizations', {
+        name: 'Soft-Deleted Personal Org',
+        slug: 'soft-deleted-personal',
+        deletedAt: now - 1000,
+        createdAt: now - 5000,
+        updatedAt: now - 1000,
+      })
+      const userId = await ctx.db.insert('users', {
+        tokenIdentifier,
+        originalTokenIdentifier: tokenIdentifier,
+        slug: 'sdusr',
+        email: 'sd@test.com',
+        name: 'Soft Deleted',
+        firstName: 'Soft',
+        lastName: 'Deleted',
+        appLanguage: 'en',
+        organizationId: orgId,
+      })
+      return { userId, deletedOrgId: orgId }
+    })
+
+    const returnedId = await t.mutation(internal.organizations.upsertFromWebhook, {
+      clerkOrgId: newClerkOrgId,
+      name: 'My Organization 9999',
+      slug: 'my-organization-9999',
+      svixId: makeSvixId(),
+      creatorTokenIdentifier: tokenIdentifier,
+    })
+
+    expect(returnedId).not.toBe(deletedOrgId)
+
+    const stillDeleted = await t.run(async (ctx) => ctx.db.get(deletedOrgId))
+    expect(stillDeleted?.clerkOrgId).toBeUndefined()
+    expect(stillDeleted?.deletedAt).toBeDefined()
+
+    const created = await t.run(async (ctx) => ctx.db.get(returnedId))
+    expect(created?.clerkOrgId).toBe(newClerkOrgId)
+
+    const noAudit = await t.run(async (ctx) =>
+      (await ctx.db.query('webhookAuditLog').collect()).filter(
+        (e) => e.eventType === 'org_creator_rebind' && e.orgId === deletedOrgId,
+      ),
+    )
+    expect(noAudit.length).toBe(0)
+
+    const user = await t.run(async (ctx) => ctx.db.get(userId))
+    expect(user?.organizationId).toBe(returnedId)
+  })
+
+  it('does NOT rebind via creatorTokenIdentifier when creator already owns a Clerk-bound org', async () => {
+    const t = makeT()
+    const tokenIdentifier = 'clerk|creator-already-bound'
+    const previouslyBoundClerkOrgId = makeClerkOrgId('previously-bound')
+    const newClerkOrgId = makeClerkOrgId('second-org')
+
+    const { existingOrgId } = await t.run(async (ctx) => {
+      const now = Date.now()
+      const orgId = await ctx.db.insert('organizations', {
+        clerkOrgId: previouslyBoundClerkOrgId,
+        name: 'First Org',
+        slug: 'first-org',
+        createdAt: now,
+        updatedAt: now,
+      })
+      await ctx.db.insert('users', {
+        tokenIdentifier,
+        originalTokenIdentifier: tokenIdentifier,
+        slug: 'creator-bound',
+        email: 'bound@test.com',
+        name: 'Bound Creator',
+        firstName: 'Bound',
+        lastName: 'Creator',
+        appLanguage: 'en',
+        organizationId: orgId,
+      })
+      return { existingOrgId: orgId }
+    })
+
+    const returnedId = await t.mutation(internal.organizations.upsertFromWebhook, {
+      clerkOrgId: newClerkOrgId,
+      name: 'Second Org',
+      slug: 'second-org',
+      svixId: makeSvixId(),
+      creatorTokenIdentifier: tokenIdentifier,
+    })
+
+    expect(returnedId).not.toBe(existingOrgId)
+
+    const existing = await t.run(async (ctx) => ctx.db.get(existingOrgId))
+    expect(existing?.clerkOrgId).toBe(previouslyBoundClerkOrgId)
+
+    const created = await t.run(async (ctx) => ctx.db.get(returnedId))
+    expect(created?.clerkOrgId).toBe(newClerkOrgId)
+    expect(created?.slug).toBe('second-org')
   })
 
   it('does NOT rebind when the slug-matched row is already bound to a real Clerk org', async () => {

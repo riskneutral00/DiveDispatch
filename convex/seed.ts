@@ -173,6 +173,7 @@ const TABLES_TO_WIPE = [
   'bookingTemplates',
   'agents',
   'stakeholderBlockedDates',
+  'organizations',
 ] as const
 
 export const wipeBatch = internalMutation({

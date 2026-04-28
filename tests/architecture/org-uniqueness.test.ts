@@ -1,12 +1,16 @@
 import { describe, it, expect } from 'vitest'
 import { internal } from '../../convex/_generated/api'
 import { ALL_STAKEHOLDERS } from '../../convex/seedData'
+import { ALL_INSTRUCTORS } from '../../convex/seedInstructorData'
 import { makeT } from '../helpers/convex-helpers'
 
 type OrgShape = { _id: string; slug: string; name: string }
 
 function canonicalOrgSlugs(): Set<string> {
-  return new Set(ALL_STAKEHOLDERS.map((s) => s.organization?.slug ?? s.user.slug))
+  return new Set([
+    ...ALL_STAKEHOLDERS.map((s) => s.organization?.slug ?? s.user.slug),
+    ...ALL_INSTRUCTORS.map((s) => s.user.slug),
+  ])
 }
 
 function detectViolations(orgs: OrgShape[], canonical: Set<string>): string[] {
@@ -71,9 +75,9 @@ describe('architecture: one org per stakeholder canonical slug', () => {
       }
       const now = Date.now()
       await ctx.db.insert('organizations', {
-        slug: `${seaFun.slug}-1776834558075647588`,
+        slug: `${seaFun.slug}-${crypto.randomUUID().slice(0, 8)}`,
         name: seaFun.name,
-        clerkOrgId: 'org_3ChOueoVoNFfBjND3SW495YLkSs',
+        clerkOrgId: `org_sea-fun-duplicate-${crypto.randomUUID().slice(0, 8)}`,
         createdAt: now,
         updatedAt: now,
       })

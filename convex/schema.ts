@@ -609,6 +609,7 @@ export default defineSchema({
       v.literal('user_rebind_rejected'),
       v.literal('org_cascade_initiated'),
       v.literal('org_cascade_restored'),
+      v.literal('org_creator_rebind'),
     ),
     userId: v.optional(v.id('users')),
     oldTokenIdentifier: v.optional(v.string()),

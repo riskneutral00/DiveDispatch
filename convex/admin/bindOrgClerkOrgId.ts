@@ -17,6 +17,19 @@ export const run = mutation({
   handler: async (ctx, args) => {
     requireDevEnvironment()
 
+    const byClerk = await ctx.db
+      .query('organizations')
+      .withIndex('by_clerkOrgId', (q) => q.eq('clerkOrgId', args.clerkOrgId))
+      .unique()
+    if (byClerk) {
+      return {
+        orgId: byClerk._id,
+        slug: byClerk.slug,
+        clerkOrgId: args.clerkOrgId,
+        changed: false,
+      }
+    }
+
     const org = await ctx.db
       .query('organizations')
       .withIndex('by_slug', (q) => q.eq('slug', args.orgSlug))
@@ -24,17 +37,8 @@ export const run = mutation({
     if (!org) {
       throw new ConvexError({
         code: ErrorCode.NOT_FOUND,
-        reason: `No organization with slug '${args.orgSlug}'`,
+        reason: `No organization with slug '${args.orgSlug}' and no organization already bound to '${args.clerkOrgId}'`,
       })
-    }
-
-    if (org.clerkOrgId === args.clerkOrgId) {
-      return {
-        orgId: org._id,
-        slug: org.slug,
-        clerkOrgId: args.clerkOrgId,
-        changed: false,
-      }
     }
 
     if (org.clerkOrgId !== undefined) {

@@ -15,21 +15,12 @@ import { assertDestinationOrgsValid } from './lib/destinationScope'
 async function findSeedRebindCandidate(
   ctx: MutationCtx,
   slug: string,
-  name: string,
 ): Promise<Doc<'organizations'> | null> {
   const bySlug = await ctx.db
     .query('organizations')
     .withIndex('by_slug', (q) => q.eq('slug', slug))
     .unique()
-  if (bySlug && bySlug.clerkOrgId === undefined) return bySlug
-
-  const allMatchingName = await ctx.db
-    .query('organizations')
-    .filter((q) => q.eq(q.field('name'), name))
-    .collect() // bounded: organizations table is one-row-per-operator (≤low-thousands in production); name-collision count ≤2 in practice
-  for (const candidate of allMatchingName) {
-    if (candidate.clerkOrgId === undefined) return candidate
-  }
+  if (bySlug && bySlug.clerkOrgId === undefined && bySlug.deletedAt === undefined) return bySlug
   return null
 }
 
@@ -73,23 +64,53 @@ export const upsertFromWebhook = internalMutation({
       await ctx.db.patch(existing._id, patch)
       orgId = existing._id
     } else {
-      const seedRebindCandidate = await findSeedRebindCandidate(ctx, args.slug, args.name)
-      if (seedRebindCandidate) {
-        await ctx.db.patch(seedRebindCandidate._id, {
+      let rebindByCreator: Doc<'organizations'> | null = null
+      let rebindCreatorId: Id<'users'> | null = null
+      if (args.creatorTokenIdentifier) {
+        const creator = await ctx.db
+          .query('users')
+          .withIndex('by_tokenIdentifier', (q) => q.eq('tokenIdentifier', args.creatorTokenIdentifier!))
+          .unique()
+        if (creator?.organizationId) {
+          const creatorOrg = await ctx.db.get(creator.organizationId)
+          if (creatorOrg && creatorOrg.clerkOrgId === undefined && creatorOrg.deletedAt === undefined) {
+            rebindByCreator = creatorOrg
+            rebindCreatorId = creator._id
+          }
+        }
+      }
+
+      if (rebindByCreator) {
+        await ctx.db.patch(rebindByCreator._id, {
           clerkOrgId: args.clerkOrgId,
-          name: args.name,
-          slug: args.slug,
           updatedAt: now,
         })
-        orgId = seedRebindCandidate._id
+        orgId = rebindByCreator._id
+        await ctx.db.insert('webhookAuditLog', {
+          eventType: 'org_creator_rebind',
+          userId: rebindCreatorId ?? undefined,
+          orgId: rebindByCreator._id,
+          orgName: rebindByCreator.name,
+          orgSlug: rebindByCreator.slug,
+          at: now,
+        })
       } else {
-        orgId = await ctx.db.insert('organizations', {
-          clerkOrgId: args.clerkOrgId,
-          name: args.name,
-          slug: args.slug,
-          createdAt: now,
-          updatedAt: now,
-        })
+        const seedRebindCandidate = await findSeedRebindCandidate(ctx, args.slug)
+        if (seedRebindCandidate) {
+          await ctx.db.patch(seedRebindCandidate._id, {
+            clerkOrgId: args.clerkOrgId,
+            updatedAt: now,
+          })
+          orgId = seedRebindCandidate._id
+        } else {
+          orgId = await ctx.db.insert('organizations', {
+            clerkOrgId: args.clerkOrgId,
+            name: args.name,
+            slug: args.slug,
+            createdAt: now,
+            updatedAt: now,
+          })
+        }
       }
     }
 
