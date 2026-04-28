@@ -22,6 +22,7 @@ import { isAdult, MIN_SIGNUP_AGE_YEARS } from './lib/timeConstants'
 import { normalizeAppLanguage, assertPhoneE164 } from './lib/validators'
 import { readOrgClaims } from './lib/activeOrg'
 import { parseTokenIdentifier, isAllowedRebind } from './lib/tokenIdentifier'
+import { resolveOrRebindUser } from './lib/userRebind'
 import { insertUserRole, getAllUserRoles, type PermissionLevel } from './lib/userRoleHelpers'
 import { setUserOrganization } from './lib/userOrg'
 import { ensureSystemThemesInline } from './lib/ensureSystemThemes'
@@ -68,6 +69,18 @@ async function ensurePersonalOrg(
   return orgId
 }
 
+export const store = mutation({
+  args: {},
+  returns: v.union(v.id('users'), v.null()),
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity()
+    if (!identity) return null
+    const outcome = await resolveOrRebindUser(ctx, identity)
+    if (outcome.kind === 'matched' || outcome.kind === 'rebound') return outcome.user._id
+    return null
+  },
+})
+
 export const createUser = mutation({
   args: {
     role: stakeholderType,
@@ -100,12 +113,11 @@ export const createUser = mutation({
       assertPhoneE164(args.phone, 'phone')
     }
 
-    const existing = await ctx.db
-      .query('users')
-      .withIndex('by_tokenIdentifier', (q) =>
-        q.eq('tokenIdentifier', identity.tokenIdentifier),
-      )
-      .unique()
+    const outcome = await resolveOrRebindUser(ctx, identity)
+    if (outcome.kind === 'rejected') {
+      throw new ConvexError({ code: ErrorCode.FORBIDDEN, reason: 'cross_issuer_rebind' })
+    }
+    const existing = outcome.kind === 'none' ? null : outcome.user
 
     const email = identity.email ?? ''
     const now = Date.now()

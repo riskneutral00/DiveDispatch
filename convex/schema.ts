@@ -596,6 +596,7 @@ export default defineSchema({
   webhookAuditLog: defineTable({
     eventType: v.union(
       v.literal('user_rebind'),
+      v.literal('user_rebind_via_auth'),
       v.literal('user_rebind_rejected'),
       v.literal('org_cascade_initiated'),
       v.literal('org_cascade_restored'),
