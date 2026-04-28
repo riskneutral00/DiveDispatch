@@ -7,13 +7,13 @@ import { internal } from './_generated/api'
 import { OPERATOR_ROLE_SET } from './lib/auth'
 import type { OperatorType } from './shared/operatorTypes'
 import { queryDynamicTable, deleteDynamic } from './lib/typedDb'
-import { ALL_STAKEHOLDERS, SeedStakeholder, StakeholderRole } from './seedData'
+import { ALL_STAKEHOLDERS, ALL_INSTRUCTORS, SeedStakeholder, StakeholderRole } from './seedData'
 import { ensureSystemThemesInline } from './lib/ensureSystemThemes'
 import { stakeholderPreferenceIdsToDelete } from './lib/stakeholderPreferencesDedupe'
 import { insertUserRole } from './lib/userRoleHelpers'
 import { setUserOrganization } from './lib/userOrg'
 import { setRoleProfileComplete } from './lib/setRoleProfileComplete'
-import { ALL_INSTRUCTORS } from './seedInstructorData'
+import { selfOwnedResourceSlugs } from './stakeholderPreferences'
 import {
   ALL_GEAR_SIZING,
   SCUBAPRO_WETSUITS,
@@ -350,8 +350,7 @@ export const seedStakeholders = internalMutation({
         await ctx.db.insert('boats', { organizationId, slug: `boat-${s.user.slug}`, ...s.boat, fleet: resolvedFleet }) // batch-exempt
       }
       if (s.equipment) {
-        const { inventoryOverrides: _overrides, ...equipmentProfile } = s.equipment
-        await ctx.db.insert('equipment', { organizationId, slug: `eq-${s.user.slug}`, ...equipmentProfile }) // batch-exempt
+        await ctx.db.insert('equipment', { organizationId, slug: `eq-${s.user.slug}`, ...s.equipment }) // batch-exempt
       }
       for (const compressor of s.compressors ?? []) {
         await ctx.db.insert('compressors', { organizationId, ...compressor }) // batch-exempt
@@ -424,11 +423,9 @@ export const seedEquipmentInventory = internalMutation({
       if (!s.equipment) continue
 
       const emSlug = s.user.slug
-      const lines: InventoryLine[] = s.equipment.inventoryOverrides
-        ? (s.equipment.inventoryOverrides as InventoryLine[])
-        : s.equipment.manufacturersByGearType
-          ? buildEquipmentLines(s.equipment.manufacturersByGearType)
-          : []
+      const lines: InventoryLine[] = s.equipment.manufacturersByGearType
+        ? buildEquipmentLines(s.equipment.manufacturersByGearType)
+        : []
 
       for (const line of lines) {
         const inventoryUnitId = await ctx.db.insert('inventoryUnits', { // batch-exempt
@@ -560,7 +557,6 @@ export const seedStakeholderPreferences = internalMutation({
     ]
 
     for (const { slug, role } of allStakeholders) {
-      if (slug === 'sea-fun') continue
       const existing = await ctx.db
         .query('stakeholderPreferences')
         .withIndex('by_stakeholderId', (q) => q.eq('stakeholderId', slug))
@@ -568,6 +564,14 @@ export const seedStakeholderPreferences = internalMutation({
       for (const row of existing) {
         await ctx.db.delete(row._id) // batch-exempt: dev-only seed
       }
+
+      const userRow = await ctx.db
+        .query('users')
+        .withIndex('by_slug', (q) => q.eq('slug', slug))
+        .unique()
+      const selfOwned = userRow?.organizationId
+        ? await selfOwnedResourceSlugs(ctx, userRow, userRow.organizationId)
+        : null
 
       await ctx.db.insert('stakeholderPreferences', { // batch-exempt
         stakeholderId: slug,
@@ -577,6 +581,11 @@ export const seedStakeholderPreferences = internalMutation({
         commonLanguageCodes: [],
         confirmOnAccept: false,
         confirmOnDecline: false,
+        preferredInstructorSlugs: selfOwned?.preferredInstructorSlugs,
+        preferredVenueSlugs: selfOwned?.preferredVenueSlugs,
+        preferredBoatSlugs: selfOwned?.preferredBoatSlugs,
+        preferredEquipmentSlugs: selfOwned?.preferredEquipmentSlugs,
+        preferredCompressorSlugs: selfOwned?.preferredCompressorSlugs,
       })
     }
   },

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { internal } from '../../convex/_generated/api'
 import { ALL_STAKEHOLDERS } from '../../convex/seedData'
-import { ALL_INSTRUCTORS } from '../../convex/seedInstructorData'
+import { ALL_INSTRUCTORS } from '../../convex/seedData'
 import { makeT } from '../helpers/convex-helpers'
 
 type OrgShape = { _id: string; slug: string; name: string }

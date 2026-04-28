@@ -27,7 +27,7 @@ const SMALL_TABLES = new Set([
 const EXCLUDED_FILES = new Set([
   'seed.ts',
   'seedData.ts',
-  'seedInstructorData.ts',
+  'parkedData.ts',
   'demoBookings.ts',
   'devSwitcher.ts',
 ])

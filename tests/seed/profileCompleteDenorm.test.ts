@@ -3,8 +3,8 @@ import { internal } from '../../convex/_generated/api'
 import { checkProfileCompleteness } from '../../convex/lib/profileCompleteness'
 import { makeT } from '../helpers/convex-helpers'
 
-describe('seed denorm + sea-fun no-prefs', () => {
-  it('sea-fun has zero stakeholderPreferences rows after seedAll', async () => {
+describe('seed denorm + sea-fun autofilled prefs', () => {
+  it('sea-fun has a stakeholderPreferences row populated from self-owned resources after seedAll', async () => {
     const t = makeT()
     await t.action(internal.seed.seedAll, {})
 
@@ -14,33 +14,13 @@ describe('seed denorm + sea-fun no-prefs', () => {
         .withIndex('by_stakeholderId', (q) => q.eq('stakeholderId', 'sea-fun'))
         .collect(),
     )
-    expect(prefs).toHaveLength(0)
-  })
-
-  it('sea-fun DC + Venue userRoles.profileComplete = false; Equipment/Boat/Instructor/Compressor = true', async () => {
-    const t = makeT()
-    await t.action(internal.seed.seedAll, {})
-
-    const denorms = await t.run(async (ctx) => {
-      const user = await ctx.db
-        .query('users')
-        .withIndex('by_slug', (q) => q.eq('slug', 'sea-fun'))
-        .unique()
-      expect(user, 'sea-fun seed user must exist').toBeTruthy()
-      const rows = await ctx.db
-        .query('userRoles')
-        .withIndex('by_userId', (q) => q.eq('userId', user!._id))
-        .collect()
-      return rows.map((r) => ({ role: r.role, complete: r.profileComplete ?? false }))
-    })
-
-    const byRole = Object.fromEntries(denorms.map((d) => [d.role, d.complete]))
-    expect(byRole.DiveCenter).toBe(false)
-    expect(byRole.Venue).toBe(false)
-    expect(byRole.Equipment).toBe(true)
-    expect(byRole.Boat).toBe(true)
-    expect(byRole.Instructor).toBe(true)
-    expect(byRole.Compressor).toBe(true)
+    expect(prefs).toHaveLength(1)
+    const row = prefs[0]
+    expect((row.preferredVenueSlugs ?? []).length).toBeGreaterThan(0)
+    expect((row.preferredBoatSlugs ?? []).length).toBeGreaterThan(0)
+    expect((row.preferredEquipmentSlugs ?? []).length).toBeGreaterThan(0)
+    expect((row.preferredCompressorSlugs ?? []).length).toBeGreaterThan(0)
+    expect(row.preferredInstructorSlugs).toEqual(['sea-fun'])
   })
 
   it('every userRoles row denorm matches live checkProfileCompleteness result (no drift)', async () => {

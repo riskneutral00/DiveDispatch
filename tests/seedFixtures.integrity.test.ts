@@ -6,7 +6,7 @@ import {
   SUPPORTED_LOCALE_CODES,
 } from '../convex/shared/i18nConstants'
 import { ALL_STAKEHOLDERS } from '../convex/seedData'
-import { ALL_INSTRUCTORS } from '../convex/seedInstructorData'
+import { ALL_INSTRUCTORS } from '../convex/seedData'
 
 const LANGUAGE_CODE_PATTERN = /^[a-z]{2,3}(-[A-Z][a-z]{3})?(-[A-Z]{2})?$/
 
