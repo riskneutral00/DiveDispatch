@@ -408,3 +408,42 @@ describe('compressors.remove — cascade + active-reservation guard', () => {
     expect(snapshots).toHaveLength(0)
   })
 })
+
+describe('compressors.mine', () => {
+  it('returns empty array for unauthenticated caller', async () => {
+    const t = makeT()
+    expect(await t.query(api.compressors.mine, {})).toEqual([])
+  })
+
+  it('returns empty array for Compressor-role user with no created profile', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedUser(ctx, 'comp-mine-empty', 'Compressor') })
+    const results = await t.withIdentity(orgIdentityFor('comp-mine-empty')).query(api.compressors.mine, {})
+    expect(results).toEqual([])
+  })
+
+  it('returns active rows for Compressor-role user with profile', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedUser(ctx, 'comp-mine-active', 'Compressor') })
+    const identity = orgIdentityFor('comp-mine-active')
+    await t.withIdentity(identity).mutation(api.compressors.create, VALID_ARGS)
+
+    const results = await t.withIdentity(identity).query(api.compressors.mine, {})
+    expect(results).toHaveLength(1)
+    expect(results[0].name).toBe('Sairee Compressor')
+  })
+
+  it('excludes archived rows', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedUser(ctx, 'comp-mine-archived', 'Compressor') })
+    const identity = orgIdentityFor('comp-mine-archived')
+    const compId = await t.withIdentity(identity).mutation(api.compressors.create, VALID_ARGS)
+
+    await t.run(async (ctx) => {
+      await ctx.db.patch(compId as Id<'compressors'>, { archivedAt: Date.now() })
+    })
+
+    const results = await t.withIdentity(identity).query(api.compressors.mine, {})
+    expect(results).toEqual([])
+  })
+})

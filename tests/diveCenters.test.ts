@@ -183,4 +183,40 @@ describe('diveCenters.archive', () => {
         .mutation(api.diveCenters.archive, { entityId: dcId! }),
     ).rejects.toThrow(/FORBIDDEN/)
   })
+
+  it('archiving the last active diveCenter row re-evaluates userRoles.profileComplete', async () => {
+    const t = makeT()
+    let dcId: Awaited<ReturnType<typeof seedDiveCenterProfile>> | undefined
+    await t.run(async (ctx) => {
+      const ownerId = await seedUser(ctx, 'arch-last-dc', 'DiveCenter')
+      dcId = await seedDiveCenterProfile(ctx, ownerId)
+      const role = await ctx.db
+        .query('userRoles')
+        .withIndex('by_userId_role', (q) => q.eq('userId', ownerId).eq('role', 'DiveCenter'))
+        .unique()
+      await ctx.db.patch(role!._id, { profileComplete: true })
+      await ctx.db.patch(dcId!, { profileComplete: true })
+    })
+
+    const readRoleComplete = async (): Promise<boolean | undefined> =>
+      await t.run(async (ctx) => {
+        const user = await ctx.db
+          .query('users')
+          .withIndex('by_slug', (q) => q.eq('slug', 'arch-last-dc'))
+          .unique()
+        if (!user) return undefined
+        const role = await ctx.db
+          .query('userRoles')
+          .withIndex('by_userId_role', (q) => q.eq('userId', user._id).eq('role', 'DiveCenter'))
+          .unique()
+        return role?.profileComplete
+      })
+
+    expect(await readRoleComplete()).toBe(true)
+
+    await t.withIdentity(orgIdentityFor('arch-last-dc'))
+      .mutation(api.diveCenters.archive, { entityId: dcId! })
+
+    expect(await readRoleComplete()).not.toBe(true)
+  })
 })

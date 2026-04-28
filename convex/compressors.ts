@@ -1,8 +1,8 @@
 import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import { authorize, assertOrgOwnership } from './lib/auth'
-import { getActiveOrg, tryGetActiveOrg } from './lib/activeOrg'
-import { visibleOrgIds } from './lib/destinationScope'
+import { getActiveOrg } from './lib/activeOrg'
+import { entityProfilesMine, queryVisibleEntities } from './lib/profileHelpers'
 import { checkHasRole } from './userRoles'
 import { ErrorCode } from './lib/errorCodes'
 import { BASE_PROFILE_CREATE_FIELDS, BASE_PROFILE_UPDATE_FIELDS, ACCESS_CONTROL_FIELDS, BUSINESS_NAME_CREATE_FIELD, BUSINESS_NAME_UPDATE_FIELD, assertPhoneE164, assertCountryCode } from './lib/validators'
@@ -131,31 +131,11 @@ export const remove = mutation({
 
 export const mine = query({
   args: {},
-  handler: async (ctx) => {
-    const activeOrg = await tryGetActiveOrg(ctx)
-    if (!activeOrg) return []
-    const rows = await ctx.db
-      .query('compressors')
-      .withIndex('by_organizationId', (q) => q.eq('organizationId', activeOrg._id))
-      .collect() // bounded: per-org compressor count, realistic cap ~10
-    return rows.filter((row) => row.archivedAt === undefined)
-  },
+  handler: async (ctx) => entityProfilesMine(ctx, 'Compressor'),
 })
 
 export const visibleToMe = query({
   args: {},
-  handler: async (ctx) => {
-    const orgIds = await visibleOrgIds(ctx)
-    if (orgIds.length === 0) return []
-    const results = await Promise.all(
-      orgIds.map((orgId) =>
-        ctx.db
-          .query('compressors')
-          .withIndex('by_organizationId', (q) => q.eq('organizationId', orgId))
-          .collect(), // bounded: per-org compressor count, realistic cap ~10
-      ),
-    )
-    return results.flat().filter((row) => row.archivedAt === undefined)
-  },
+  handler: async (ctx) => queryVisibleEntities(ctx, 'Compressor'),
 })
 

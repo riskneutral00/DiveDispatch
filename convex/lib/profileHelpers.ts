@@ -2,11 +2,12 @@ import { ConvexError } from 'convex/values'
 import type { QueryCtx, MutationCtx } from '../_generated/server'
 import type { Doc, Id, TableNames } from '../_generated/dataModel'
 import type { UserIdentity } from 'convex/server'
-import { authorize } from './auth'
+import { authorize, assertOrgOwnership } from './auth'
 import { checkHasRole } from '../userRoles'
 import { ErrorCode } from './errorCodes'
 import { queryDynamicTable, insertDynamicTable, patchDynamic } from './typedDb'
 import { getActiveOrg, tryGetActiveOrg } from './activeOrg'
+import { visibleOrgIds } from './destinationScope'
 import { assertCountryCode, assertPhoneE164, assertLanguageCodes } from './validators'
 import { setRoleProfileComplete } from './setRoleProfileComplete'
 import {
@@ -330,6 +331,38 @@ export async function entityProfileNames(
 ): Promise<string[]> {
   const rows = (await entityProfilesByUser(ctx, userId, role)) as Array<{ name?: string }>
   return rows.map((r) => r.name ?? '').filter(Boolean)
+}
+
+export async function archiveEntityProfile<R extends EntityRole>(
+  ctx: MutationCtx,
+  entityId: Id<TableForRole<R>>,
+  role: R,
+  actor?: { user: Doc<'users'>; identity: UserIdentity },
+): Promise<void> {
+  const { user } = await authorize(ctx, actor ?? null, 'profile:manage', { type: 'profile' })
+  const row = await ctx.db.get(entityId as Id<TableNames>)
+  if (!row) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
+  const { org: activeOrg } = await getActiveOrg(ctx)
+  assertOrgOwnership(row as { organizationId?: Id<'organizations'> }, activeOrg)
+  await patchDynamic(ctx.db, entityId, { archivedAt: Date.now() })
+  await setRoleProfileComplete(ctx, user._id, role)
+}
+
+export async function queryVisibleEntities<R extends EntityRole>(
+  ctx: QueryCtx,
+  role: R,
+): Promise<Array<Doc<TableForRole<R>>>> {
+  const orgIds = await visibleOrgIds(ctx)
+  if (orgIds.length === 0) return []
+  const tableName = ROLE_SPECS[role].table
+  const results = await Promise.all(
+    orgIds.map((orgId) =>
+      queryDynamicTable(ctx.db, tableName)
+        .withIndex('by_organizationId', (q) => q.eq('organizationId', orgId))
+        .collect(), // bounded: per-org entity-role row count, realistic cap ~20
+    ),
+  )
+  return (results.flat() as Array<Doc<TableForRole<R>>>).filter(isActiveRow)
 }
 
 export async function getProfileName(
