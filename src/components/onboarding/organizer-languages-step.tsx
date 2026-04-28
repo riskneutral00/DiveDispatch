@@ -4,6 +4,7 @@ import { useMutation, useQuery } from 'convex/react'
 import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { useSessionIdentity } from '@/lib/hooks/use-session-identity'
+import { useMutationWithFeedback } from '@/lib/hooks/use-mutation-with-feedback'
 import { InlineError, NumberPicker } from '@/components/ui'
 import { LoadingCard } from '@/components/ui/loading-card'
 import { resolveLanguages } from '@/lib/constants/dive-languages'
@@ -11,7 +12,6 @@ import { MAX_COURSE_DAYS } from '@/lib/constants/form-config'
 import { LanguageField } from '@/components/ui/language-field'
 import { SpecialtyField } from '@/components/profiles/specialty-field'
 import type { Language } from '@/lib/types/language'
-import { parseConvexError } from '@/lib/utils/convex-error'
 import { parseNumber } from '@/lib/utils/numbers'
 import type { ClerkRole } from '@/lib/constants/roles'
 import { useOrganizerRoleApi } from '@/lib/hooks/use-organizer-role-api'
@@ -59,9 +59,11 @@ function LanguagesStepInner({ role, roleApi, onSaved, onBack }: LanguagesStepInn
   const [aowDays, setAowDays] = useState('')
   const [oaDays, setOaDays] = useState('')
   const [aowSpecialties, setAowSpecialties] = useState<string[]>([])
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const [initialized, setInitialized] = useState(false)
+  const { execute: save, loading: saving, error } = useMutationWithFeedback(
+    update,
+    { errorFallback: 'Save failed' },
+  )
 
   useEffect(() => {
     if (existing !== undefined && me !== undefined && !initialized) {
@@ -85,39 +87,32 @@ function LanguagesStepInner({ role, roleApi, onSaved, onBack }: LanguagesStepInn
   }, [existing, me, initialized, supportsCoursePreferences])
 
   async function handleNext() {
-    setSaving(true)
-    setError(null)
-    try {
-      if (supportsCoursePreferences) {
-        const owDaysNum = owDays ? parseNumber(owDays, true) : undefined
-        const aowDaysNum = aowDays ? parseNumber(aowDays, true) : undefined
-        const oaDaysNum = oaDays ? parseNumber(oaDays, true) : undefined
-        const specialties = aowSpecialties.length > 0 ? aowSpecialties : undefined
+    let result: Awaited<ReturnType<typeof save>>
+    if (supportsCoursePreferences) {
+      const owDaysNum = owDays ? parseNumber(owDays, true) : undefined
+      const aowDaysNum = aowDays ? parseNumber(aowDays, true) : undefined
+      const oaDaysNum = oaDays ? parseNumber(oaDays, true) : undefined
+      const specialties = aowSpecialties.length > 0 ? aowSpecialties : undefined
 
-        const currentAssocs = existing && 'associations' in existing ? existing.associations : []
-        const firstAssoc = currentAssocs[0] ?? { agency: 'PADI', number: '' }
-        const patchedFirst = {
-          ...firstAssoc,
-          ...(owDaysNum !== undefined ? { owDays: owDaysNum } : {}),
-          ...(aowDaysNum !== undefined ? { aowDays: aowDaysNum } : {}),
-          ...(oaDaysNum !== undefined ? { oaDays: oaDaysNum } : {}),
-          ...(specialties !== undefined ? { selectedSpecialties: specialties } : {}),
-        }
-        await update({
-          associations: [patchedFirst, ...currentAssocs.slice(1)],
-          customerLanguages: focusedLanguages.map((l) => l.code),
-        })
-      } else {
-        await update({
-          customerLanguages: focusedLanguages.map((l) => l.code),
-        })
+      const currentAssocs = existing && 'associations' in existing ? existing.associations : []
+      const firstAssoc = currentAssocs[0] ?? { agency: 'PADI', number: '' }
+      const patchedFirst = {
+        ...firstAssoc,
+        ...(owDaysNum !== undefined ? { owDays: owDaysNum } : {}),
+        ...(aowDaysNum !== undefined ? { aowDays: aowDaysNum } : {}),
+        ...(oaDaysNum !== undefined ? { oaDays: oaDaysNum } : {}),
+        ...(specialties !== undefined ? { selectedSpecialties: specialties } : {}),
       }
-      onSaved()
-    } catch (err) {
-      setError(parseConvexError(err, 'Save failed'))
-    } finally {
-      setSaving(false)
+      result = await save({
+        associations: [patchedFirst, ...currentAssocs.slice(1)],
+        customerLanguages: focusedLanguages.map((l) => l.code),
+      })
+    } else {
+      result = await save({
+        customerLanguages: focusedLanguages.map((l) => l.code),
+      })
     }
+    if (result.ok) onSaved()
   }
 
   if (existing === undefined || me === undefined) {

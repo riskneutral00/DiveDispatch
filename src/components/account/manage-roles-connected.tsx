@@ -14,6 +14,7 @@ import { Spinner } from '@/components/ui/spinner'
 import type { ClerkRole } from '@/lib/constants/roles'
 import { ROLE_BY_CLERK_ROLE } from '@/lib/constants/roles'
 import { useDashboardSession } from '@/lib/hooks/use-dashboard-session'
+import { useMutationWithFeedback } from '@/lib/hooks/use-mutation-with-feedback'
 import { ErrorCode } from '@/lib/errors'
 
 interface ManageRolesConnectedProps {
@@ -32,9 +33,19 @@ export function ManageRolesConnected({ onNavigateToRole, activeClerkRole }: Mana
   const deleteRole = useMutation(api.userRoles.deleteRole)
 
   const [modalOpen, setModalOpen] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const [onboardingRole, setOnboardingRole] = useState<ClerkRole | null>(null)
+
+  const { execute: executeAddRole, loading, error, clearError } = useMutationWithFeedback(
+    async (role: ClerkRole) => addRole({ role }),
+    {
+      translateError: (e) => {
+        const code = getConvexErrorCode(e)
+        return code === ErrorCode.DUPLICATE_ROLE
+          ? tErr('duplicateRole')
+          : tCommon('actionFailed', { action: 'Add role' })
+      },
+    },
+  )
 
   const heldRoles = (roles ?? []).map((r) => r.role as ClerkRole)
   const roleCompletions = (roleCompleteness?.roles ?? []).map((entry) => ({
@@ -44,29 +55,17 @@ export function ManageRolesConnected({ onNavigateToRole, activeClerkRole }: Mana
 
   const handleSelectRole = useCallback(
     async (role: ClerkRole) => {
-      setError(null)
-      setLoading(true)
-      try {
-        await addRole({ role })
-        setModalOpen(false)
-        const roleConfig = ROLE_BY_CLERK_ROLE[role]
-        if (roleConfig && onNavigateToRole) {
-          onNavigateToRole(roleConfig.key)
-        } else {
-          setOnboardingRole(role)
-        }
-      } catch (e: unknown) {
-        const code = getConvexErrorCode(e)
-        if (code === ErrorCode.DUPLICATE_ROLE) {
-          setError(tErr('duplicateRole'))
-        } else {
-          setError(tCommon('actionFailed', { action: 'Add role' }))
-        }
-      } finally {
-        setLoading(false)
+      const result = await executeAddRole(role)
+      if (!result.ok) return
+      setModalOpen(false)
+      const roleConfig = ROLE_BY_CLERK_ROLE[role]
+      if (roleConfig && onNavigateToRole) {
+        onNavigateToRole(roleConfig.key)
+      } else {
+        setOnboardingRole(role)
       }
     },
-    [addRole, tCommon, tErr, onNavigateToRole],
+    [executeAddRole, onNavigateToRole],
   )
 
   const handleDeleteRole = useCallback(
@@ -121,7 +120,7 @@ export function ManageRolesConnected({ onNavigateToRole, activeClerkRole }: Mana
         roles={roles}
         roleCompletions={roleCompletions}
         onAddRole={() => {
-          setError(null)
+          clearError()
           setModalOpen(true)
         }}
         onDeleteRole={handleDeleteRole}
