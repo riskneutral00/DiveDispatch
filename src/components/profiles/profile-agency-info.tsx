@@ -6,7 +6,6 @@ import { DayPicker } from "@/components/ui/day-picker";
 import { InlineError } from "@/components/ui/inline-error";
 import { FormSectionHeader } from "@/components/ui/form-section-header";
 import { Button } from "@/components/ui/button";
-import { CheckboxGroup } from "@/components/ui/checkbox-group";
 import { FieldLabel } from "@/components/ui/field-shell";
 import { Input } from "@/components/ui/input";
 import { SimpleSelect } from "@/components/ui/simple-select";
@@ -22,10 +21,7 @@ import {
   type AgencyCourse,
 } from "@/lib/constants/agencies";
 
-export type ProfileAgencyInfoVariant =
-  | "dive-center"
-  | "agent"
-  | "instructor";
+export type ProfileAgencyInfoVariant = "dive-center" | "agent";
 
 type AgencyRow = Record<string, unknown>;
 
@@ -42,15 +38,12 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
   onChange,
   errors = {},
 }: ProfileAgencyInfoProps<TItem>) {
-  const isPro = variant === "instructor";
   const isAgent = variant === "agent";
   const isCenter = variant === "dive-center";
 
-  const sectionLabel = isPro ? "Dive Credentials" : "Affiliations";
-  const addLabel = isPro ? "Add Credential" : "Add";
-  const emptyMessage = isPro
-    ? "No credentials yet. Tap Add to get started."
-    : "No affiliations yet. Tap Add to get started.";
+  const sectionLabel = "Affiliations";
+  const addLabel = "Add";
+  const emptyMessage = "No affiliations yet. Tap Add to get started.";
 
   const keys = useStableKeys(items);
 
@@ -65,15 +58,7 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
         selectedSpecialties: getDefaultSpecialties("PADI"),
       };
     }
-    if (isAgent) {
-      return { agency: "", number: "" };
-    }
-    return {
-      agency: "",
-      level: "",
-      agencyID: "",
-      specialtyRatings: [],
-    };
+    return { agency: "", number: "" };
   }
 
   function handleAdd() {
@@ -96,13 +81,6 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
       (updated as AgencyRow).selectedSpecialties = getDefaultSpecialties(
         String(patch.agency),
       );
-    }
-
-    if (isPro && "agency" in patch) {
-      (updated as AgencyRow).level = "";
-      (updated as AgencyRow).agencyID = "";
-    } else if (isPro && "level" in patch) {
-      (updated as AgencyRow).agencyID = "";
     }
 
     newItems[idx] = updated;
@@ -214,82 +192,9 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
     );
   }
 
-  function renderProFields(item: AgencyRow, idx: number) {
-    const selectedAgency = String((item as AgencyRow).agency ?? "");
-    const selectedLevel = String((item as AgencyRow).level ?? "");
-    const agencyDef = selectedAgency ? AGENCIES[selectedAgency] : undefined;
-    const levelOptions = (agencyDef ?? AGENCIES["PADI"]).levels.map(
-      (l) => l.code,
-    );
-    const ratingItems = (agencyDef?.specialties ?? [])
-      .filter((s) => s.specialtyCourseName !== null)
-      .map((s) => ({ value: s.code, label: s.label }));
-
-    return (
-      <Fragment>
-        <div className="flex flex-wrap gap-3 mb-4 ">
-          <SimpleSelect
-            label="Agency"
-            value={selectedAgency}
-            onChange={(v) => handleUpdate(idx, { agency: v })}
-            options={DIVE_AGENCIES}
-            error={errors[`credential.${idx}.agency`]}
-            required
-            className="field-sm"
-          />
-          <SimpleSelect
-            label="Level"
-            value={selectedLevel}
-            onChange={(v) => handleUpdate(idx, { level: v })}
-            options={levelOptions}
-            error={errors[`credential.${idx}.level`]}
-            required
-            disabled={!selectedAgency}
-            className="field-sm"
-          />
-          <Input
-            label="Agency ID"
-            helperText={agencyDef?.memberIdLabel}
-            value={String((item as AgencyRow).agencyID ?? "")}
-            onChange={(e) => handleUpdate(idx, { agencyID: e.target.value })}
-            error={errors[`credential.${idx}.agencyID`]}
-            className="field-md"
-            required
-            disabled={!selectedAgency || !selectedLevel}
-          />
-        </div>
-        {variant === "instructor" && (
-          <div
-            className={
-              ratingItems.length > 0
-                ? "opacity-100"
-                : "opacity-0 h-0 overflow-hidden"
-            }
-          >
-            <CheckboxGroup
-              label="Specialty Instructor Ratings"
-              items={ratingItems}
-              selected={
-                ((item as AgencyRow).specialtyRatings as
-                  | string[]
-                  | undefined) ?? []
-              }
-              onChange={(values) =>
-                handleUpdate(idx, { specialtyRatings: values })
-              }
-              error={errors[`credential.${idx}.specialtyRatings`]}
-              columns={3}
-            />
-          </div>
-        )}
-      </Fragment>
-    );
-  }
-
   function renderVariantFields(item: AgencyRow, idx: number) {
     if (isCenter) return renderDiveCenterFields(item, idx);
-    if (isAgent) return renderAgentFields(item, idx);
-    return renderProFields(item, idx);
+    return renderAgentFields(item, idx);
   }
 
   return (

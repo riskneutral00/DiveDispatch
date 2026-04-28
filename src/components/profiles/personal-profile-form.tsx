@@ -1,6 +1,7 @@
 'use client'
 
-import { ProfileAgencyInfo } from '@/components/profiles/profile-agency-info'
+import { CredentialFields } from '@/components/profiles/credential-fields'
+import { InlineRowList } from '@/components/profiles/collection-editors'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import { BusinessContactSection } from '@/components/profiles/business-contact-section'
 import {
@@ -125,11 +126,26 @@ export function PersonalCredentialsSection({
       isValid={isValid}
       className="space-y-6"
     >
-      <ProfileAgencyInfo
-        variant="instructor"
+      <InlineRowList<PersonalCredential>
+        label="Dive Credentials"
+        addLabel="Add Credential"
         items={form.credential}
         onChange={(items) => setField('credential', items)}
-        errors={errors as Record<string, string>}
+        emptyItem={makeEmptyCredential}
+        renderRow={(cred, update, i) => (
+          <CredentialFields
+            value={cred}
+            onChange={update}
+            errors={{
+              agency: (errors as Record<string, string>)[`credential.${i}.agency`],
+              level: (errors as Record<string, string>)[`credential.${i}.level`],
+              agencyID: (errors as Record<string, string>)[`credential.${i}.agencyID`],
+              specialtyRatings: (errors as Record<string, string>)[`credential.${i}.specialtyRatings`],
+            }}
+          />
+        )}
+        minItems={1}
+        removeAriaLabel={() => 'Remove credential'}
       />
     </ProfileFormShell>
   )
