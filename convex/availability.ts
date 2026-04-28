@@ -4,7 +4,7 @@ import { requireAuth, authorize, type DbCtx } from './lib/auth'
 import { getProfileName } from './lib/profileHelpers'
 import type { MutationCtx } from './_generated/server'
 import type { Id } from './_generated/dataModel'
-import { releaseBookingReservations, isFullDayResource, restoreSnapshotUnits, getAvailabilitySnapshot } from './bookings/_shared'
+import { isFullDayResource, restoreSnapshotUnits, getAvailabilitySnapshot } from './bookings/_shared'
 import { todayISO } from './bookings/stateMachine'
 import { type SnapshotKey, snapshotKeyHash, buildSnapshotKey } from './bookings/snapshotKeys'
 
@@ -178,10 +178,6 @@ export async function _listInventoryByType(
       ctx.db.query('users').withIndex('by_slug', (q) => q.eq('slug', slug)).first(),
     ),
   )
-  const ownerMap = new Map(
-    uniqueOwnerIds.map((slug, i) => [slug, ownerDocs[i]]),
-  )
-
   const ownerToRole = new Map<string, string>()
   for (const unit of units) {
     ownerToRole.set(unit.ownerId as string, unit.resourceType as string)

@@ -6,20 +6,13 @@ export type SnapshotKey = {
   windowStart: string
 }
 
-export type ReservationLike = Pick<
-  Doc<'reservations'>,
-  'inventoryUnitId' | 'bookingSessionId'
->
-
-export type SessionLike = Pick<Doc<'bookingSessions'>, 'date' | 'startTime'>
-
 export function snapshotKeyHash(key: SnapshotKey): string {
   return `${key.inventoryUnitId}|${key.date}|${key.windowStart}`
 }
 
 export function buildSnapshotKey(
-  reservation: ReservationLike,
-  session: SessionLike,
+  reservation: Pick<Doc<'reservations'>, 'inventoryUnitId' | 'bookingSessionId'>,
+  session: Pick<Doc<'bookingSessions'>, 'date' | 'startTime'>,
 ): SnapshotKey {
   return {
     inventoryUnitId: reservation.inventoryUnitId,

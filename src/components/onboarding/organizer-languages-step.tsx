@@ -3,7 +3,7 @@
 import { useMutation, useQuery } from 'convex/react'
 import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
-import { useSessionIdentity } from '@/lib/hooks/use-session-identity'
+import { useDashboardSession } from '@/lib/hooks/use-dashboard-session'
 import { useMutationWithFeedback } from '@/lib/hooks/use-mutation-with-feedback'
 import { InlineError, NumberPicker } from '@/components/ui'
 import { LoadingCard } from '@/components/ui/loading-card'
@@ -49,7 +49,7 @@ interface LanguagesStepInnerProps {
 function LanguagesStepInner({ role, roleApi, onSaved, onBack }: LanguagesStepInnerProps) {
   const tCommon = useTranslations('common')
   const existing = useQuery(roleApi.mine)
-  const { user: me } = useSessionIdentity()
+  const { user: me } = useDashboardSession()
   const update = useMutation(roleApi.update)
 
   const { supportsCoursePreferences } = getOrganizerRoleFlags(role)

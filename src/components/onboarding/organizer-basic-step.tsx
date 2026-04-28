@@ -11,7 +11,7 @@ import { PhoneField } from '@/components/ui/phone-field'
 import { FieldRow } from '@/components/ui/field-row'
 import type { ClerkRole } from '@/lib/constants/roles'
 import { useOrganizerRoleApi } from '@/lib/hooks/use-organizer-role-api'
-import { useSessionIdentity } from '@/lib/hooks/use-session-identity'
+import { useDashboardSession } from '@/lib/hooks/use-dashboard-session'
 import { getOrganizerRoleFlags } from '@/lib/constants/organizer-wizard-config'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 import {
@@ -116,7 +116,7 @@ export function OrganizerBasicStep({ role, onSaved, onBack }: OrganizerBasicStep
 function VenueBasicStep({ onSaved, onBack }: { onSaved: () => void; onBack?: () => void }) {
   const t = useTranslations('common')
   const org = useQuery(api.organizations.mine)
-  const { user: me } = useSessionIdentity()
+  const { user: me } = useDashboardSession()
   const updateMutation = useMutation(api.organizations.updateBusinessMetadata)
 
   const { form, setField, errors, saving, isValid, loading, handleSubmit, validateField } =
@@ -187,7 +187,7 @@ interface BasicStepInnerProps {
 function BasicStepInner({ role, mutations, onSaved, onBack }: BasicStepInnerProps) {
   const t = useTranslations('common')
   const existing = useQuery(mutations.mine)
-  const { user: me } = useSessionIdentity()
+  const { user: me } = useDashboardSession()
   const inheritance = useQuery(api.users.inheritedContactDefaults, { excludeRole: role })
   const createMutation = useMutation(mutations.create)
   const updateMutation = useMutation(mutations.update)
