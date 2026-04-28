@@ -5,14 +5,11 @@ import { RESOURCE_OWNER_TYPES, type ResourceOwnerType } from '../shared/resource
 import { addressStructuredValidator } from '../shared/addressValidator'
 import {
   ISO_COUNTRY_CODES,
-  SUPPORTED_LOCALE_CODES,
   E164_REGEX,
   normalizeChineseScript,
 } from '../shared/i18nConstants'
 import { RANGE_BY_KIND, type VenueKind } from '../shared/venueTypes'
 import { ErrorCode } from './errorCodes'
-
-type SupportedLocale = 'en' | 'zh-CN' | 'zh-TW' | 'th' | 'fr' | 'ko'
 
 export const stakeholderTypeValidator = v.union(
   v.literal('DiveCenter'),
@@ -128,15 +125,6 @@ export function assertPhoneE164(phone: string, field = 'phone'): void {
   }
 }
 
-export function assertSupportedLocale(locale: string, field = 'appLanguage'): void {
-  if (!SUPPORTED_LOCALE_CODES.has(locale)) {
-    throw new ConvexError({
-      code: ErrorCode.VALIDATION,
-      reason: `invalid_locale:${field}:${locale}`,
-    })
-  }
-}
-
 export function assertLanguageCodes(codes: readonly string[], field: string): void {
   for (const code of codes) {
     if (typeof code !== 'string' || code.length === 0) {
@@ -154,30 +142,11 @@ export function assertLanguageCodes(codes: readonly string[], field: string): vo
   }
 }
 
-export function normalizeAppLanguage(code: string): SupportedLocale {
+export function normalizeAppLanguage(code: string): string {
   if (typeof code !== 'string' || code.length === 0) return 'en'
   const scripted = normalizeChineseScript(code)
-  if (SUPPORTED_LOCALE_CODES.has(scripted)) return scripted as SupportedLocale
-  const base = scripted.split('-')[0]
-  if (SUPPORTED_LOCALE_CODES.has(base)) return base as SupportedLocale
-  return 'en'
-}
-
-export function normalizeAppLanguageOrThrow(code: string, field = 'appLanguage'): SupportedLocale {
-  if (typeof code !== 'string' || code.length === 0) {
-    throw new ConvexError({
-      code: ErrorCode.VALIDATION,
-      reason: `invalid_locale:${field}:empty`,
-    })
-  }
-  const scripted = normalizeChineseScript(code)
-  if (SUPPORTED_LOCALE_CODES.has(scripted)) return scripted as SupportedLocale
-  const base = scripted.split('-')[0]
-  if (SUPPORTED_LOCALE_CODES.has(base)) return base as SupportedLocale
-  throw new ConvexError({
-    code: ErrorCode.VALIDATION,
-    reason: `invalid_locale:${field}:${code}`,
-  })
+  assertLanguageCodes([scripted], 'appLanguage')
+  return scripted
 }
 
 export function assertVenueRange(

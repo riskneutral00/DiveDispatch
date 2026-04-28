@@ -34,12 +34,12 @@ export interface SeedAddress {
 export interface SeedUser {
   slug: string
   email: string
-  name: string
   firstName: string
   lastName: string
+  nickname?: string
   appLanguage: SeedAppLanguage
   phone: string
-  dateOfBirth?: string
+  dateOfBirth: string
   customerLanguages?: string[]
 }
 
@@ -192,11 +192,11 @@ export const PHUKET_ADMIN: SeedStakeholder = {
   user: {
     slug: 'admin',
     email: 'admin+clerk_test@divedispatch.dev',
-    name: 'Matt Admin',
     firstName: 'Matt',
     lastName: 'Admin',
     appLanguage: 'en',
     phone: '+12345678910',
+    dateOfBirth: '1985-01-01',
   },
   organization: { name: 'South Andaman', slug: 'south-andaman', isAreaOrg: true },
   roles: [{ role: 'Venue' }],
@@ -217,7 +217,6 @@ export const RENE_SEA_FUN: SeedStakeholder = {
   user: {
     slug: 'sea-fun',
     email: 'rene_balot+clerk_test@seafundivers.com',
-    name: 'Rene Balot',
     firstName: 'Rene',
     lastName: 'Balot',
     appLanguage: 'en',
@@ -341,13 +340,45 @@ export const RENE_SEA_FUN: SeedStakeholder = {
 }
 
 
-export const ALL_STAKEHOLDERS: SeedStakeholder[] = [PHUKET_ADMIN, RENE_SEA_FUN]
+export const KAMON_COMPRESSOR_SHOP: SeedStakeholder = {
+  user: {
+    slug: 'otud5m',
+    email: 'compressor1+clerk_test@divedispatch.dev',
+    firstName: 'Kamon',
+    lastName: 'Saengkaew',
+    nickname: 'bubble',
+    appLanguage: 'en',
+    phone: '+66834966746',
+    dateOfBirth: '1996-09-09',
+  },
+  organization: { name: 'Compressor Shop Chalong', slug: 'compressor-shop-chalong' },
+  roles: [{ role: 'Compressor' }],
+  compressors: [
+    {
+      slug: 'compressor-shop-chalong',
+      name: 'Compressor Shop Chalong',
+      address: { street: 'ถนน ซันไรซ์', city: 'ราไวย์', state: 'ภูเก็ต', country: 'TH', postalCode: '83130' },
+      lat: 7.820217500000005,
+      lng: 98.3421578,
+      placeId: 'ChIJnZnaMEsvUDARpWaqKUuPJaQ',
+      email: 'compressor1+clerk_test@divedispatch.dev',
+      phone: '+66834966746',
+      gasMixes: ['air', 'nitrox'],
+      nitroxMin: 22,
+      nitroxMax: 40,
+      isAllowed: [],
+      notAllowed: [],
+      verified: false,
+    },
+  ],
+}
+
+export const ALL_STAKEHOLDERS: SeedStakeholder[] = [PHUKET_ADMIN, RENE_SEA_FUN, KAMON_COMPRESSOR_SHOP]
 
 export const PIERRE_DUBOIS: SeedStakeholder = {
   user: {
     slug: 'p4dub3',
     email: 'instructor1+clerk_test@divedispatch.dev',
-    name: '',
     firstName: 'Pierre',
     lastName: 'Dubois',
     appLanguage: 'en',
@@ -375,7 +406,6 @@ export const STEFAN_BRAUN: SeedStakeholder = {
   user: {
     slug: 's7brn8',
     email: 'instructor2+clerk_test@divedispatch.dev',
-    name: '',
     firstName: 'Stefan',
     lastName: 'Braun',
     appLanguage: 'en',
@@ -403,7 +433,6 @@ export const NATTAYA_SRISUK: SeedStakeholder = {
   user: {
     slug: 'n2sri5',
     email: 'instructor3+clerk_test@divedispatch.dev',
-    name: '',
     firstName: 'Nattaya',
     lastName: 'Srisuk',
     appLanguage: 'en',
@@ -431,7 +460,6 @@ export const ZHANG_YONG: SeedStakeholder = {
   user: {
     slug: 'zy9ng2',
     email: 'instructor4+clerk_test@divedispatch.dev',
-    name: '',
     firstName: 'Zhang',
     lastName: 'Yong',
     appLanguage: 'en',
@@ -459,7 +487,6 @@ export const SATO_KENJI: SeedStakeholder = {
   user: {
     slug: 'sk6jp4',
     email: 'instructor5+clerk_test@divedispatch.dev',
-    name: '',
     firstName: 'Sato',
     lastName: 'Kenji',
     appLanguage: 'en',
@@ -487,7 +514,6 @@ export const PRASIT_RATTANA: SeedStakeholder = {
   user: {
     slug: 'pr8th1',
     email: 'instructor6+clerk_test@divedispatch.dev',
-    name: '',
     firstName: 'Prasit',
     lastName: 'Rattana',
     appLanguage: 'en',
@@ -515,7 +541,6 @@ export const MIKE_CHEN: SeedStakeholder = {
   user: {
     slug: 'mc4cn7',
     email: 'instructor7+clerk_test@divedispatch.dev',
-    name: '',
     firstName: 'Mike',
     lastName: 'Chen',
     appLanguage: 'zh-CN',
@@ -544,7 +569,6 @@ export const LEE_MIN_HO: SeedStakeholder = {
   user: {
     slug: 'lm5kr3',
     email: 'instructor8+clerk_test@divedispatch.dev',
-    name: '',
     firstName: 'Lee',
     lastName: 'Min-Ho',
     appLanguage: 'ko',
@@ -573,7 +597,6 @@ export const MARIA_SANTOS: SeedStakeholder = {
   user: {
     slug: 'ms9es6',
     email: 'instructor9+clerk_test@divedispatch.dev',
-    name: '',
     firstName: 'Maria',
     lastName: 'Santos',
     appLanguage: 'fr',
@@ -602,7 +625,6 @@ export const HIROSHI_KATO: SeedStakeholder = {
   user: {
     slug: 'hk3jp9',
     email: 'instructor10+clerk_test@divedispatch.dev',
-    name: '',
     firstName: 'Hiroshi',
     lastName: 'Kato',
     appLanguage: 'ko',

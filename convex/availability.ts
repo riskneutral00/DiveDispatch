@@ -189,7 +189,7 @@ export async function _listInventoryByType(
       if (!owner) return
       const role = ownerToRole.get(slug) ?? ''
       const profileName = await getProfileName(ctx, owner._id, role)
-      profileNameMap.set(slug, profileName || owner.name || '')
+      profileNameMap.set(slug, profileName || `${owner.firstName} ${owner.lastName}`.trim())
     }),
   )
 

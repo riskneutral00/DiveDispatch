@@ -19,7 +19,7 @@ import { extractErrorCode, ISOLATABLE_ERRORS } from './lib/errorCodes'
 import { batchDelete, batchPatch } from './lib/batch'
 import { sanitizeFields, USER_FIELDS } from './lib/sanitize'
 import { isAdult, MIN_SIGNUP_AGE_YEARS } from './lib/timeConstants'
-import { normalizeAppLanguageOrThrow, assertPhoneE164 } from './lib/validators'
+import { normalizeAppLanguage, assertPhoneE164 } from './lib/validators'
 import { readOrgClaims } from './lib/activeOrg'
 import { parseTokenIdentifier, isAllowedRebind } from './lib/tokenIdentifier'
 import { insertUserRole, getAllUserRoles, type PermissionLevel } from './lib/userRoleHelpers'
@@ -107,7 +107,6 @@ export const createUser = mutation({
       )
       .unique()
 
-    const name = identity.name ?? ''
     const email = identity.email ?? ''
     const now = Date.now()
 
@@ -129,7 +128,7 @@ export const createUser = mutation({
         ...(existing.dateOfBirth === undefined && { dateOfBirth: args.dateOfBirth }),
         ...(args.nickname !== undefined && { nickname: args.nickname }),
         ...(args.phone !== undefined && { phone: args.phone }),
-        ...(args.appLanguage !== undefined && { appLanguage: normalizeAppLanguageOrThrow(args.appLanguage) }),
+        ...(args.appLanguage !== undefined && { appLanguage: normalizeAppLanguage(args.appLanguage) }),
         ...(existing.tcAcceptedAt === undefined && { tcAcceptedAt: now }),
         ...(args.tcVersion !== existing.tcVersion && { tcVersion: args.tcVersion, tcAcceptedAt: now }),
       })
@@ -174,10 +173,8 @@ export const createUser = mutation({
     const slug = await generateUniqueSlug(ctx.db)
     const userId = await ctx.db.insert('users', {
       tokenIdentifier: identity.tokenIdentifier,
-      originalTokenIdentifier: identity.tokenIdentifier,
       slug,
       email,
-      name,
       firstName: args.firstName,
       lastName: args.lastName,
       dateOfBirth: args.dateOfBirth,
@@ -185,7 +182,7 @@ export const createUser = mutation({
       tcVersion: args.tcVersion,
       ...(args.nickname !== undefined && { nickname: args.nickname }),
       ...(args.phone !== undefined && { phone: args.phone }),
-      appLanguage: args.appLanguage ? normalizeAppLanguageOrThrow(args.appLanguage) : 'en',
+      appLanguage: args.appLanguage ? normalizeAppLanguage(args.appLanguage) : 'en',
     })
 
     let resolvedOrgId: Id<'organizations'>
@@ -216,7 +213,7 @@ export const createUser = mutation({
       await ctx.scheduler.runAfter(0, internal.demoBookings.scheduleDemoBookings, {
         slug,
         role: args.role,
-        operatorName: name,
+        operatorName: `${args.firstName} ${args.lastName}`.trim(),
       })
     }
 
@@ -253,7 +250,7 @@ export const updateProfile = mutation({
       ...(sanitized.nickname !== undefined && { nickname: sanitized.nickname }),
       ...(sanitized.phone !== undefined && { phone: sanitized.phone }),
       ...(args.dateOfBirth !== undefined && { dateOfBirth: args.dateOfBirth }),
-      ...(args.appLanguage !== undefined && { appLanguage: normalizeAppLanguageOrThrow(args.appLanguage) }),
+      ...(args.appLanguage !== undefined && { appLanguage: normalizeAppLanguage(args.appLanguage) }),
     })
 
     await syncDiveStaffName(
@@ -371,31 +368,6 @@ export const getAllRolesCompleteness = query({
   },
 })
 
-export const updateAccountDefaults = mutation({
-  args: {
-    defaultLocation: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    const { user } = await authorize(ctx, null, 'profile:manage', { type: 'profile' })
-
-    await ctx.db.patch(user._id, {
-      ...(args.defaultLocation !== undefined && { defaultLocation: args.defaultLocation }),
-    })
-  },
-})
-
-export const getAccountDefaults = query({
-  args: {},
-  handler: async (ctx) => {
-    const user = await getAuthUser(ctx)
-    if (!user) return null
-
-    return {
-      defaultLocation: user.defaultLocation,
-    }
-  },
-})
-
 const INHERITANCE_SOURCE_ROLES: ReadonlySet<string> = new Set([
   'DiveCenter',
   'Agent',
@@ -459,7 +431,6 @@ export const upsertFromWebhook = internalMutation({
   args: {
     tokenIdentifier: v.string(),
     email: v.string(),
-    name: v.string(),
     firstName: v.string(),
     lastName: v.string(),
     svixId: v.optional(v.string()),
@@ -488,7 +459,6 @@ export const upsertFromWebhook = internalMutation({
     if (existing) {
       await ctx.db.patch(existing._id, {
         email: args.email,
-        name: args.name,
         firstName: args.firstName,
         lastName: args.lastName,
       })
@@ -512,8 +482,6 @@ export const upsertFromWebhook = internalMutation({
         if (allowed) {
           await ctx.db.patch(byEmail._id, {
             tokenIdentifier: args.tokenIdentifier,
-            originalTokenIdentifier: args.tokenIdentifier,
-            name: args.name,
             firstName: args.firstName,
             lastName: args.lastName,
           })
@@ -548,10 +516,8 @@ export const upsertFromWebhook = internalMutation({
     const slug = await generateUniqueSlug(ctx.db)
     const userId = await ctx.db.insert('users', {
       tokenIdentifier: args.tokenIdentifier,
-      originalTokenIdentifier: args.tokenIdentifier,
       slug,
       email: args.email,
-      name: args.name,
       firstName: args.firstName,
       lastName: args.lastName,
       appLanguage: 'en',
@@ -585,7 +551,6 @@ export const deleteFromWebhook = internalMutation({
 
     await ctx.db.patch(user._id, {
       email: 'deleted@deleted.invalid',
-      name: '',
       firstName: '',
       lastName: '',
     })

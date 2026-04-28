@@ -160,12 +160,10 @@ http.route({
         ''
       const firstName = userData.first_name ?? ''
       const lastName = userData.last_name ?? ''
-      const name = [firstName, lastName].filter(Boolean).join(' ')
 
       await ctx.runMutation(internal.users.upsertFromWebhook, {
         tokenIdentifier,
         email: primaryEmail,
-        name,
         firstName,
         lastName,
         svixId,

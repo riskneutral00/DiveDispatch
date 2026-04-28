@@ -36,33 +36,18 @@ async function devSwitchUserHandler(ctx: MutCtx, targetSlug: string) {
   const defaultRole = deriveDefaultRole(targetRoles.map((r) => r.role))
 
   if (currentHolder && currentHolder._id === target._id) {
-    return { slug: target.slug, role: defaultRole, name: target.name }
+    return { slug: target.slug, role: defaultRole, name: `${target.firstName} ${target.lastName}`.trim() }
   }
 
   if (currentHolder) {
-    const restoreToken = currentHolder.originalTokenIdentifier ?? currentHolder.tokenIdentifier
-    const parkedToken =
-      restoreToken === realToken
-        ? `parked|${currentHolder.slug}|${Date.now()}`
-        : restoreToken
-    const patch: { tokenIdentifier: string; originalTokenIdentifier?: string } = {
-      tokenIdentifier: parkedToken,
-    }
-    if (!currentHolder.originalTokenIdentifier) {
-      patch.originalTokenIdentifier = realToken
-    }
-    await ctx.db.patch(currentHolder._id, patch)
+    await ctx.db.patch(currentHolder._id, {
+      tokenIdentifier: `parked|${currentHolder.slug}|${Date.now()}`,
+    })
   }
 
-  const targetPatch: { tokenIdentifier: string; originalTokenIdentifier?: string } = {
-    tokenIdentifier: realToken,
-  }
-  if (!target.originalTokenIdentifier) {
-    targetPatch.originalTokenIdentifier = target.tokenIdentifier
-  }
-  await ctx.db.patch(target._id, targetPatch)
+  await ctx.db.patch(target._id, { tokenIdentifier: realToken })
 
-  return { slug: target.slug, role: defaultRole, name: target.name }
+  return { slug: target.slug, role: defaultRole, name: `${target.firstName} ${target.lastName}`.trim() }
 }
 
 export const devSwitchUser = mutation({
@@ -91,7 +76,7 @@ export const listAllUsers = query({
           slug: u.slug,
           firstName: u.firstName,
           lastName: u.lastName,
-          name: u.name,
+          name: `${u.firstName} ${u.lastName}`.trim(),
           roles: userRoles.map((r) => r.role),
         },
       ]

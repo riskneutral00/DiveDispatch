@@ -13,11 +13,11 @@ export const HUG_OCEAN: SeedStakeholder = {
   user: {
     slug: 'n7rq5j',
     email: 'hug-ocean+clerk_test@divedispatch.dev',
-    name: 'Somchai Prasert',
     firstName: 'Somchai',
     lastName: 'Prasert',
     appLanguage: 'zh-CN',
     phone: '+66812345001',
+    dateOfBirth: '1985-01-01',
   },
   roles: [
     { role: 'DiveCenter' },
@@ -76,11 +76,11 @@ export const NEPTUNE: SeedStakeholder = {
   user: {
     slug: 'z8mv4c',
     email: 'neptune+clerk_test@divedispatch.dev',
-    name: 'Wei Lin',
     firstName: 'Wei',
     lastName: 'Lin',
     appLanguage: 'zh-CN',
     phone: '+66812345002',
+    dateOfBirth: '1985-01-01',
   },
   roles: [
     { role: 'DiveCenter' },
@@ -123,11 +123,11 @@ export const PHUKET_DC: SeedStakeholder = {
   user: {
     slug: 'p5ky3w',
     email: 'phuket-dive-center+clerk_test@divedispatch.dev',
-    name: 'Kittisak Charoen',
     firstName: 'Kittisak',
     lastName: 'Charoen',
     appLanguage: 'th',
     phone: '+66812345003',
+    dateOfBirth: '1985-01-01',
   },
   roles: [
     { role: 'DiveCenter' },
@@ -187,11 +187,11 @@ export const NICOLE_DC: SeedStakeholder = {
   user: {
     slug: 'q9bz7r',
     email: 'nicole-dive-center+clerk_test@divedispatch.dev',
-    name: 'Nicole Huang',
     firstName: 'Nicole',
     lastName: 'Huang',
     appLanguage: 'zh-TW',
     phone: '+66812345004',
+    dateOfBirth: '1985-01-01',
   },
   roles: [
     { role: 'DiveCenter' },
@@ -223,11 +223,11 @@ export const MANTA_DC: SeedStakeholder = {
   user: {
     slug: 'v6js2t',
     email: 'manta-dive-center+clerk_test@divedispatch.dev',
-    name: 'Pierre Duval',
     firstName: 'Pierre',
     lastName: 'Duval',
     appLanguage: 'fr',
     phone: '+66812345005',
+    dateOfBirth: '1985-01-01',
   },
   roles: [
     { role: 'DiveCenter' },
@@ -247,11 +247,11 @@ export const SCUBANICKS: SeedStakeholder = {
   user: {
     slug: 'm4fx8d',
     email: 'scubanicks+clerk_test@divedispatch.dev',
-    name: 'Nick Harrison',
     firstName: 'Nick',
     lastName: 'Harrison',
     appLanguage: 'en',
     phone: '+66812345006',
+    dateOfBirth: '1985-01-01',
   },
   roles: [
     { role: 'DiveCenter' },
@@ -281,11 +281,11 @@ export const SCUBA_DEEP: SeedStakeholder = {
   user: {
     slug: 'h3cp6n',
     email: 'scuba-deep+clerk_test@divedispatch.dev',
-    name: 'James Mitchell',
     firstName: 'James',
     lastName: 'Mitchell',
     appLanguage: 'en',
     phone: '+66812345007',
+    dateOfBirth: '1985-01-01',
   },
   roles: [
     { role: 'DiveCenter' },
@@ -318,11 +318,11 @@ export const SIROLO: SeedStakeholder = {
   user: {
     slug: 'sirolo',
     email: 'sirolo+clerk_test@divedispatch.dev',
-    name: 'Prasit Wongsawat',
     firstName: 'Prasit',
     lastName: 'Wongsawat',
     appLanguage: 'th',
     phone: '+66812345008',
+    dateOfBirth: '1985-01-01',
   },
   roles: [
     { role: 'DiveCenter' },
@@ -375,11 +375,11 @@ export const PRAY_DC: SeedStakeholder = {
   user: {
     slug: 't7gw1k',
     email: 'pray-dive-center+clerk_test@divedispatch.dev',
-    name: 'Anong Srisuk',
     firstName: 'Anong',
     lastName: 'Srisuk',
     appLanguage: 'en',
     phone: '+66812345009',
+    dateOfBirth: '1985-01-01',
   },
   roles: [
     { role: 'DiveCenter' },
@@ -399,11 +399,11 @@ export const HANUL_DIVE: SeedStakeholder = {
   user: {
     slug: 'w3kn7p',
     email: 'hanul-dive+clerk_test@divedispatch.dev',
-    name: 'Park Joon-Woo',
     firstName: 'Joon-Woo',
     lastName: 'Park',
     appLanguage: 'ko',
     phone: '+66812345013',
+    dateOfBirth: '1985-01-01',
   },
   roles: [
     { role: 'DiveCenter' },
@@ -426,11 +426,11 @@ export const UMI_DIVE: SeedStakeholder = {
   user: {
     slug: 'b6um4j',
     email: 'umi-dive+clerk_test@divedispatch.dev',
-    name: 'Tanaka Haruto',
     firstName: 'Haruto',
     lastName: 'Tanaka',
     appLanguage: 'en',
     phone: '+66812345015',
+    dateOfBirth: '1985-01-01',
   },
   roles: [
     { role: 'DiveCenter' },
@@ -453,11 +453,11 @@ export const AQUA_PRO: SeedStakeholder = {
   user: {
     slug: 'r9aq5v',
     email: 'aqua-pro+clerk_test@divedispatch.dev',
-    name: 'Sergei Kozlov',
     firstName: 'Sergei',
     lastName: 'Kozlov',
     appLanguage: 'en',
     phone: '+66812345016',
+    dateOfBirth: '1985-01-01',
   },
   roles: [
     { role: 'DiveCenter' },
@@ -480,11 +480,11 @@ export const PACIFIC_DIVERS: SeedStakeholder = {
   user: {
     slug: 'c2pd8x',
     email: 'pacific-divers+clerk_test@divedispatch.dev',
-    name: 'Carlos Mendoza',
     firstName: 'Carlos',
     lastName: 'Mendoza',
     appLanguage: 'en',
     phone: '+66812345017',
+    dateOfBirth: '1985-01-01',
   },
   roles: [
     { role: 'DiveCenter' },
@@ -507,11 +507,11 @@ export const BLUE_PLANET: SeedStakeholder = {
   user: {
     slug: 'f7bp3g',
     email: 'blue-planet+clerk_test@divedispatch.dev',
-    name: 'Willem de Groot',
     firstName: 'Willem',
     lastName: 'de Groot',
     appLanguage: 'en',
     phone: '+66812345018',
+    dateOfBirth: '1985-01-01',
   },
   roles: [
     { role: 'DiveCenter' },
@@ -534,12 +534,12 @@ export const AMANDA: SeedStakeholder = {
   user: {
     slug: 'r5yz4q',
     email: 'amanda+clerk_test@divedispatch.dev',
-    name: 'Amanda Chen',
     firstName: 'Amanda',
     lastName: 'Chen',
     appLanguage: 'zh-CN',
     phone: '+66812345010',
     customerLanguages: ['zh-CN', 'zh-TW', 'en', 'th'],
+    dateOfBirth: '1985-01-01',
   },
   roles: [
     { role: 'Agent' },
@@ -558,12 +558,12 @@ export const JIYEON_AGENT: SeedStakeholder = {
   user: {
     slug: 'k4ko9j',
     email: 'jiyeon+clerk_test@divedispatch.dev',
-    name: 'Ji-Yeon Park',
     firstName: 'Ji-Yeon',
     lastName: 'Park',
     appLanguage: 'ko',
     phone: '+821034567890',
     customerLanguages: ['ko', 'en'],
+    dateOfBirth: '1985-01-01',
   },
   roles: [{ role: 'Agent' }],
   agent: {
@@ -585,12 +585,12 @@ export const KENJI_AGENT: SeedStakeholder = {
   user: {
     slug: 'a7ja2m',
     email: 'kenji+clerk_test@divedispatch.dev',
-    name: 'Kenji Watanabe',
     firstName: 'Kenji',
     lastName: 'Watanabe',
     appLanguage: 'en',
     phone: '+819012345678',
     customerLanguages: ['ja', 'en'],
+    dateOfBirth: '1985-01-01',
   },
   roles: [{ role: 'Agent' }],
   agent: {
@@ -612,12 +612,12 @@ export const EVA_AGENT: SeedStakeholder = {
   user: {
     slug: 'e6eu5z',
     email: 'eva+clerk_test@divedispatch.dev',
-    name: 'Eva Klein',
     firstName: 'Eva',
     lastName: 'Klein',
     appLanguage: 'en',
     phone: '+491701234567',
     customerLanguages: ['de', 'fr', 'nl'],
+    dateOfBirth: '1985-01-01',
   },
   roles: [{ role: 'Agent' }],
   agent: {
@@ -639,11 +639,11 @@ export const WATER_PRO: SeedStakeholder = {
   user: {
     slug: 'b3wt9f',
     email: 'water-pro+clerk_test@divedispatch.dev',
-    name: 'Niran Jantarakul',
     firstName: 'Niran',
     lastName: 'Jantarakul',
     appLanguage: 'th',
     phone: '+6676394001',
+    dateOfBirth: '1985-01-01',
   },
   roles: [
     { role: 'Venue' },
@@ -666,11 +666,11 @@ export const SHARK_BITES: SeedStakeholder = {
   user: {
     slug: 'g2hn6x',
     email: 'shark-bites+clerk_test@divedispatch.dev',
-    name: 'Kittisak Wongsawat',
     firstName: 'Kittisak',
     lastName: 'Wongsawat',
     appLanguage: 'th',
     phone: '+6676394002',
+    dateOfBirth: '1985-01-01',
   },
   roles: [
     { role: 'Venue' },
@@ -693,11 +693,11 @@ export const SCUBA_REVOLUTION: SeedStakeholder = {
   user: {
     slug: 'v8sr2p',
     email: 'scuba-revolution+clerk_test@divedispatch.dev',
-    name: 'Anong Petcharat',
     firstName: 'Anong',
     lastName: 'Petcharat',
     appLanguage: 'th',
     phone: '+6676330678',
+    dateOfBirth: '1985-01-01',
   },
   roles: [{ role: 'Equipment' }],
   equipment: {

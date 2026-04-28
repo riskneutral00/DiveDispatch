@@ -189,17 +189,10 @@ export const wipeBatch = internalMutation({
 
 async function insertUser(ctx: MutationCtx, s: SeedStakeholder) {
   const token = `seed|${s.user.slug}`
+  const { customerLanguages: _customerLanguages, ...userFields } = s.user
   return ctx.db.insert('users', {
+    ...userFields,
     tokenIdentifier: token,
-    originalTokenIdentifier: token,
-    slug: s.user.slug,
-    email: s.user.email,
-    name: s.user.name,
-    firstName: s.user.firstName,
-    lastName: s.user.lastName,
-    appLanguage: s.user.appLanguage,
-    phone: s.user.phone,
-    dateOfBirth: s.user.dateOfBirth ?? '1990-01-01',
   })
 }
 
@@ -408,7 +401,7 @@ export const seedInstructors = internalMutation({
     for (const s of ALL_INSTRUCTORS) {
       const userId = await insertUser(ctx, s)
       if (s.instructor) {
-        const organizationId = await getOrCreateSeedOrg(ctx, s.user.slug, s.instructor.name ?? s.user.name) // batch-exempt
+        const organizationId = await getOrCreateSeedOrg(ctx, s.user.slug, s.instructor.name ?? `${s.user.firstName} ${s.user.lastName}`.trim()) // batch-exempt
         await setUserOrganization(ctx, userId, organizationId) // batch-exempt
         await ctx.db.insert('diveStaff', { organizationId, ...s.instructor, role: 'Instructor' }) // batch-exempt: sequential per-instructor seed
       }
@@ -477,7 +470,7 @@ export const seedResourceInventory = internalMutation({
       await ctx.db.insert('inventoryUnits', { // batch-exempt
         resourceType: 'Instructor' as const,
         resourceId: s.user.slug,
-        displayName: s.user.name,
+        displayName: `${s.user.firstName} ${s.user.lastName}`.trim(),
         capacityModel: 'Exclusive',
         totalUnits: 1,
         ownerId: s.user.slug,

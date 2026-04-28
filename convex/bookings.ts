@@ -158,7 +158,7 @@ export async function buildInstructorNameMap(
         .query('users')
         .withIndex('by_slug', (q) => q.eq('slug', slug))
         .unique()
-      if (user) map.set(slug, user.name as string)
+      if (user) map.set(slug, `${user.firstName} ${user.lastName}`.trim())
     }),
   )
   return map
@@ -522,7 +522,7 @@ export async function _getBookingDetail(
         .unique()
       if (u) {
         userProfileMap.set(slug, {
-          name: u.name as string,
+          name: `${u.firstName} ${u.lastName}`.trim(),
           displaySub: (u.nickname as string | undefined) ?? undefined,
         })
       }
