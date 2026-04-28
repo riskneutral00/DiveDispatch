@@ -47,6 +47,7 @@ export const NOTIFICATION_CONFIG = {
   medical_cleared: { icon: 'ShieldCheck', tier: 'info' },
   portal_complete: { icon: 'CheckCircle', tier: 'info' },
   booking_confirmed: { icon: 'CheckCircle', tier: 'info' },
+  reservation_accepted: { icon: 'UserCheck', tier: 'info' },
 } satisfies Record<NotificationType, NotificationTypeConfig>
 
 const FALLBACK_CONFIG: NotificationTypeConfig = { icon: 'Bell', tier: 'info' }

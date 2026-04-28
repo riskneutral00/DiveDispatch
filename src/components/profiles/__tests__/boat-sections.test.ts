@@ -239,6 +239,10 @@ describe('boatFleetToPayload', () => {
           cutoffHours: 24,
         },
       ],
+      hasCompressor: false,
+      gasMixes: [],
+      nitroxMin: undefined,
+      nitroxMax: undefined,
     }
     const payload = boatFleetToPayload(form)
     const vessels = payload.fleet as Array<Record<string, unknown>>
@@ -253,6 +257,10 @@ describe('boatFleetToPayload', () => {
   it('sets minPax to undefined when not set', () => {
     const form: BoatFleetFormState = {
       fleet: [{ boatName: 'Boat', maxPax: 10, minPax: undefined, boatType: 'speedboat', routes: [], cutoffHours: undefined }],
+      hasCompressor: false,
+      gasMixes: [],
+      nitroxMin: undefined,
+      nitroxMax: undefined,
     }
     const payload = boatFleetToPayload(form)
     const vessel = (payload.fleet as Array<Record<string, unknown>>)[0]
@@ -262,6 +270,10 @@ describe('boatFleetToPayload', () => {
   it('sets cutoffHours to undefined when not set', () => {
     const form: BoatFleetFormState = {
       fleet: [{ boatName: 'Boat', maxPax: 10, minPax: undefined, boatType: 'speedboat', routes: [], cutoffHours: undefined }],
+      hasCompressor: false,
+      gasMixes: [],
+      nitroxMin: undefined,
+      nitroxMax: undefined,
     }
     const payload = boatFleetToPayload(form)
     const vessel = (payload.fleet as Array<Record<string, unknown>>)[0]
@@ -271,6 +283,10 @@ describe('boatFleetToPayload', () => {
   it('sets routes to undefined when empty', () => {
     const form: BoatFleetFormState = {
       fleet: [{ boatName: 'Boat', maxPax: 10, minPax: undefined, boatType: 'speedboat', routes: [], cutoffHours: undefined }],
+      hasCompressor: false,
+      gasMixes: [],
+      nitroxMin: undefined,
+      nitroxMax: undefined,
     }
     const payload = boatFleetToPayload(form)
     const vessel = (payload.fleet as Array<Record<string, unknown>>)[0]
@@ -289,6 +305,10 @@ describe('boatFleetToPayload', () => {
           cutoffHours: undefined,
         },
       ],
+      hasCompressor: false,
+      gasMixes: [],
+      nitroxMin: undefined,
+      nitroxMax: undefined,
     }
     const payload = boatFleetToPayload(form)
     const vessel = (payload.fleet as Array<Record<string, unknown>>)[0]
@@ -296,7 +316,7 @@ describe('boatFleetToPayload', () => {
   })
 
   it('does not include contact fields (name, email, phone, location)', () => {
-    const form: BoatFleetFormState = { fleet: [] }
+    const form: BoatFleetFormState = { fleet: [], hasCompressor: false, gasMixes: [], nitroxMin: undefined, nitroxMax: undefined }
     const payload = boatFleetToPayload(form)
     expect(payload).not.toHaveProperty('name')
     expect(payload).not.toHaveProperty('email')
