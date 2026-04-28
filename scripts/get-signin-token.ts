@@ -15,7 +15,7 @@ import { createClerkClient } from '@clerk/backend'
 import { readFileSync } from 'fs'
 import { join } from 'path'
 import { ALL_STAKEHOLDERS } from '../convex/seedData'
-import { ALL_INSTRUCTORS } from '../convex/seedInstructorData'
+import { ALL_INSTRUCTORS } from '../convex/seedData'
 
 function readEnvLocal(): Record<string, string> {
   try {

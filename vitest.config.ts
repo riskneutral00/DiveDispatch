@@ -11,7 +11,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       include: ['src/**', 'convex/**'],
-      exclude: ['**/node_modules/**', '**/*.d.ts', '**/_generated/**', '**/seed*.ts', 'convex/seed.ts', 'convex/seedData.ts', 'convex/seedInstructorData.ts', 'convex/seedBookingData.ts',
+      exclude: ['**/node_modules/**', '**/*.d.ts', '**/_generated/**', '**/seed*.ts', 'convex/seed.ts', 'convex/seedData.ts', 'convex/parkedData.ts', 'convex/seedBookingData.ts',
       'src/app/**', 'src/components/**', 'src/hooks/**', 'src/i18n/**', 'src/themes/theme-provider.tsx', 'src/themes/theme-loader.ts', 'src/themes/theme-types.ts',
       'src/lib/hooks/use-current-user.ts', 'src/lib/hooks/use-debounce.ts', 'src/lib/hooks/use-profile-form.ts', 'src/lib/hooks/use-stable-query.ts', 'src/lib/validation/useFormValidation.ts',
       'src/lib/types/**', 'src/lib/validators/**',

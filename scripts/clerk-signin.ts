@@ -6,7 +6,7 @@ import { readFileSync } from 'fs'
 import { join } from 'path'
 import { tmpdir } from 'os'
 import { ALL_STAKEHOLDERS } from '../convex/seedData'
-import { ALL_INSTRUCTORS } from '../convex/seedInstructorData'
+import { ALL_INSTRUCTORS } from '../convex/seedData'
 
 const ROLE_SLUGS: Record<string, string> = {
   'n7rq5j': 'dive-center',

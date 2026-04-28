@@ -5,7 +5,7 @@ import { readFileSync } from 'fs'
 import { join } from 'path'
 import { spawnSync } from 'child_process'
 import { ALL_STAKEHOLDERS, type SeedUser } from '../convex/seedData'
-import { ALL_INSTRUCTORS } from '../convex/seedInstructorData'
+import { ALL_INSTRUCTORS } from '../convex/seedData'
 
 const SEED_PASSWORD = 'divedispatch123'
 const DELAY_MS = 500 // spacing between Clerk API calls to avoid rate limits

@@ -1,0 +1,23 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": [
+    "src/app/**/page.tsx",
+    "src/app/**/layout.tsx",
+    "src/app/**/route.ts",
+    "src/proxy.ts",
+    "src/app/sw.ts",
+    "src/i18n/namespaces.ts",
+    "src/scripts/generate-globals-derived-css.ts",
+    "convex/**/*.ts!",
+    "scripts/**/*.{ts,mjs}",
+    "tests/**/*.test.ts",
+    "tests/**/*.test.tsx",
+    "e2e/**/*.spec.ts",
+    "vitest.config.ts",
+    "next.config.ts",
+    "playwright.config.ts"
+  ],
+  "project": ["src/**/*.{ts,tsx}", "convex/**/*.ts", "scripts/**/*.ts", "tests/**/*.{ts,tsx}", "e2e/**/*.ts"],
+  "ignore": ["convex/_generated/**", ".next/**", "node_modules/**", "ultraplan/**", ".tickets/**", ".claude/**", "src/lib/utils/mrz.ts"],
+  "ignoreDependencies": ["mrz"]
+}

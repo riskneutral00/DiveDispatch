@@ -16,7 +16,7 @@ When starting a migration, paste this checklist into the plan or ticket and fill
 | **Frontend schemas updated** | `src/lib/schemas/*`, `src/lib/validation/*` shape changes |
 | **Validators added/wired** | new / wired `assert*` calls; any new hook added |
 | **Tests added** | lock tests that would have caught the bug this migration fixes |
-| **Seed / fixtures updated** | `convex/seedData.ts`, `convex/seedInstructorData.ts`, `tests/fixtures/**` |
+| **Seed / fixtures updated** | `convex/seedData.ts`, `convex/parkedData.ts`, `tests/fixtures/**` |
 | **Session log accurate** | vault `log.md` entry reflects count of sites actually touched |
 | **Vault entities added/updated** | `wiki/Architecture/entities/*.md` for new concepts |
 | **Legacy branches swept** | grep for old table/field names — residual references to the old shape are a test-passing hazard |
