@@ -6,6 +6,7 @@ import type { MutationCtx } from './_generated/server'
 import type { Id } from './_generated/dataModel'
 import { releaseBookingReservations, isFullDayResource, restoreSnapshotUnits, getAvailabilitySnapshot } from './bookings/_shared'
 import { todayISO } from './bookings/stateMachine'
+import { type SnapshotKey, snapshotKeyHash, buildSnapshotKey } from './bookings/snapshotKeys'
 
 import { type ResourceOwnerType, resourceOwnerTypeValidator, RESOURCE_OWNER_TYPES } from './shared/resourceOwnerTypes'
 import { effectiveResourceType, stakeholderTypeValidator as stakeholderType, type StakeholderRole, assertValidTime } from './lib/validators'
@@ -426,7 +427,6 @@ export async function _toggleBlockedDate(
       (r) => r.status === RESERVATION_STATUS.PendingAcceptance,
     )
 
-    type SnapshotKey = { inventoryUnitId: Id<'inventoryUnits'>; date: string; windowStart: string }
     const snapshotKeyMap = new Map<string, SnapshotKey>()
 
     for (const reservation of pendingReservations) {
@@ -434,15 +434,12 @@ export async function _toggleBlockedDate(
       affectedBookingIds.add(sessionMap.get(reservation.bookingSessionId)!.bookingId)
 
       const session = sessionMap.get(reservation.bookingSessionId)!
-      const key = `${reservation.inventoryUnitId}|${session.date}|${session.startTime}`
+      const snapshotKey = buildSnapshotKey(reservation, session)
+      const key = snapshotKeyHash(snapshotKey)
 
       if (!snapshotKeyMap.has(key)) {
         assertValidTime(session.startTime, 'startTime')
-        snapshotKeyMap.set(key, {
-          inventoryUnitId: reservation.inventoryUnitId,
-          date: session.date,
-          windowStart: session.startTime,
-        })
+        snapshotKeyMap.set(key, snapshotKey)
       }
 
       unitsToRestore.set(key, (unitsToRestore.get(key) ?? 0) + reservation.unitsRequested)

@@ -8,6 +8,7 @@ import { type BookingStatus, BOOKING_STATUS, RESERVATION_STATUS, VACATED_REASON 
 import { canBookingTransition } from './stateMachine'
 import { ErrorCode } from '../lib/errorCodes'
 import { assertValidTime } from '../lib/validators'
+import { type SnapshotKey, snapshotKeyHash, buildSnapshotKey } from './snapshotKeys'
 import { logBookingChange } from '../lib/auditLog'
 import { batchPatch } from '../lib/batch'
 import { releaseBagsForBooking } from '../lib/equipmentBags'
@@ -89,17 +90,13 @@ async function releaseActiveReservations(
     sessionMap.set(uniqueSessionIds[i], doc)
   }
 
-  type SnapshotKey = { inventoryUnitId: Id<'inventoryUnits'>; date: string; windowStart: string }
   const snapshotKeyMap = new Map<string, SnapshotKey>()
   for (const res of active) {
     const session = sessionMap.get(res.bookingSessionId)!
-    const key = `${res.inventoryUnitId}|${session.date}|${session.startTime}`
+    const snapshotKey = buildSnapshotKey(res, session)
+    const key = snapshotKeyHash(snapshotKey)
     if (!snapshotKeyMap.has(key)) {
-      snapshotKeyMap.set(key, {
-        inventoryUnitId: res.inventoryUnitId,
-        date: session.date,
-        windowStart: session.startTime,
-      })
+      snapshotKeyMap.set(key, snapshotKey)
     }
   }
 
