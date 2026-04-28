@@ -163,11 +163,11 @@ export default function SignUpPage() {
         <div className="w-full mb-6">
           <LanguageField
             label={t('appLanguage')}
-            max={1}
+            multiple={false}
             required
             value={selectedLocale}
             onChange={(langs) => {
-              if (langs[0]) changeAppLanguage(langs[0].code)
+              changeAppLanguage(langs[0]?.code ?? '')
             }}
           />
         </div>

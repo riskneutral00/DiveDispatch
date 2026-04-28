@@ -42,7 +42,11 @@ export function LanguagePicker({
 
   function toggle(lang: Language) {
     if (max === 1) {
-      onChange([{ code: lang.code, label: lang.label }]);
+      if (selectedCodes.has(lang.code)) {
+        onChange([]);
+      } else {
+        onChange([{ code: lang.code, label: lang.label }]);
+      }
       setQuery("");
       return;
     }

@@ -11,6 +11,7 @@ interface LanguageFieldProps {
   onChange: (languages: Language[]) => void;
   onBlur?: () => void;
   id?: string;
+  multiple?: boolean;
   max?: number;
   required?: boolean;
   error?: string;
@@ -24,12 +25,14 @@ export function LanguageField({
   onChange,
   onBlur,
   id = "language-field",
-  max = 4,
+  multiple = true,
+  max,
   required = true,
   error,
   disabled = false,
   className,
 }: LanguageFieldProps) {
+  const resolvedMax = multiple ? (max ?? 4) : 1;
   return (
     <div
       onBlur={
@@ -53,7 +56,7 @@ export function LanguageField({
           <LanguagePicker
             value={value}
             onChange={onChange}
-            max={max}
+            max={resolvedMax}
             disabled={disabled}
           />
         </div>

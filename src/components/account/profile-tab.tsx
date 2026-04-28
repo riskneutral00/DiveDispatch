@@ -180,11 +180,11 @@ export function ProfileTab({ onClose }: { onClose?: () => void }) {
 
         <LanguageField
           label={t('appLanguage')}
-          max={1}
+          multiple={false}
           required
           value={selectedLocale}
           onChange={(langs) => {
-            if (langs[0]) setField('appLanguage', langs[0].code)
+            setField('appLanguage', langs[0]?.code ?? '')
           }}
         />
       </div>
