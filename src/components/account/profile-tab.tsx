@@ -5,7 +5,7 @@ import { useMutation } from 'convex/react'
 import { z } from 'zod'
 import { isValidPhoneNumber } from 'libphonenumber-js'
 import { api } from '@/lib/convex-generated'
-import { useSessionIdentity } from '@/lib/hooks/use-session-identity'
+import { useDashboardSession } from '@/lib/hooks/use-dashboard-session'
 import { isValidISODate } from '@/lib/utils/date'
 import { NameField } from '@/components/ui/name-field'
 import { EmailField } from '@/components/ui/email-field'
@@ -78,7 +78,7 @@ export function profileToPayload(form: ProfileValues) {
 
 export function ProfileTab({ onClose }: { onClose?: () => void }) {
   const t = useTranslations('common')
-  const { user } = useSessionIdentity()
+  const { user } = useDashboardSession()
   const updateProfile = useMutation(api.users.updateProfile)
 
   const {
