@@ -12,21 +12,33 @@ vi.mock('next/navigation', () => ({
 const mockSession = vi.fn<() => { user: unknown; status: 'loading' | 'unauthenticated' | 'ready' }>()
 let mockMyRoles: unknown = [{ role: 'DiveCenter' }]
 
-vi.mock('@/lib/hooks/use-session-identity', () => ({
-  useSessionIdentity: () => {
-    const s = mockSession()
-    return {
-      user: s.user,
-      roles: mockMyRoles,
-      defaultRole: null,
-      defaultRoleKey: null,
-      slug: (s.user as { slug?: string } | null)?.slug ?? null,
-      status: s.status,
-      isAuthLoading: false,
-      isAuthenticated: s.user != null,
-    }
-  },
-}))
+vi.mock('@/lib/hooks/use-session-identity', async () => {
+  const { ROLE_BY_CLERK_ROLE } = await vi.importActual<typeof import('@/lib/constants/roles')>('@/lib/constants/roles')
+  const { deriveDefaultRole } = await vi.importActual<typeof import('@/lib/utils/role')>('@/lib/utils/role')
+  return {
+    useSessionIdentity: () => {
+      const s = mockSession()
+      const rolesArr = mockMyRoles as { role: string }[] | undefined
+      const defaultRole =
+        rolesArr && rolesArr.length > 0
+          ? (deriveDefaultRole(rolesArr.map((r) => r.role)) as string | null)
+          : null
+      const defaultRoleKey = defaultRole
+        ? (ROLE_BY_CLERK_ROLE[defaultRole as keyof typeof ROLE_BY_CLERK_ROLE]?.key ?? null)
+        : null
+      return {
+        user: s.user,
+        roles: mockMyRoles,
+        defaultRole,
+        defaultRoleKey,
+        slug: (s.user as { slug?: string } | null)?.slug ?? null,
+        status: s.status,
+        isAuthLoading: false,
+        isAuthenticated: s.user != null,
+      }
+    },
+  }
+})
 
 vi.mock('convex/react', async () => {
   const actual = await vi.importActual<typeof import('convex/react')>('convex/react')
