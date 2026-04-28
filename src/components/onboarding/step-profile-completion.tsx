@@ -3,7 +3,7 @@
 import { useMemo } from 'react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
-import { isValidPhoneNumber } from 'libphonenumber-js'
+import { isValidPhoneE164 } from '@/lib/constants/i18n'
 import { WizardStepShell } from '@/components/ui/wizard-step-shell'
 import { PhoneField } from '@/components/ui/phone-field'
 import { NameField } from '@/components/ui/name-field'
@@ -57,7 +57,7 @@ export function StepProfileCompletion({
       firstName.trim().length > 0 &&
       lastName.trim().length > 0 &&
       phone.trim().length > 0 &&
-      isValidPhoneNumber(phone) &&
+      isValidPhoneE164(phone) &&
       dateOfBirth.length > 0 &&
       isAdult(dateOfBirth) &&
       tcAccepted,

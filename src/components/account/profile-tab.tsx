@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl'
 import { useMutation } from 'convex/react'
 import { z } from 'zod'
-import { isValidPhoneNumber } from 'libphonenumber-js'
+import { phoneSchema } from '@/lib/schemas/i18n'
 import { api } from '@/lib/convex-generated'
 import { useDashboardSession } from '@/lib/hooks/use-dashboard-session'
 import { isValidISODate } from '@/lib/utils/date'
@@ -32,7 +32,7 @@ export const profileTabSchema = z.object({
   lastName: z.string().min(1, 'Last name is required'),
   nickname: z.string(),
   email: z.string().email('Invalid email address'),
-  phone: z.string().refine((v) => isValidPhoneNumber(v), { message: 'Invalid phone number' }),
+  phone: phoneSchema({ requiredMessage: 'Phone is required', invalidMessage: 'Invalid phone number' }),
   dateOfBirth: z
     .string()
     .refine((v) => v === '' || isValidISODate(v), {
