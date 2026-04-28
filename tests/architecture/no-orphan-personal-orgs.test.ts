@@ -26,10 +26,8 @@ describe('architecture: creator-rebind webhook prevents orphan personal orgs', (
       })
       const userId = await ctx.db.insert('users', {
         tokenIdentifier,
-        originalTokenIdentifier: tokenIdentifier,
         slug: 'sllo123',
         email: 'solo@test.com',
-        name: 'Solo Instructor',
         firstName: 'Solo',
         lastName: 'Instructor',
         appLanguage: 'en',

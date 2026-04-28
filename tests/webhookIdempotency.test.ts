@@ -34,7 +34,6 @@ describe('upsertFromWebhook idempotency', () => {
     const userId = await t.mutation(internal.users.upsertFromWebhook, {
       tokenIdentifier: token,
       email: 'user1@test.com',
-      name: 'User One',
       firstName: 'User',
       lastName: 'One',
       svixId,
@@ -51,7 +50,6 @@ describe('upsertFromWebhook idempotency', () => {
         .unique()
     })
     expect(user?.email).toBe('user1@test.com')
-    expect(user?.name).toBe('User One')
   })
 
   it('skips duplicate svixId on upsert (second call is no-op)', async () => {
@@ -63,7 +61,6 @@ describe('upsertFromWebhook idempotency', () => {
     await t.mutation(internal.users.upsertFromWebhook, {
       tokenIdentifier: token,
       email: 'original@test.com',
-      name: 'Original Name',
       firstName: 'Original',
       lastName: 'Name',
       svixId,
@@ -73,7 +70,6 @@ describe('upsertFromWebhook idempotency', () => {
     await t.mutation(internal.users.upsertFromWebhook, {
       tokenIdentifier: token,
       email: 'updated@test.com',
-      name: 'Updated Name',
       firstName: 'Updated',
       lastName: 'Name',
       svixId,
@@ -90,7 +86,6 @@ describe('upsertFromWebhook idempotency', () => {
     })
 
     expect(user?.email).toBe('original@test.com')
-    expect(user?.name).toBe('Original Name')
 
     // idempotencyLog should contain exactly one entry for this svixId
     const logEntries = await t.run(async (ctx) => {
@@ -114,7 +109,6 @@ describe('upsertFromWebhook idempotency', () => {
     await t.mutation(internal.users.upsertFromWebhook, {
       tokenIdentifier: token,
       email: 'first@test.com',
-      name: 'First',
       firstName: 'First',
       lastName: 'User',
       svixId: svixIdA,
@@ -124,7 +118,6 @@ describe('upsertFromWebhook idempotency', () => {
     await t.mutation(internal.users.upsertFromWebhook, {
       tokenIdentifier: token,
       email: 'second@test.com',
-      name: 'Second',
       firstName: 'Second',
       lastName: 'User',
       svixId: svixIdB,
@@ -141,7 +134,6 @@ describe('upsertFromWebhook idempotency', () => {
     })
 
     expect(user?.email).toBe('second@test.com')
-    expect(user?.name).toBe('Second')
   })
 })
 
@@ -160,7 +152,6 @@ describe('deleteFromWebhook idempotency', () => {
       await seedUser(ctx, {
         tokenIdentifier: token,
         email: 'victim@test.com',
-        name: 'Delete Me',
       })
     })
 
@@ -180,7 +171,6 @@ describe('deleteFromWebhook idempotency', () => {
     })
 
     expect(user?.email).toBe('deleted@deleted.invalid')
-    expect(user?.name).toBe('')
   })
 
   it('skips duplicate svixId on delete (second call is no-op)', async () => {
@@ -192,7 +182,6 @@ describe('deleteFromWebhook idempotency', () => {
       await seedUser(ctx, {
         tokenIdentifier: token,
         email: 'target@test.com',
-        name: 'Target User',
       })
     })
 
@@ -259,7 +248,6 @@ describe('webhook backwards compatibility', () => {
     await t.mutation(internal.users.upsertFromWebhook, {
       tokenIdentifier: token,
       email: 'first@test.com',
-      name: 'First',
       firstName: 'First',
       lastName: 'User',
     })
@@ -268,7 +256,6 @@ describe('webhook backwards compatibility', () => {
     await t.mutation(internal.users.upsertFromWebhook, {
       tokenIdentifier: token,
       email: 'second@test.com',
-      name: 'Second',
       firstName: 'Second',
       lastName: 'User',
     })
@@ -294,7 +281,6 @@ describe('webhook backwards compatibility', () => {
       await seedUser(ctx, {
         tokenIdentifier: token,
         email: 'target@test.com',
-        name: 'Target',
       })
     })
 

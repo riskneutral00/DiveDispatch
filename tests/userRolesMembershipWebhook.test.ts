@@ -10,10 +10,8 @@ async function seedUserOrgAndRole(): Promise<ReturnType<typeof makeT>> {
   await t.run(async (ctx) => {
     const uid = await ctx.db.insert('users', {
       tokenIdentifier: TOKEN,
-      originalTokenIdentifier: TOKEN,
       slug: 'mw-user',
       email: 'mw@test.com',
-      name: 'MW',
       firstName: 'Mem',
       lastName: 'Ship',
       appLanguage: 'en',
@@ -111,10 +109,8 @@ describe('Clerk organizationMembership webhooks → userRoles permissionLevel', 
     await t.run(async (ctx) => {
       const uid = await ctx.db.insert('users', {
         tokenIdentifier: TOKEN,
-        originalTokenIdentifier: TOKEN,
         slug: 'eq-user',
         email: 'eq@test.com',
-        name: 'Eq',
         firstName: 'Eq',
         lastName: 'User',
         appLanguage: 'en',
@@ -217,10 +213,8 @@ describe('Clerk organizationMembership webhooks → userRoles permissionLevel', 
       })
       const aid = await ctx.db.insert('users', {
         tokenIdentifier: TOKEN_A,
-        originalTokenIdentifier: TOKEN_A,
         slug: 'holder-a',
         email: 'a@test.com',
-        name: 'A',
         firstName: 'Hold',
         lastName: 'A',
         appLanguage: 'en',
@@ -228,10 +222,8 @@ describe('Clerk organizationMembership webhooks → userRoles permissionLevel', 
       })
       const bid = await ctx.db.insert('users', {
         tokenIdentifier: TOKEN_B,
-        originalTokenIdentifier: TOKEN_B,
         slug: 'holder-b',
         email: 'b@test.com',
-        name: 'B',
         firstName: 'Hold',
         lastName: 'B',
         appLanguage: 'en',

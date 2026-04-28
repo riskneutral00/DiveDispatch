@@ -19,7 +19,6 @@ describe('users.upsertFromWebhook', () => {
     const userId = await t.mutation(internal.users.upsertFromWebhook, {
       tokenIdentifier: 'clerk|brand-new',
       email: 'new@test.com',
-      name: 'New User',
       firstName: 'New',
       lastName: 'User',
     })
@@ -44,14 +43,12 @@ describe('users.upsertFromWebhook', () => {
         email: 'converge@test.com',
         firstName: 'Seed',
         lastName: 'Stub',
-        name: 'Seed Stub',
       })
     })
 
     const returnedId = await t.mutation(internal.users.upsertFromWebhook, {
       tokenIdentifier: 'https://clerk.example|user_abc',
       email: 'converge@test.com',
-      name: 'Real Name',
       firstName: 'Real',
       lastName: 'Name',
     })
@@ -68,7 +65,6 @@ describe('users.upsertFromWebhook', () => {
       expect(all[0].tokenIdentifier).toBe('https://clerk.example|user_abc')
       expect(all[0].firstName).toBe('Real')
       expect(all[0].lastName).toBe('Name')
-      expect(all[0].name).toBe('Real Name')
     })
   })
 
@@ -84,7 +80,6 @@ describe('users.upsertFromWebhook', () => {
     const newId = await t.mutation(internal.users.upsertFromWebhook, {
       tokenIdentifier: 'clerk|different',
       email: '',
-      name: 'X',
       firstName: 'X',
       lastName: 'Y',
     })
@@ -108,7 +103,6 @@ describe('users.upsertFromWebhook', () => {
     const userId = await t.mutation(internal.users.upsertFromWebhook, {
       tokenIdentifier: 'clerk|existing',
       email: 'updated@test.com',
-      name: 'Updated Name',
       firstName: 'Updated',
       lastName: 'Name',
     })
@@ -116,7 +110,6 @@ describe('users.upsertFromWebhook', () => {
     await t.run(async (ctx) => {
       const user = await ctx.db.get(userId)
       expect(user!.email).toBe('updated@test.com')
-      expect(user!.name).toBe('Updated Name')
     })
   })
 })
@@ -128,7 +121,6 @@ describe('users.upsertFromWebhook — userRoles', () => {
     const userId = await t.mutation(internal.users.upsertFromWebhook, {
       tokenIdentifier: 'clerk|roles-test',
       email: 'roles@test.com',
-      name: 'Roles User',
       firstName: 'Roles',
       lastName: 'User',
     })
@@ -153,7 +145,6 @@ describe('users.upsertFromWebhook — userRoles', () => {
     await t.mutation(internal.users.upsertFromWebhook, {
       tokenIdentifier: 'clerk|existing-roles',
       email: 'updated@test.com',
-      name: 'Updated',
       firstName: 'Up',
       lastName: 'Dated',
     })
@@ -218,7 +209,6 @@ describe('users.bySlug', () => {
 
     const user = await t.query(api.users.bySlug, { slug: TEST_SLUGS.diveCenter })
     expect(user).not.toBeNull()
-    expect(user!.name).toBe('Visible Name')
     expect(user!.slug).toBe(TEST_SLUGS.diveCenter)
     expect(typeof user!._id).toBe('string')
   })

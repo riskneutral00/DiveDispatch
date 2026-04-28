@@ -385,10 +385,8 @@ describe('userRoles.deleteRole', () => {
     await t.run(async (ctx) => {
       userId = await ctx.db.insert('users', {
         tokenIdentifier: 'clerk|rene',
-        originalTokenIdentifier: 'clerk|rene',
         slug: 'rene-user-slug',
         email: 'rene@example.com',
-        name: 'Rene Balot',
         firstName: 'Rene',
         lastName: 'Balot',
         appLanguage: 'en',
@@ -520,10 +518,8 @@ describe('userRoles.deleteRole', () => {
 
       const aliceId = await ctx.db.insert('users', {
         tokenIdentifier: 'clerk|alice',
-        originalTokenIdentifier: 'clerk|alice',
         slug: 'alice-slug',
         email: 'alice@example.com',
-        name: 'Alice',
         firstName: 'Alice',
         lastName: 'A',
         organizationId: orgId,
@@ -531,10 +527,8 @@ describe('userRoles.deleteRole', () => {
       })
       const bobId = await ctx.db.insert('users', {
         tokenIdentifier: 'clerk|bob',
-        originalTokenIdentifier: 'clerk|bob',
         slug: 'bob-slug',
         email: 'bob@example.com',
-        name: 'Bob',
         firstName: 'Bob',
         lastName: 'B',
         organizationId: orgId,

@@ -89,10 +89,8 @@ export async function seedUser(
   const token = overrides.tokenIdentifier ?? TEST_TOKENS.diveCenter
   const userId = await ctx.db.insert('users', {
     tokenIdentifier: token,
-    originalTokenIdentifier: token,
     slug: overrides.slug ?? TEST_SLUGS.diveCenter,
     email: overrides.email ?? 'test@test.com',
-    name: overrides.name ?? 'Test User',
     firstName: overrides.firstName ?? 'Test',
     lastName: overrides.lastName ?? 'User',
     phone: '+66812345678',
@@ -122,7 +120,6 @@ export async function seedUserWithOrg(
     tokenIdentifier: `clerk|${slug}`,
     slug,
     email: `${slug}@test.com`,
-    name: slug,
     firstName: slug,
     lastName: 'Test',
     role,

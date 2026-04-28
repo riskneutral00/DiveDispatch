@@ -21,10 +21,8 @@ async function seedSoftDeletedOrgWithChildren(
     })
     const userId = await ctx.db.insert('users', {
       tokenIdentifier: 'clerk|purge-user',
-      originalTokenIdentifier: 'clerk|purge-user',
       slug: 'purge-user',
       email: 'purge@test.com',
-      name: 'Purge User',
       firstName: 'Purge',
       lastName: 'User',
       appLanguage: 'en',

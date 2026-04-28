@@ -10,10 +10,8 @@ describe('operatorCoverage — boat/venue OR logic', () => {
     await t.run(async (ctx) => {
       const dcUserId = await ctx.db.insert('users', {
         tokenIdentifier: 'clerk|dc-cov-mismatch',
-        originalTokenIdentifier: 'clerk|dc-cov-mismatch',
         slug: 'dc-cov-mismatch',
         email: 'dc@test.com',
-        name: 'DC',
         firstName: 'DC',
         lastName: 'User',
         phone: '+66812345678',
@@ -37,10 +35,8 @@ describe('operatorCoverage — boat/venue OR logic', () => {
 
       await ctx.db.insert('users', {
         tokenIdentifier: 'clerk|boat-cov-mismatch',
-        originalTokenIdentifier: 'clerk|boat-cov-mismatch',
         slug: 'boat-cov-mismatch',
         email: 'boat@test.com',
-        name: 'Boat',
         firstName: 'Boat',
         lastName: 'Owner',
         phone: '+66812345679',
@@ -74,10 +70,8 @@ describe('operatorCoverage — boat/venue OR logic', () => {
     await t.run(async (ctx) => {
       const dcUserId = await ctx.db.insert('users', {
         tokenIdentifier: 'clerk|dc-no-comp',
-        originalTokenIdentifier: 'clerk|dc-no-comp',
         slug: 'dc-no-comp',
         email: 'dc@test.com',
-        name: 'DC',
         firstName: 'DC',
         lastName: 'User',
         phone: '+66812345678',
@@ -101,10 +95,8 @@ describe('operatorCoverage — boat/venue OR logic', () => {
 
       await ctx.db.insert('users', {
         tokenIdentifier: 'clerk|boat-no-comp',
-        originalTokenIdentifier: 'clerk|boat-no-comp',
         slug: 'boat-no-comp',
         email: 'boat@test.com',
-        name: 'Boat',
         firstName: 'Boat',
         lastName: 'Owner',
         phone: '+66812345679',
@@ -139,10 +131,8 @@ describe('operatorAcceptanceMode — Venue completeness gate', () => {
     await t.run(async (ctx) => {
       const userId = await ctx.db.insert('users', {
         tokenIdentifier: 'clerk|venue-no-prefs',
-        originalTokenIdentifier: 'clerk|venue-no-prefs',
         slug: 'venue-no-prefs',
         email: 'venue@test.com',
-        name: 'Venue',
         firstName: 'Venue',
         lastName: 'Owner',
         phone: '+66812345678',
@@ -168,10 +158,8 @@ describe('operatorAcceptanceMode — Venue completeness gate', () => {
     await t.run(async (ctx) => {
       const userId = await ctx.db.insert('users', {
         tokenIdentifier: 'clerk|venue-with-mode',
-        originalTokenIdentifier: 'clerk|venue-with-mode',
         slug: 'venue-with-mode',
         email: 'venue@test.com',
-        name: 'Venue',
         firstName: 'Venue',
         lastName: 'Owner',
         phone: '+66812345678',

@@ -13,7 +13,6 @@ async function seedUser(
     tokenIdentifier: `clerk|${slug}`,
     slug,
     email: `${slug}@test.com`,
-    name: slug,
     firstName: slug,
     lastName: 'Test',
     role: primaryRole,

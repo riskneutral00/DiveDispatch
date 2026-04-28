@@ -114,10 +114,8 @@ describe('organizations.upsertFromWebhook', () => {
     const userId = await t.run(async (ctx) => {
       return ctx.db.insert('users', {
         tokenIdentifier,
-        originalTokenIdentifier: tokenIdentifier,
         slug: 'creator-slug',
         email: 'creator@test.com',
-        name: 'Creator',
         firstName: 'Cre',
         lastName: 'Ator',
         appLanguage: 'en',
@@ -256,10 +254,8 @@ describe('organizations.upsertFromWebhook', () => {
       })
       const userId = await ctx.db.insert('users', {
         tokenIdentifier,
-        originalTokenIdentifier: tokenIdentifier,
         slug: 'zy9ng2',
         email: 'zhang@test.com',
-        name: 'Zhang Yong',
         firstName: 'Zhang',
         lastName: 'Yong',
         appLanguage: 'en',
@@ -316,10 +312,8 @@ describe('organizations.upsertFromWebhook', () => {
       })
       const userId = await ctx.db.insert('users', {
         tokenIdentifier,
-        originalTokenIdentifier: tokenIdentifier,
         slug: 'sdusr',
         email: 'sd@test.com',
-        name: 'Soft Deleted',
         firstName: 'Soft',
         lastName: 'Deleted',
         appLanguage: 'en',
@@ -373,10 +367,8 @@ describe('organizations.upsertFromWebhook', () => {
       })
       await ctx.db.insert('users', {
         tokenIdentifier,
-        originalTokenIdentifier: tokenIdentifier,
         slug: 'creator-bound',
         email: 'bound@test.com',
-        name: 'Bound Creator',
         firstName: 'Bound',
         lastName: 'Creator',
         appLanguage: 'en',
@@ -618,10 +610,8 @@ describe('organizations.deleteFromWebhook', () => {
     } = await t.run(async (ctx) => {
       const userId = await ctx.db.insert('users', {
         tokenIdentifier: `clerk|cascade-user-${crypto.randomUUID().slice(0, 8)}`,
-        originalTokenIdentifier: `clerk|cascade-user`,
         slug: 'cascade-user',
         email: 'cascade@test.com',
-        name: 'Cascade User',
         firstName: 'Cascade',
         lastName: 'User',
         appLanguage: 'en',
@@ -757,10 +747,8 @@ describe('organizations.getBySlug', () => {
     await t.run(async (ctx) => {
       await ctx.db.insert('users', {
         tokenIdentifier: 'clerk|slug-reader',
-        originalTokenIdentifier: 'clerk|slug-reader',
         slug: 'slug-reader',
         email: 'reader@test.com',
-        name: 'Reader',
         firstName: 'Slug',
         lastName: 'Reader',
         appLanguage: 'en',
@@ -787,10 +775,8 @@ describe('organizations.getBySlug', () => {
     await t.run(async (ctx) => {
       await ctx.db.insert('users', {
         tokenIdentifier: 'clerk|slug-reader',
-        originalTokenIdentifier: 'clerk|slug-reader',
         slug: 'slug-reader',
         email: 'reader@test.com',
-        name: 'Reader',
         firstName: 'Slug',
         lastName: 'Reader',
         appLanguage: 'en',
@@ -859,10 +845,8 @@ describe('organizations.updateBusinessMetadata (admin gate)', () => {
     await t.run(async (ctx) => {
       const uid = await ctx.db.insert('users', {
         tokenIdentifier: adminToken,
-        originalTokenIdentifier: adminToken,
         slug: 'admin-user',
         email: 'admin-user@test.com',
-        name: 'Admin User',
         firstName: 'Admin',
         lastName: 'User',
         appLanguage: 'en',
@@ -914,10 +898,8 @@ describe('organizations.updateBusinessMetadata (admin gate)', () => {
     await t.run(async (ctx) => {
       const uid = await ctx.db.insert('users', {
         tokenIdentifier: adminToken,
-        originalTokenIdentifier: adminToken,
         slug: 'admin-empty',
         email: 'admin-empty@test.com',
-        name: 'Admin Empty',
         firstName: 'Admin',
         lastName: 'Empty',
         appLanguage: 'en',

@@ -18,10 +18,8 @@ import {
 import {
   assertCountryCode,
   assertPhoneE164,
-  assertSupportedLocale,
   assertLanguageCodes,
   normalizeAppLanguage,
-  normalizeAppLanguageOrThrow,
 } from '../convex/lib/validators'
 import { normalizeAppLanguage as feNormalizeAppLanguage } from '../src/lib/constants/i18n'
 import {
@@ -219,16 +217,6 @@ describe('convex/lib/i18nValidators — throw behavior', () => {
     expect(() => assertPhoneE164('')).toThrow()
   })
 
-  it('assertSupportedLocale accepts SUPPORTED_LOCALES entries', () => {
-    expect(() => assertSupportedLocale('en')).not.toThrow()
-    expect(() => assertSupportedLocale('zh-CN')).not.toThrow()
-  })
-
-  it('assertSupportedLocale throws on unsupported', () => {
-    expect(() => assertSupportedLocale('en-GB')).toThrow()
-    expect(() => assertSupportedLocale('ja')).toThrow()
-    expect(() => assertSupportedLocale('')).toThrow()
-  })
 })
 
 describe('src Zod schemas — i18n', () => {
@@ -288,30 +276,27 @@ describe('src Zod schemas — i18n', () => {
   })
 })
 
-describe('convex normalizeAppLanguage — dialect trim + Chinese script', () => {
+describe('convex normalizeAppLanguage — Chinese script normalization, otherwise permissive', () => {
   it.each([
     ['en', 'en'],
-    ['en-GB', 'en'],
-    ['en-US', 'en'],
+    ['en-GB', 'en-GB'],
     ['zh-CN', 'zh-CN'],
     ['zh-TW', 'zh-TW'],
     ['zh-Hans', 'zh-CN'],
     ['zh-Hans-HK', 'zh-CN'],
     ['zh-Hant', 'zh-TW'],
     ['zh-Hant-HK', 'zh-TW'],
-    ['th-TH', 'th'],
-    ['fr-CA', 'fr'],
-    ['ko-KR', 'ko'],
+    ['th-TH', 'th-TH'],
+    ['de', 'de'],
+    ['ja', 'ja'],
+    ['es', 'es'],
   ])('normalizes %s -> %s', (input, expected) => {
     expect(normalizeAppLanguage(input)).toBe(expected)
   })
 
-  it.each([['de'], ['ja'], ['es'], [''], ['xx-YY']])(
-    'falls back to en for unrecognized %p',
-    (input) => {
-      expect(normalizeAppLanguage(input)).toBe('en')
-    },
-  )
+  it('returns "en" on empty input', () => {
+    expect(normalizeAppLanguage('')).toBe('en')
+  })
 
   it('mirrors FE behavior', () => {
     expect(feNormalizeAppLanguage('zh-Hans-HK')).toBe('zh-CN')
@@ -321,19 +306,19 @@ describe('convex normalizeAppLanguage — dialect trim + Chinese script', () => 
   })
 })
 
-describe('convex normalizeAppLanguageOrThrow — strict variant', () => {
-  it('returns supported locale for valid input', () => {
-    expect(normalizeAppLanguageOrThrow('zh-Hant-HK')).toBe('zh-TW')
-    expect(normalizeAppLanguageOrThrow('en-GB')).toBe('en')
+describe('convex normalizeAppLanguage — permissive', () => {
+  it('collapses Chinese script tags', () => {
+    expect(normalizeAppLanguage('zh-Hant-HK')).toBe('zh-TW')
   })
 
-  it('throws VALIDATION for empty input', () => {
-    expect(() => normalizeAppLanguageOrThrow('')).toThrow()
+  it('preserves unsupported but well-formed codes', () => {
+    expect(normalizeAppLanguage('de-DE')).toBe('de-DE')
+    expect(normalizeAppLanguage('ja')).toBe('ja')
+    expect(normalizeAppLanguage('en-GB')).toBe('en-GB')
   })
 
-  it('throws VALIDATION for unrecognized base', () => {
-    expect(() => normalizeAppLanguageOrThrow('de-DE')).toThrow()
-    expect(() => normalizeAppLanguageOrThrow('ja')).toThrow()
+  it('returns "en" on empty input', () => {
+    expect(normalizeAppLanguage('')).toBe('en')
   })
 })
 

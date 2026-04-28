@@ -32,10 +32,8 @@ describe('createUser mutation', () => {
     const userId = await t.run(async (ctx) => {
       return ctx.db.insert('users', {
         tokenIdentifier: identity.tokenIdentifier,
-        originalTokenIdentifier: identity.tokenIdentifier,
         slug: 'bf-slug',
         email: identity.email,
-        name: '',
         firstName: '',
         lastName: '',
         appLanguage: 'en',
@@ -458,7 +456,6 @@ describe('upsertFromWebhook email path', () => {
     const userId = await t.mutation(internal.users.upsertFromWebhook, {
       tokenIdentifier: token,
       email: 'webhook@clerk.dev',
-      name: 'Webhook User',
       firstName: 'Webhook',
       lastName: 'User',
     })
@@ -474,7 +471,6 @@ describe('upsertFromWebhook email path', () => {
     await t.mutation(internal.users.upsertFromWebhook, {
       tokenIdentifier: token,
       email: 'old@clerk.dev',
-      name: 'Old Name',
       firstName: 'Old',
       lastName: 'Name',
     })
@@ -482,7 +478,6 @@ describe('upsertFromWebhook email path', () => {
     await t.mutation(internal.users.upsertFromWebhook, {
       tokenIdentifier: token,
       email: 'new@clerk.dev',
-      name: 'New Name',
       firstName: 'New',
       lastName: 'Name',
     })
@@ -494,7 +489,6 @@ describe('upsertFromWebhook email path', () => {
         .unique()
     })
     expect(user?.email).toBe('new@clerk.dev')
-    expect(user?.name).toBe('New Name')
   })
 })
 
@@ -569,10 +563,8 @@ describe('upsertFromWebhook email-rebind safety', () => {
     const seedId = await t.run(async (ctx) => {
       return ctx.db.insert('users', {
         tokenIdentifier: seedToken,
-        originalTokenIdentifier: seedToken,
         slug: 'seed-slug',
         email,
-        name: 'Seed User',
         firstName: 'Seed',
         lastName: 'User',
         appLanguage: 'en',
@@ -582,7 +574,6 @@ describe('upsertFromWebhook email-rebind safety', () => {
     const resultId = await t.mutation(internal.users.upsertFromWebhook, {
       tokenIdentifier: newToken,
       email,
-      name: 'Clerk User',
       firstName: 'Clerk',
       lastName: 'User',
     })
@@ -590,7 +581,6 @@ describe('upsertFromWebhook email-rebind safety', () => {
     expect(resultId).toBe(seedId)
     const user = await t.run(async (ctx) => ctx.db.get(seedId))
     expect(user?.tokenIdentifier).toBe(newToken)
-    expect(user?.originalTokenIdentifier).toBe(newToken)
     expect(user?.firstName).toBe('Clerk')
 
     const audit = await t.run(async (ctx) => {
@@ -614,10 +604,8 @@ describe('upsertFromWebhook email-rebind safety', () => {
     const userId = await t.run(async (ctx) => {
       return ctx.db.insert('users', {
         tokenIdentifier: oldToken,
-        originalTokenIdentifier: oldToken,
         slug: 'same-issuer-slug',
         email,
-        name: 'Original',
         firstName: 'Orig',
         lastName: 'Inal',
         appLanguage: 'en',
@@ -627,7 +615,6 @@ describe('upsertFromWebhook email-rebind safety', () => {
     const resultId = await t.mutation(internal.users.upsertFromWebhook, {
       tokenIdentifier: newToken,
       email,
-      name: 'Recreated',
       firstName: 'Re',
       lastName: 'Created',
     })
@@ -635,7 +622,6 @@ describe('upsertFromWebhook email-rebind safety', () => {
     expect(resultId).toBe(userId)
     const user = await t.run(async (ctx) => ctx.db.get(userId))
     expect(user?.tokenIdentifier).toBe(newToken)
-    expect(user?.originalTokenIdentifier).toBe(newToken)
 
     const audit = await t.run(async (ctx) => {
       return await ctx.db
@@ -658,10 +644,8 @@ describe('upsertFromWebhook email-rebind safety', () => {
     const victimId = await t.run(async (ctx) => {
       return ctx.db.insert('users', {
         tokenIdentifier: victimToken,
-        originalTokenIdentifier: victimToken,
         slug: 'victim-slug',
         email,
-        name: 'Victim',
         firstName: 'Vic',
         lastName: 'Tim',
         appLanguage: 'en',
@@ -671,7 +655,6 @@ describe('upsertFromWebhook email-rebind safety', () => {
     const resultId = await t.mutation(internal.users.upsertFromWebhook, {
       tokenIdentifier: attackerToken,
       email,
-      name: 'Attacker',
       firstName: 'Att',
       lastName: 'Acker',
     })
@@ -679,7 +662,6 @@ describe('upsertFromWebhook email-rebind safety', () => {
     expect(resultId).toBe(victimId)
     const victim = await t.run(async (ctx) => ctx.db.get(victimId))
     expect(victim?.tokenIdentifier).toBe(victimToken)
-    expect(victim?.originalTokenIdentifier).toBe(victimToken)
     expect(victim?.firstName).toBe('Vic')
 
     const attackerLookup = await t.run(async (ctx) => {
@@ -711,10 +693,8 @@ describe('upsertFromWebhook email-rebind safety', () => {
     const userId = await t.run(async (ctx) => {
       return ctx.db.insert('users', {
         tokenIdentifier: oldToken,
-        originalTokenIdentifier: oldToken,
         slug: 'rebind-delete-slug',
         email,
-        name: 'Original',
         firstName: 'Orig',
         lastName: 'Inal',
         appLanguage: 'en',
@@ -724,7 +704,6 @@ describe('upsertFromWebhook email-rebind safety', () => {
     await t.mutation(internal.users.upsertFromWebhook, {
       tokenIdentifier: newToken,
       email,
-      name: 'Recreated',
       firstName: 'Re',
       lastName: 'Created',
     })

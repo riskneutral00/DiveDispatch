@@ -21,7 +21,6 @@ async function seedUser(ctx: Ctx, slug: string, role: StakeholderRole = 'Agent')
     role,
     tokenIdentifier: `clerk|${slug}`,
     email: `${slug}@test.com`,
-    name: `${slug} Display`,
     firstName: slug,
     lastName: 'Test',
   })

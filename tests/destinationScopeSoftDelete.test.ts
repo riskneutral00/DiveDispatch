@@ -25,10 +25,8 @@ async function seedOperatorWithDestination(deletedAt?: number) {
     })
     const uid = await ctx.db.insert('users', {
       tokenIdentifier: OPERATOR_TOKEN,
-      originalTokenIdentifier: OPERATOR_TOKEN,
       slug: 'op-slug',
       email: 'op@test.com',
-      name: 'Op',
       firstName: 'Op',
       lastName: 'Erator',
       appLanguage: 'en',
@@ -109,10 +107,8 @@ describe('destinationScope — soft-deleted destination orgs', () => {
       })
       const uid = await ctx.db.insert('users', {
         tokenIdentifier: OPERATOR_TOKEN,
-        originalTokenIdentifier: OPERATOR_TOKEN,
         slug: 'op-2-slug',
         email: 'op2@test.com',
-        name: 'Op2',
         firstName: 'Op',
         lastName: 'Two',
         appLanguage: 'en',

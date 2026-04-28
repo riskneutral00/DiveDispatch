@@ -15,7 +15,7 @@ describe('devSwitchUser — token park + restore', () => {
     vi.unstubAllEnvs()
   })
 
-  it('single switch A→B: sets originalTokenIdentifier on both, parks A, rebinds B to caller token', async () => {
+  it('single switch A→B: parks A, rebinds B to caller token', async () => {
     const t = makeT()
     const tokenA = 'clerk|switcher-A'
     const tokenB = 'clerk|switcher-B'
@@ -44,14 +44,11 @@ describe('devSwitchUser — token park + restore', () => {
       await ctx.db.get(idA),
       await ctx.db.get(idB),
     ])
-
-    expect(a?.originalTokenIdentifier).toBe(tokenA)
     expect(a?.tokenIdentifier).toMatch(/^parked\|switcher-a\|\d+$/)
-    expect(b?.originalTokenIdentifier).toBe(tokenB)
     expect(b?.tokenIdentifier).toBe(tokenA)
   })
 
-  it('double switch A→B→C: restores B from originalTokenIdentifier (not a new parked string)', async () => {
+  it('double switch A→B→C: parks B and rebinds C', async () => {
     const t = makeT()
     const tokenA = 'clerk|restore-A'
     const tokenB = 'clerk|restore-B'
@@ -93,15 +90,9 @@ describe('devSwitchUser — token park + restore', () => {
       await ctx.db.get(idC),
     ])
 
-    expect(b?.tokenIdentifier).toBe(tokenB)
-    expect(b?.tokenIdentifier).not.toMatch(/^parked\|/)
-    expect(b?.originalTokenIdentifier).toBe(tokenB)
-
+    expect(b?.tokenIdentifier).toMatch(/^parked\|restore-b\|\d+$/)
     expect(c?.tokenIdentifier).toBe(tokenA)
-    expect(c?.originalTokenIdentifier).toBe(tokenC)
-
     expect(a?.tokenIdentifier).toMatch(/^parked\|restore-a\|\d+$/)
-    expect(a?.originalTokenIdentifier).toBe(tokenA)
   })
 
   it('idempotent A→A: early return, no DB writes', async () => {
@@ -126,7 +117,6 @@ describe('devSwitchUser — token park + restore', () => {
     const after = await t.run(async (ctx) => ctx.db.get(idA))
 
     expect(after?.tokenIdentifier).toBe(before?.tokenIdentifier)
-    expect(after?.originalTokenIdentifier).toBe(before?.originalTokenIdentifier)
     expect(after?._creationTime).toBe(before?._creationTime)
   })
 })

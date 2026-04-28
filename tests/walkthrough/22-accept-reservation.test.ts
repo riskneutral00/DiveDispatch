@@ -33,7 +33,6 @@ async function seedUser(
     tokenIdentifier: `clerk|${slug}`,
     slug,
     email: `${slug}@test.com`,
-    name: `${slug} Display`,
     firstName: slug,
     lastName: 'Test',
     phone: '+66812345678',

@@ -13,7 +13,6 @@ async function seedUser(ctx: unknown, slug = 'dc-test') {
     tokenIdentifier: `clerk|${slug}`,
     slug,
     email: `${slug}@test.com`,
-    name: slug,
     firstName: 'Test',
     lastName: 'User',
     appLanguage: 'en',

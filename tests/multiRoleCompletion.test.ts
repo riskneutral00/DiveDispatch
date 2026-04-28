@@ -17,7 +17,6 @@ async function seedCompleteEquipment(ctx: SeedCtx, slug: string) {
     tokenIdentifier: `clerk|${slug}`,
     role: 'Equipment',
     email: `${slug}@test.com`,
-    name: `${slug} Display`,
     firstName: slug,
     lastName: 'Test',
   })

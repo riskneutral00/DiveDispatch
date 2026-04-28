@@ -39,7 +39,6 @@ async function seedEM(
     slug: EM_SLUG,
     role: 'Equipment',
     email: 'em@test.com',
-    name: 'Test EM',
   })
   await seedEquipmentProfile(ctx, userId, { name: 'Test Equipment' })
   // Patch manufacturersByGearType if provided (seedEquipmentProfile doesn't support it)

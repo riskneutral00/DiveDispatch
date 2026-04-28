@@ -45,7 +45,6 @@ async function seedTestUser(
     tokenIdentifier: `clerk|${slug}`,
     role,
     email: email ?? `${slug}@test.com`,
-    name: `${slug} Name`,
     firstName: slug,
     lastName: 'Test',
   })
@@ -91,8 +90,8 @@ describe('getBookingDetail', () => {
       .query(api.bookings.getBookingDetail, { bookingId: bookingId! as never })
 
     expect(result).not.toBeNull()
-    expect(result!.instructorName).toBe('instructor-1 Name')
-    expect(result!.boatName).toBe('boat-1 Name')
+    expect(result!.instructorName).toBe('instructor-1 Test')
+    expect(result!.boatName).toBe('boat-1 Test')
 
     expect(Array.isArray(result!.stakeholders)).toBe(true)
     const instructorStakeholder = result!.stakeholders.find(
@@ -100,7 +99,7 @@ describe('getBookingDetail', () => {
     )
     expect(instructorStakeholder).toMatchObject({
       role: 'Instructor',
-      name: 'instructor-1 Name',
+      name: 'instructor-1 Test',
       isExternal: false,
       slug: 'instructor-1',
     })
@@ -110,7 +109,7 @@ describe('getBookingDetail', () => {
     const boatStakeholder = result!.stakeholders.find((s) => s.role === 'Boat')
     expect(boatStakeholder).toMatchObject({
       role: 'Boat',
-      name: 'boat-1 Name',
+      name: 'boat-1 Test',
       isExternal: false,
     })
   })
@@ -299,7 +298,7 @@ describe('getBookingDetail', () => {
     expect(result!.reservations[0].status).toBe('Confirmed')
     expect(result!.reservations[0].inventoryUnitName).toBe('instructor-1 Unit')
     expect(result!.reservations[0].resourceType).toBe('Instructor')
-    expect(result!.reservations[0].stakeholderName).toBe('instructor-1 Name')
+    expect(result!.reservations[0].stakeholderName).toBe('instructor-1 Test')
   })
 
   it('returns audit log entries sorted by timestamp descending', async () => {

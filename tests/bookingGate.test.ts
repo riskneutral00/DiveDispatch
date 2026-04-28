@@ -24,7 +24,6 @@ async function seedFullDCWithCoverage(ctx: SeedCtx, slug: string) {
     tokenIdentifier: `clerk|${slug}`,
     role: 'DiveCenter',
     email: `${slug}@test.com`,
-    name: `${slug} Display`,
     firstName: slug,
     lastName: 'Test',
   })
@@ -61,7 +60,6 @@ async function seedFullDCWithCoverage(ctx: SeedCtx, slug: string) {
     tokenIdentifier: 'clerk|test-instructor',
     role: 'Instructor',
     email: 'inst@test.com',
-    name: 'Test Instructor',
     firstName: 'Test',
     lastName: 'Instructor',
   })
@@ -70,7 +68,6 @@ async function seedFullDCWithCoverage(ctx: SeedCtx, slug: string) {
     tokenIdentifier: 'clerk|test-equipment',
     role: 'Equipment',
     email: 'eq@test.com',
-    name: 'Test Equipment',
     firstName: 'Test',
     lastName: 'Equipment',
   })
@@ -79,7 +76,6 @@ async function seedFullDCWithCoverage(ctx: SeedCtx, slug: string) {
     tokenIdentifier: 'clerk|test-venue',
     role: 'Venue',
     email: 'venue@test.com',
-    name: 'Test Venue',
     firstName: 'Test',
     lastName: 'Venue',
   })
@@ -93,7 +89,6 @@ async function seedFullDCWithCoverage(ctx: SeedCtx, slug: string) {
     tokenIdentifier: 'clerk|test-compressor',
     role: 'Compressor',
     email: 'comp@test.com',
-    name: 'Test Compressor',
     firstName: 'Test',
     lastName: 'Compressor',
   })
@@ -122,7 +117,6 @@ describe('booking gate: profile completeness', () => {
         tokenIdentifier: 'clerk|dc-gate-fail',
         role: 'DiveCenter',
         email: 'dc-gate-fail@test.com',
-        name: 'dc-gate-fail Display',
         firstName: 'dc-gate-fail',
         lastName: 'Test',
       })
@@ -164,7 +158,6 @@ describe('booking gate: role enforcement', () => {
         tokenIdentifier: 'clerk|inst-gate',
         role: 'Instructor',
         email: 'inst-gate@test.com',
-        name: 'Instructor Gate',
         firstName: 'Inst',
         lastName: 'Gate',
       })
@@ -264,7 +257,6 @@ describe('booking gate: specialty rating enforcement', () => {
         tokenIdentifier: 'clerk|dc-spec',
         role: 'DiveCenter',
         email: 'dc-spec@test.com',
-        name: 'DC Spec',
         firstName: 'DC',
         lastName: 'Spec',
       })
@@ -273,7 +265,6 @@ describe('booking gate: specialty rating enforcement', () => {
         tokenIdentifier: 'clerk|inst-spec',
         role: 'Instructor',
         email: 'inst-spec@test.com',
-        name: 'Inst Spec',
         firstName: 'Inst',
         lastName: 'Spec',
       })
@@ -322,7 +313,6 @@ describe('booking gate: specialty rating enforcement', () => {
         tokenIdentifier: 'clerk|dc-spec2',
         role: 'DiveCenter',
         email: 'dc-spec2@test.com',
-        name: 'DC Spec2',
         firstName: 'DC',
         lastName: 'Spec2',
       })
@@ -331,7 +321,6 @@ describe('booking gate: specialty rating enforcement', () => {
         tokenIdentifier: 'clerk|inst-spec2',
         role: 'Instructor',
         email: 'inst-spec2@test.com',
-        name: 'Inst Spec2',
         firstName: 'Inst',
         lastName: 'Spec2',
       })
@@ -381,7 +370,6 @@ describe('booking gate: capability gate blocks DM from OW+', () => {
         tokenIdentifier: 'clerk|dc-cap',
         role: 'DiveCenter',
         email: 'dc-cap@test.com',
-        name: 'DC Cap',
         firstName: 'DC',
         lastName: 'Cap',
       })
@@ -390,7 +378,6 @@ describe('booking gate: capability gate blocks DM from OW+', () => {
         tokenIdentifier: 'clerk|inst-cap',
         role: 'Instructor',
         email: 'inst-cap@test.com',
-        name: 'Inst Cap',
         firstName: 'Inst',
         lastName: 'Cap',
       })
@@ -401,7 +388,6 @@ describe('booking gate: capability gate blocks DM from OW+', () => {
         tokenIdentifier: 'clerk|dm-cap',
         role: 'Instructor',
         email: 'dm-cap@test.com',
-        name: 'DM Cap',
         firstName: 'DM',
         lastName: 'Cap',
       })
@@ -449,7 +435,6 @@ describe('booking gate: capability gate blocks DM from OW+', () => {
         tokenIdentifier: 'clerk|dc-nitrox',
         role: 'DiveCenter',
         email: 'dc-nitrox@test.com',
-        name: 'DC Nitrox',
         firstName: 'DC',
         lastName: 'Nitrox',
       })
@@ -458,7 +443,6 @@ describe('booking gate: capability gate blocks DM from OW+', () => {
         tokenIdentifier: 'clerk|inst-nitrox-no',
         role: 'Instructor',
         email: 'inst-nitrox-no@test.com',
-        name: 'Inst NitroxNo',
         firstName: 'Inst',
         lastName: 'NitroxNo',
       })
@@ -507,7 +491,6 @@ describe('booking gate: capability gate blocks DM from OW+', () => {
         tokenIdentifier: 'clerk|dc-nitrox-ok',
         role: 'DiveCenter',
         email: 'dc-nitrox-ok@test.com',
-        name: 'DC NitroxOK',
         firstName: 'DC',
         lastName: 'NitroxOK',
       })
@@ -516,7 +499,6 @@ describe('booking gate: capability gate blocks DM from OW+', () => {
         tokenIdentifier: 'clerk|inst-nitrox-yes',
         role: 'Instructor',
         email: 'inst-nitrox-yes@test.com',
-        name: 'Inst NitroxYes',
         firstName: 'Inst',
         lastName: 'NitroxYes',
       })
@@ -564,7 +546,6 @@ describe('booking gate: capability gate blocks DM from OW+', () => {
         tokenIdentifier: 'clerk|dc-cap2',
         role: 'DiveCenter',
         email: 'dc-cap2@test.com',
-        name: 'DC Cap2',
         firstName: 'DC',
         lastName: 'Cap2',
       })
@@ -573,7 +554,6 @@ describe('booking gate: capability gate blocks DM from OW+', () => {
         tokenIdentifier: 'clerk|inst-cap2',
         role: 'Instructor',
         email: 'inst-cap2@test.com',
-        name: 'Inst Cap2',
         firstName: 'Inst',
         lastName: 'Cap2',
       })
@@ -584,7 +564,6 @@ describe('booking gate: capability gate blocks DM from OW+', () => {
         tokenIdentifier: 'clerk|dm-cap2',
         role: 'Instructor',
         email: 'dm-cap2@test.com',
-        name: 'DM Cap2',
         firstName: 'DM',
         lastName: 'Cap2',
       })

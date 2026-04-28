@@ -12,10 +12,8 @@ describe('userRoles.organizationId stays in sync with users.organizationId', () 
     const { userId } = await t.run(async (ctx) => {
       const uid = await ctx.db.insert('users', {
         tokenIdentifier,
-        originalTokenIdentifier: tokenIdentifier,
         slug: 'rene',
         email: 'rene@test.com',
-        name: 'Rene Balot',
         firstName: 'Rene',
         lastName: 'Balot',
         appLanguage: 'en',
@@ -67,10 +65,8 @@ describe('userRoles.organizationId stays in sync with users.organizationId', () 
     await t.run(async (ctx) => {
       await ctx.db.insert('users', {
         tokenIdentifier,
-        originalTokenIdentifier: tokenIdentifier,
         slug: 'orgless',
         email: 'orgless@test.com',
-        name: 'No Org',
         firstName: 'No',
         lastName: 'Org',
         appLanguage: 'en',
@@ -93,10 +89,8 @@ describe('userRoles.organizationId stays in sync with users.organizationId', () 
     await t.run(async (ctx) => {
       const uid = await ctx.db.insert('users', {
         tokenIdentifier,
-        originalTokenIdentifier: tokenIdentifier,
         slug: 'hasorg',
         email: 'hasorg@test.com',
-        name: 'Has Org',
         firstName: 'Has',
         lastName: 'Org',
         appLanguage: 'en',
@@ -130,10 +124,8 @@ describe('userRoles.organizationId stays in sync with users.organizationId', () 
     const { userId, personalOrgId, clerkOrgId } = await t.run(async (ctx) => {
       const uid = await ctx.db.insert('users', {
         tokenIdentifier,
-        originalTokenIdentifier: tokenIdentifier,
         slug: 'rebinder',
         email: 'rebinder@test.com',
-        name: 'Re Binder',
         firstName: 'Re',
         lastName: 'Binder',
         appLanguage: 'en',
@@ -165,7 +157,6 @@ describe('userRoles.organizationId stays in sync with users.organizationId', () 
       tokenIdentifier,
       subject: tokenIdentifier,
       email: 'rebinder@test.com',
-      name: 'Re Binder',
       orgId: 'org_rebinder',
       orgRole: 'admin',
       orgSlug: 'rebinder-co',
@@ -203,7 +194,6 @@ describe('userRoles.organizationId stays in sync with users.organizationId', () 
       tokenIdentifier,
       subject: tokenIdentifier,
       email: 'fresh@test.com',
-      name: 'Fresh User',
     })
     await asUser.mutation(api.users.createUser, {
       role: 'Compressor',

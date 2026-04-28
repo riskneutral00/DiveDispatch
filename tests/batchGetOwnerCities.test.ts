@@ -36,7 +36,6 @@ describe('batchGetOwnerContext', () => {
         slug: 'instr-a',
         role: 'Instructor',
         email: 'a@test.com',
-        name: 'A',
         firstName: 'A',
         lastName: 'Test',
       })
@@ -47,7 +46,6 @@ describe('batchGetOwnerContext', () => {
         slug: 'instr-b',
         role: 'Instructor',
         email: 'b@test.com',
-        name: 'B',
         firstName: 'B',
         lastName: 'Test',
       })
@@ -82,7 +80,6 @@ describe('batchGetOwnerContext', () => {
         slug: 'no-profile-slug',
         role: 'Instructor',
         email: 'np@test.com',
-        name: 'NP',
         firstName: 'NP',
         lastName: 'Test',
       })
@@ -118,7 +115,6 @@ describe('decline with maxCandidates bound', () => {
         slug: 'bound-dc',
         role: 'DiveCenter',
         email: 'bound-dc@test.com',
-        name: 'Bound DC',
         firstName: 'Bound',
         lastName: 'DC',
       })
@@ -128,7 +124,6 @@ describe('decline with maxCandidates bound', () => {
         slug: 'bound-instr',
         role: 'Instructor',
         email: 'bound-instr@test.com',
-        name: 'Bound Instructor',
         firstName: 'Bound',
         lastName: 'Instr',
       })
@@ -174,7 +169,6 @@ describe('decline with maxCandidates bound', () => {
           slug,
           role: 'Instructor',
           email: `alt-${i}@test.com`,
-          name: `Alt ${i}`,
           firstName: 'Alt',
           lastName: `${i}`,
         })
@@ -216,7 +210,6 @@ describe('decline with batched city lookup preserves filtering', () => {
         slug: 'city-dc',
         role: 'DiveCenter',
         email: 'city-dc@test.com',
-        name: 'City DC',
         firstName: 'City',
         lastName: 'DC',
       })
@@ -226,7 +219,6 @@ describe('decline with batched city lookup preserves filtering', () => {
         slug: 'city-decl-instr',
         role: 'Instructor',
         email: 'city-decl@test.com',
-        name: 'Decl Instructor',
         firstName: 'Decl',
         lastName: 'Inst',
       })
@@ -244,7 +236,6 @@ describe('decline with batched city lookup preserves filtering', () => {
         slug: 'city-alt-instr',
         role: 'Instructor',
         email: 'city-alt@test.com',
-        name: 'Alt Instructor',
         firstName: 'Alt',
         lastName: 'Inst',
       })
@@ -322,7 +313,6 @@ describe('decline with batched city lookup preserves filtering', () => {
         slug: 'lang-dc',
         role: 'DiveCenter',
         email: 'lang-dc@test.com',
-        name: 'Lang DC',
         firstName: 'Lang',
         lastName: 'DC',
       })
@@ -332,7 +322,6 @@ describe('decline with batched city lookup preserves filtering', () => {
         slug: 'lang-decl-instr',
         role: 'Instructor',
         email: 'lang-decl@test.com',
-        name: 'Decl Instructor',
         firstName: 'Decl',
         lastName: 'Inst',
       })
@@ -353,7 +342,6 @@ describe('decline with batched city lookup preserves filtering', () => {
         slug: 'lang-alt-a',
         role: 'Instructor',
         email: 'lang-alt-a@test.com',
-        name: 'Alt A',
         firstName: 'Alt',
         lastName: 'A',
       })
@@ -373,7 +361,6 @@ describe('decline with batched city lookup preserves filtering', () => {
         slug: 'lang-alt-b',
         role: 'Instructor',
         email: 'lang-alt-b@test.com',
-        name: 'Alt B',
         firstName: 'Alt',
         lastName: 'B',
       })
@@ -469,7 +456,6 @@ describe('decline with batched city lookup preserves filtering', () => {
         slug: 'diffcity-dc',
         role: 'DiveCenter',
         email: 'diffcity-dc@test.com',
-        name: 'DiffCity DC',
         firstName: 'DiffCity',
         lastName: 'DC',
       })
@@ -479,7 +465,6 @@ describe('decline with batched city lookup preserves filtering', () => {
         slug: 'diffcity-decl-instr',
         role: 'Instructor',
         email: 'diffcity-decl@test.com',
-        name: 'DiffDecl Instructor',
         firstName: 'DiffDecl',
         lastName: 'Inst',
       })
@@ -497,7 +482,6 @@ describe('decline with batched city lookup preserves filtering', () => {
         slug: 'diffcity-alt-instr',
         role: 'Instructor',
         email: 'diffcity-alt@test.com',
-        name: 'DiffAlt Instructor',
         firstName: 'DiffAlt',
         lastName: 'Inst',
       })

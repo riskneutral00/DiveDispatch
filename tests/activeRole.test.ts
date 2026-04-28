@@ -31,7 +31,6 @@ async function seedFullDc(ctx: SeedCtx, slug: string) {
     tokenIdentifier: `clerk|${slug}`,
     role: 'DiveCenter',
     email: `${slug}@test.com`,
-    name: `${slug} Display`,
     firstName: slug,
     lastName: 'Test',
   })

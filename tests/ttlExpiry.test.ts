@@ -267,7 +267,6 @@ describe('expireBooking', () => {
         tokenIdentifier: 'clerk|dc-1',
         slug: 'dc-1',
         email: 'dc1@test.com',
-        name: 'DC One',
         firstName: 'DC',
         lastName: 'One',
       })
@@ -306,7 +305,6 @@ describe('expireBooking', () => {
         tokenIdentifier: 'clerk|dc-1',
         slug: 'dc-1',
         email: 'dc1@test.com',
-        name: 'DC One',
         firstName: 'DC',
         lastName: 'One',
       })
@@ -587,7 +585,6 @@ describe('checkAndExpireBooking', () => {
         tokenIdentifier: 'clerk|intruder',
         slug: 'intruder',
         email: 'intruder@test.com',
-        name: 'Intruder',
         firstName: 'In',
         lastName: 'Truder',
       })
@@ -617,7 +614,6 @@ describe('checkAndExpireBooking', () => {
         tokenIdentifier: 'clerk|dc-owner',
         slug: 'dc-owner',
         email: 'owner@test.com',
-        name: 'Owner DC',
         firstName: 'Owner',
         lastName: 'DC',
       })
@@ -648,7 +644,6 @@ describe('checkAndExpireBooking', () => {
         tokenIdentifier: 'clerk|dc-owner2',
         slug: 'dc-owner2',
         email: 'owner2@test.com',
-        name: 'Owner DC2',
         firstName: 'Owner',
         lastName: 'DC2',
       })
@@ -838,7 +833,6 @@ describe('toggleBlockedDate auto-cancels Draft bookings', () => {
           tokenIdentifier: 'clerk|inst-1',
           slug: 'inst-1',
           email: 'inst1@test.com',
-          name: 'Instructor One',
           firstName: 'Instructor',
           lastName: 'One',
           role: 'Instructor',
@@ -941,7 +935,6 @@ describe('toggleBlockedDate auto-cancels Draft bookings', () => {
         tokenIdentifier: 'clerk|inst-2',
         slug: 'inst-2',
         email: 'inst2@test.com',
-        name: 'Instructor Two',
         firstName: 'Instructor',
         lastName: 'Two',
         role: 'Instructor',
@@ -1018,7 +1011,6 @@ describe('toggleBlockedDate auto-cancels Draft bookings', () => {
         tokenIdentifier: 'clerk|dc-1',
         slug: 'dc-1',
         email: 'dc1@test.com',
-        name: 'DC One',
         firstName: 'DC',
         lastName: 'One',
       })
@@ -1211,7 +1203,6 @@ describe('token invalidation', () => {
         tokenIdentifier: 'clerk|dc-test',
         slug: 'dc-test',
         email: 'op@test.com',
-        name: 'Test DC',
         firstName: 'Test',
         lastName: 'DC',
       })
@@ -1281,7 +1272,6 @@ describe('token invalidation', () => {
         tokenIdentifier: 'clerk|dc-regen',
         slug: 'dc-regen',
         email: 'regen@test.com',
-        name: 'Regen DC',
         firstName: 'Regen',
         lastName: 'DC',
       })

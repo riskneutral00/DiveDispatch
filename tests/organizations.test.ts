@@ -74,10 +74,8 @@ describe('destinationScope — visibleOrgIds', () => {
     const orgId = await t.run(async (ctx) => {
       const uid = await ctx.db.insert('users', {
         tokenIdentifier,
-        originalTokenIdentifier: tokenIdentifier,
         slug: 'lone',
         email: 'lone@test.com',
-        name: 'Lone',
         firstName: 'Lone',
         lastName: 'Op',
         appLanguage: 'en',
@@ -125,10 +123,8 @@ describe('destinationScope — visibleOrgIds', () => {
       })
       const uid = await ctx.db.insert('users', {
         tokenIdentifier,
-        originalTokenIdentifier: tokenIdentifier,
         slug: 'rene',
         email: 'rene@test.com',
-        name: 'Rene',
         firstName: 'Rene',
         lastName: 'B',
         appLanguage: 'en',
@@ -169,10 +165,8 @@ describe('organizations.updateBusinessMetadata — destinationIds wire-up', () =
       })
       const uid = await ctx.db.insert('users', {
         tokenIdentifier,
-        originalTokenIdentifier: tokenIdentifier,
         slug: 'rene',
         email: 'rene@test.com',
-        name: 'Rene',
         firstName: 'Rene',
         lastName: 'B',
         appLanguage: 'en',
@@ -216,10 +210,8 @@ describe('organizations.updateBusinessMetadata — destinationIds wire-up', () =
       })
       const uid = await ctx.db.insert('users', {
         tokenIdentifier,
-        originalTokenIdentifier: tokenIdentifier,
         slug: 'rene',
         email: 'rene@test.com',
-        name: 'Rene',
         firstName: 'Rene',
         lastName: 'B',
         appLanguage: 'en',
@@ -314,10 +306,8 @@ describe('organizations.getBySlug — authenticated returns full org doc', () =>
       })
       await ctx.db.insert('users', {
         tokenIdentifier: 'clerk|full-reader',
-        originalTokenIdentifier: 'clerk|full-reader',
         slug: 'full-reader',
         email: 'reader@test.com',
-        name: 'Full Reader',
         firstName: 'Full',
         lastName: 'Reader',
         appLanguage: 'en',

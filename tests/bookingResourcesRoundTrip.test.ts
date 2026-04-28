@@ -195,9 +195,9 @@ describe('bookingResources round-trip lifecycle', () => {
 
       const { bookingId, instUnitId, emUnitId } = await t.run(async (ctx) => {
         await seedUser(ctx, { slug: 'dc-test', tokenIdentifier: 'clerk|dc-test', role: 'DiveCenter' })
-        const instUserId2 = await seedUser(ctx, { slug: 'inst-1', tokenIdentifier: 'clerk|inst-1', role: 'Instructor', name: 'inst-1 Display' })
+        const instUserId2 = await seedUser(ctx, { slug: 'inst-1', tokenIdentifier: 'clerk|inst-1', role: 'Instructor', name: 'Test User' })
         await seedInstructorProfile(ctx, instUserId2)
-        const emUserId2 = await seedUser(ctx, { slug: 'em-1', tokenIdentifier: 'clerk|em-1', role: 'Equipment', name: 'em-1 Display' })
+        const emUserId2 = await seedUser(ctx, { slug: 'em-1', tokenIdentifier: 'clerk|em-1', role: 'Equipment', name: 'Test User' })
         await seedEquipmentProfile(ctx, emUserId2)
         await seedCompleteGearInventory(ctx, 'em-1')
 
@@ -268,14 +268,14 @@ describe('bookingResources round-trip lifecycle', () => {
       const instStakeholder = detail!.stakeholders.find((s) => s.role === 'Instructor')
       expect(instStakeholder?.role).toBe('Instructor')
       expect(instStakeholder!.slug).toBe('inst-1')
-      expect(instStakeholder!.name).toBe('inst-1 Display')
+      expect(instStakeholder!.name).toBe('Test User')
       expect(instStakeholder!.isExternal).toBe(false)
       expect(instStakeholder!.reservationStatus).toBe('PendingAcceptance')
 
       const emStakeholder = detail!.stakeholders.find((s) => s.role === 'Equipment')
       expect(emStakeholder?.role).toBe('Equipment')
       expect(emStakeholder!.slug).toBe('em-1')
-      expect(emStakeholder!.name).toBe('em-1 Display')
+      expect(emStakeholder!.name).toBe('Test User')
       expect(emStakeholder!.isExternal).toBe(false)
       expect(emStakeholder!.reservationStatus).toBe('PendingAcceptance')
     })

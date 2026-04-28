@@ -71,7 +71,6 @@ describe('diveCenters.create (profile setup)', () => {
         tokenIdentifier: 'clerk|profile-inst-01',
         slug: 'profile-inst-01',
         email: 'inst@test.com',
-        name: 'Inst User',
         firstName: 'Inst',
         lastName: 'Test',
         role: 'Instructor',

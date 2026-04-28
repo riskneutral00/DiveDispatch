@@ -643,7 +643,6 @@ describe('deleteFromWebhook cascade scheduling', () => {
         .unique()
       expect(user).not.toBeNull()
       expect(user!.email).toBe('deleted@deleted.invalid')
-      expect(user!.name).toBe('')
     })
 
     // Cascade runs via scheduled function

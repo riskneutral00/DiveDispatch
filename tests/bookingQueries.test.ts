@@ -23,7 +23,6 @@ async function seedTestUser(
     tokenIdentifier: `clerk|${slug}`,
     role,
     email: `${slug}@test.com`,
-    name: `${slug} Display`,
     firstName: slug,
     lastName: 'Test',
   })
@@ -112,7 +111,7 @@ describe('buildInstructorNameMap', () => {
       const map = await buildInstructorNameMap(ctx, ['instructor-1'])
       return Object.fromEntries(map)
     })
-    expect(entries['instructor-1']).toBe('instructor-1 Display')
+    expect(entries['instructor-1']).toBe('instructor-1 Test')
   })
 
   it('deduplicates slugs before querying', async () => {
@@ -123,7 +122,7 @@ describe('buildInstructorNameMap', () => {
       return Object.fromEntries(map)
     })
     expect(Object.keys(entries)).toHaveLength(1)
-    expect(entries['instructor-1']).toBe('instructor-1 Display')
+    expect(entries['instructor-1']).toBe('instructor-1 Test')
   })
 
   it('skips unknown slugs without error', async () => {
@@ -145,8 +144,8 @@ describe('buildInstructorNameMap', () => {
       const map = await buildInstructorNameMap(ctx, ['instructor-1', 'boat-owner-1'])
       return Object.fromEntries(map)
     })
-    expect(entries['instructor-1']).toBe('instructor-1 Display')
-    expect(entries['boat-owner-1']).toBe('boat-owner-1 Display')
+    expect(entries['instructor-1']).toBe('instructor-1 Test')
+    expect(entries['boat-owner-1']).toBe('boat-owner-1 Test')
   })
 })
 
@@ -234,7 +233,7 @@ describe('listByOwner', () => {
     const result = await t.withIdentity({ tokenIdentifier: 'clerk|dc-1' })
       .query(api.bookings.listByOwner, { ownerId: 'dc-1', ownerType: 'DiveCenter' })
 
-    expect(result[0].instructorName).toBe('instructor-1 Display')
+    expect(result[0].instructorName).toBe('instructor-1 Test')
   })
 
   it('falls back to externalStakeholders when no in-system instructor', async () => {
@@ -497,7 +496,7 @@ describe('listByResource', () => {
     const result = await t.withIdentity({ tokenIdentifier: 'clerk|boat-owner-1' })
       .query(api.bookings.listByResource, { resourceId: 'boat-owner-1', resourceType: 'Boat' })
 
-    expect(result[0].boatName).toBe('boat-owner-1 Display')
+    expect(result[0].boatName).toBe('boat-owner-1 Test')
   })
 })
 

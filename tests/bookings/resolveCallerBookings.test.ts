@@ -18,7 +18,6 @@ describe('resolveCallerBookings ownerType isolation', () => {
         tokenIdentifier: token,
         slug,
         email: 'multi@test.com',
-        name: 'Multi Role',
         firstName: 'Multi',
         lastName: 'Role',
         phone: '+66812345678',

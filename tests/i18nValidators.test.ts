@@ -4,8 +4,7 @@ import {
   assertCountryCode,
   assertPhoneE164,
   assertLanguageCodes,
-  assertSupportedLocale,
-  normalizeAppLanguageOrThrow,
+  normalizeAppLanguage,
 } from '../convex/lib/validators'
 
 function reasonOf(err: unknown): string {
@@ -114,26 +113,23 @@ describe('assertLanguageCodes', () => {
   })
 })
 
-describe('assertSupportedLocale + normalizeAppLanguageOrThrow', () => {
-  it('assertSupportedLocale accepts supported', () => {
-    expect(() => assertSupportedLocale('en')).not.toThrow()
-    expect(() => assertSupportedLocale('zh-TW')).not.toThrow()
+describe('normalizeAppLanguage (permissive)', () => {
+  it('collapses Chinese script tags', () => {
+    expect(normalizeAppLanguage('zh-Hans-CN')).toBe('zh-CN')
+    expect(normalizeAppLanguage('zh-Hant-TW')).toBe('zh-TW')
   })
 
-  it('assertSupportedLocale rejects unsupported', () => {
-    expect(() => assertSupportedLocale('de')).toThrow(ConvexError)
+  it('preserves unsupported but well-formed codes (storage trusts FE picker)', () => {
+    expect(normalizeAppLanguage('es')).toBe('es')
+    expect(normalizeAppLanguage('vi')).toBe('vi')
+    expect(normalizeAppLanguage('en-GB')).toBe('en-GB')
   })
 
-  it('normalizeAppLanguageOrThrow collapses script tags', () => {
-    expect(normalizeAppLanguageOrThrow('zh-Hans-CN')).toBe('zh-CN')
-    expect(normalizeAppLanguageOrThrow('zh-Hant-TW')).toBe('zh-TW')
+  it('returns "en" on empty input', () => {
+    expect(normalizeAppLanguage('')).toBe('en')
   })
 
-  it('normalizeAppLanguageOrThrow falls back to base tag when supported', () => {
-    expect(normalizeAppLanguageOrThrow('en-GB')).toBe('en')
-  })
-
-  it('normalizeAppLanguageOrThrow throws on unsupported tag', () => {
-    expect(() => normalizeAppLanguageOrThrow('xx-YY')).toThrow(ConvexError)
+  it('throws on malformed shape', () => {
+    expect(() => normalizeAppLanguage('XX-yy-zz-too-long')).toThrow(ConvexError)
   })
 })

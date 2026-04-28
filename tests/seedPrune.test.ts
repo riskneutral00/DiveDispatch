@@ -53,7 +53,6 @@ describe('seed.pruneOrphanOrgs', () => {
         tokenIdentifier: 'seed|fake-blocker',
         slug: 'fake-blocker',
         email: 'fake@blocker.test',
-        name: 'Fake Blocker',
         firstName: 'Fake',
         lastName: 'Blocker',
         appLanguage: 'en',

@@ -10,10 +10,8 @@ describe('getActiveOrg — membership-gated denorm fallback', () => {
     const { orgId } = await t.run(async (ctx) => {
       const uid = await ctx.db.insert('users', {
         tokenIdentifier,
-        originalTokenIdentifier: tokenIdentifier,
         slug: 'free-slug',
         email: 'free@test.com',
-        name: 'Free',
         firstName: 'Free',
         lastName: 'Lancer',
         appLanguage: 'en',
@@ -51,10 +49,8 @@ describe('getActiveOrg — membership-gated denorm fallback', () => {
     const { orgId } = await t.run(async (ctx) => {
       const uid = await ctx.db.insert('users', {
         tokenIdentifier,
-        originalTokenIdentifier: tokenIdentifier,
         slug: 'seed-slug',
         email: 'seed@test.com',
-        name: 'Seed',
         firstName: 'See',
         lastName: 'Eed',
         appLanguage: 'en',
@@ -93,10 +89,8 @@ describe('getActiveOrg — membership-gated denorm fallback', () => {
     await t.run(async (ctx) => {
       const uid = await ctx.db.insert('users', {
         tokenIdentifier,
-        originalTokenIdentifier: tokenIdentifier,
         slug: 'orphan-denorm',
         email: 'orphan-denorm@test.com',
-        name: 'Orphan',
         firstName: 'Or',
         lastName: 'Phan',
         appLanguage: 'en',
@@ -128,10 +122,8 @@ describe('getActiveOrg — membership-gated denorm fallback', () => {
     await t.run(async (ctx) => {
       await ctx.db.insert('users', {
         tokenIdentifier,
-        originalTokenIdentifier: tokenIdentifier,
         slug: 'no-denorm',
         email: 'no-denorm@test.com',
-        name: 'NoDenorm',
         firstName: 'No',
         lastName: 'Denorm',
         appLanguage: 'en',
@@ -156,10 +148,8 @@ describe('getActiveOrg — membership-gated denorm fallback', () => {
     const { orgId } = await t.run(async (ctx) => {
       const uid = await ctx.db.insert('users', {
         tokenIdentifier,
-        originalTokenIdentifier: tokenIdentifier,
         slug: 'jwt-user',
         email: 'jwt@test.com',
-        name: 'JWT',
         firstName: 'J',
         lastName: 'WT',
         appLanguage: 'en',
@@ -203,10 +193,8 @@ describe('getActiveOrg — membership-gated denorm fallback', () => {
     const { membershipOrgId } = await t.run(async (ctx) => {
       const uid = await ctx.db.insert('users', {
         tokenIdentifier,
-        originalTokenIdentifier: tokenIdentifier,
         slug: 'jwt-fall',
         email: 'jwt-fall@test.com',
-        name: 'JWT Fall',
         firstName: 'JWT',
         lastName: 'Fall',
         appLanguage: 'en',
@@ -250,10 +238,8 @@ describe('getActiveOrg — membership-gated denorm fallback', () => {
     const { membershipOrgId } = await t.run(async (ctx) => {
       const uid = await ctx.db.insert('users', {
         tokenIdentifier,
-        originalTokenIdentifier: tokenIdentifier,
         slug: 'jwt-wrong',
         email: 'jwt-wrong@test.com',
-        name: 'JWT Wrong',
         firstName: 'JWT',
         lastName: 'Wrong',
         appLanguage: 'en',
@@ -303,10 +289,8 @@ describe('getActiveOrg — membership-gated denorm fallback', () => {
     await t.run(async (ctx) => {
       const uid = await ctx.db.insert('users', {
         tokenIdentifier,
-        originalTokenIdentifier: tokenIdentifier,
         slug: 'member-fb',
         email: 'member-fb@test.com',
-        name: 'Member',
         firstName: 'Mem',
         lastName: 'Ber',
         appLanguage: 'en',
@@ -346,10 +330,8 @@ describe('getActiveOrg — membership-gated denorm fallback', () => {
     await t.run(async (ctx) => {
       const uid = await ctx.db.insert('users', {
         tokenIdentifier,
-        originalTokenIdentifier: tokenIdentifier,
         slug: 'jwt-member',
         email: 'jwt-member@test.com',
-        name: 'JWT Member',
         firstName: 'JWT',
         lastName: 'Member',
         appLanguage: 'en',

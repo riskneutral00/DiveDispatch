@@ -8,10 +8,8 @@ describe('setUserOrganization — single-writer invariant', () => {
     await t.run(async (ctx) => {
       const userId = await ctx.db.insert('users', {
         tokenIdentifier: 'clerk|sync-user',
-        originalTokenIdentifier: 'clerk|sync-user',
         slug: 'sync-user',
         email: 'sync@test.com',
-        name: 'Sync User',
         firstName: 'Sync',
         lastName: 'User',
         appLanguage: 'en',
@@ -63,10 +61,8 @@ describe('setUserOrganization — single-writer invariant', () => {
     await t.run(async (ctx) => {
       const userId = await ctx.db.insert('users', {
         tokenIdentifier: 'clerk|drift-user',
-        originalTokenIdentifier: 'clerk|drift-user',
         slug: 'drift-user',
         email: 'drift@test.com',
-        name: 'Drift User',
         firstName: 'Drift',
         lastName: 'User',
         appLanguage: 'en',
@@ -116,10 +112,8 @@ describe('setUserOrganization — single-writer invariant', () => {
     await t.run(async (ctx) => {
       const userId = await ctx.db.insert('users', {
         tokenIdentifier: 'clerk|noop-user',
-        originalTokenIdentifier: 'clerk|noop-user',
         slug: 'noop-user',
         email: 'noop@test.com',
-        name: 'Noop User',
         firstName: 'Noop',
         lastName: 'User',
         appLanguage: 'en',
