@@ -12,7 +12,7 @@ import { FieldRow } from '@/components/ui/field-row'
 import { Input } from '@/components/ui/input'
 import { NumberPicker } from '@/components/ui/number-picker'
 import { SimpleSelect } from '@/components/ui/simple-select'
-import { EntityCardList } from '@/components/ui/entity-card-list'
+import { ExpandingCardList, InlineRowList } from '@/components/profiles/collection-editors'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import { GasMixFields } from '@/components/capabilities/gas-mix-fields'
 import {
@@ -223,16 +223,20 @@ export function BoatFleetSection({ profile: existing, me, create, update, onClos
           setField('nitroxMax', next.nitroxMax)
         }}
       />
-      <EntityCardList<FleetState>
+      <ExpandingCardList<FleetState>
         label="Fleet"
         addLabel="Add Vessel"
         items={form.fleet}
         emptyItem={emptyFleet}
         onChange={(next) => setField('fleet', next)}
-        layout="stack"
+        itemKey={(_v, fi) => String(fi)}
+        defaultExpandFirst
         minItems={1}
         removeAriaLabel={(_v, fi) => `Remove vessel ${fi + 1}`}
-        renderCard={(vessel, update, fi) => (
+        renderCardTitle={(vessel, fi) =>
+          `Vessel ${fi + 1}${vessel.boatName ? ` — ${vessel.boatName}` : ''}`
+        }
+        renderExpandedBody={(vessel, update, fi) => (
           <FleetEntryBody
             vessel={vessel}
             fleetIdx={fi}
@@ -261,12 +265,6 @@ interface FleetEntryBodyProps {
 function FleetEntryBody({ vessel, fleetIdx: fi, errors, venueOptions, onUpdate, onUpdateRoutes, onToggleDay }: FleetEntryBodyProps) {
   return (
     <>
-      <div className="mb-4">
-        <span className="text-body font-medium text-primary">
-          Vessel {fi + 1}{vessel.boatName ? ` — ${vessel.boatName}` : ''}
-        </span>
-      </div>
-
       <FieldRow className="mb-5">
         <Input
           className="field-md"
@@ -315,16 +313,15 @@ function FleetEntryBody({ vessel, fleetIdx: fi, errors, venueOptions, onUpdate, 
         />
       </FieldRow>
 
-      <EntityCardList<RouteState>
+      <InlineRowList<RouteState>
         label="Routes"
         addLabel="Add Route"
         items={vessel.routes}
         emptyItem={emptyRoute}
         onChange={onUpdateRoutes}
-        layout="stack"
         emptyMessage="No routes added. Routes define which dive sites this vessel visits and on which days."
         removeAriaLabel={() => 'Remove route'}
-        renderCard={(route, _update, ri) => (
+        renderRow={(route, _update, ri) => (
           <RouteRowBody
             route={route}
             fleetIdx={fi}
