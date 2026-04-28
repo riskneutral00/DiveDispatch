@@ -6,10 +6,22 @@ import {
   isValidLanguageCode,
 } from '@/lib/constants/i18n'
 
-export const e164Schema = z
-  .string()
-  .min(1, 'Phone is required')
-  .refine(isValidPhoneE164, { message: 'Phone must be valid E.164 format' })
+interface PhoneSchemaOptions {
+  requiredMessage?: string
+  invalidMessage?: string
+}
+
+export function phoneSchema({
+  requiredMessage = 'Phone is required',
+  invalidMessage = 'Phone must be valid E.164 format',
+}: PhoneSchemaOptions = {}) {
+  return z
+    .string()
+    .min(1, requiredMessage)
+    .refine(isValidPhoneE164, { message: invalidMessage })
+}
+
+export const e164Schema = phoneSchema()
 
 export const countryCodeSchema = z
   .string()

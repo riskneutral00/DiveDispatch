@@ -7,7 +7,7 @@ import { parseConvexError } from '@/lib/utils/convex-error'
 interface UseMutationWithFeedbackOptions {
   successMessage?: string
   errorFallback?: string
-  onError?: (err: unknown) => string
+  translateError?: (err: unknown) => string
 }
 
 type MutationResult<T> =
@@ -20,7 +20,7 @@ export function useMutationWithFeedback<TArgs extends unknown[], TResult>(
 ) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const { successMessage, errorFallback, onError } = opts ?? {}
+  const { successMessage, errorFallback, translateError } = opts ?? {}
 
   const execute = useCallback(
     async (...args: TArgs): Promise<MutationResult<TResult>> => {
@@ -33,8 +33,8 @@ export function useMutationWithFeedback<TArgs extends unknown[], TResult>(
         }
         return { ok: true, value: result }
       } catch (e: unknown) {
-        const message = onError
-          ? onError(e)
+        const message = translateError
+          ? translateError(e)
           : parseConvexError(e, errorFallback ?? 'Something went wrong')
         setError(message)
         toast.error(message, { duration: 5000 })
@@ -43,7 +43,7 @@ export function useMutationWithFeedback<TArgs extends unknown[], TResult>(
         setLoading(false)
       }
     },
-    [mutationFn, successMessage, errorFallback, onError],
+    [mutationFn, successMessage, errorFallback, translateError],
   )
 
   const clearError = useCallback(() => setError(null), [])

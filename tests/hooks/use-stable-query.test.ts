@@ -86,4 +86,24 @@ describe('useStableQuery', () => {
     expect(result.current.isError).toBe(false)
     expect(result.current.isLoading).toBe(true)
   })
+
+  it('respects a caller-supplied timeoutMs override', () => {
+    mockUseQuery.mockReturnValue(undefined)
+    mockUseConvexAuth.mockReturnValue({ isAuthenticated: true })
+    const { result } = renderHook(() => useStableQuery(fakeQuery, {}, { timeoutMs: 2000 }))
+    act(() => { vi.advanceTimersByTime(1999) })
+    expect(result.current.isError).toBe(false)
+    act(() => { vi.advanceTimersByTime(1) })
+    expect(result.current.isError).toBe(true)
+  })
+
+  it('falls back to the 8000ms default when timeoutMs is omitted', () => {
+    mockUseQuery.mockReturnValue(undefined)
+    mockUseConvexAuth.mockReturnValue({ isAuthenticated: true })
+    const { result } = renderHook(() => useStableQuery(fakeQuery, {}))
+    act(() => { vi.advanceTimersByTime(7999) })
+    expect(result.current.isError).toBe(false)
+    act(() => { vi.advanceTimersByTime(1) })
+    expect(result.current.isError).toBe(true)
+  })
 })

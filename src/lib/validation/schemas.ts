@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { COURSE_CODES } from '@/lib/constants/course-catalog'
-import { isValidPhoneE164 } from '@/lib/constants/i18n'
+import { phoneSchema } from '@/lib/schemas/i18n'
 import {
   CERT_REQUIRED_ACTIVITIES,
   calcAgeAtDate,
@@ -21,10 +21,10 @@ function requireEndAfterStart(
   }
 }
 
-const phoneField = z
-  .string()
-  .min(1, 'Required')
-  .refine(isValidPhoneE164, 'Use a valid international phone number')
+const phoneField = phoneSchema({
+  requiredMessage: 'Required',
+  invalidMessage: 'Use a valid international phone number',
+})
 
 const dateField = z.string().min(1, 'Required')
 
