@@ -6,6 +6,7 @@ import { api } from '@/lib/convex-generated'
 import type { Doc } from '@/lib/convex-generated'
 import { ROLE_BY_CLERK_ROLE, type ClerkRole, type RoleKey } from '@/lib/constants/roles'
 import { deriveDefaultRole } from '@/lib/utils/role'
+import { useStoreUserStatus } from './store-user-context'
 
 type User = Doc<'users'>
 type UserRoleDoc = Doc<'userRoles'>
@@ -25,12 +26,13 @@ export interface SessionIdentity {
 
 export function useSessionIdentity(): SessionIdentity {
   const { isLoading: isAuthLoading, isAuthenticated } = useConvexAuth()
+  const storeStatus = useStoreUserStatus()
   const user = useQuery(api.users.me)
   const roles = useQuery(api.userRoles.myRoles)
 
   return useMemo<SessionIdentity>(() => {
     let status: SessionStatus
-    if (isAuthLoading || user === undefined || roles === undefined) {
+    if (isAuthLoading || storeStatus === 'pending' || user === undefined || roles === undefined) {
       status = 'loading'
     } else if (user === null) {
       status = 'unauthenticated'
@@ -54,5 +56,5 @@ export function useSessionIdentity(): SessionIdentity {
       isAuthLoading,
       isAuthenticated,
     }
-  }, [user, roles, isAuthLoading, isAuthenticated])
+  }, [user, roles, isAuthLoading, isAuthenticated, storeStatus])
 }

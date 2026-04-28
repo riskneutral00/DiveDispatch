@@ -4,6 +4,7 @@ import { Inter } from "next/font/google"
 import { NextIntlClientProvider } from "next-intl"
 import { getLocale, getMessages } from "next-intl/server"
 import { ConvexClerkProvider } from "../lib/convex"
+import { StoreUserProvider } from "../lib/hooks/store-user-context"
 import { LocaleSyncProvider } from "../lib/hooks/locale-sync-provider"
 import { ThemeProvider } from "../themes/theme-provider"
 import { getThemeBootstrapScript } from "../themes/theme-bootstrap"
@@ -40,6 +41,7 @@ export default async function RootLayout({
           signUpFallbackRedirectUrl="/sign-up"
         >
           <ConvexClerkProvider>
+            <StoreUserProvider>
             <PostHogProvider>
             <ThemeProvider>
               <NextIntlClientProvider messages={messages}>
@@ -51,6 +53,7 @@ export default async function RootLayout({
               </NextIntlClientProvider>
             </ThemeProvider>
             </PostHogProvider>
+            </StoreUserProvider>
           </ConvexClerkProvider>
         </ClerkProvider>
       </body>
