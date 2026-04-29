@@ -58,10 +58,13 @@ function renderDialog(initial: Partial<VenueEditValue> = {}) {
       open={true}
       onClose={onClose}
       mode="create"
-      initialValue={{ ...EMPTY_VENUE_EDIT, ...initial }}
+      lockedKind="dive_site"
+      initialValue={{ ...EMPTY_VENUE_EDIT, kind: 'dive_site', ...initial }}
       onSubmit={onSubmit}
     />,
   )
+  const accessTab = screen.queryByText('Access')
+  if (accessTab) fireEvent.click(accessTab)
   return { onSubmit, onClose }
 }
 

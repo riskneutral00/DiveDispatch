@@ -30,10 +30,6 @@ vi.mock('@/components/profiles/agent-profile-form', () => ({
   AgentAssociationsSection: () => <div data-testid="agent-associations" />,
 }))
 
-vi.mock('@/components/profiles/venue-contact-section', () => ({
-  VenueContactSection: () => <div data-testid="venue-contact" />,
-}))
-
 vi.mock('@/components/profiles/venue-capabilities-section', () => ({
   VenueCapabilitiesSection: () => <div data-testid="venue-capabilities" />,
 }))

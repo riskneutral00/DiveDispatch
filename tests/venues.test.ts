@@ -43,6 +43,7 @@ const VALID_DIVE_SITE_ARGS = {
   kind: 'dive_site' as const,
   features: ['reef' as const],
   confinedCapable: false,
+  maxDepth: 30,
   maxCapacity: 20,
 }
 
@@ -69,6 +70,7 @@ const VALID_SHORE_ARGS = {
   kind: 'dive_site' as const,
   features: [],
   confinedCapable: true,
+  maxDepth: 18,
   maxCapacity: 10,
 }
 
@@ -730,12 +732,51 @@ describe('venues.create — i18n validators at boundary', () => {
     ).rejects.toThrow(/VALIDATION/)
   })
 
-  it('accepts empty-string phone (optional field convention)', async () => {
+  it('rejects empty-string phone with VALIDATION (per-row contact required)', async () => {
     const t = makeT()
     await t.run(async (ctx) => { await seedVenueUser(ctx, 'empty-phone') })
-    const venueId = await t.withIdentity(orgIdentityFor('empty-phone'))
-      .mutation(api.venues.create, { ...VALID_DIVE_SITE_ARGS, phone: '' })
-    expect(venueId).toBeTruthy()
+    await expect(
+      t.withIdentity(orgIdentityFor('empty-phone'))
+        .mutation(api.venues.create, { ...VALID_DIVE_SITE_ARGS, phone: '' }),
+    ).rejects.toThrow(/VALIDATION/)
+  })
+
+  it('rejects empty-string email with VALIDATION (per-row contact required)', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedVenueUser(ctx, 'empty-email') })
+    await expect(
+      t.withIdentity(orgIdentityFor('empty-email'))
+        .mutation(api.venues.create, { ...VALID_DIVE_SITE_ARGS, email: '' }),
+    ).rejects.toThrow(/VALIDATION/)
+  })
+
+  it('rejects missing maxDepth with VALIDATION', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedVenueUser(ctx, 'missing-depth') })
+    const { maxDepth: _omit, ...withoutDepth } = VALID_DIVE_SITE_ARGS
+    await expect(
+      t.withIdentity(orgIdentityFor('missing-depth'))
+        .mutation(api.venues.create, withoutDepth),
+    ).rejects.toThrow(/VALIDATION/)
+  })
+
+  it('rejects pool create with missing maxCapacity', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedVenueUser(ctx, 'missing-cap') })
+    const { maxCapacity: _omit, ...withoutCap } = VALID_POOL_ARGS
+    await expect(
+      t.withIdentity(orgIdentityFor('missing-cap'))
+        .mutation(api.venues.create, withoutCap),
+    ).rejects.toThrow(/VALIDATION/)
+  })
+
+  it('rejects pool create with maxCapacity=0', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedVenueUser(ctx, 'zero-cap') })
+    await expect(
+      t.withIdentity(orgIdentityFor('zero-cap'))
+        .mutation(api.venues.create, { ...VALID_POOL_ARGS, maxCapacity: 0 }),
+    ).rejects.toThrow(/VALIDATION/)
   })
 })
 
@@ -750,6 +791,26 @@ describe('venues.update — i18n validators at boundary', () => {
         venueId,
         phone: '1234',
       }),
+    ).rejects.toThrow(/VALIDATION/)
+  })
+
+  it('rejects empty-string phone update with VALIDATION', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedVenueUser(ctx, 'update-empty-phone') })
+    const identity = orgIdentityFor('update-empty-phone')
+    const venueId = await t.withIdentity(identity).mutation(api.venues.create, VALID_DIVE_SITE_ARGS)
+    await expect(
+      t.withIdentity(identity).mutation(api.venues.update, { venueId, phone: '' }),
+    ).rejects.toThrow(/VALIDATION/)
+  })
+
+  it('rejects empty-string email update with VALIDATION', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedVenueUser(ctx, 'update-empty-email') })
+    const identity = orgIdentityFor('update-empty-email')
+    const venueId = await t.withIdentity(identity).mutation(api.venues.create, VALID_DIVE_SITE_ARGS)
+    await expect(
+      t.withIdentity(identity).mutation(api.venues.update, { venueId, email: '' }),
     ).rejects.toThrow(/VALIDATION/)
   })
 })

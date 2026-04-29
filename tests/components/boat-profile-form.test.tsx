@@ -8,7 +8,7 @@ type MinimalCompressor = Pick<
   '_id' | 'name' | 'gasMixes' | 'nitroxMin' | 'nitroxMax'
 >
 
-type MinimalVenue = Pick<Doc<'venues'>, '_id' | 'name'>
+type MinimalVenue = Pick<Doc<'venues'>, '_id' | 'name' | 'kind'>
 
 let boatProfile: Array<Pick<Doc<'boats'>, '_id'>> = []
 let compressors: MinimalCompressor[] = []
@@ -114,8 +114,8 @@ function fillVesselBasics(name: string) {
 describe('BoatFleetSection — venue multi-select populates routes[].venueIds', () => {
   it('submits payload with routes[].venueIds when venues are picked', async () => {
     venues = [
-      { _id: 'venue-racha-yai' as Id<'venues'>, name: 'Racha Yai' },
-      { _id: 'venue-racha-noi' as Id<'venues'>, name: 'Racha Noi' },
+      { _id: 'venue-racha-yai' as Id<'venues'>, name: 'Racha Yai', kind: 'dive_site' },
+      { _id: 'venue-racha-noi' as Id<'venues'>, name: 'Racha Noi', kind: 'dive_site' },
     ]
 
     render(<BoatFleetSection {...baseProps} />)
@@ -148,11 +148,22 @@ describe('BoatFleetSection — venue multi-select populates routes[].venueIds', 
   })
 
   it('renders the venue checkbox group only after Add Route', () => {
-    venues = [{ _id: 'venue-x' as Id<'venues'>, name: 'Venue X' }]
+    venues = [{ _id: 'venue-x' as Id<'venues'>, name: 'Venue X', kind: 'dive_site' }]
     render(<BoatFleetSection {...baseProps} />)
     expect(screen.queryByRole('checkbox', { name: /venue x/i })).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: /add route/i }))
     expect(screen.getByRole('checkbox', { name: /venue x/i })).toBeTruthy()
+  })
+
+  it('excludes pool venues from the route picker', () => {
+    venues = [
+      { _id: 'venue-pool' as Id<'venues'>, name: 'Training Pool', kind: 'pool' },
+      { _id: 'venue-site' as Id<'venues'>, name: 'Sail Rock', kind: 'dive_site' },
+    ]
+    render(<BoatFleetSection {...baseProps} />)
+    fireEvent.click(screen.getByRole('button', { name: /add route/i }))
+    expect(screen.queryByRole('checkbox', { name: /training pool/i })).toBeNull()
+    expect(screen.getByRole('checkbox', { name: /sail rock/i })).toBeInTheDocument()
   })
 })
 

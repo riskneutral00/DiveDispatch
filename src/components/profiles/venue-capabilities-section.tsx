@@ -3,10 +3,11 @@
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { useMutation, useQuery } from 'convex/react'
-import type { Id } from '@/lib/convex-generated'
+import type { Doc, Id } from '@/lib/convex-generated'
 import { api } from '@/lib/convex-generated'
 import { EntityCardList } from '@/components/ui/entity-card-list'
 import { Button } from '@/components/ui/button'
+import { MenuButton } from '@/components/ui/menu-button'
 import { Badge } from '@/components/ui/badge'
 import { LoadingCard } from '@/components/ui/loading-card'
 import {
@@ -60,6 +61,51 @@ export function venueCapabilitiesToPayload(f: VenueCapabilitiesFormState): Recor
 
 type VenueCapabilitiesSectionProps = BaseProfileSectionProps
 
+type VenueDoc = Doc<'venues'>
+
+type SubTab = 'pool' | 'dive_site'
+
+function buildCreateDefaults(
+  kind: VenueKind,
+  venues: VenueDoc[],
+  inheritedDefaults: Record<string, unknown>,
+): VenueEditValue {
+  const sortedSameKind = venues
+    .filter((v) => (v.kind as VenueKind) === kind)
+    .sort((a, b) => b._creationTime - a._creationTime)
+  const sortedAny = [...venues].sort((a, b) => b._creationTime - a._creationTime)
+  const seed = sortedSameKind[0] ?? sortedAny[0] ?? null
+
+  if (seed) {
+    const existingGasMixes = (seed.gasMixes ?? []) as GasMix[]
+    return {
+      ...EMPTY_VENUE_EDIT,
+      kind,
+      email: seed.email ?? '',
+      phone: seed.phone ?? '',
+      location: {
+        address: seed.address,
+        placeId: seed.placeId,
+        lat: seed.lat,
+        lng: seed.lng,
+      },
+      isAllowed: seed.isAllowed ?? [],
+      notAllowed: seed.notAllowed ?? [],
+      hasCompressorOnSite: existingGasMixes.length > 0,
+      compressorGasMixes: existingGasMixes,
+      compressorNitroxMin: seed.nitroxMin ?? undefined,
+      compressorNitroxMax: seed.nitroxMax ?? undefined,
+    }
+  }
+
+  return {
+    ...EMPTY_VENUE_EDIT,
+    kind,
+    email: (inheritedDefaults.email as string) || '',
+    phone: (inheritedDefaults.phone as string) || '',
+  }
+}
+
 export function VenueCapabilitiesSection({ me }: VenueCapabilitiesSectionProps) {
   const t = useTranslations('common')
   const venues = useQuery(api.venues.mine)
@@ -68,10 +114,11 @@ export function VenueCapabilitiesSection({ me }: VenueCapabilitiesSectionProps) 
   const removeVenue = useMutation(api.venues.remove)
   const venueInheritedDefaults = useInheritedContactDefaults('Venue', me)
 
+  const [activeTab, setActiveTab] = useState<SubTab>('pool')
   const [dialogState, setDialogState] = useState<
     | { open: false }
-    | { open: true; mode: 'create' }
-    | { open: true; mode: 'edit'; venueId: Id<'venues'>; initial: VenueEditValue }
+    | { open: true; mode: 'create'; kind: VenueKind; initial: VenueEditValue }
+    | { open: true; mode: 'edit'; venueId: Id<'venues'>; kind: VenueKind; initial: VenueEditValue }
   >({ open: false })
 
   if (venues === undefined) {
@@ -98,8 +145,8 @@ export function VenueCapabilitiesSection({ me }: VenueCapabilitiesSectionProps) 
       placeId: value.location.placeId,
       lat: value.location.lat,
       lng: value.location.lng,
-      email: (venueInheritedDefaults.email as string) || '',
-      phone: (venueInheritedDefaults.phone as string) || '',
+      email: value.email,
+      phone: value.phone,
       kind: value.kind,
       features: value.features,
       confinedCapable: value.confinedCapable,
@@ -120,6 +167,8 @@ export function VenueCapabilitiesSection({ me }: VenueCapabilitiesSectionProps) 
       placeId: value.location.placeId,
       lat: value.location.lat,
       lng: value.location.lng,
+      email: value.email,
+      phone: value.phone,
       kind: value.kind,
       features: value.features,
       confinedCapable: value.confinedCapable,
@@ -135,15 +184,27 @@ export function VenueCapabilitiesSection({ me }: VenueCapabilitiesSectionProps) 
     await removeVenue({ venueId })
   }
 
-  const openEditFor = (venue: (typeof venues)[number]) => {
+  const openCreate = (kind: VenueKind) => {
+    setDialogState({
+      open: true,
+      mode: 'create',
+      kind,
+      initial: buildCreateDefaults(kind, venues, venueInheritedDefaults),
+    })
+  }
+
+  const openEditFor = (venue: VenueDoc) => {
     const existingGasMixes = (venue.gasMixes ?? []) as GasMix[]
     setDialogState({
       open: true,
       mode: 'edit',
       venueId: venue._id,
+      kind: venue.kind as VenueKind,
       initial: {
         name: venue.name,
         kind: venue.kind as VenueKind,
+        email: venue.email ?? '',
+        phone: venue.phone ?? '',
         location: {
           address: venue.address,
           placeId: venue.placeId,
@@ -164,17 +225,45 @@ export function VenueCapabilitiesSection({ me }: VenueCapabilitiesSectionProps) 
     })
   }
 
+  const filtered = venues.filter((v) => (v.kind as VenueKind) === activeTab)
+  const addLabel = activeTab === 'pool' ? t('addPool') : t('addDiveSite')
+  const emptyMessage = activeTab === 'pool' ? t('noPoolsYet') : t('noDiveSitesYet')
+  const removeAriaKey = activeTab === 'pool' ? 'removePool' : 'removeDiveSite'
+
   return (
     <>
+      <nav className="flex gap-2 mb-4" role="tablist" aria-label={t('venues')}>
+        <MenuButton
+          variant="pill"
+          size="sm"
+          role="tab"
+          aria-selected={activeTab === 'pool'}
+          active={activeTab === 'pool'}
+          onClick={() => setActiveTab('pool')}
+        >
+          {t('venueKinds.pool')}
+        </MenuButton>
+        <MenuButton
+          variant="pill"
+          size="sm"
+          role="tab"
+          aria-selected={activeTab === 'dive_site'}
+          active={activeTab === 'dive_site'}
+          onClick={() => setActiveTab('dive_site')}
+        >
+          {t('venueKinds.dive_site')}
+        </MenuButton>
+      </nav>
+
       <EntityCardList
-        label={t('venues')}
-        items={venues}
-        addLabel={t('addVenue')}
-        emptyMessage={t('noVenuesYet')}
-        onAdd={() => setDialogState({ open: true, mode: 'create' })}
+        label={activeTab === 'pool' ? t('venueKinds.pool') : t('venueKinds.dive_site')}
+        items={filtered}
+        addLabel={addLabel}
+        emptyMessage={emptyMessage}
+        onAdd={() => openCreate(activeTab)}
         onRemove={(venue) => void handleRemove(venue._id)}
         itemKey={(venue) => venue._id}
-        removeAriaLabel={(venue) => t('removeVenue', { name: venue.name })}
+        removeAriaLabel={(venue) => t(removeAriaKey, { name: venue.name })}
         getCompleteness={(venue) => ({
           complete: venue.profileComplete === true,
           incomplete: [],
@@ -228,11 +317,8 @@ export function VenueCapabilitiesSection({ me }: VenueCapabilitiesSectionProps) 
         open={dialogState.open}
         onClose={() => setDialogState({ open: false })}
         mode={dialogState.open && dialogState.mode === 'edit' ? 'edit' : 'create'}
-        initialValue={
-          dialogState.open && dialogState.mode === 'edit'
-            ? dialogState.initial
-            : EMPTY_VENUE_EDIT
-        }
+        lockedKind={dialogState.open ? dialogState.kind : undefined}
+        initialValue={dialogState.open ? dialogState.initial : EMPTY_VENUE_EDIT}
         onSubmit={async (value) => {
           if (dialogState.open && dialogState.mode === 'edit') {
             await handleEdit(dialogState.venueId, value)

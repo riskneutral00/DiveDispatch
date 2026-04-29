@@ -63,11 +63,21 @@ export const create = mutation({
     assertVenueRange(kind, args.maxDepth, args.maxCapacity)
     validateNitroxRange(args)
 
-    if (args.phone !== undefined && args.phone !== '') {
-      assertPhoneE164(args.phone, 'phone')
+    if (!args.email || args.email.trim() === '') {
+      throw new ConvexError({ code: ErrorCode.VALIDATION, reason: 'missing_email' })
     }
+    if (!args.phone || args.phone.trim() === '') {
+      throw new ConvexError({ code: ErrorCode.VALIDATION, reason: 'missing_phone' })
+    }
+    assertPhoneE164(args.phone, 'phone')
     if (args.address?.country) {
       assertCountryCode(args.address.country, 'address.country')
+    }
+    if (kind === 'pool' && (args.maxCapacity === undefined || args.maxCapacity <= 0)) {
+      throw new ConvexError({ code: ErrorCode.VALIDATION, reason: 'missing_maxCapacity' })
+    }
+    if (args.maxDepth === undefined || args.maxDepth <= 0) {
+      throw new ConvexError({ code: ErrorCode.VALIDATION, reason: 'missing_maxDepth' })
     }
 
     const hasVenueRole = await checkHasRole(ctx, user._id, 'Venue')
@@ -130,7 +140,13 @@ export const update = mutation({
     const { org: activeOrg } = await getActiveOrg(ctx)
     assertOrgOwnership(venue, activeOrg)
 
-    if (args.phone !== undefined && args.phone !== '') {
+    if (args.email !== undefined && args.email.trim() === '') {
+      throw new ConvexError({ code: ErrorCode.VALIDATION, reason: 'missing_email' })
+    }
+    if (args.phone !== undefined) {
+      if (args.phone.trim() === '') {
+        throw new ConvexError({ code: ErrorCode.VALIDATION, reason: 'missing_phone' })
+      }
       assertPhoneE164(args.phone, 'phone')
     }
     if (args.address?.country) {

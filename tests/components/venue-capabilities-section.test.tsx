@@ -23,6 +23,10 @@ type MinimalVenue = Pick<
   | 'address'
   | 'isAllowed'
   | 'notAllowed'
+  | 'email'
+  | 'phone'
+  | 'lat'
+  | 'lng'
 >
 
 type MinimalCompressor = Pick<
@@ -127,6 +131,10 @@ function baseVenue(overrides: Partial<MinimalVenue> = {}): MinimalVenue {
     address: { city: 'Koh Tao', country: 'TH' },
     isAllowed: [],
     notAllowed: [],
+    email: 'venue@test.com',
+    phone: '+66100000050',
+    lat: 10.09,
+    lng: 99.84,
     ...overrides,
   }
 }
@@ -182,20 +190,32 @@ describe('VenueCapabilitiesSection — feature badges', () => {
 })
 
 describe('VenueCapabilitiesSection — create payload includes features', () => {
-  it('submits features selected in the dialog', async () => {
+  it('submits features selected in the dive-site dialog', async () => {
     venues = []
 
     render(<VenueCapabilitiesSection {...baseProps} />)
 
-    fireEvent.click(screen.getByRole('button', { name: /add venue/i }))
+    fireEvent.click(screen.getByRole('tab', { name: /dive site/i }))
+    fireEvent.click(screen.getByRole('button', { name: /add dive site/i }))
 
-    const nameInput = screen.getByLabelText(/venue name/i) as HTMLInputElement
+    const nameInput = screen.getByLabelText(/dive site name/i) as HTMLInputElement
     fireEvent.change(nameInput, { target: { value: 'New Dive Site' } })
+
+    const emailInput = screen.getByLabelText(/email/i) as HTMLInputElement
+    fireEvent.change(emailInput, { target: { value: 'site@test.com' } })
+
+    const phoneLabels = screen.getAllByLabelText(/phone/i)
+    const phoneInput = phoneLabels.find((el) => (el as HTMLInputElement).type === 'tel') as HTMLInputElement
+    expect(phoneInput).toBeInTheDocument()
+    fireEvent.change(phoneInput, { target: { value: '+66100000099' } })
 
     fireEvent.click(screen.getByRole('button', { name: /pick location/i }))
 
-    const kindSelect = screen.getByLabelText(/venue type/i) as HTMLSelectElement
-    fireEvent.change(kindSelect, { target: { value: 'dive_site' } })
+    const depthInput = screen.getByLabelText(/max depth/i) as HTMLInputElement
+    fireEvent.change(depthInput, { target: { value: '20' } })
+    fireEvent.blur(depthInput)
+
+    fireEvent.click(screen.getByRole('tab', { name: /^features$/i }))
 
     const featuresGroup = screen.getByRole('group', { name: /features/i })
     const reef = within(featuresGroup).getByRole('checkbox', { name: /^reef$/i })
@@ -204,13 +224,14 @@ describe('VenueCapabilitiesSection — create payload includes features', () => 
     fireEvent.click(wreck)
 
     const footer = screen.getByRole('dialog')
-    const submit = within(footer).getAllByRole('button', { name: /add venue/i }).pop()!
+    const submit = within(footer).getAllByRole('button', { name: /add dive site/i }).pop()!
     fireEvent.click(submit)
 
     await new Promise((r) => setTimeout(r, 0))
 
     expect(createVenue).toHaveBeenCalledTimes(1)
-    const payload = createVenue.mock.calls[0]![0] as { features: string[] }
+    const payload = createVenue.mock.calls[0]![0] as { features: string[]; kind: string }
+    expect(payload.kind).toBe('dive_site')
     expect(payload.features).toEqual(['reef', 'wreck'])
   })
 })
@@ -219,13 +240,18 @@ describe('VenueCapabilitiesSection — edit seeds features from venue', () => {
   it('preloads venue.features into CheckboxGroup state and emits edits', async () => {
     venues = [
       baseVenue({
+        kind: 'dive_site',
+        confinedCapable: false,
         features: ['cave'] as VenueFeature[],
       }),
     ]
 
     render(<VenueCapabilitiesSection {...baseProps} />)
 
+    fireEvent.click(screen.getByRole('tab', { name: /dive site/i }))
     fireEvent.click(screen.getByRole('button', { name: /^edit$/i }))
+
+    fireEvent.click(screen.getByRole('tab', { name: /^features$/i }))
 
     const featuresGroup = screen.getByRole('group', { name: /features/i })
     const cave = within(featuresGroup).getByRole('checkbox', { name: /^cave$/i }) as HTMLInputElement

@@ -212,8 +212,7 @@ export const ROLES: RoleConfig[] = [
     bookingPresence: 'itinerary',
     description: 'Provide a place where diving happens — pool, shore, reef, lake, river, quarry, or other.',
     profileTabs: [
-      { id: 'contact', label: 'Contact', fields: ['name', 'email', 'phone', 'address'] },
-      { id: 'capabilities', label: 'Pool/Dive Site', fields: ['kind', 'maxDepth', 'maxCapacity', 'confinedCapable'] },
+      { id: 'capabilities', label: 'Venues', fields: ['name', 'email', 'phone', 'address', 'kind', 'maxDepth', 'maxCapacity', 'confinedCapable'] },
       { id: 'booking', label: 'Booking', fields: ['acceptanceMode'] },
     ],
   },

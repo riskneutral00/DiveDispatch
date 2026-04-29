@@ -47,7 +47,6 @@ describe('PROFILE_REGISTRY', () => {
   it('venue has tabs', () => {
     expect(PROFILE_REGISTRY.venue.tabs).not.toBeNull()
     expect(PROFILE_REGISTRY.venue.tabs?.map((t) => t.id)).toEqual([
-      'contact',
       'capabilities',
       'booking',
     ])

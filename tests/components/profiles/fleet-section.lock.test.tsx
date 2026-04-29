@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '../../helpers/render'
 import type { Doc, Id } from '@/lib/convex-generated'
 
-type MinimalVenue = Pick<Doc<'venues'>, '_id' | 'name'>
+type MinimalVenue = Pick<Doc<'venues'>, '_id' | 'name' | 'kind'>
 
 let venues: MinimalVenue[] = []
 
@@ -83,8 +83,8 @@ const seededFleet = {
 beforeEach(() => {
   vi.clearAllMocks()
   venues = [
-    { _id: 'venue-racha-yai' as Id<'venues'>, name: 'Racha Yai' },
-    { _id: 'venue-racha-noi' as Id<'venues'>, name: 'Racha Noi' },
+    { _id: 'venue-racha-yai' as Id<'venues'>, name: 'Racha Yai', kind: 'dive_site' },
+    { _id: 'venue-racha-noi' as Id<'venues'>, name: 'Racha Noi', kind: 'dive_site' },
   ]
   HTMLDialogElement.prototype.show = vi.fn(function (this: HTMLDialogElement) {
     this.setAttribute('open', '')

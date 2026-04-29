@@ -67,7 +67,6 @@ const CONSUMER_FILES = [
   'src/components/profiles/business-contact-section.tsx',
   'src/components/onboarding/organizer-basic-step.tsx',
   'src/components/profiles/profile-basic-info.tsx',
-  'src/components/profiles/venue-contact-section.tsx',
   'src/components/profiles/venue-edit-dialog.tsx',
 ]
 

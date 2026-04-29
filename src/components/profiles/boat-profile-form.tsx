@@ -169,7 +169,9 @@ export function boatFleetToPayload(f: BoatFleetFormState): Record<string, unknow
 export function BoatFleetSection({ profile: existing, me, create, update, onClose }: BaseProfileSectionProps) {
   const t = useTranslations('common')
   const venues = useQuery(api.venues.visibleToMe)
-  const venueOptions = (venues ?? []).map((v) => ({ value: v._id, label: v.name }))
+  const venueOptions = (venues ?? [])
+    .filter((v) => v.kind === 'dive_site')
+    .map((v) => ({ value: v._id, label: v.name }))
 
   const newBoatIdRef = useRef<Id<'boats'> | null>(null)
 

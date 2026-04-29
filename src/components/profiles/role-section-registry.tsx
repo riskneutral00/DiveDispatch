@@ -21,7 +21,6 @@ import {
 import { CompressorGasMixesSection } from '@/components/profiles/compressor-profile-form'
 import { CompressorContactSection } from '@/components/profiles/compressor-contact-section'
 import { EquipmentContactSection } from '@/components/profiles/equipment-profile-form'
-import { VenueContactSection } from '@/components/profiles/venue-contact-section'
 import { VenueCapabilitiesSection } from '@/components/profiles/venue-capabilities-section'
 
 export type ProfileSectionComponent = ComponentType<BaseProfileSectionProps>
@@ -54,7 +53,6 @@ export const ROLE_SECTION_REGISTRY: Record<
     'gas-mixes': CompressorGasMixesSection,
   },
   venue: {
-    contact: VenueContactSection,
     capabilities: VenueCapabilitiesSection,
   },
 }
