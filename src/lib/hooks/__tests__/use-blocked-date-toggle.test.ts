@@ -92,7 +92,7 @@ describe('useBlockedDateToggle', () => {
     expect(mockMutate).toHaveBeenCalledWith({
       date: DATE,
       roleType: 'Instructor',
-      timezone: 'America/New_York',
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     })
     expect(result.current.pendingToggle).toBeNull()
   })
