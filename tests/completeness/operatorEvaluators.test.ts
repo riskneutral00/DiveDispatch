@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { operatorCoverage, operatorAcceptanceMode } from '../../convex/lib/completeness/operatorEvaluators'
+import { operatorCoverage } from '../../convex/lib/completeness/operatorEvaluators'
 import type { EvaluatorContext } from '../../convex/lib/completeness/types'
 import { seedStakeholderPreferences } from '../fixtures/seedStakeholders'
 import { makeT } from '../helpers/convex-helpers'
@@ -121,66 +121,6 @@ describe('operatorCoverage — boat/venue OR logic', () => {
       } as EvaluatorContext)
 
       expect(result.incomplete).toContain('preferredCompressor')
-    })
-  })
-})
-
-describe('operatorAcceptanceMode — Venue completeness gate', () => {
-  it('reports incomplete when stakeholderPreferences row does not exist', async () => {
-    const t = makeT()
-    await t.run(async (ctx) => {
-      const userId = await ctx.db.insert('users', {
-        tokenIdentifier: 'clerk|venue-no-prefs',
-        slug: 'venue-no-prefs',
-        email: 'venue@test.com',
-        firstName: 'Venue',
-        lastName: 'Owner',
-        phone: '+66812345678',
-        dateOfBirth: '1990-01-01',
-        appLanguage: 'en',
-      })
-
-      const userDoc = await ctx.db.get(userId)
-      const result = await operatorAcceptanceMode()({
-        ctx,
-        userDoc: userDoc!,
-        profile: null,
-        role: 'Venue',
-        activeOrgId: null,
-      } as EvaluatorContext)
-
-      expect(result).toEqual({ slots: 1, incomplete: ['acceptanceMode'] })
-    })
-  })
-
-  it('reports complete when acceptanceMode is set on stakeholderPreferences', async () => {
-    const t = makeT()
-    await t.run(async (ctx) => {
-      const userId = await ctx.db.insert('users', {
-        tokenIdentifier: 'clerk|venue-with-mode',
-        slug: 'venue-with-mode',
-        email: 'venue@test.com',
-        firstName: 'Venue',
-        lastName: 'Owner',
-        phone: '+66812345678',
-        dateOfBirth: '1990-01-01',
-        appLanguage: 'en',
-      })
-      await seedStakeholderPreferences(ctx, 'venue-with-mode', {
-        stakeholderType: 'Venue',
-        acceptanceMode: 'PostPayAllowed',
-      })
-
-      const userDoc = await ctx.db.get(userId)
-      const result = await operatorAcceptanceMode()({
-        ctx,
-        userDoc: userDoc!,
-        profile: null,
-        role: 'Venue',
-        activeOrgId: null,
-      } as EvaluatorContext)
-
-      expect(result).toEqual({ slots: 1, incomplete: [] })
     })
   })
 })

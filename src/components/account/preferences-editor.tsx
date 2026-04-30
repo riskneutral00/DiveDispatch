@@ -17,10 +17,6 @@ import { FormSectionHeader } from '@/components/ui/form-section-header'
 import { Card } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
-import {
-  AccessControlSection,
-  INITIAL_ACCESS_CONTROL,
-} from '@/components/profiles/access-control-section'
 import { SectionDivider } from '@/components/ui/section-divider'
 import {
   PreferredInstructorList,
@@ -37,24 +33,6 @@ import {
   type ResourceSubTab as ResourceSubTabId,
 } from '@/lib/preferences/resource-tab-requirement'
 
-const ACCEPTANCE_MODES = [
-  {
-    value: 'Auto',
-    label: 'Auto-accept',
-    description: 'Booking confirmed automatically when all slots are filled.',
-  },
-  {
-    value: 'PrePayRequired',
-    label: 'Pre-pay required',
-    description: 'Customer must complete payment before confirmation.',
-  },
-  {
-    value: 'PostPayAllowed',
-    label: 'Post-pay allowed',
-    description: 'Confirmation possible before payment is received.',
-  },
-] as const
-
 type PreferencesRecord = Record<string, unknown>
 
 const DISPLAY_OPERATOR_ROLE_KEYS = new Set(DISPLAY_OPERATOR_ROLES.map((r) => r.clerkRole))
@@ -62,7 +40,7 @@ const DISPLAY_OPERATOR_ROLE_KEYS = new Set(DISPLAY_OPERATOR_ROLES.map((r) => r.c
 export type ResourceSubTab = ResourceSubTabId
 
 const defaultFormData = (): PrefsFormData => ({
-  acceptanceMode: 'Auto',
+  autoAccept: true,
   commonLanguageCodes: ['en'],
   confirmOnAccept: true,
   confirmOnDecline: true,
@@ -152,10 +130,10 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp,
     fromProfile: (profile) => {
       const typed = profile as Partial<PrefsFormData>
       return {
-        acceptanceMode: 'Auto',
+        autoAccept: typed.autoAccept ?? true,
         commonLanguageCodes: typed.commonLanguageCodes ?? ['en'],
-        confirmOnAccept: true,
-        confirmOnDecline: true,
+        confirmOnAccept: typed.confirmOnAccept ?? true,
+        confirmOnDecline: typed.confirmOnDecline ?? true,
         preferredInstructorSlugs: typed.preferredInstructorSlugs ?? [],
         preferredVenueSlugs: typed.preferredVenueSlugs ?? [],
         preferredEquipmentSlugs: typed.preferredEquipmentSlugs ?? [],
@@ -207,7 +185,7 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp,
     }
     await upsert({
       activeRole,
-      acceptanceMode: form.acceptanceMode,
+      autoAccept: form.autoAccept,
       commonLanguageCodes: form.commonLanguageCodes,
       confirmOnAccept: form.confirmOnAccept,
       confirmOnDecline: form.confirmOnDecline,
@@ -283,33 +261,12 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp,
         {section === 'booking' && (
           <div className="max-w-2xl mx-auto space-y-6">
             <Card padding="sm" className="reading-plane">
-              <AccessControlSection value={INITIAL_ACCESS_CONTROL} onChange={() => {}} />
-            </Card>
-
-            <SectionDivider show />
-
-            <Card padding="sm" className="reading-plane">
-              <FormSectionHeader
-                className="mb-4"
-                label={tBooking('acceptanceMode')}
-                required
+              <Checkbox
+                label={tBooking('autoAccept')}
+                description={tBooking('autoAcceptDescription')}
+                checked={form.autoAccept}
+                onChange={(v) => setField('autoAccept', v)}
               />
-              <div className="space-y-2">
-                {ACCEPTANCE_MODES.map(({ value, label, description }) => (
-                  <Checkbox
-                    key={value}
-                    as="radio"
-                    variant="card"
-                    name="acceptanceMode"
-                    value={value}
-                    label={label}
-                    description={description}
-                    checked={value === 'Auto'}
-                    onChange={() => {}}
-                    disabled
-                  />
-                ))}
-              </div>
             </Card>
 
             <SectionDivider show />
@@ -346,9 +303,8 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp,
                   <Checkbox
                     key={key}
                     label={label}
-                    checked
-                    onChange={() => {}}
-                    disabled
+                    checked={form[key]}
+                    onChange={(v) => setField(key, v)}
                   />
                 ))}
               </div>

@@ -12,7 +12,6 @@ function mockDoc(
     _creationTime,
     stakeholderId,
     stakeholderType: 'DiveCenter',
-    acceptanceMode: 'Auto',
     useNamedUnits: false,
     commonLanguageCodes: [],
     confirmOnAccept: false,

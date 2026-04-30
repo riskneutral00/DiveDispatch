@@ -318,7 +318,7 @@ export const togglePreferredInstructor = mutation({
       await ctx.db.insert('stakeholderPreferences', {
         stakeholderId: user.slug,
         stakeholderType: args.activeRole,
-        acceptanceMode: 'Auto',
+        autoAccept: true,
         useNamedUnits: false,
         commonLanguageCodes: [],
         preferredInstructorSlugs: [args.instructorSlug],

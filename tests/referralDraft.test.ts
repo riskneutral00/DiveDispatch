@@ -68,7 +68,7 @@ async function seedCompleteOperator(ctx: Ctx, slug: string, role: StakeholderRol
   await ctx.db.insert('stakeholderPreferences', {
     stakeholderId: slug,
     stakeholderType: role,
-    acceptanceMode: 'Auto',
+    autoAccept: true,
     useNamedUnits: false,
     commonLanguageCodes: ['en'],
     confirmOnAccept: true,

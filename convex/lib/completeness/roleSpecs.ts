@@ -9,7 +9,7 @@ import {
   nestedPathPredicate,
   subTableEnumSlots,
 } from './evaluators'
-import { operatorAcceptanceMode, operatorCoverage } from './operatorEvaluators'
+import { operatorCoverage } from './operatorEvaluators'
 import { AOW_REQUIRED_SPECIALTY_COUNT } from '../../shared/activityCatalog'
 import { GEAR_TYPES, type GearType } from '../../shared/gearSizing'
 import { isGearItemComplete } from '../../shared/gearRequiredFields'
@@ -49,7 +49,6 @@ export const ROLE_SPECS: Record<string, Evaluator[]> = {
     nestedAddress(),
     associationEvaluator({ minSpecialties: AOW_REQUIRED_SPECIALTY_COUNT }),
     arrayNonEmpty('customerLanguages'),
-    operatorAcceptanceMode(),
     operatorCoverage(),
   ],
   Agent: [
@@ -59,7 +58,6 @@ export const ROLE_SPECS: Record<string, Evaluator[]> = {
     nestedAddress(),
     associationEvaluator({ minSpecialties: 0 }),
     arrayNonEmpty('customerLanguages'),
-    operatorAcceptanceMode(),
     operatorCoverage(),
   ],
   Instructor: [
@@ -106,7 +104,6 @@ export const ROLE_SPECS: Record<string, Evaluator[]> = {
         return typeof v === 'number' && Number.isFinite(v) && v > 0
       },
     }),
-    operatorAcceptanceMode(),
   ],
   Compressor: [
     scalarString('name'),

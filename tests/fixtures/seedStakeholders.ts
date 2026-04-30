@@ -6,7 +6,7 @@ export async function seedStakeholderPreferences(
   stakeholderId: string,
   overrides: {
     stakeholderType?: Doc<'stakeholderPreferences'>['stakeholderType']
-    acceptanceMode?: Doc<'stakeholderPreferences'>['acceptanceMode']
+    autoAccept?: boolean
     useNamedUnits?: boolean
     commonLanguageCodes?: string[]
     confirmOnAccept?: boolean
@@ -21,7 +21,7 @@ export async function seedStakeholderPreferences(
   return ctx.db.insert('stakeholderPreferences', {
     stakeholderId,
     stakeholderType: overrides.stakeholderType ?? 'DiveCenter',
-    acceptanceMode: overrides.acceptanceMode ?? 'Auto',
+    autoAccept: overrides.autoAccept ?? true,
     useNamedUnits: overrides.useNamedUnits ?? false,
     commonLanguageCodes: overrides.commonLanguageCodes ?? ['en'],
     confirmOnAccept: overrides.confirmOnAccept ?? true,

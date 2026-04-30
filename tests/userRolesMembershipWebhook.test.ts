@@ -155,7 +155,7 @@ describe('Clerk organizationMembership webhooks → userRoles permissionLevel', 
       await ctx.db.insert('stakeholderPreferences', {
         stakeholderId: 'eq-user',
         stakeholderType: 'Equipment',
-        acceptanceMode: 'Auto',
+        autoAccept: true,
         useNamedUnits: false,
         confirmOnAccept: false,
         confirmOnDecline: false,

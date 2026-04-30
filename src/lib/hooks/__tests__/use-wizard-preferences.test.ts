@@ -10,7 +10,6 @@ function prefs(overrides: Partial<Prefs> = {}): Prefs {
     _creationTime: 0,
     stakeholderId: 'owner-slug',
     stakeholderType: 'DiveCenter',
-    acceptanceMode: 'Auto',
     useNamedUnits: false,
     commonLanguageCodes: ['en'],
     confirmOnAccept: true,

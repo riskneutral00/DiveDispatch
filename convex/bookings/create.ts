@@ -206,7 +206,7 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
       .unique()
 
     const isSelfBooking = inventoryUnit.ownerId === (booking as BookingDoc).ownerId
-    const isAutoAccept = prefs?.acceptanceMode === 'Auto' || !ownerUser || isSelfBooking
+    const isAutoAccept = (prefs?.autoAccept ?? prefs?.acceptanceMode === 'Auto') || !ownerUser || isSelfBooking
     const reservationStatus = isAutoAccept ? RESERVATION_STATUS.Confirmed : RESERVATION_STATUS.PendingAcceptance
 
     await ctx.db.insert('reservations', { // batch-exempt // fsm-ok

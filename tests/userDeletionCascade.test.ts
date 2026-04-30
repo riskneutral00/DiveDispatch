@@ -299,7 +299,7 @@ describe('cleanupDeletedUserData', () => {
       await ctx.db.insert('stakeholderPreferences', {
         stakeholderId: 'cleanup-user',
         stakeholderType: 'DiveCenter',
-        acceptanceMode: 'Auto',
+        autoAccept: true,
         useNamedUnits: false,
         confirmOnAccept: false,
         confirmOnDecline: false,

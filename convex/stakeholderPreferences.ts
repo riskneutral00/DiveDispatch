@@ -44,12 +44,6 @@ export async function selfOwnedResourceSlugs(
   }
 }
 
-const acceptanceModeValidator = v.union(
-  v.literal('Auto'),
-  v.literal('PrePayRequired'),
-  v.literal('PostPayAllowed'),
-)
-
 export const mine = query({
   args: {},
   handler: async (ctx) => {
@@ -78,7 +72,7 @@ export const bySlug = query({
 export const upsert = mutation({
   args: {
     activeRole: stakeholderType,
-    acceptanceMode: acceptanceModeValidator,
+    autoAccept: v.optional(v.boolean()),
     commonLanguageCodes: v.optional(v.array(v.string())),
     preferredInstructorSlugs: v.optional(v.array(v.string())),
     preferredVenueSlugs: v.optional(v.array(v.string())),
@@ -105,7 +99,7 @@ export const upsert = mutation({
       .unique()
 
     const payload = {
-      acceptanceMode: args.acceptanceMode,
+      autoAccept: args.autoAccept,
       commonLanguageCodes: args.commonLanguageCodes,
       preferredInstructorSlugs: args.preferredInstructorSlugs,
       preferredVenueSlugs: args.preferredVenueSlugs,
@@ -139,6 +133,7 @@ export const upsert = mutation({
         stakeholderType: args.activeRole,
         useNamedUnits: false,
         ...payload,
+        autoAccept: args.autoAccept ?? true,
         preferredInstructorSlugs: initial(args.preferredInstructorSlugs, 'preferredInstructorSlugs'),
         preferredVenueSlugs: initial(args.preferredVenueSlugs, 'preferredVenueSlugs'),
         preferredBoatSlugs: initial(args.preferredBoatSlugs, 'preferredBoatSlugs'),

@@ -1,17 +1,5 @@
 import type { Evaluator } from './types'
-import { str } from './types'
 import { entityProfilesByUser } from '../profileHelpers'
-
-export function operatorAcceptanceMode(): Evaluator {
-  return async ({ ctx, userDoc }) => {
-    const prefs = await ctx.db
-      .query('stakeholderPreferences')
-      .withIndex('by_stakeholderId', (q) => q.eq('stakeholderId', userDoc.slug))
-      .unique()
-    const ok = prefs && str((prefs as Record<string, unknown>).acceptanceMode)
-    return { slots: 1, incomplete: ok ? [] : ['acceptanceMode'] }
-  }
-}
 
 export function operatorCoverage(): Evaluator {
   return async ({ ctx, userDoc }) => {

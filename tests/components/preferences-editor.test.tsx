@@ -60,38 +60,35 @@ describe('PreferencesEditor — booking section', () => {
   it('renders loading state while prefs query is pending', () => {
     mockPrefs = undefined
     const { container } = render(<PreferencesEditor section="booking" roleSlug="dive-center" />)
-    // ProfileFormShell shows skeleton/spinner; no acceptance mode radio visible
-    expect(screen.queryByRole('radio', { name: /auto-accept/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('checkbox', { name: /auto-accept/i })).not.toBeInTheDocument()
     const loading = container.querySelector('[class*="animate"]') || container.querySelector('[class*="pulse"]')
     expect(loading).toBeTruthy()
   })
 
-  it('renders acceptance mode radio buttons when prefs are loaded', () => {
-    mockPrefs = null // null = no prefs yet (create mode)
+  it('renders auto-accept checkbox checked by default when prefs absent', () => {
+    mockPrefs = null
     render(<PreferencesEditor section="booking" roleSlug="dive-center" />)
 
-    expect(screen.getByText('Auto-accept')).toBeInTheDocument()
-    expect(screen.getByText('Pre-pay required')).toBeInTheDocument()
-    expect(screen.getByText('Post-pay allowed')).toBeInTheDocument()
+    const autoAcceptCheckbox = screen.getByRole('checkbox', { name: /auto-accept bookings/i }) as HTMLInputElement
+    expect(autoAcceptCheckbox.checked).toBe(true)
   })
 
   it('renders confirmation alert checkboxes', () => {
     mockPrefs = {
-      acceptanceMode: 'Auto',
+      autoAccept: true,
       confirmOnAccept: false,
       confirmOnDecline: false,
       autoAssignPreferred: true,
     }
     render(<PreferencesEditor section="booking" roleSlug="dive-center" />)
 
-    // The confirmation alerts section header
     expect(screen.getByText(/confirmation alerts/i)).toBeInTheDocument()
   })
 
-  it('locks acceptance mode and confirmation alert controls', () => {
+  it('reflects stored autoAccept=false from prefs', () => {
     mockPrefs = {
-      acceptanceMode: 'Auto',
-      confirmOnAccept: false,
+      autoAccept: false,
+      confirmOnAccept: true,
       confirmOnDecline: false,
       commonLanguageCodes: ['en'],
       preferredInstructorSlugs: [],
@@ -104,22 +101,16 @@ describe('PreferencesEditor — booking section', () => {
 
     render(<PreferencesEditor section="booking" roleSlug="dive-center" />)
 
-    const autoRadio = screen.getByDisplayValue('Auto') as HTMLInputElement
-    const prePayRadio = screen.getByDisplayValue('PrePayRequired') as HTMLInputElement
-    const postPayRadio = screen.getByDisplayValue('PostPayAllowed') as HTMLInputElement
-    expect(autoRadio.disabled).toBe(true)
-    expect(autoRadio.checked).toBe(true)
-    expect(prePayRadio.disabled).toBe(true)
-    expect(prePayRadio.checked).toBe(false)
-    expect(postPayRadio.disabled).toBe(true)
-    expect(postPayRadio.checked).toBe(false)
+    const autoAcceptCheckbox = screen.getByRole('checkbox', { name: /auto-accept bookings/i }) as HTMLInputElement
+    expect(autoAcceptCheckbox.checked).toBe(false)
+    expect(autoAcceptCheckbox.disabled).toBe(false)
   })
 })
 
 describe('PreferencesEditor — resources section', () => {
   it('shows instructor preferred list sub-tab content for DiveCenter role', () => {
     mockPrefs = {
-      acceptanceMode: 'Auto',
+      autoAccept: true,
       preferredInstructorSlugs: [],
       preferredVenueSlugs: [],
       preferredEquipmentSlugs: [],
@@ -160,7 +151,7 @@ describe('PreferencesEditor — Row 3 dynamic asterisk transitions', () => {
 
   it('marks all 5 resource tabs required when no preferences are set (compressors required when no compressor source)', () => {
     mockPrefs = {
-      acceptanceMode: 'Auto',
+      autoAccept: true,
       preferredInstructorSlugs: [],
       preferredVenueSlugs: [],
       preferredEquipmentSlugs: [],
@@ -180,7 +171,7 @@ describe('PreferencesEditor — Row 3 dynamic asterisk transitions', () => {
 
   it('clears Venues + Boats when at least one venue is set (OR substitution); Compressors still required without a compressor source', () => {
     mockPrefs = {
-      acceptanceMode: 'Auto',
+      autoAccept: true,
       preferredInstructorSlugs: [],
       preferredVenueSlugs: ['venue-a'],
       preferredEquipmentSlugs: [],
@@ -201,7 +192,7 @@ describe('PreferencesEditor — Row 3 dynamic asterisk transitions', () => {
   it('clears Compressors when a preferred boat with hasCompressor:true is set', () => {
     mockBoatDirectory = [{ slug: 'boat-with-comp', hasCompressor: true }]
     mockPrefs = {
-      acceptanceMode: 'Auto',
+      autoAccept: true,
       preferredInstructorSlugs: [],
       preferredVenueSlugs: [],
       preferredEquipmentSlugs: [],
@@ -221,7 +212,7 @@ describe('PreferencesEditor — Row 3 dynamic asterisk transitions', () => {
   it('boat without hasCompressor leaves Compressors required (no compressor source)', () => {
     mockBoatDirectory = [{ slug: 'boat-bare', hasCompressor: false }]
     mockPrefs = {
-      acceptanceMode: 'Auto',
+      autoAccept: true,
       preferredInstructorSlugs: [],
       preferredVenueSlugs: [],
       preferredEquipmentSlugs: [],

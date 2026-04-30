@@ -42,13 +42,6 @@ describe('firstIncompleteTab', () => {
     })
   })
 
-  it('routes to booking tab for acceptanceMode', () => {
-    expect(firstIncompleteTab('dive-center', ['acceptanceMode'])).toEqual({
-      tab: 'role:dive-center',
-      section: 'booking',
-    })
-  })
-
   it('global field wins over role field when both are missing', () => {
     expect(firstIncompleteTab('dive-center', ['phone', 'associations'])).toEqual({
       tab: 'profile',
@@ -57,7 +50,7 @@ describe('firstIncompleteTab', () => {
 
   it('picks the earliest tab in profileTabs order when multiple role fields are missing', () => {
     expect(
-      firstIncompleteTab('dive-center', ['acceptanceMode', 'associations']),
+      firstIncompleteTab('dive-center', ['preferredInstructor', 'associations']),
     ).toEqual({ tab: 'role:dive-center', section: 'associations' })
   })
 

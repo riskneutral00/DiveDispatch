@@ -29,7 +29,7 @@ async function seedVenueUser(ctx: SeedCtx, slug: string) {
     role: 'Venue',
   })
   await getOrCreateTestOrg(ctx, userId, slug)
-  await seedStakeholderPreferences(ctx, slug, { stakeholderType: 'Venue', acceptanceMode: 'Auto' })
+  await seedStakeholderPreferences(ctx, slug, { stakeholderType: 'Venue' })
   return userId
 }
 

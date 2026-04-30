@@ -569,7 +569,7 @@ export const seedStakeholderPreferences = internalMutation({
       await ctx.db.insert('stakeholderPreferences', { // batch-exempt
         stakeholderId: slug,
         stakeholderType: role,
-        acceptanceMode: role === 'Instructor' ? 'PrePayRequired' : 'Auto',
+        autoAccept: true,
         useNamedUnits: false,
         commonLanguageCodes: [],
         confirmOnAccept: false,

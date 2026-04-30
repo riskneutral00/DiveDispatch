@@ -290,7 +290,7 @@ export default defineSchema({
   stakeholderPreferences: defineTable({
     stakeholderId: v.string(),
     stakeholderType: stakeholderType,
-    acceptanceMode: acceptanceMode,
+    acceptanceMode: v.optional(acceptanceMode),
     useNamedUnits: v.boolean(),
     commonLanguageCodes: v.optional(v.array(v.string())),
     preferredInstructorSlugs: v.optional(v.array(v.string())),
@@ -301,6 +301,7 @@ export default defineSchema({
     preferredOperatorSlug: v.optional(v.string()),
     confirmOnAccept: v.boolean(),
     confirmOnDecline: v.boolean(),
+    autoAccept: v.optional(v.boolean()),
     autoAssignPreferred: v.optional(v.boolean()),
   }).index('by_stakeholderId', ['stakeholderId']),
 

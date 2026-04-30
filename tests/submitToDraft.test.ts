@@ -490,7 +490,7 @@ describe('submitToDraft', () => {
       })
       await seedStakeholderPreferences(ctx, 'instructor-auto', {
         stakeholderType: 'Instructor',
-        acceptanceMode: 'Auto',
+        autoAccept: true,
       })
       return { bookingId, unitId }
     })
@@ -541,7 +541,7 @@ describe('submitToDraft', () => {
       })
       await seedStakeholderPreferences(ctx, 'instructor-autoadvance', {
         stakeholderType: 'Instructor',
-        acceptanceMode: 'Auto',
+        autoAccept: true,
       })
       return { bookingId, unitId }
     })
@@ -901,7 +901,7 @@ describe('submitToDraft', () => {
       })
       await seedStakeholderPreferences(ctx, 'instructor-advance', {
         stakeholderType: 'Instructor',
-        acceptanceMode: 'Auto',
+        autoAccept: true,
       })
       const bookingId = await seedBooking(ctx, {
         ownerId: 'dc-test',

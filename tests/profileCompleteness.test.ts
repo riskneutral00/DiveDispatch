@@ -173,7 +173,6 @@ describe('checkProfileCompleteness', () => {
 
       expect(result.percentage).toBeLessThan(100)
       expect(result.incomplete).toEqual(expect.arrayContaining([
-        'acceptanceMode',
         'preferredInstructor',
         'preferredEquipment',
         'preferredVenue',
@@ -400,7 +399,7 @@ describe('checkProfileCompleteness — Venue multi-row semantics', () => {
       const userId = await seedUser(ctx, { role: 'Venue', slug: 'venue-multi', tokenIdentifier: 'clerk|venue-multi' })
       const orgId = await getOrCreateTestOrg(ctx, userId, 'venue-multi')
       await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
-      await seedStakeholderPreferences(ctx, 'venue-multi', { stakeholderType: 'Venue', acceptanceMode: 'Auto' })
+      await seedStakeholderPreferences(ctx, 'venue-multi', { stakeholderType: 'Venue' })
       await ctx.db.insert('venues', {
         organizationId: orgId,
         name: 'Pool A', slug: 'pool-a',
@@ -429,7 +428,7 @@ describe('checkProfileCompleteness — Venue multi-row semantics', () => {
       const userId = await seedUser(ctx, { role: 'Venue', slug: 'venue-one-complete', tokenIdentifier: 'clerk|venue-one-complete' })
       const orgId = await getOrCreateTestOrg(ctx, userId, 'venue-one-complete')
       await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
-      await seedStakeholderPreferences(ctx, 'venue-one-complete', { stakeholderType: 'Venue', acceptanceMode: 'Auto' })
+      await seedStakeholderPreferences(ctx, 'venue-one-complete', { stakeholderType: 'Venue' })
       // First venue: missing address.country
       await ctx.db.insert('venues', {
         organizationId: orgId,

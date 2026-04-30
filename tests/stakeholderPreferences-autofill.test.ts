@@ -53,7 +53,7 @@ async function insertCompressor(ctx: SeedCtx, orgId: Id<'organizations'>, slug: 
 function args(overrides: Record<string, unknown> = {}) {
   return {
     activeRole: 'DiveCenter' as const,
-    acceptanceMode: 'Auto' as const,
+    autoAccept: true as const,
     confirmOnAccept: false,
     confirmOnDecline: false,
     ...overrides,

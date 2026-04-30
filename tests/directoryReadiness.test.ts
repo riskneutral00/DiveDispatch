@@ -62,7 +62,7 @@ describe('Rule 12 — cross-org discovery readiness', () => {
     await expect(
       t.withIdentity({ tokenIdentifier: 'clerk|dc-writer' }).mutation(api.stakeholderPreferences.upsert, {
         activeRole: 'DiveCenter',
-        acceptanceMode: 'Auto',
+        autoAccept: true,
         confirmOnAccept: true,
         confirmOnDecline: true,
         preferredCompressorSlugs: ['comp-bad'],
@@ -80,7 +80,7 @@ describe('Rule 12 — cross-org discovery readiness', () => {
     await expect(
       t.withIdentity({ tokenIdentifier: 'clerk|dc-writer-ok' }).mutation(api.stakeholderPreferences.upsert, {
         activeRole: 'DiveCenter',
-        acceptanceMode: 'Auto',
+        autoAccept: true,
         confirmOnAccept: true,
         confirmOnDecline: true,
         preferredCompressorSlugs: ['comp-good'],
@@ -115,7 +115,7 @@ describe('Rule 12 — cross-org discovery readiness', () => {
       await ctx.db.insert('stakeholderPreferences', {
         stakeholderId: 'dc-unstar',
         stakeholderType: 'DiveCenter',
-        acceptanceMode: 'Auto',
+        autoAccept: true,
         useNamedUnits: false,
         confirmOnAccept: false,
         confirmOnDecline: false,

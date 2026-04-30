@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 export const prefsSchema = z.object({
-  acceptanceMode: z.enum(['Auto', 'PrePayRequired', 'PostPayAllowed']),
+  autoAccept: z.boolean(),
   commonLanguageCodes: z.array(z.string()).optional(),
   confirmOnAccept: z.boolean(),
   confirmOnDecline: z.boolean(),

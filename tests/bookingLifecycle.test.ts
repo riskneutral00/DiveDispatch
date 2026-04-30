@@ -255,7 +255,7 @@ describe('2f — max 3 non-confined dives per day validation', () => {
       await ctx.db.insert('stakeholderPreferences', {
         stakeholderId: 'instr-1',
         stakeholderType: 'Instructor',
-        acceptanceMode: 'Auto',
+        autoAccept: true,
         useNamedUnits: false,
         commonLanguageCodes: ['en'],
         confirmOnAccept: true,

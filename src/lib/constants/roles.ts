@@ -87,7 +87,7 @@ export const ROLES: RoleConfig[] = [
       { id: 'contact', label: 'Contact', fields: ['name', 'email', 'phone', 'address', 'customerLanguages'] },
       { id: 'associations', label: 'Affiliations', fields: ['associations'] },
       { id: 'resources', label: 'Preferences', fields: ['preferredInstructor', 'preferredEquipment', 'preferredVenue', 'preferredBoat', 'preferredCompressor'] },
-      { id: 'booking', label: 'Booking', fields: ['acceptanceMode'] },
+      { id: 'booking', label: 'Booking' },
     ],
   },
   {
@@ -109,7 +109,7 @@ export const ROLES: RoleConfig[] = [
       { id: 'contact', label: 'Contact', fields: ['name', 'email', 'phone', 'address', 'customerLanguages'] },
       { id: 'associations', label: 'Affiliations', fields: ['associations'] },
       { id: 'resources', label: 'Preferences', fields: ['preferredInstructor', 'preferredEquipment', 'preferredVenue', 'preferredBoat', 'preferredCompressor'] },
-      { id: 'booking', label: 'Booking', fields: ['acceptanceMode'] },
+      { id: 'booking', label: 'Booking' },
     ],
   },
   {
@@ -213,7 +213,7 @@ export const ROLES: RoleConfig[] = [
     description: 'Provide a place where diving happens — pool, shore, reef, lake, river, quarry, or other.',
     profileTabs: [
       { id: 'capabilities', label: 'Venues', fields: ['name', 'email', 'phone', 'address', 'kind', 'maxDepth', 'maxCapacity', 'confinedCapable'] },
-      { id: 'booking', label: 'Booking', fields: ['acceptanceMode'] },
+      { id: 'booking', label: 'Booking' },
     ],
   },
 ]

@@ -299,6 +299,8 @@
     "endTime": "End time",
     "removeDay": "Remove day",
     "acceptanceMode": "Acceptance Mode",
+    "autoAccept": "Auto-accept bookings",
+    "autoAcceptDescription": "Confirm bookings automatically when all slots are filled. Turn off to require manual review before confirmation.",
     "preferredResources": "Preferred resources",
     "autoAssignPreferred": "Auto-assign preferred instructors, boats, and venues in new bookings when available",
     "confirmationAlerts": "Confirmation Alerts",

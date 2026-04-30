@@ -49,7 +49,7 @@ async function seedRoleUser(ctx: SeedCtx, slug: string, role: 'Instructor' | 'Eq
 function baseArgs(overrides: Record<string, unknown> = {}) {
   return {
     activeRole: 'DiveCenter' as const,
-    acceptanceMode: 'Auto' as const,
+    autoAccept: true,
     commonLanguageCodes: ['en'],
     confirmOnAccept: true,
     confirmOnDecline: true,
@@ -68,7 +68,7 @@ describe('stakeholderPreferences.bySlug', () => {
       await ctx.db.insert('stakeholderPreferences', {
         stakeholderId: 'dc-target',
         stakeholderType: 'DiveCenter',
-        acceptanceMode: 'Auto',
+        autoAccept: true,
         useNamedUnits: false,
         confirmOnAccept: false,
         confirmOnDecline: false,
