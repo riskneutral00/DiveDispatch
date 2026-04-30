@@ -11,8 +11,11 @@ import { EmailField } from '@/components/ui/email-field'
 import { PhoneField } from '@/components/ui/phone-field'
 import { FieldRow } from '@/components/ui/field-row'
 import type { ClerkRole } from '@/lib/constants/roles'
-import type { VenueSignupIntent } from '@/lib/constants/signup-role-tiles'
-import type { VenueKind } from '../../../convex/shared/venueTypes'
+import {
+  getVenueKindTile,
+  type VenueSignupIntent,
+} from '@/lib/constants/signup-role-tiles'
+import { VENUE_KINDS, type VenueKind } from '../../../convex/shared/venueTypes'
 import { useOrganizerRoleApi } from '@/lib/hooks/use-organizer-role-api'
 import { useDashboardSession } from '@/lib/hooks/use-dashboard-session'
 import { getOrganizerRoleFlags } from '@/lib/constants/organizer-wizard-config'
@@ -26,7 +29,6 @@ import {
 import { contactSchema } from '@/lib/schemas/profile-shared'
 import { OrganizerStepCard } from './organizer-step-card'
 import { RoleTile } from '@/components/ui/role-tile'
-import { PoolIcon, DiveSiteIcon } from '@/lib/icons/role-icons'
 
 // query-budget-ok: 4 subscriptions; planned migration to organizer.basicStepContext (Phase 2D of zesty-creek perf plan)
 
@@ -96,25 +98,17 @@ interface VenueKindPickerProps {
 function VenueKindPicker({ value, onChange }: VenueKindPickerProps) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
-      <RoleTile
-        role={{
-          label: 'Pool',
-          description: 'Operate a private pool used for confined-water training.',
-          icon: PoolIcon,
-        }}
-        selected={value === 'pool'}
-        onClick={() => onChange('pool')}
-      />
-      <RoleTile
-        role={{
-          label: 'Dive Site',
-          description:
-            'Operate a private dive site — shore, reef, lake, river, quarry, or other open-water location.',
-          icon: DiveSiteIcon,
-        }}
-        selected={value === 'dive_site'}
-        onClick={() => onChange('dive_site')}
-      />
+      {VENUE_KINDS.map((kind) => {
+        const tile = getVenueKindTile(kind)
+        return (
+          <RoleTile
+            key={kind}
+            role={tile}
+            selected={value === kind}
+            onClick={() => onChange(kind)}
+          />
+        )
+      })}
     </div>
   )
 }

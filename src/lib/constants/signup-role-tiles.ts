@@ -26,73 +26,55 @@ export interface SignupRoleTileConfig {
   venueKindHint?: VenueKind
 }
 
-interface VenueKindDisplayMeta {
-  tileKey: string
-  label: string
-  description: string
-  icon: ComponentType<RoleIconProps>
-}
-
-const VENUE_KIND_DISPLAY: Record<VenueKind, VenueKindDisplayMeta> = {
+const VENUE_KIND_TILES: Record<VenueKind, SignupRoleTileConfig> = {
   pool: {
     tileKey: 'pool',
+    clerkRole: 'Venue',
     label: 'Pool',
     description: 'Operate a private pool used for confined-water training.',
     icon: PoolIcon,
+    displayGroup: 'resource',
+    venueKindHint: 'pool',
   },
   dive_site: {
     tileKey: 'dive-site',
+    clerkRole: 'Venue',
     label: 'Dive Site',
     description:
       'Operate a private dive site — shore, reef, lake, river, quarry, or other open-water location.',
     icon: DiveSiteIcon,
+    displayGroup: 'resource',
+    venueKindHint: 'dive_site',
   },
 }
 
-function venueKindToTile(kind: VenueKind): SignupRoleTileConfig {
-  const meta = VENUE_KIND_DISPLAY[kind]
-  return {
-    tileKey: meta.tileKey,
-    clerkRole: 'Venue',
-    label: meta.label,
-    description: meta.description,
-    icon: meta.icon,
-    displayGroup: 'resource',
-    venueKindHint: kind,
-  }
+export function getVenueKindTile(kind: VenueKind): SignupRoleTileConfig {
+  return VENUE_KIND_TILES[kind]
 }
 
-function roleConfigToResourceTile(role: RoleConfig): SignupRoleTileConfig {
+function roleConfigToTile(
+  role: RoleConfig,
+  displayGroup: 'operator' | 'resource',
+): SignupRoleTileConfig {
   return {
     tileKey: role.key,
     clerkRole: role.clerkRole,
     label: role.label,
     description: role.description,
     icon: role.icon,
-    displayGroup: 'resource',
-  }
-}
-
-function roleConfigToOperatorTile(role: RoleConfig): SignupRoleTileConfig {
-  return {
-    tileKey: role.key,
-    clerkRole: role.clerkRole,
-    label: role.label,
-    description: role.description,
-    icon: role.icon,
-    displayGroup: 'operator',
+    displayGroup,
   }
 }
 
 export function getSignupOperatorTiles(): SignupRoleTileConfig[] {
-  return DISPLAY_OPERATOR_ROLES.map(roleConfigToOperatorTile)
+  return DISPLAY_OPERATOR_ROLES.map((r) => roleConfigToTile(r, 'operator'))
 }
 
 export function getSignupResourceTiles(): SignupRoleTileConfig[] {
-  const nonVenue = DISPLAY_RESOURCE_ROLES.filter((r) => r.clerkRole !== 'Venue').map(
-    roleConfigToResourceTile,
-  )
-  const venueTiles = VENUE_KINDS.map(venueKindToTile)
+  const nonVenue = DISPLAY_RESOURCE_ROLES
+    .filter((r) => r.clerkRole !== 'Venue')
+    .map((r) => roleConfigToTile(r, 'resource'))
+  const venueTiles = VENUE_KINDS.map((k) => VENUE_KIND_TILES[k])
   return [...nonVenue, ...venueTiles]
 }
 
@@ -119,11 +101,3 @@ export function deriveVenueSignupIntent(
   if (kinds.length > 1) return 'multi'
   return kinds[0]
 }
-
-export function tilesIncludeRole(
-  tiles: SignupRoleTileConfig[],
-  clerkRole: ClerkRole,
-): boolean {
-  return tiles.some((t) => t.clerkRole === clerkRole)
-}
-

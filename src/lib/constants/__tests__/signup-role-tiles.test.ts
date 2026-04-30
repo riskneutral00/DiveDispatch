@@ -3,7 +3,6 @@ import {
   getSignupResourceTiles,
   collapseSignupTilesToRoles,
   deriveVenueSignupIntent,
-  tilesIncludeRole,
   type SignupRoleTileConfig,
 } from '../signup-role-tiles'
 import { VENUE_KINDS } from '../../../../convex/shared/venueTypes'
@@ -108,13 +107,3 @@ describe('deriveVenueSignupIntent', () => {
   })
 })
 
-describe('tilesIncludeRole', () => {
-  it('detects venue role from any kind tile', () => {
-    expect(tilesIncludeRole([tileByKey('pool')], 'Venue')).toBe(true)
-    expect(tilesIncludeRole([tileByKey('dive-site')], 'Venue')).toBe(true)
-  })
-
-  it('returns false when role absent', () => {
-    expect(tilesIncludeRole([tileByKey('boat')], 'Venue')).toBe(false)
-  })
-})
