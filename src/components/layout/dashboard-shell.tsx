@@ -9,7 +9,7 @@ import { DASHBOARD_CONTENT_GUTTER_X } from '@/lib/constants/dashboard-layout'
 import { cn } from '@/lib/utils/cn'
 import { useDashboardSession } from '@/lib/hooks/use-dashboard-session'
 import { useGuardedRedirect } from '@/lib/hooks/use-guarded-redirect'
-import { useVenueSignupIntent } from '@/lib/hooks/use-venue-signup-intent'
+import { useVenueSignupIntent, clearStoredVenueSignupIntent } from '@/lib/hooks/use-venue-signup-intent'
 import { FullPageSpinner } from '@/components/ui/full-page-spinner'
 import { ProfileOverlay, type ProfileOverlayTab } from '../profiles/profile-overlay'
 import { HierarchySubBar } from './hierarchy-sub-bar'
@@ -58,13 +58,17 @@ export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps
     if (autoOpenedRef.current) return
     if (status !== 'ready') return
     if (!venueSignupIntent) return
-    if (!venueRoleIncomplete) return
+    if (!venueRoleEntry) return
     autoOpenedRef.current = true
+    if (!venueRoleIncomplete) {
+      clearStoredVenueSignupIntent()
+      return
+    }
     setOverlayTab('roles')
     setOverlaySection(undefined)
     setOverlayOnboardingRole('Venue')
     setOverlayOpen(true)
-  }, [status, venueSignupIntent, venueRoleIncomplete])
+  }, [status, venueSignupIntent, venueRoleEntry, venueRoleIncomplete])
 
   const redirectTo = useMemo<string | null>(() => {
     if (status === 'loading') return null

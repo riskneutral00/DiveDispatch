@@ -4,7 +4,10 @@ import { renderHook } from '@testing-library/react'
 import {
   VENUE_SIGNUP_INTENT_STORAGE_KEY,
 } from '@/lib/constants/signup-role-tiles'
-import { useVenueSignupIntent } from '../use-venue-signup-intent'
+import {
+  useVenueSignupIntent,
+  clearStoredVenueSignupIntent,
+} from '../use-venue-signup-intent'
 
 describe('useVenueSignupIntent', () => {
   beforeEach(() => {
@@ -34,17 +37,17 @@ describe('useVenueSignupIntent', () => {
     expect(result.current).toBe('multi')
   })
 
-  it('clears storage after reading (one-shot)', () => {
+  it('does NOT clear storage on read', () => {
     window.sessionStorage.setItem(VENUE_SIGNUP_INTENT_STORAGE_KEY, 'pool')
     renderHook(() => useVenueSignupIntent())
-    expect(window.sessionStorage.getItem(VENUE_SIGNUP_INTENT_STORAGE_KEY)).toBe(null)
+    expect(window.sessionStorage.getItem(VENUE_SIGNUP_INTENT_STORAGE_KEY)).toBe('pool')
   })
 
-  it('rejects unknown values and clears storage', () => {
+  it('returns null for invalid values without touching storage', () => {
     window.sessionStorage.setItem(VENUE_SIGNUP_INTENT_STORAGE_KEY, 'garbage')
     const { result } = renderHook(() => useVenueSignupIntent())
     expect(result.current).toBe(null)
-    expect(window.sessionStorage.getItem(VENUE_SIGNUP_INTENT_STORAGE_KEY)).toBe(null)
+    expect(window.sessionStorage.getItem(VENUE_SIGNUP_INTENT_STORAGE_KEY)).toBe('garbage')
   })
 
   it('does not re-read after consumption (stable across re-renders)', () => {
@@ -54,5 +57,22 @@ describe('useVenueSignupIntent', () => {
     window.sessionStorage.setItem(VENUE_SIGNUP_INTENT_STORAGE_KEY, 'multi')
     rerender()
     expect(result.current).toBe('pool')
+  })
+})
+
+describe('clearStoredVenueSignupIntent', () => {
+  beforeEach(() => {
+    window.sessionStorage.clear()
+  })
+
+  it('removes the stored intent', () => {
+    window.sessionStorage.setItem(VENUE_SIGNUP_INTENT_STORAGE_KEY, 'pool')
+    clearStoredVenueSignupIntent()
+    expect(window.sessionStorage.getItem(VENUE_SIGNUP_INTENT_STORAGE_KEY)).toBe(null)
+  })
+
+  it('is a no-op when nothing stored', () => {
+    clearStoredVenueSignupIntent()
+    expect(window.sessionStorage.getItem(VENUE_SIGNUP_INTENT_STORAGE_KEY)).toBe(null)
   })
 })

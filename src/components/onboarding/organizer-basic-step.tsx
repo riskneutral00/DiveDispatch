@@ -15,6 +15,7 @@ import {
   getVenueKindTile,
   type VenueSignupIntent,
 } from '@/lib/constants/signup-role-tiles'
+import { clearStoredVenueSignupIntent } from '@/lib/hooks/use-venue-signup-intent'
 import { VENUE_KINDS, type VenueKind } from '../../../convex/shared/venueTypes'
 import { useOrganizerRoleApi } from '@/lib/hooks/use-organizer-role-api'
 import { useDashboardSession } from '@/lib/hooks/use-dashboard-session'
@@ -238,7 +239,10 @@ function BasicStepInner({ role, mutations, onSaved, onBack, venueSignupIntent }:
       toPayload: contactToPayload,
       create: createWithRoleExtras,
       update: updateForRole,
-      onSaved,
+      onSaved: () => {
+        if (role === 'Venue') clearStoredVenueSignupIntent()
+        onSaved()
+      },
       waitForMeBeforeInit: true,
     })
 
