@@ -91,6 +91,21 @@ export const ROLE_SPECS: Record<string, Evaluator[]> = {
     scalarString('phone'),
     nestedAddress(),
     scalarString('kind'),
+    nestedPathPredicate({
+      label: 'maxDepth',
+      predicate: (profile) => {
+        const v = profile.maxDepth
+        return typeof v === 'number' && Number.isFinite(v) && v > 0
+      },
+    }),
+    nestedPathPredicate({
+      label: 'maxCapacity',
+      predicate: (profile) => {
+        if (profile.kind !== 'pool') return true
+        const v = profile.maxCapacity
+        return typeof v === 'number' && Number.isFinite(v) && v > 0
+      },
+    }),
     operatorAcceptanceMode(),
   ],
   Compressor: [

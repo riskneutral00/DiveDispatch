@@ -114,7 +114,9 @@ export function VenueCapabilitiesSection({ me }: VenueCapabilitiesSectionProps) 
   const removeVenue = useMutation(api.venues.remove)
   const venueInheritedDefaults = useInheritedContactDefaults('Venue', me)
 
-  const [activeTab, setActiveTab] = useState<SubTab>('pool')
+  const initialTab: SubTab =
+    venues && venues.length === 1 ? (venues[0].kind as SubTab) : 'pool'
+  const [activeTab, setActiveTab] = useState<SubTab>(initialTab)
   const [dialogState, setDialogState] = useState<
     | { open: false }
     | { open: true; mode: 'create'; kind: VenueKind; initial: VenueEditValue }

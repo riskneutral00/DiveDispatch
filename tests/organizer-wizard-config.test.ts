@@ -4,7 +4,6 @@ import {
   getOrganizerSteps,
   ORGANIZER_WIZARD_ROLES,
   getOrganizerRoleFlags,
-  type OrganizerRoleFlags,
 } from '../src/lib/constants/organizer-wizard-config'
 import { ORGANIZER_ROLES } from '../src/lib/constants/roles'
 
@@ -17,11 +16,14 @@ describe('ORGANIZER_WIZARD_CONFIG', () => {
     expect(ORGANIZER_WIZARD_CONFIG.Agent).toEqual(['basic', 'agency'])
   })
 
-  it('resource roles are not in the config', () => {
+  it('Venue uses the basic-only step list (signup tile split)', () => {
+    expect(ORGANIZER_WIZARD_CONFIG.Venue).toEqual(['basic'])
+  })
+
+  it('non-Venue resource roles are not in the config', () => {
     expect(ORGANIZER_WIZARD_CONFIG.Instructor).toBeUndefined()
     expect(ORGANIZER_WIZARD_CONFIG.Boat).toBeUndefined()
     expect(ORGANIZER_WIZARD_CONFIG.Equipment).toBeUndefined()
-    expect(ORGANIZER_WIZARD_CONFIG.Venue).toBeUndefined()
     expect(ORGANIZER_WIZARD_CONFIG.Compressor).toBeUndefined()
   })
 })
@@ -44,17 +46,17 @@ describe('getOrganizerSteps', () => {
 })
 
 describe('ORGANIZER_WIZARD_ROLES', () => {
-  it('contains all organizer roles', () => {
-    expect(ORGANIZER_WIZARD_ROLES).toHaveLength(2)
+  it('contains DiveCenter, Agent, and Venue', () => {
+    expect(ORGANIZER_WIZARD_ROLES).toHaveLength(3)
     expect(ORGANIZER_WIZARD_ROLES).toContain('DiveCenter')
     expect(ORGANIZER_WIZARD_ROLES).toContain('Agent')
+    expect(ORGANIZER_WIZARD_ROLES).toContain('Venue')
   })
 
-  it('does not contain resource roles', () => {
+  it('does not contain non-Venue resource roles', () => {
     expect(ORGANIZER_WIZARD_ROLES).not.toContain('Instructor')
     expect(ORGANIZER_WIZARD_ROLES).not.toContain('Boat')
     expect(ORGANIZER_WIZARD_ROLES).not.toContain('Equipment')
-    expect(ORGANIZER_WIZARD_ROLES).not.toContain('Venue')
     expect(ORGANIZER_WIZARD_ROLES).not.toContain('Compressor')
   })
 })
@@ -88,11 +90,11 @@ describe('getOrganizerRoleFlags', () => {
     })
   })
 
-  it('Venue (resource) falls back to defaults', () => {
+  it('Venue uses the multi-location wizard flag set (signup tile split)', () => {
     const flags = getOrganizerRoleFlags('Venue')
     expect(flags).toEqual({
       supportsCoursePreferences: false,
-      locationModel: 'single',
+      locationModel: 'multi',
       displayLabel: 'venue',
     })
   })

@@ -1,7 +1,14 @@
-import type { RoleConfig } from '@/lib/constants/roles'
+import type { ComponentType } from 'react'
+import type { RoleIconProps } from '@/lib/icons/role-icons'
+
+export interface RoleTileDisplay {
+  label: string
+  description: string
+  icon: ComponentType<RoleIconProps>
+}
 
 export interface RoleTileProps {
-  role: RoleConfig
+  role: RoleTileDisplay
   selected?: boolean
   disabled?: boolean
   showDescription?: boolean

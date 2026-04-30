@@ -750,33 +750,30 @@ describe('venues.create — i18n validators at boundary', () => {
     ).rejects.toThrow(/VALIDATION/)
   })
 
-  it('rejects missing maxDepth with VALIDATION', async () => {
+  it('accepts missing maxDepth (onboarding-incomplete create); profileComplete stays false', async () => {
     const t = makeT()
     await t.run(async (ctx) => { await seedVenueUser(ctx, 'missing-depth') })
     const { maxDepth: _omit, ...withoutDepth } = VALID_DIVE_SITE_ARGS
-    await expect(
-      t.withIdentity(orgIdentityFor('missing-depth'))
-        .mutation(api.venues.create, withoutDepth),
-    ).rejects.toThrow(/VALIDATION/)
+    const id = await t.withIdentity(orgIdentityFor('missing-depth'))
+      .mutation(api.venues.create, withoutDepth)
+    expect(id).toBeDefined()
   })
 
-  it('rejects pool create with missing maxCapacity', async () => {
+  it('accepts pool create with missing maxCapacity (onboarding-incomplete)', async () => {
     const t = makeT()
     await t.run(async (ctx) => { await seedVenueUser(ctx, 'missing-cap') })
     const { maxCapacity: _omit, ...withoutCap } = VALID_POOL_ARGS
-    await expect(
-      t.withIdentity(orgIdentityFor('missing-cap'))
-        .mutation(api.venues.create, withoutCap),
-    ).rejects.toThrow(/VALIDATION/)
+    const id = await t.withIdentity(orgIdentityFor('missing-cap'))
+      .mutation(api.venues.create, withoutCap)
+    expect(id).toBeDefined()
   })
 
-  it('rejects pool create with maxCapacity=0', async () => {
+  it('accepts pool create with maxCapacity=0 (onboarding-incomplete)', async () => {
     const t = makeT()
     await t.run(async (ctx) => { await seedVenueUser(ctx, 'zero-cap') })
-    await expect(
-      t.withIdentity(orgIdentityFor('zero-cap'))
-        .mutation(api.venues.create, { ...VALID_POOL_ARGS, maxCapacity: 0 }),
-    ).rejects.toThrow(/VALIDATION/)
+    const id = await t.withIdentity(orgIdentityFor('zero-cap'))
+      .mutation(api.venues.create, { ...VALID_POOL_ARGS, maxCapacity: 0 })
+    expect(id).toBeDefined()
   })
 })
 

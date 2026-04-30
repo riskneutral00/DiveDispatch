@@ -11,11 +11,13 @@ export interface OrganizerRoleFlags {
 export const ORGANIZER_WIZARD_CONFIG: Partial<Record<ClerkRole, OrganizerSubStep[]>> = {
   DiveCenter: ['basic', 'agency', 'languages'],
   Agent: ['basic', 'agency'],
+  Venue: ['basic'],
 }
 
 const ORGANIZER_ROLE_FLAGS: Partial<Record<ClerkRole, OrganizerRoleFlags>> = {
   DiveCenter: { supportsCoursePreferences: true, locationModel: 'single', displayLabel: 'dive center' },
   Agent: { supportsCoursePreferences: false, locationModel: 'multi', displayLabel: 'agent' },
+  Venue: { supportsCoursePreferences: false, locationModel: 'multi', displayLabel: 'venue' },
 }
 
 export const ORGANIZER_WIZARD_ROLES = Object.keys(ORGANIZER_WIZARD_CONFIG) as ClerkRole[]

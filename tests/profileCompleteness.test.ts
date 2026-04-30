@@ -407,6 +407,7 @@ describe('checkProfileCompleteness — Venue multi-row semantics', () => {
         email: 'a@x.test', phone: '+66100000001',
         address: { city: 'Koh Tao', country: 'TH' },
         lat: 10, lng: 99, kind: "pool" as const, features: [] as ('reef' | 'wreck' | 'cave' | 'wall' | 'drift' | 'muck' | 'altitude' | 'lake' | 'river' | 'quarry' | 'night' | 'deep')[], verified: true,
+        maxDepth: 2, maxCapacity: 10,
       })
       await ctx.db.insert('venues', {
         organizationId: orgId,
@@ -414,6 +415,7 @@ describe('checkProfileCompleteness — Venue multi-row semantics', () => {
         email: 'b@x.test', phone: '+66100000002',
         address: { city: 'Koh Tao', country: 'TH' },
         lat: 10, lng: 99, kind: "pool" as const, features: [] as ('reef' | 'wreck' | 'cave' | 'wall' | 'drift' | 'muck' | 'altitude' | 'lake' | 'river' | 'quarry' | 'night' | 'deep')[], verified: true,
+        maxDepth: 2, maxCapacity: 10,
       })
 
       const result = await checkProfileCompleteness(ctx, { _id: userId }, 'Venue')
@@ -442,6 +444,7 @@ describe('checkProfileCompleteness — Venue multi-row semantics', () => {
         email: 'good@x.test', phone: '+66100000003',
         address: { city: 'Koh Tao', country: 'TH' },
         lat: 10, lng: 99, kind: "pool" as const, features: [] as ('reef' | 'wreck' | 'cave' | 'wall' | 'drift' | 'muck' | 'altitude' | 'lake' | 'river' | 'quarry' | 'night' | 'deep')[], verified: true,
+        maxDepth: 2, maxCapacity: 10,
       })
 
       const result = await checkProfileCompleteness(ctx, { _id: userId }, 'Venue')

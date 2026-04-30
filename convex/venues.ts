@@ -73,12 +73,6 @@ export const create = mutation({
     if (args.address?.country) {
       assertCountryCode(args.address.country, 'address.country')
     }
-    if (kind === 'pool' && (args.maxCapacity === undefined || args.maxCapacity <= 0)) {
-      throw new ConvexError({ code: ErrorCode.VALIDATION, reason: 'missing_maxCapacity' })
-    }
-    if (args.maxDepth === undefined || args.maxDepth <= 0) {
-      throw new ConvexError({ code: ErrorCode.VALIDATION, reason: 'missing_maxDepth' })
-    }
 
     const hasVenueRole = await checkHasRole(ctx, user._id, 'Venue')
     if (!hasVenueRole) {
@@ -166,6 +160,13 @@ export const update = mutation({
     }
 
     assertVenueRange(effectiveKind, args.maxDepth, args.maxCapacity)
+
+    if (args.maxDepth !== undefined && args.maxDepth <= 0) {
+      throw new ConvexError({ code: ErrorCode.VALIDATION, reason: 'missing_maxDepth' })
+    }
+    if (effectiveKind === 'pool' && args.maxCapacity !== undefined && args.maxCapacity <= 0) {
+      throw new ConvexError({ code: ErrorCode.VALIDATION, reason: 'missing_maxCapacity' })
+    }
 
     await ctx.db.patch(args.venueId, patch)
 

@@ -6,7 +6,12 @@ import { useMutation, useQuery } from 'convex/react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { api } from '@/lib/convex-generated'
-import { type RoleConfig } from '@/lib/constants/roles'
+import {
+  collapseSignupTilesToRoles,
+  deriveVenueSignupIntent,
+  VENUE_SIGNUP_INTENT_STORAGE_KEY,
+  type SignupRoleTileConfig,
+} from '@/lib/constants/signup-role-tiles'
 import { useDashboardSession } from '@/lib/hooks/use-dashboard-session'
 import { useGuardedRedirect } from '@/lib/hooks/use-guarded-redirect'
 import { ErrorAlert } from '@/components/ui/error-alert'
@@ -58,7 +63,7 @@ export default function SignUpPage() {
   )
 
   const [appLanguage, setAppLanguageState] = useState<string>(DEFAULT_LOCALE)
-  const [selectedRoles, setSelectedRoles] = useState<RoleConfig[]>([])
+  const [selectedTiles, setSelectedTiles] = useState<SignupRoleTileConfig[]>([])
   const [stage, setStage] = useState<PostAuthStage>('role')
 
   const orgLookupClerkId = activeOrg?.id ?? null
@@ -95,32 +100,44 @@ export default function SignUpPage() {
     router.refresh()
   }
 
-  function toggleRole(role: RoleConfig) {
-    setSelectedRoles((prev) =>
-      prev.some((r) => r.key === role.key)
-        ? prev.filter((r) => r.key !== role.key)
-        : [...prev, role],
+  function toggleTile(tile: SignupRoleTileConfig) {
+    setSelectedTiles((prev) =>
+      prev.some((t) => t.tileKey === tile.tileKey)
+        ? prev.filter((t) => t.tileKey !== tile.tileKey)
+        : [...prev, tile],
     )
   }
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const intent = deriveVenueSignupIntent(selectedTiles)
+    if (intent === null) {
+      window.sessionStorage.removeItem(VENUE_SIGNUP_INTENT_STORAGE_KEY)
+    } else {
+      window.sessionStorage.setItem(VENUE_SIGNUP_INTENT_STORAGE_KEY, intent)
+    }
+  }, [selectedTiles])
+
   function handleRoleContinue() {
-    if (!selectedRoles.length) return
+    if (!selectedTiles.length) return
     setError('')
     setStage('profile')
   }
 
   async function handleProfileSubmit() {
-    if (!selectedRoles.length) return
+    if (!selectedTiles.length) return
     if (!tcAccepted) return
-    const primaryRole = selectedRoles[0]
+    const clerkRoles = collapseSignupTilesToRoles(selectedTiles)
+    if (!clerkRoles.length) return
+    const primaryRole = clerkRoles[0]
 
     setSubmitting(true)
     setError('')
 
     try {
       await createUser({
-        role: primaryRole.clerkRole,
-        roles: selectedRoles.map((r) => r.clerkRole),
+        role: primaryRole,
+        roles: clerkRoles,
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         dateOfBirth,
@@ -197,8 +214,8 @@ export default function SignUpPage() {
 
       {stage === 'role' ? (
         <StepRoleSelection
-          selectedRoles={selectedRoles}
-          onToggle={toggleRole}
+          selectedTiles={selectedTiles}
+          onToggle={toggleTile}
           onContinue={handleRoleContinue}
         />
       ) : (

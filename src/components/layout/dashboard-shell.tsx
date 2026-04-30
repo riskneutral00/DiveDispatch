@@ -1,14 +1,15 @@
 'use client'
 
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery } from 'convex/react'
 import { useTranslations } from 'next-intl'
 import { api } from '@/lib/convex-generated'
-import { type RoleKey, ROLE_BY_KEY } from '@/lib/constants/roles'
+import { type ClerkRole, type RoleKey, ROLE_BY_KEY } from '@/lib/constants/roles'
 import { DASHBOARD_CONTENT_GUTTER_X } from '@/lib/constants/dashboard-layout'
 import { cn } from '@/lib/utils/cn'
 import { useDashboardSession } from '@/lib/hooks/use-dashboard-session'
 import { useGuardedRedirect } from '@/lib/hooks/use-guarded-redirect'
+import { useVenueSignupIntent } from '@/lib/hooks/use-venue-signup-intent'
 import { FullPageSpinner } from '@/components/ui/full-page-spinner'
 import { ProfileOverlay, type ProfileOverlayTab } from '../profiles/profile-overlay'
 import { HierarchySubBar } from './hierarchy-sub-bar'
@@ -31,16 +32,39 @@ export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps
   const [overlayOpen, setOverlayOpen] = useState(false)
   const [overlayTab, setOverlayTab] = useState<ProfileOverlayTab>('profile')
   const [overlaySection, setOverlaySection] = useState<string | undefined>(undefined)
+  const [overlayOnboardingRole, setOverlayOnboardingRole] = useState<ClerkRole | null>(null)
 
   const openProfileOverlay = useCallback((tab: ProfileOverlayTab = 'profile', section?: string) => {
     setOverlayTab(tab)
     setOverlaySection(section)
+    setOverlayOnboardingRole(null)
     setOverlayOpen(true)
   }, [])
 
   const closeProfileOverlay = useCallback(() => {
     setOverlayOpen(false)
+    setOverlayOnboardingRole(null)
   }, [])
+
+  const venueSignupIntent = useVenueSignupIntent()
+  const venueRoleEntry = useMemo(
+    () => myRoles?.find((r) => r.role === 'Venue') ?? null,
+    [myRoles],
+  )
+  const venueRoleIncomplete = Boolean(venueRoleEntry && venueRoleEntry.profileComplete !== true)
+  const autoOpenedRef = useRef(false)
+
+  useEffect(() => {
+    if (autoOpenedRef.current) return
+    if (status !== 'ready') return
+    if (!venueSignupIntent) return
+    if (!venueRoleIncomplete) return
+    autoOpenedRef.current = true
+    setOverlayTab('roles')
+    setOverlaySection(undefined)
+    setOverlayOnboardingRole('Venue')
+    setOverlayOpen(true)
+  }, [status, venueSignupIntent, venueRoleIncomplete])
 
   const redirectTo = useMemo<string | null>(() => {
     if (status === 'loading') return null
@@ -88,6 +112,8 @@ export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps
         onClose={closeProfileOverlay}
         initialTab={overlayTab}
         initialSection={overlaySection}
+        initialOnboardingRole={overlayOnboardingRole}
+        venueSignupIntent={venueSignupIntent}
         roleSlug={roleSlug}
         slug={slug}
       />

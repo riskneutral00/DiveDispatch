@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Dialog, Tabs, type TabItem } from '@/components/ui'
 import { ROLE_BY_CLERK_ROLE, type ClerkRole, type RoleKey } from '@/lib/constants/roles'
+import type { VenueSignupIntent } from '@/lib/constants/signup-role-tiles'
 import type { ProfileOverlayTab } from '@/lib/utils/first-incomplete-tab'
 import { useDashboardSession } from '@/lib/hooks/use-dashboard-session'
 import { ProfileTab } from '@/components/account/profile-tab'
@@ -25,6 +26,8 @@ interface ProfileOverlayProps {
   onClose: () => void
   initialTab?: ProfileOverlayTab
   initialSection?: string
+  initialOnboardingRole?: ClerkRole | null
+  venueSignupIntent?: VenueSignupIntent | null
   roleSlug: RoleKey
   slug: string
 }
@@ -34,7 +37,7 @@ const STATIC_TAB_IDS: { id: ProfileOverlayTab; labelKey: 'profile' | 'roles' }[]
   { id: 'roles', labelKey: 'roles' },
 ]
 
-export function ProfileOverlay({ open, onClose, initialTab = 'profile', initialSection, roleSlug, slug: _slug }: ProfileOverlayProps) {
+export function ProfileOverlay({ open, onClose, initialTab = 'profile', initialSection, initialOnboardingRole, venueSignupIntent, roleSlug, slug: _slug }: ProfileOverlayProps) {
   const tNav = useTranslations('nav')
   const [activeTab, setActiveTab] = useState<string>(initialTab)
   const [roleProfileSection, setRoleProfileSection] = useState<string>(initialSection ?? '')
@@ -158,6 +161,8 @@ export function ProfileOverlay({ open, onClose, initialTab = 'profile', initialS
               <ManageRolesConnected
                 onNavigateToRole={(roleKey) => setActiveTab(`role:${roleKey}`)}
                 activeClerkRole={activeClerkRole}
+                initialOnboardingRole={initialOnboardingRole ?? null}
+                venueSignupIntent={venueSignupIntent ?? null}
               />
             )}
             {activeRoleKey && renderRoleContent()}

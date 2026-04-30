@@ -8,8 +8,15 @@ import { OrganizerLanguagesStep } from '@/components/onboarding/organizer-langua
 import { getOrganizerSteps, ORGANIZER_WIZARD_CONFIG, type OrganizerSubStep } from '@/lib/constants/organizer-wizard-config'
 import { RoleProfileForm, hasConnectedForm } from '@/components/profiles/connected-role-forms'
 import { ROLE_BY_CLERK_ROLE, type ClerkRole } from '@/lib/constants/roles'
+import type { VenueSignupIntent } from '@/lib/constants/signup-role-tiles'
 
-function ProfileFormForRole({ role, onComplete }: { role: ClerkRole; onComplete: () => void }) {
+interface ProfileFormForRoleProps {
+  role: ClerkRole
+  onComplete: () => void
+  venueSignupIntent?: VenueSignupIntent | null
+}
+
+function ProfileFormForRole({ role, onComplete, venueSignupIntent }: ProfileFormForRoleProps) {
   const [organizerSubStep, setOrganizerSubStep] = useState<OrganizerSubStep>('basic')
 
   if (role in ORGANIZER_WIZARD_CONFIG) {
@@ -34,7 +41,7 @@ function ProfileFormForRole({ role, onComplete }: { role: ClerkRole; onComplete:
     return (
       <>
         {organizerSubStep === 'basic' && (
-          <OrganizerBasicStep role={role} onSaved={goNext} onBack={goBack} />
+          <OrganizerBasicStep role={role} onSaved={goNext} onBack={goBack} venueSignupIntent={venueSignupIntent ?? null} />
         )}
         {organizerSubStep === 'agency' && (
           <OrganizerAgencyStep role={role} onSaved={goNext} onBack={goBack} />
@@ -64,9 +71,10 @@ function ProfileFormForRole({ role, onComplete }: { role: ClerkRole; onComplete:
 interface RoleOnboardingProps {
   role: ClerkRole
   onComplete: () => void
+  venueSignupIntent?: VenueSignupIntent | null
 }
 
-export function RoleOnboarding({ role, onComplete }: RoleOnboardingProps) {
+export function RoleOnboarding({ role, onComplete, venueSignupIntent }: RoleOnboardingProps) {
   const config = ROLE_BY_CLERK_ROLE[role]
 
   return (
@@ -78,7 +86,7 @@ export function RoleOnboarding({ role, onComplete }: RoleOnboardingProps) {
         </p>
       </div>
 
-      <ProfileFormForRole role={role} onComplete={onComplete} />
+      <ProfileFormForRole role={role} onComplete={onComplete} venueSignupIntent={venueSignupIntent} />
 
       <div className="flex justify-end">
         <Button variant="secondary" onClick={onComplete}>

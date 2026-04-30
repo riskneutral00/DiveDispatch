@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { useMutation, useQuery } from 'convex/react'
 import { useTranslations } from 'next-intl'
 import { api } from '@/lib/convex-generated'
@@ -10,6 +11,8 @@ import { EmailField } from '@/components/ui/email-field'
 import { PhoneField } from '@/components/ui/phone-field'
 import { FieldRow } from '@/components/ui/field-row'
 import type { ClerkRole } from '@/lib/constants/roles'
+import type { VenueSignupIntent } from '@/lib/constants/signup-role-tiles'
+import type { VenueKind } from '../../../convex/shared/venueTypes'
 import { useOrganizerRoleApi } from '@/lib/hooks/use-organizer-role-api'
 import { useDashboardSession } from '@/lib/hooks/use-dashboard-session'
 import { getOrganizerRoleFlags } from '@/lib/constants/organizer-wizard-config'
@@ -22,6 +25,8 @@ import {
 } from '@/lib/profile-form'
 import { contactSchema } from '@/lib/schemas/profile-shared'
 import { OrganizerStepCard } from './organizer-step-card'
+import { RoleTile } from '@/components/ui/role-tile'
+import { PoolIcon, DiveSiteIcon } from '@/lib/icons/role-icons'
 
 // query-budget-ok: 4 subscriptions; planned migration to organizer.basicStepContext (Phase 2D of zesty-creek perf plan)
 
@@ -83,19 +88,47 @@ function OrganizerContactFields({ form, setField, errors, validateField }: Organ
   )
 }
 
+interface VenueKindPickerProps {
+  value: VenueKind | null
+  onChange: (kind: VenueKind) => void
+}
+
+function VenueKindPicker({ value, onChange }: VenueKindPickerProps) {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
+      <RoleTile
+        role={{
+          label: 'Pool',
+          description: 'Operate a private pool used for confined-water training.',
+          icon: PoolIcon,
+        }}
+        selected={value === 'pool'}
+        onClick={() => onChange('pool')}
+      />
+      <RoleTile
+        role={{
+          label: 'Dive Site',
+          description:
+            'Operate a private dive site — shore, reef, lake, river, quarry, or other open-water location.',
+          icon: DiveSiteIcon,
+        }}
+        selected={value === 'dive_site'}
+        onClick={() => onChange('dive_site')}
+      />
+    </div>
+  )
+}
+
 interface OrganizerBasicStepProps {
   role: ClerkRole
   onSaved: () => void
   onBack?: () => void
+  venueSignupIntent?: VenueSignupIntent | null
 }
 
-export function OrganizerBasicStep({ role, onSaved, onBack }: OrganizerBasicStepProps) {
+export function OrganizerBasicStep({ role, onSaved, onBack, venueSignupIntent }: OrganizerBasicStepProps) {
   const t = useTranslations('common')
   const mutations = useOrganizerRoleApi(role)
-
-  if (role === 'Venue') {
-    return <VenueBasicStep onSaved={onSaved} onBack={onBack} />
-  }
 
   if (!mutations) {
     return (
@@ -110,70 +143,14 @@ export function OrganizerBasicStep({ role, onSaved, onBack }: OrganizerBasicStep
     )
   }
 
-  return <BasicStepInner role={role} mutations={mutations} onSaved={onSaved} onBack={onBack} />
-}
-
-function VenueBasicStep({ onSaved, onBack }: { onSaved: () => void; onBack?: () => void }) {
-  const t = useTranslations('common')
-  const org = useQuery(api.organizations.mine)
-  const { user: me } = useDashboardSession()
-  const updateMutation = useMutation(api.organizations.updateBusinessMetadata)
-
-  const { form, setField, errors, saving, isValid, loading, handleSubmit, validateField } =
-    useProfileForm({
-      profile: org,
-      me,
-      schema: contactSchema,
-      defaults: INITIAL_CONTACT_FORM,
-      fromProfile: (p): ContactFormState => ({
-        name: (p.name as string) ?? '',
-        location:
-          p.address != null
-            ? {
-                address: p.address as LocationValue['address'],
-                placeId: p.placeId as string | undefined,
-                lat: (p.lat as number | undefined) ?? 0,
-                lng: (p.lng as number | undefined) ?? 0,
-              }
-            : null,
-        email: (p.email as string) ?? '',
-        phone: (p.phone as string) ?? '',
-      }),
-      fromMe: (u, defaults) => ({ ...defaults, email: (u.email as string) ?? '' }),
-      toPayload: (f) => ({
-        name: f.name,
-        email: f.email,
-        phone: f.phone,
-        ...(f.location
-          ? {
-              address: f.location.address,
-              placeId: f.location.placeId,
-              lat: f.location.lat,
-              lng: f.location.lng,
-            }
-          : {}),
-      }),
-      create: async (payload) => { await updateMutation(payload) },
-      update: async (payload) => { await updateMutation(payload) },
-      onSaved,
-      waitForMeBeforeInit: true,
-    })
-
-  if (loading) return <LoadingCard />
-
-  const handleNext = () => handleSubmit({ preventDefault: () => {} } as React.FormEvent)
-
   return (
-    <OrganizerStepCard
-      title={t('basicInformation')}
-      subtitle={t('tellUsAbout', { role: 'Venue' })}
+    <BasicStepInner
+      role={role}
+      mutations={mutations}
+      onSaved={onSaved}
       onBack={onBack}
-      onNext={handleNext}
-      loading={saving}
-      disabled={!isValid}
-    >
-      <OrganizerContactFields form={form} setField={setField} errors={errors} validateField={validateField} />
-    </OrganizerStepCard>
+      venueSignupIntent={venueSignupIntent ?? null}
+    />
   )
 }
 
@@ -182,15 +159,22 @@ interface BasicStepInnerProps {
   mutations: NonNullable<ReturnType<typeof useOrganizerRoleApi>>
   onSaved: () => void
   onBack?: () => void
+  venueSignupIntent: VenueSignupIntent | null
 }
 
-function BasicStepInner({ role, mutations, onSaved, onBack }: BasicStepInnerProps) {
+function BasicStepInner({ role, mutations, onSaved, onBack, venueSignupIntent }: BasicStepInnerProps) {
   const t = useTranslations('common')
   const existing = useQuery(mutations.mine)
   const { user: me } = useDashboardSession()
   const inheritance = useQuery(api.users.inheritedContactDefaults, { excludeRole: role })
   const createMutation = useMutation(mutations.create)
   const updateMutation = useMutation(mutations.update)
+
+  const seedKind: VenueKind | null =
+    role === 'Venue' && (venueSignupIntent === 'pool' || venueSignupIntent === 'dive_site')
+      ? venueSignupIntent
+      : null
+  const [pickedKind, setPickedKind] = useState<VenueKind | null>(seedKind)
 
   const createWithRoleExtras = async (payload: Record<string, unknown>) => {
     const base = {
@@ -201,6 +185,17 @@ function BasicStepInner({ role, mutations, onSaved, onBack }: BasicStepInnerProp
       lng: payload.lng as number,
       email: payload.email as string,
       phone: payload.phone as string,
+    }
+    if (role === 'Venue') {
+      if (!pickedKind) {
+        throw new Error('VENUE_KIND_REQUIRED') // error-ok: developer contract — UI gate prevents reaching this
+      }
+      const venueCreate = createMutation as unknown as (args: Record<string, unknown>) => Promise<unknown>
+      return venueCreate({
+        ...base,
+        kind: pickedKind,
+        features: [],
+      })
     }
     return createMutation({ ...base, associations: [] })
   }
@@ -227,6 +222,14 @@ function BasicStepInner({ role, mutations, onSaved, onBack }: BasicStepInnerProp
         entityId: dcId,
       })
     }
+    if (role === 'Venue') {
+      const venueId = (existingProfile as { _id?: string } | null)?._id
+      if (!venueId) return undefined
+      return (updateMutation as unknown as (args: Record<string, unknown>) => Promise<unknown>)({
+        ...payload,
+        venueId,
+      })
+    }
     return (updateMutation as unknown as (args: Record<string, unknown>) => Promise<unknown>)(payload)
   }
 
@@ -251,6 +254,9 @@ function BasicStepInner({ role, mutations, onSaved, onBack }: BasicStepInnerProp
 
   const { displayLabel: roleLabel } = getOrganizerRoleFlags(role)
 
+  const venueRequiresPicker = role === 'Venue' && existingProfile == null
+  const venueGate = venueRequiresPicker && pickedKind == null
+
   const handleNext = () => {
     handleSubmit({ preventDefault: () => {} } as React.FormEvent)
   }
@@ -262,8 +268,11 @@ function BasicStepInner({ role, mutations, onSaved, onBack }: BasicStepInnerProp
       onBack={onBack}
       onNext={handleNext}
       loading={saving}
-      disabled={!isValid}
+      disabled={!isValid || venueGate}
     >
+      {venueRequiresPicker && (
+        <VenueKindPicker value={pickedKind} onChange={setPickedKind} />
+      )}
       <OrganizerContactFields form={form} setField={setField} errors={errors} validateField={validateField} />
     </OrganizerStepCard>
   )

@@ -1,27 +1,62 @@
 'use client'
 
 import {
-  DISPLAY_OPERATOR_ROLES,
-  DISPLAY_RESOURCE_ROLES,
-  type RoleConfig,
-} from '@/lib/constants/roles'
+  getSignupOperatorTiles,
+  getSignupResourceTiles,
+  type SignupRoleTileConfig,
+} from '@/lib/constants/signup-role-tiles'
 import { Button } from '@/components/ui/button'
 import { CardTitle } from '@/components/ui/card-title'
 import { RoleTile } from '@/components/ui/role-tile'
 
 interface StepRoleSelectionProps {
-  selectedRoles: RoleConfig[]
-  onToggle: (role: RoleConfig) => void
+  selectedTiles: SignupRoleTileConfig[]
+  onToggle: (tile: SignupRoleTileConfig) => void
   onContinue: () => void
 }
 
+const OPERATOR_TILES = getSignupOperatorTiles()
+const RESOURCE_TILES = getSignupResourceTiles()
+
+interface SummaryEntry {
+  key: string
+  label: string
+  description: string
+}
+
+function buildSummary(tiles: SignupRoleTileConfig[]): SummaryEntry[] {
+  const venueTiles = tiles.filter((t) => t.clerkRole === 'Venue')
+  const nonVenue = tiles.filter((t) => t.clerkRole !== 'Venue')
+  const entries: SummaryEntry[] = nonVenue.map((t) => ({
+    key: t.tileKey,
+    label: t.label,
+    description: t.description,
+  }))
+  if (venueTiles.length === 1) {
+    entries.push({
+      key: venueTiles[0].tileKey,
+      label: venueTiles[0].label,
+      description: venueTiles[0].description,
+    })
+  } else if (venueTiles.length > 1) {
+    entries.push({
+      key: 'venue-umbrella',
+      label: 'Venue',
+      description:
+        'Provide a place where diving happens — pool, shore, reef, lake, river, quarry, or other.',
+    })
+  }
+  return entries
+}
+
 export function StepRoleSelection({
-  selectedRoles,
+  selectedTiles,
   onToggle,
   onContinue,
 }: StepRoleSelectionProps) {
-  const selectedSet = new Set(selectedRoles.map((r) => r.key))
-  const canContinue = selectedRoles.length > 0
+  const selectedSet = new Set(selectedTiles.map((t) => t.tileKey))
+  const canContinue = selectedTiles.length > 0
+  const summary = buildSummary(selectedTiles)
 
   return (
     <>
@@ -38,12 +73,12 @@ export function StepRoleSelection({
             Organizers
           </p>
         </div>
-        {DISPLAY_OPERATOR_ROLES.map((role) => (
+        {OPERATOR_TILES.map((tile) => (
           <RoleTile
-            key={role.key}
-            role={role}
-            selected={selectedSet.has(role.key)}
-            onClick={() => onToggle(role)}
+            key={tile.tileKey}
+            role={tile}
+            selected={selectedSet.has(tile.tileKey)}
+            onClick={() => onToggle(tile)}
           />
         ))}
 
@@ -52,12 +87,12 @@ export function StepRoleSelection({
             Resources
           </p>
         </div>
-        {DISPLAY_RESOURCE_ROLES.map((role) => (
+        {RESOURCE_TILES.map((tile) => (
           <RoleTile
-            key={role.key}
-            role={role}
-            selected={selectedSet.has(role.key)}
-            onClick={() => onToggle(role)}
+            key={tile.tileKey}
+            role={tile}
+            selected={selectedSet.has(tile.tileKey)}
+            onClick={() => onToggle(tile)}
           />
         ))}
       </div>
@@ -75,16 +110,16 @@ export function StepRoleSelection({
 
       <div
         className={`mt-3 h-32 overflow-y-auto overflow-x-hidden flex flex-col gap-1 transition-opacity ${
-          selectedRoles.length > 0 ? 'opacity-100' : 'opacity-0'
+          summary.length > 0 ? 'opacity-100' : 'opacity-0'
         }`}
-        aria-hidden={selectedRoles.length === 0}
+        aria-hidden={summary.length === 0}
       >
-        {selectedRoles.map((role) => (
-          <p key={role.key} className="text-label text-secondary">
+        {summary.map((entry) => (
+          <p key={entry.key} className="text-label text-secondary">
             <span className="font-medium text-primary">
-              {role.label}:
+              {entry.label}:
             </span>{' '}
-            {role.description}
+            {entry.description}
           </p>
         ))}
       </div>

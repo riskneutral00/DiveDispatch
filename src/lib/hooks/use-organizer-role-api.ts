@@ -16,7 +16,11 @@ export function useOrganizerRoleApi(role: ClerkRole) {
         create: api.agents.create,
       } as const
     case 'Venue':
-      return null
+      return {
+        mine: api.venues.mine,
+        update: api.venues.update,
+        create: api.venues.create,
+      } as const
     default:
       return null
   }
