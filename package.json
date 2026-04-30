@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "node scripts/check-next-cache.mjs",
     "dev": "bash scripts/dev-auto.sh",
     "dev:port": "next dev",
     "build": "next build",
