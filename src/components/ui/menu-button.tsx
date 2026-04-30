@@ -10,6 +10,7 @@ interface MenuButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   active?: boolean
   size?: MenuButtonSize
   variant?: MenuButtonVariant
+  comingSoon?: boolean
   children: ReactNode
 }
 
@@ -30,19 +31,24 @@ export const MenuButton = forwardRef<HTMLButtonElement, MenuButtonProps>(functio
     active = false,
     size = 'md',
     variant = 'flush',
+    comingSoon = false,
     children,
     className,
     type = 'button',
+    onClick,
     ...rest
   },
   ref,
 ) {
   const shape = VARIANT_MAP[variant]
+  const handleClick = comingSoon ? undefined : onClick
 
   return (
     <button
       ref={ref}
       type={type}
+      onClick={handleClick}
+      aria-disabled={comingSoon || undefined}
       className={cn(
         'inline-flex items-center gap-2 font-medium cursor-pointer',
         'transition-all duration-theme',
@@ -51,7 +57,8 @@ export const MenuButton = forwardRef<HTMLButtonElement, MenuButtonProps>(functio
         active ? shape.active : shape.base,
         active ? 'text-primary' : 'text-secondary',
         active && 'bg-glass-bg-elevated',
-        !active && 'hover:opacity-70',
+        !active && !comingSoon && 'hover:opacity-70',
+        comingSoon && 'opacity-50 pointer-events-none',
         'flex-shrink-0',
         className,
       )}

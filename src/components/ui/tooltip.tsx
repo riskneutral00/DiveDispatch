@@ -14,10 +14,11 @@ export function Tooltip({ label, children, className }: TooltipProps) {
   const tooltipId = useId()
   const [showTouch, setShowTouch] = useState(false)
   const [hovered, setHovered] = useState(false)
+  const [focused, setFocused] = useState(false)
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null)
   const ref = useRef<HTMLSpanElement>(null)
 
-  const visible = showTouch || hovered
+  const visible = showTouch || hovered || focused
 
   function measureAndSetPos() {
     if (!ref.current) { setPos(null); return }
@@ -46,6 +47,7 @@ export function Tooltip({ label, children, className }: TooltipProps) {
   }, [showTouch])
 
   function handleClick(e: React.MouseEvent) {
+    if (typeof window.matchMedia !== 'function') return
     if (!window.matchMedia('(hover: none)').matches) return
     if (!showTouch) {
       e.preventDefault()
@@ -65,7 +67,9 @@ export function Tooltip({ label, children, className }: TooltipProps) {
       aria-describedby={visible ? tooltipId : undefined}
       onClick={handleClick}
       onMouseEnter={() => { setHovered(true); measureAndSetPos() }}
-      onMouseLeave={() => { setHovered(false); if (!showTouch) setPos(null) }}
+      onMouseLeave={() => { setHovered(false); if (!showTouch && !focused) setPos(null) }}
+      onFocus={() => { setFocused(true); measureAndSetPos() }}
+      onBlur={() => { setFocused(false); if (!showTouch && !hovered) setPos(null) }}
     >
       {children}
       {visible && pos && createPortal(

@@ -11,6 +11,7 @@ export interface RoleTileProps {
   role: RoleTileDisplay
   selected?: boolean
   disabled?: boolean
+  comingSoon?: boolean
   showDescription?: boolean
   onClick: () => void
 }
@@ -19,6 +20,7 @@ export function RoleTile({
   role,
   selected,
   disabled,
+  comingSoon,
   showDescription,
   onClick,
 }: RoleTileProps) {
@@ -38,14 +40,17 @@ export function RoleTile({
     ? 'var(--color-primary)'
     : 'var(--color-text-secondary)'
 
+  const handleClick = comingSoon ? () => {} : onClick
+
   return (
     <button
       type="button"
       disabled={disabled}
-      onClick={onClick}
+      aria-disabled={comingSoon || undefined}
+      onClick={handleClick}
       aria-label={role.label}
       {...(hasSelection ? { 'aria-pressed': selected } : {})}
-      className={`glass-container w-full rounded-theme p-4 text-left transition-all duration-theme focus-visible:outline-2 disabled:opacity-50 disabled:cursor-not-allowed text-primary${hasSelection ? '' : ' reading-plane'}`}
+      className={`glass-container w-full rounded-theme p-4 text-left transition-all duration-theme focus-visible:outline-2 disabled:opacity-50 disabled:cursor-not-allowed text-primary${hasSelection ? '' : ' reading-plane'}${comingSoon ? ' opacity-50 pointer-events-none' : ''}`}
       style={{
         borderColor,
         background,
