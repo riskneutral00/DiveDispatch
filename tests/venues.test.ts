@@ -33,16 +33,16 @@ async function seedVenueUser(ctx: SeedCtx, slug: string) {
   return userId
 }
 
-const VALID_DIVE_SITE_ARGS = {
+const VALID_REEF_POOL_ARGS = {
   name: 'Shark Bay Reef',
   email: 'reef@test.com',
   phone: '+66100000010',
   address: { city: 'Koh Tao', country: 'TH' },
   lat: 10.09,
   lng: 99.84,
-  kind: 'dive_site' as const,
-  features: ['reef' as const],
-  confinedCapable: false,
+  kind: 'pool' as const,
+  features: [],
+  confinedCapable: true,
   maxDepth: 30,
   maxCapacity: 20,
 }
@@ -60,18 +60,31 @@ const VALID_POOL_ARGS = {
   maxDepth: 5,
 }
 
-const VALID_SHORE_ARGS = {
+const VALID_SHORE_POOL_ARGS = {
   name: 'Beach Entry',
   email: 'shore@test.com',
   phone: '+66100000012',
   address: { city: 'Phuket', country: 'TH' },
   lat: 7.88,
   lng: 98.39,
-  kind: 'dive_site' as const,
+  kind: 'pool' as const,
   features: [],
   confinedCapable: true,
   maxDepth: 18,
   maxCapacity: 10,
+}
+
+const VALID_DIVE_SITE_ARGS = {
+  name: 'Reef Dive Site',
+  email: 'site@test.com',
+  phone: '+66100000099',
+  address: { city: 'Phuket', country: 'TH' },
+  lat: 7.88,
+  lng: 98.39,
+  kind: 'dive_site' as const,
+  features: [],
+  confinedCapable: false,
+  maxDepth: 30,
 }
 
 describe('venues.create — slug minting + inventoryUnit', () => {
@@ -80,7 +93,7 @@ describe('venues.create — slug minting + inventoryUnit', () => {
     await t.run(async (ctx) => { await seedVenueUser(ctx, 'slug-test') })
 
     const venueId = await t.withIdentity(orgIdentityFor('slug-test'))
-      .mutation(api.venues.create, VALID_DIVE_SITE_ARGS)
+      .mutation(api.venues.create, VALID_REEF_POOL_ARGS)
 
     const venue = await t.run(async (ctx) => await ctx.db.get(venueId)) as Doc<'venues'>
     expect(venue.slug).toBe('shark-bay-reef')
@@ -91,7 +104,7 @@ describe('venues.create — slug minting + inventoryUnit', () => {
     await t.run(async (ctx) => { await seedVenueUser(ctx, 'inv-test') })
 
     const venueId = await t.withIdentity(orgIdentityFor('inv-test'))
-      .mutation(api.venues.create, VALID_DIVE_SITE_ARGS)
+      .mutation(api.venues.create, VALID_REEF_POOL_ARGS)
 
     const venue = await t.run(async (ctx) => await ctx.db.get(venueId)) as Doc<'venues'>
 
@@ -180,8 +193,8 @@ describe('venues.create — multi-row under one org', () => {
     const identity = orgIdentityFor('multi-op')
 
     const poolId = await t.withIdentity(identity).mutation(api.venues.create, VALID_POOL_ARGS)
-    const reefId = await t.withIdentity(identity).mutation(api.venues.create, VALID_DIVE_SITE_ARGS)
-    const shoreId = await t.withIdentity(identity).mutation(api.venues.create, VALID_SHORE_ARGS)
+    const reefId = await t.withIdentity(identity).mutation(api.venues.create, VALID_REEF_POOL_ARGS)
+    const shoreId = await t.withIdentity(identity).mutation(api.venues.create, VALID_SHORE_POOL_ARGS)
 
     expect(poolId).not.toBe(reefId)
     expect(reefId).not.toBe(shoreId)
@@ -198,7 +211,7 @@ describe('venues.update — by venueId', () => {
     const identity = orgIdentityFor('patch-target')
 
     const poolId = await t.withIdentity(identity).mutation(api.venues.create, VALID_POOL_ARGS)
-    const reefId = await t.withIdentity(identity).mutation(api.venues.create, VALID_DIVE_SITE_ARGS)
+    const reefId = await t.withIdentity(identity).mutation(api.venues.create, VALID_REEF_POOL_ARGS)
 
     await t.withIdentity(identity).mutation(api.venues.update, {
       venueId: poolId,
@@ -220,7 +233,7 @@ describe('venues.update — by venueId', () => {
     const identity = orgIdentityFor('cap-sync')
 
     const poolId = await t.withIdentity(identity).mutation(api.venues.create, VALID_POOL_ARGS)
-    await t.withIdentity(identity).mutation(api.venues.create, VALID_DIVE_SITE_ARGS)
+    await t.withIdentity(identity).mutation(api.venues.create, VALID_REEF_POOL_ARGS)
 
     await t.withIdentity(identity).mutation(api.venues.update, {
       venueId: poolId,
@@ -460,11 +473,11 @@ describe('venues.mine — multi-row return', () => {
     expect(venues).toEqual([])
 
     await t.withIdentity(identity).mutation(api.venues.create, VALID_POOL_ARGS)
-    await t.withIdentity(identity).mutation(api.venues.create, VALID_DIVE_SITE_ARGS)
+    await t.withIdentity(identity).mutation(api.venues.create, VALID_REEF_POOL_ARGS)
 
     const venuesAfter = await t.withIdentity(identity).query(api.venues.mine, {})
     expect(venuesAfter).toHaveLength(2)
-    expect(venuesAfter.map((v) => v.kind).sort()).toEqual(['dive_site', 'pool'])
+    expect(venuesAfter.map((v) => v.kind).sort()).toEqual(['pool', 'pool'])
   })
 
   it('returns empty array for unauthenticated caller', async () => {
@@ -604,7 +617,7 @@ describe('venues — access control persistence', () => {
     const identity = orgIdentityFor('acl-update')
 
     const poolId = await t.withIdentity(identity).mutation(api.venues.create, VALID_POOL_ARGS)
-    const reefId = await t.withIdentity(identity).mutation(api.venues.create, VALID_DIVE_SITE_ARGS)
+    const reefId = await t.withIdentity(identity).mutation(api.venues.create, VALID_REEF_POOL_ARGS)
 
     await t.withIdentity(identity).mutation(api.venues.update, {
       venueId: poolId,
@@ -625,7 +638,7 @@ describe('venues.create — access control', () => {
   it('rejects unauthenticated callers', async () => {
     const t = makeT()
     await expect(
-      t.mutation(api.venues.create, VALID_DIVE_SITE_ARGS),
+      t.mutation(api.venues.create, VALID_REEF_POOL_ARGS),
     ).rejects.toThrow(/UNAUTHENTICATED/)
   })
 
@@ -645,7 +658,7 @@ describe('venues.create — access control', () => {
 
     await expect(
       t.withIdentity(orgIdentityFor('dc-user'))
-        .mutation(api.venues.create, VALID_DIVE_SITE_ARGS),
+        .mutation(api.venues.create, VALID_REEF_POOL_ARGS),
     ).rejects.toThrow(/FORBIDDEN/)
   })
 })
@@ -673,7 +686,7 @@ describe('venues.* — Rule 12: profileComplete denorm flips', () => {
     expect(await readVenueRoleComplete(t, 'venue-complete-create')).not.toBe(true)
 
     await t.withIdentity(orgIdentityFor('venue-complete-create'))
-      .mutation(api.venues.create, VALID_DIVE_SITE_ARGS)
+      .mutation(api.venues.create, VALID_REEF_POOL_ARGS)
 
     expect(await readVenueRoleComplete(t, 'venue-complete-create')).toBe(true)
   })
@@ -683,7 +696,7 @@ describe('venues.* — Rule 12: profileComplete denorm flips', () => {
     await t.run(async (ctx) => { await seedVenueUser(ctx, 'venue-complete-update') })
     const identity = orgIdentityFor('venue-complete-update')
     const venueId = await t.withIdentity(identity)
-      .mutation(api.venues.create, VALID_DIVE_SITE_ARGS)
+      .mutation(api.venues.create, VALID_REEF_POOL_ARGS)
 
     expect(await readVenueRoleComplete(t, 'venue-complete-update')).toBe(true)
 
@@ -700,7 +713,7 @@ describe('venues.* — Rule 12: profileComplete denorm flips', () => {
     await t.run(async (ctx) => { await seedVenueUser(ctx, 'venue-complete-remove') })
     const identity = orgIdentityFor('venue-complete-remove')
     const venueId = await t.withIdentity(identity)
-      .mutation(api.venues.create, VALID_DIVE_SITE_ARGS)
+      .mutation(api.venues.create, VALID_REEF_POOL_ARGS)
 
     expect(await readVenueRoleComplete(t, 'venue-complete-remove')).toBe(true)
 
@@ -716,7 +729,7 @@ describe('venues.create — i18n validators at boundary', () => {
     await t.run(async (ctx) => { await seedVenueUser(ctx, 'phone-check') })
     await expect(
       t.withIdentity(orgIdentityFor('phone-check'))
-        .mutation(api.venues.create, { ...VALID_DIVE_SITE_ARGS, phone: 'not-e164' }),
+        .mutation(api.venues.create, { ...VALID_REEF_POOL_ARGS, phone: 'not-e164' }),
     ).rejects.toThrow(/VALIDATION/)
   })
 
@@ -726,7 +739,7 @@ describe('venues.create — i18n validators at boundary', () => {
     await expect(
       t.withIdentity(orgIdentityFor('country-check'))
         .mutation(api.venues.create, {
-          ...VALID_DIVE_SITE_ARGS,
+          ...VALID_REEF_POOL_ARGS,
           address: { city: 'X', country: 'zz' },
         }),
     ).rejects.toThrow(/VALIDATION/)
@@ -737,7 +750,7 @@ describe('venues.create — i18n validators at boundary', () => {
     await t.run(async (ctx) => { await seedVenueUser(ctx, 'empty-phone') })
     await expect(
       t.withIdentity(orgIdentityFor('empty-phone'))
-        .mutation(api.venues.create, { ...VALID_DIVE_SITE_ARGS, phone: '' }),
+        .mutation(api.venues.create, { ...VALID_REEF_POOL_ARGS, phone: '' }),
     ).rejects.toThrow(/VALIDATION/)
   })
 
@@ -746,14 +759,14 @@ describe('venues.create — i18n validators at boundary', () => {
     await t.run(async (ctx) => { await seedVenueUser(ctx, 'empty-email') })
     await expect(
       t.withIdentity(orgIdentityFor('empty-email'))
-        .mutation(api.venues.create, { ...VALID_DIVE_SITE_ARGS, email: '' }),
+        .mutation(api.venues.create, { ...VALID_REEF_POOL_ARGS, email: '' }),
     ).rejects.toThrow(/VALIDATION/)
   })
 
   it('accepts missing maxDepth (onboarding-incomplete create); profileComplete stays false', async () => {
     const t = makeT()
     await t.run(async (ctx) => { await seedVenueUser(ctx, 'missing-depth') })
-    const { maxDepth: _omit, ...withoutDepth } = VALID_DIVE_SITE_ARGS
+    const { maxDepth: _omit, ...withoutDepth } = VALID_REEF_POOL_ARGS
     const id = await t.withIdentity(orgIdentityFor('missing-depth'))
       .mutation(api.venues.create, withoutDepth)
     expect(id).toBeDefined()
@@ -782,7 +795,7 @@ describe('venues.update — i18n validators at boundary', () => {
     const t = makeT()
     await t.run(async (ctx) => { await seedVenueUser(ctx, 'update-phone') })
     const identity = orgIdentityFor('update-phone')
-    const venueId = await t.withIdentity(identity).mutation(api.venues.create, VALID_DIVE_SITE_ARGS)
+    const venueId = await t.withIdentity(identity).mutation(api.venues.create, VALID_REEF_POOL_ARGS)
     await expect(
       t.withIdentity(identity).mutation(api.venues.update, {
         venueId,
@@ -795,7 +808,7 @@ describe('venues.update — i18n validators at boundary', () => {
     const t = makeT()
     await t.run(async (ctx) => { await seedVenueUser(ctx, 'update-empty-phone') })
     const identity = orgIdentityFor('update-empty-phone')
-    const venueId = await t.withIdentity(identity).mutation(api.venues.create, VALID_DIVE_SITE_ARGS)
+    const venueId = await t.withIdentity(identity).mutation(api.venues.create, VALID_REEF_POOL_ARGS)
     await expect(
       t.withIdentity(identity).mutation(api.venues.update, { venueId, phone: '' }),
     ).rejects.toThrow(/VALIDATION/)
@@ -805,12 +818,98 @@ describe('venues.update — i18n validators at boundary', () => {
     const t = makeT()
     await t.run(async (ctx) => { await seedVenueUser(ctx, 'update-empty-email') })
     const identity = orgIdentityFor('update-empty-email')
-    const venueId = await t.withIdentity(identity).mutation(api.venues.create, VALID_DIVE_SITE_ARGS)
+    const venueId = await t.withIdentity(identity).mutation(api.venues.create, VALID_REEF_POOL_ARGS)
     await expect(
       t.withIdentity(identity).mutation(api.venues.update, { venueId, email: '' }),
     ).rejects.toThrow(/VALIDATION/)
   })
 })
 
-// Prevent "unused import" TS on helper types kept for future suite additions
+describe('venues.create / venues.update — public surface accepts both pool and dive_site', () => {
+  it('accepts venues.create with kind: "dive_site"', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedVenueUser(ctx, 'create-dive-site') })
+    const venueId = await t.withIdentity(orgIdentityFor('create-dive-site'))
+      .mutation(api.venues.create, VALID_DIVE_SITE_ARGS)
+    const venue = await t.run(async (ctx) => await ctx.db.get(venueId)) as Doc<'venues'>
+    expect(venue.kind).toBe('dive_site')
+  })
+
+  it('accepts venues.update on an existing dive_site row when editing non-kind fields', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedVenueUser(ctx, 'update-existing-dive-site') })
+    const identity = orgIdentityFor('update-existing-dive-site')
+    const venueId = await t.withIdentity(identity).mutation(api.venues.create, VALID_DIVE_SITE_ARGS)
+    await t.withIdentity(identity).mutation(api.venues.update, {
+      venueId,
+      name: 'Renamed Dive Site',
+    })
+    const venue = await t.run(async (ctx) => await ctx.db.get(venueId)) as Doc<'venues'>
+    expect(venue.name).toBe('Renamed Dive Site')
+    expect(venue.kind).toBe('dive_site')
+  })
+
+  it('rejects venues.update when args.kind differs from existing row kind (kind immutability)', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedVenueUser(ctx, 'reject-update-kind-flip') })
+    const identity = orgIdentityFor('reject-update-kind-flip')
+    const venueId = await t.withIdentity(identity).mutation(api.venues.create, VALID_POOL_ARGS)
+    await expect(
+      t.withIdentity(identity).mutation(api.venues.update, {
+        venueId,
+        kind: 'dive_site',
+      }),
+    ).rejects.toThrow(/kind_immutable/)
+  })
+
+  it('accepts venues.update when args.kind matches existing row kind (no-op)', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedVenueUser(ctx, 'update-kind-noop') })
+    const identity = orgIdentityFor('update-kind-noop')
+    const venueId = await t.withIdentity(identity).mutation(api.venues.create, VALID_POOL_ARGS)
+    await t.withIdentity(identity).mutation(api.venues.update, {
+      venueId,
+      kind: 'pool',
+    })
+    const venue = await t.run(async (ctx) => await ctx.db.get(venueId)) as Doc<'venues'>
+    expect(venue.kind).toBe('pool')
+  })
+
+  it('pool update still rejects maxCapacity=0 with missing_maxCapacity (pool-only validation preserved)', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedVenueUser(ctx, 'pool-still-needs-capacity-update') })
+    const identity = orgIdentityFor('pool-still-needs-capacity-update')
+    const venueId = await t.withIdentity(identity).mutation(api.venues.create, VALID_POOL_ARGS)
+    await expect(
+      t.withIdentity(identity).mutation(api.venues.update, {
+        venueId,
+        maxCapacity: 0,
+      }),
+    ).rejects.toThrow(/missing_maxCapacity/)
+  })
+
+  it('dive_site update accepts maxCapacity=0 (pool-only check does not apply)', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedVenueUser(ctx, 'dive-site-cap-zero-ok') })
+    const identity = orgIdentityFor('dive-site-cap-zero-ok')
+    const venueId = await t.withIdentity(identity).mutation(api.venues.create, VALID_DIVE_SITE_ARGS)
+    await t.withIdentity(identity).mutation(api.venues.update, {
+      venueId,
+      maxCapacity: 0,
+    })
+    const venue = await t.run(async (ctx) => await ctx.db.get(venueId)) as Doc<'venues'>
+    expect(venue.kind).toBe('dive_site')
+  })
+
+  it('dive_site create does not require maxCapacity', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedVenueUser(ctx, 'dive-site-no-capacity') })
+    const venueId = await t.withIdentity(orgIdentityFor('dive-site-no-capacity'))
+      .mutation(api.venues.create, VALID_DIVE_SITE_ARGS)
+    const venue = await t.run(async (ctx) => await ctx.db.get(venueId)) as Doc<'venues'>
+    expect(venue.kind).toBe('dive_site')
+    expect(venue.maxCapacity).toBeUndefined()
+  })
+})
+
 void (null as unknown as Id<'venues'>)

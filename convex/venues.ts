@@ -1,8 +1,10 @@
 import { ConvexError, v } from 'convex/values'
 import { mutation, query, type MutationCtx } from './_generated/server'
-import { authorize, assertOrgOwnership } from './lib/auth'
-import { getActiveOrg } from './lib/activeOrg'
+import { authorize, assertOrgOwnership, getAuthUser } from './lib/auth'
+import { getActiveOrg, tryGetActiveOrg } from './lib/activeOrg'
 import { entityProfilesMine, queryVisibleEntities } from './lib/profileHelpers'
+import { evaluateRowCompleteness } from './lib/completeness/perRow'
+import type { Doc } from './_generated/dataModel'
 import { checkHasRole } from './userRoles'
 import { ErrorCode } from './lib/errorCodes'
 import { BASE_PROFILE_CREATE_FIELDS, BASE_PROFILE_UPDATE_FIELDS, ACCESS_CONTROL_FIELDS, BUSINESS_NAME_CREATE_FIELD, BUSINESS_NAME_UPDATE_FIELD, assertVenueRange, assertVenueKindConsistent, assertPhoneE164, assertCountryCode } from './lib/validators'
@@ -134,6 +136,13 @@ export const update = mutation({
     const { org: activeOrg } = await getActiveOrg(ctx)
     assertOrgOwnership(venue, activeOrg)
 
+    if (args.kind !== undefined && args.kind !== venue.kind) {
+      throw new ConvexError({
+        code: ErrorCode.VALIDATION,
+        reason: 'kind_immutable',
+      })
+    }
+
     if (args.email !== undefined && args.email.trim() === '') {
       throw new ConvexError({ code: ErrorCode.VALIDATION, reason: 'missing_email' })
     }
@@ -235,7 +244,26 @@ export const remove = mutation({
 
 export const mine = query({
   args: {},
-  handler: async (ctx) => entityProfilesMine(ctx, 'Venue'),
+  handler: async (ctx): Promise<Array<Doc<'venues'> & { incomplete: string[] }>> => {
+    const venues = await entityProfilesMine(ctx, 'Venue')
+    if (venues.length === 0) return []
+    const user = await getAuthUser(ctx)
+    if (!user) return venues.map((v) => ({ ...v, incomplete: [] }))
+    const activeOrg = await tryGetActiveOrg(ctx)
+    const activeOrgId = activeOrg?._id ?? null
+    return Promise.all(
+      venues.map(async (venue) => {
+        const { incomplete } = await evaluateRowCompleteness(
+          ctx,
+          user,
+          'Venue',
+          venue as unknown as Record<string, unknown>,
+          activeOrgId,
+        )
+        return { ...venue, incomplete }
+      }),
+    )
+  },
 })
 
 export const visibleToMe = query({
