@@ -8,6 +8,9 @@ FILE_PATH=$(echo "$INPUT" | grep -o '"file_path"[[:space:]]*:[[:space:]]*"[^"]*"
 
 case "$FILE_PATH" in
   */.tickets/DD-*.md|.tickets/DD-*.md)
+    if [ -f "$FILE_PATH" ]; then
+      exit 0
+    fi
     SENTINEL=$(ls .tickets/.spec-authorized-* 2>/dev/null | head -1)
     if [ -n "$SENTINEL" ]; then
       if [ "$(uname)" = "Darwin" ]; then

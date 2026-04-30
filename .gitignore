@@ -140,6 +140,9 @@ docs/LLM_HANDOFF.md
 .sisyphus/
 .tmp/
 
+# Project-scoped MCP overrides (personal config)
+.mcp.json
+
 *storybook.log
 storybook-static
 
