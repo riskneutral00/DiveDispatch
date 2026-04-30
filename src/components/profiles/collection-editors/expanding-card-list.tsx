@@ -33,6 +33,8 @@ interface ExpandingCardListProps<T> {
   className?: string
   hideEmptyState?: boolean
   defaultExpandFirst?: boolean
+  expandedKeys?: Set<string>
+  onExpandedKeysChange?: (next: Set<string>) => void
   onAdd?: () => void
   onRemove?: (item: T, index: number) => void
   onSave?: (item: T, index: number) => void
@@ -62,6 +64,8 @@ export function ExpandingCardList<T>({
   className,
   hideEmptyState = false,
   defaultExpandFirst = false,
+  expandedKeys: controlledKeys,
+  onExpandedKeysChange,
   onAdd,
   onRemove,
   onSave,
@@ -73,21 +77,37 @@ export function ExpandingCardList<T>({
   completeLabel = 'Complete',
   incompleteLabel = 'Incomplete',
 }: ExpandingCardListProps<T>) {
-  const [expandedKeys, setExpandedKeys] = useState<Set<string>>(() => {
+  const [internalKeys, setInternalKeys] = useState<Set<string>>(() => {
     if (defaultExpandFirst && items.length > 0) {
       return new Set([itemKey(items[0], 0)])
     }
     return new Set()
   })
 
-  const toggleExpand = useCallback((key: string) => {
-    setExpandedKeys((prev) => {
-      const next = new Set(prev)
-      if (next.has(key)) next.delete(key)
-      else next.add(key)
-      return next
-    })
-  }, [])
+  const isControlled = controlledKeys !== undefined
+  const expandedKeys = isControlled ? controlledKeys : internalKeys
+
+  const setExpandedKeys = useCallback(
+    (updater: (prev: Set<string>) => Set<string>) => {
+      const prev = isControlled ? controlledKeys : internalKeys
+      const next = updater(prev)
+      onExpandedKeysChange?.(next)
+      if (!isControlled) setInternalKeys(next)
+    },
+    [isControlled, controlledKeys, internalKeys, onExpandedKeysChange],
+  )
+
+  const toggleExpand = useCallback(
+    (key: string) => {
+      setExpandedKeys((prev) => {
+        const next = new Set(prev)
+        if (next.has(key)) next.delete(key)
+        else next.add(key)
+        return next
+      })
+    },
+    [setExpandedKeys],
+  )
 
   const canAdd = maxItems === undefined || items.length < maxItems
   const canRemoveAt = items.length > minItems

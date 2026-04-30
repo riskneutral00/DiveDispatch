@@ -31,10 +31,11 @@ describe('useVenueSignupIntent', () => {
     expect(result.current).toBe('dive_site')
   })
 
-  it('returns "multi" when stored', () => {
+  it('returns null for stale "multi" without clobbering storage', () => {
     window.sessionStorage.setItem(VENUE_SIGNUP_INTENT_STORAGE_KEY, 'multi')
     const { result } = renderHook(() => useVenueSignupIntent())
-    expect(result.current).toBe('multi')
+    expect(result.current).toBe(null)
+    expect(window.sessionStorage.getItem(VENUE_SIGNUP_INTENT_STORAGE_KEY)).toBe('multi')
   })
 
   it('does NOT clear storage on read', () => {
@@ -54,7 +55,7 @@ describe('useVenueSignupIntent', () => {
     window.sessionStorage.setItem(VENUE_SIGNUP_INTENT_STORAGE_KEY, 'pool')
     const { result, rerender } = renderHook(() => useVenueSignupIntent())
     expect(result.current).toBe('pool')
-    window.sessionStorage.setItem(VENUE_SIGNUP_INTENT_STORAGE_KEY, 'multi')
+    window.sessionStorage.setItem(VENUE_SIGNUP_INTENT_STORAGE_KEY, 'dive_site')
     rerender()
     expect(result.current).toBe('pool')
   })

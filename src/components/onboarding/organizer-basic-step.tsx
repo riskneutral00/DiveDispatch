@@ -11,11 +11,11 @@ import { EmailField } from '@/components/ui/email-field'
 import { PhoneField } from '@/components/ui/phone-field'
 import { FieldRow } from '@/components/ui/field-row'
 import type { ClerkRole } from '@/lib/constants/roles'
+import { getVenueKindTile } from '@/lib/constants/signup-role-tiles'
 import {
-  getVenueKindTile,
-  type VenueSignupIntent,
-} from '@/lib/constants/signup-role-tiles'
-import { clearStoredVenueSignupIntent } from '@/lib/hooks/use-venue-signup-intent'
+  clearStoredVenueSignupIntent,
+  useVenueSignupIntent,
+} from '@/lib/hooks/use-venue-signup-intent'
 import { VENUE_KINDS, type VenueKind } from '../../../convex/shared/venueTypes'
 import { useOrganizerRoleApi } from '@/lib/hooks/use-organizer-role-api'
 import { useDashboardSession } from '@/lib/hooks/use-dashboard-session'
@@ -102,12 +102,13 @@ function VenueKindPicker({ value, onChange }: VenueKindPickerProps) {
       {VENUE_KINDS.map((kind) => {
         const tile = getVenueKindTile(kind)
         return (
-          <RoleTile
-            key={kind}
-            role={tile}
-            selected={value === kind}
-            onClick={() => onChange(kind)}
-          />
+          <div key={kind}>
+            <RoleTile
+              role={tile}
+              selected={value === kind}
+              onClick={() => onChange(kind)}
+            />
+          </div>
         )
       })}
     </div>
@@ -118,10 +119,9 @@ interface OrganizerBasicStepProps {
   role: ClerkRole
   onSaved: () => void
   onBack?: () => void
-  venueSignupIntent?: VenueSignupIntent | null
 }
 
-export function OrganizerBasicStep({ role, onSaved, onBack, venueSignupIntent }: OrganizerBasicStepProps) {
+export function OrganizerBasicStep({ role, onSaved, onBack }: OrganizerBasicStepProps) {
   const t = useTranslations('common')
   const mutations = useOrganizerRoleApi(role)
 
@@ -144,7 +144,6 @@ export function OrganizerBasicStep({ role, onSaved, onBack, venueSignupIntent }:
       mutations={mutations}
       onSaved={onSaved}
       onBack={onBack}
-      venueSignupIntent={venueSignupIntent ?? null}
     />
   )
 }
@@ -154,16 +153,16 @@ interface BasicStepInnerProps {
   mutations: NonNullable<ReturnType<typeof useOrganizerRoleApi>>
   onSaved: () => void
   onBack?: () => void
-  venueSignupIntent: VenueSignupIntent | null
 }
 
-function BasicStepInner({ role, mutations, onSaved, onBack, venueSignupIntent }: BasicStepInnerProps) {
+function BasicStepInner({ role, mutations, onSaved, onBack }: BasicStepInnerProps) {
   const t = useTranslations('common')
   const existing = useQuery(mutations.mine)
   const { user: me } = useDashboardSession()
   const inheritance = useQuery(api.users.inheritedContactDefaults, { excludeRole: role })
   const createMutation = useMutation(mutations.create)
   const updateMutation = useMutation(mutations.update)
+  const venueSignupIntent = useVenueSignupIntent()
 
   const seedKind: VenueKind | null =
     role === 'Venue' && (venueSignupIntent === 'pool' || venueSignupIntent === 'dive_site')

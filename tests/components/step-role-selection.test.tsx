@@ -71,7 +71,7 @@ describe('StepRoleSelection', () => {
     expect(queryByText(/^Venue$/)).toBeNull()
   })
 
-  it('Pool and Dive Site tiles toggle independently', async () => {
+  it('Pool and Dive Site tiles both toggle independently', async () => {
     const onToggle = vi.fn()
     const user = userEvent.setup()
     const { getByText } = render(
@@ -81,6 +81,9 @@ describe('StepRoleSelection', () => {
     expect(onToggle).toHaveBeenCalledWith(
       expect.objectContaining({ tileKey: 'pool', venueKindHint: 'pool' }),
     )
+    onToggle.mockClear()
+    const diveSiteButton = getByText('Dive Site').closest('button') as HTMLButtonElement
+    expect(diveSiteButton).not.toHaveAttribute('aria-disabled', 'true')
     await user.click(getByText('Dive Site'))
     expect(onToggle).toHaveBeenCalledWith(
       expect.objectContaining({ tileKey: 'dive-site', venueKindHint: 'dive_site' }),
@@ -124,5 +127,14 @@ describe('StepRoleSelection', () => {
     )
     const tile = getByText('Dive Center').closest('button')
     expect(tile).toHaveAttribute('aria-pressed', 'true')
+  })
+
+  it('Dive Site tile is fully selectable (no tooltip, no aria-disabled)', () => {
+    const { getByText, queryByRole } = render(
+      <StepRoleSelection {...defaultProps} />,
+    )
+    const button = getByText('Dive Site').closest('button') as HTMLButtonElement
+    expect(button).not.toHaveAttribute('aria-disabled', 'true')
+    expect(queryByRole('tooltip')).toBeNull()
   })
 })

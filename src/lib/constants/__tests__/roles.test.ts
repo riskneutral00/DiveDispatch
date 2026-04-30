@@ -148,3 +148,39 @@ describe('Booking creation eligibility (isOrganizer gates QuickBookRail + create
     )
   })
 })
+
+describe('Pool and Dive Site are not canonical role-level entries', () => {
+  it('ROLES does not include "pool" or "dive-site" as RoleKey', () => {
+    const keys = ROLES.map((r) => r.key)
+    expect(keys).not.toContain('pool')
+    expect(keys).not.toContain('dive-site')
+  })
+
+  it('ROLE_BY_KEY does not resolve "pool" or "dive-site" lookups', () => {
+    expect(ROLE_BY_KEY['pool' as RoleKey]).toBeUndefined()
+    expect(ROLE_BY_KEY['dive-site' as RoleKey]).toBeUndefined()
+  })
+
+  it('ROLE_BY_CLERK_ROLE does not resolve "Pool" or "DiveSite" lookups', () => {
+    expect(ROLE_BY_CLERK_ROLE['Pool' as ClerkRole]).toBeUndefined()
+    expect(ROLE_BY_CLERK_ROLE['DiveSite' as ClerkRole]).toBeUndefined()
+  })
+
+  it('Venue clerkRole is the only sink for venue-kind tiles', () => {
+    expect(ROLE_BY_KEY['venue'].clerkRole).toBe('Venue')
+  })
+})
+
+describe('Venue role tab contract', () => {
+  it('Venue role tabs do not include a "contact" tab', () => {
+    const venue = ROLE_BY_KEY['venue']
+    const tabIds = venue.profileTabs.map((t) => t.id)
+    expect(tabIds).not.toContain('contact')
+  })
+
+  it('Venue role tabs are exactly capabilities then booking', () => {
+    const venue = ROLE_BY_KEY['venue']
+    const tabIds = venue.profileTabs.map((t) => t.id)
+    expect(tabIds).toEqual(['capabilities', 'booking'])
+  })
+})

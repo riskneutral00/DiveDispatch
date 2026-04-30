@@ -1,8 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, within } from '../helpers/render'
+import { render, screen, fireEvent } from '../helpers/render'
 import type { Doc, Id } from '@/lib/convex-generated'
-import type { VenueFeature } from '@/lib/constants/venue-subtypes'
 
 const createVenue = vi.fn().mockResolvedValue('venue-new' as Id<'venues'>)
 const updateVenue = vi.fn().mockResolvedValue(undefined)
@@ -14,6 +13,7 @@ const removeCompressor = vi.fn().mockResolvedValue(undefined)
 type MinimalVenue = Pick<
   Doc<'venues'>,
   | '_id'
+  | '_creationTime'
   | 'name'
   | 'kind'
   | 'features'
@@ -110,18 +110,13 @@ vi.mock('@/components/profiles/location-picker', () => ({
   ),
 }))
 
-import {
-  VenueCapabilitiesSection,
-  venueCapabilitiesFromProfile,
-  venueCapabilitiesToPayload,
-  INITIAL_VENUE_CAPABILITIES_FORM,
-  type VenueCapabilitiesFormState,
-} from '@/components/profiles/venue-capabilities-section'
-import { venueCapabilitiesSchema } from '@/lib/schemas/profile-shared'
+import { VenueCapabilitiesSection } from '@/components/profiles/venue-capabilities-section'
+import { VENUE_SIGNUP_INTENT_STORAGE_KEY } from '@/lib/constants/signup-role-tiles'
 
 function baseVenue(overrides: Partial<MinimalVenue> = {}): MinimalVenue {
   return {
     _id: 'venue1' as Doc<'venues'>['_id'],
+    _creationTime: 1_700_000_000_000,
     name: 'Sea Fun Pool',
     kind: 'pool',
     features: [],
@@ -164,208 +159,500 @@ beforeEach(() => {
   })
 })
 
-describe('VenueCapabilitiesSection — feature badges', () => {
-  it('renders feature chips when venue.features is non-empty', () => {
+describe('VenueCapabilitiesSection — empty pre-seed', () => {
+  it('renders one expanded draft pool row when no venues exist', () => {
+    venues = []
+    render(<VenueCapabilitiesSection {...baseProps} />)
+    expect(screen.getByLabelText(/pool name/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/email/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/max depth/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/max capacity/i)).toBeInTheDocument()
+  })
+
+  it('does not pre-seed a draft when at least one pool exists; existing card stays collapsed', () => {
+    venues = [baseVenue({ kind: 'pool', name: 'Existing Pool' })]
+    render(<VenueCapabilitiesSection {...baseProps} />)
+    expect(screen.getByText('Existing Pool')).toBeInTheDocument()
+    expect(screen.queryByLabelText(/pool name/i)).toBeNull()
+  })
+})
+
+describe('VenueCapabilitiesSection — Dive Site sub-tab is selectable', () => {
+  it('Dive Site sub-tab renders without aria-disabled', () => {
+    venues = []
+    render(<VenueCapabilitiesSection {...baseProps} />)
+    const diveSiteTab = screen.getByRole('tab', { name: /dive site/i })
+    expect(diveSiteTab).not.toHaveAttribute('aria-disabled', 'true')
+  })
+
+  it('clicking the Dive Site sub-tab switches activeTab and pre-seeds a dive_site draft', () => {
+    venues = []
+    render(<VenueCapabilitiesSection {...baseProps} />)
+    const diveSiteTab = screen.getByRole('tab', { name: /dive site/i })
+    fireEvent.click(diveSiteTab)
+    expect(diveSiteTab.getAttribute('aria-selected')).toBe('true')
+    expect(screen.getByLabelText(/dive site name/i)).toBeInTheDocument()
+    expect(screen.queryByLabelText(/pool name/i)).toBeNull()
+    expect(screen.queryByLabelText(/max capacity/i)).toBeNull()
+  })
+
+  it('switching back from Dive Site to Pool restores the pool draft', () => {
+    venues = []
+    render(<VenueCapabilitiesSection {...baseProps} />)
+    const diveSiteTab = screen.getByRole('tab', { name: /dive site/i })
+    const poolTab = screen.getByRole('tab', { name: /^pool$/i })
+    fireEvent.click(diveSiteTab)
+    expect(screen.getByLabelText(/dive site name/i)).toBeInTheDocument()
+    fireEvent.click(poolTab)
+    expect(screen.getByLabelText(/pool name/i)).toBeInTheDocument()
+    expect(screen.queryByLabelText(/dive site name/i)).toBeNull()
+  })
+
+  it('existing single dive_site row lands on Dive Site tab on first render (no click required)', () => {
+    venues = [baseVenue({ kind: 'dive_site', name: 'Reef Site' })]
+    render(<VenueCapabilitiesSection {...baseProps} />)
+    const diveSiteTab = screen.getByRole('tab', { name: /dive site/i })
+    expect(diveSiteTab.getAttribute('aria-selected')).toBe('true')
+    expect(screen.getByText('Reef Site')).toBeInTheDocument()
+    const poolTab = screen.getByRole('tab', { name: /^pool$/i })
+    fireEvent.click(poolTab)
+    expect(screen.queryByText('Reef Site')).toBeNull()
+  })
+})
+
+describe('VenueCapabilitiesSection — remediation: initial-tab precedence', () => {
+  beforeEach(() => {
+    window.sessionStorage.clear()
+  })
+
+  it('valid stored intent + no rows selects matching tab and renders one matching draft', () => {
+    venues = []
+    window.sessionStorage.setItem(VENUE_SIGNUP_INTENT_STORAGE_KEY, 'dive_site')
+
+    render(<VenueCapabilitiesSection {...baseProps} />)
+
+    const diveSiteTab = screen.getByRole('tab', { name: /dive site/i })
+    expect(diveSiteTab.getAttribute('aria-selected')).toBe('true')
+    expect(screen.getByLabelText(/dive site name/i)).toBeInTheDocument()
+    expect(screen.queryByLabelText(/pool name/i)).toBeNull()
+  })
+
+  it('only pool rows exist forces pool tab even when stale intent says dive_site', () => {
+    venues = [baseVenue({ kind: 'pool', name: 'My Pool' })]
+    window.sessionStorage.setItem(VENUE_SIGNUP_INTENT_STORAGE_KEY, 'dive_site')
+
+    render(<VenueCapabilitiesSection {...baseProps} />)
+
+    const poolTab = screen.getByRole('tab', { name: /^pool$/i })
+    expect(poolTab.getAttribute('aria-selected')).toBe('true')
+  })
+
+  it('both kinds + valid stored intent uses intent', () => {
+    venues = [
+      baseVenue({ _id: 'v1' as Doc<'venues'>['_id'], kind: 'pool', name: 'My Pool' }),
+      baseVenue({ _id: 'v2' as Doc<'venues'>['_id'], kind: 'dive_site', name: 'My Site' }),
+    ]
+    window.sessionStorage.setItem(VENUE_SIGNUP_INTENT_STORAGE_KEY, 'dive_site')
+
+    render(<VenueCapabilitiesSection {...baseProps} />)
+
+    const diveSiteTab = screen.getByRole('tab', { name: /dive site/i })
+    expect(diveSiteTab.getAttribute('aria-selected')).toBe('true')
+  })
+
+  it('both kinds + no intent defaults to pool', () => {
+    venues = [
+      baseVenue({ _id: 'v1' as Doc<'venues'>['_id'], kind: 'pool', name: 'My Pool' }),
+      baseVenue({ _id: 'v2' as Doc<'venues'>['_id'], kind: 'dive_site', name: 'My Site' }),
+    ]
+
+    render(<VenueCapabilitiesSection {...baseProps} />)
+
+    const poolTab = screen.getByRole('tab', { name: /^pool$/i })
+    expect(poolTab.getAttribute('aria-selected')).toBe('true')
+  })
+})
+
+describe('VenueCapabilitiesSection — remediation: draft inheritance precedence', () => {
+  it('latest same-kind row inherits email/phone/location into a new pool draft (name not copied)', () => {
     venues = [
       baseVenue({
-        name: 'Reef Pool',
-        features: ['reef', 'wreck'] as VenueFeature[],
+        _id: 'v-old' as Doc<'venues'>['_id'],
+        _creationTime: 1_700_000_000_000,
+        kind: 'pool',
+        name: 'Old Pool',
+        email: 'old@test.com',
+        phone: '+66100000111',
+      }),
+      baseVenue({
+        _id: 'v-latest' as Doc<'venues'>['_id'],
+        _creationTime: 1_700_000_500_000,
+        kind: 'pool',
+        name: 'Latest Pool',
+        email: 'latest@test.com',
+        phone: '+66100000222',
       }),
     ]
 
     render(<VenueCapabilitiesSection {...baseProps} />)
 
-    expect(screen.getByText('Reef')).toBeTruthy()
-    expect(screen.getByText('Wreck')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: /add pool/i }))
+
+    const nameInput = screen.getByLabelText(/pool name/i) as HTMLInputElement
+    expect(nameInput.value).toBe('')
+
+    const emailInput = screen.getByLabelText(/email/i) as HTMLInputElement
+    expect(emailInput.value).toBe('latest@test.com')
+
+    const phoneInputs = screen.getAllByLabelText(/phone/i)
+    const phoneInput = phoneInputs.find((el) => (el as HTMLInputElement).type === 'tel') as HTMLInputElement
+    expect(phoneInput.value.length).toBeGreaterThan(0)
+    expect(phoneInput.value).not.toBe('')
   })
 
-  it('does not render feature row when venue.features is empty', () => {
-    venues = [baseVenue({ features: [] })]
+  it('falls back to latest any-kind row when no same-kind row exists', () => {
+    venues = [
+      baseVenue({
+        _id: 'v-pool' as Doc<'venues'>['_id'],
+        _creationTime: 1_700_000_500_000,
+        kind: 'pool',
+        name: 'My Pool',
+        email: 'pool@test.com',
+        phone: '+66100000333',
+      }),
+    ]
 
     render(<VenueCapabilitiesSection {...baseProps} />)
 
-    expect(screen.queryByText('Reef')).toBeNull()
-    expect(screen.queryByText('Wreck')).toBeNull()
-  })
-})
+    const diveSiteTab = screen.getByRole('tab', { name: /dive site/i })
+    fireEvent.click(diveSiteTab)
 
-describe('VenueCapabilitiesSection — create payload includes features', () => {
-  it('submits features selected in the dive-site dialog', async () => {
+    const emailInput = screen.getByLabelText(/email/i) as HTMLInputElement
+    expect(emailInput.value).toBe('pool@test.com')
+
+    const nameInput = screen.getByLabelText(/dive site name/i) as HTMLInputElement
+    expect(nameInput.value).toBe('')
+
+    expect(screen.queryByLabelText(/max capacity/i)).toBeNull()
+  })
+
+  it('no prior rows falls back to inherited contact defaults only', () => {
     venues = []
 
     render(<VenueCapabilitiesSection {...baseProps} />)
 
-    fireEvent.click(screen.getByRole('tab', { name: /dive site/i }))
-    fireEvent.click(screen.getByRole('button', { name: /add dive site/i }))
+    const nameInput = screen.getByLabelText(/pool name/i) as HTMLInputElement
+    expect(nameInput.value).toBe('')
+    const emailInput = screen.getByLabelText(/email/i) as HTMLInputElement
+    expect(emailInput.value).toBe('')
+  })
+})
+
+describe('VenueCapabilitiesSection — remediation: auto-seed lifecycle', () => {
+  it('successful create does not spawn a phantom blank draft before query refresh', async () => {
+    venues = []
+
+    render(<VenueCapabilitiesSection {...baseProps} />)
+
+    const nameInput = screen.getByLabelText(/pool name/i) as HTMLInputElement
+    fireEvent.change(nameInput, { target: { value: 'New Pool' } })
+    const emailInput = screen.getByLabelText(/email/i) as HTMLInputElement
+    fireEvent.change(emailInput, { target: { value: 'pool@test.com' } })
+    const phoneInputs = screen.getAllByLabelText(/phone/i)
+    const phoneInput = phoneInputs.find((el) => (el as HTMLInputElement).type === 'tel') as HTMLInputElement
+    fireEvent.change(phoneInput, { target: { value: '+66100000077' } })
+    fireEvent.click(screen.getByRole('button', { name: /pick location/i }))
+    const depthInput = screen.getByLabelText(/max depth/i) as HTMLInputElement
+    fireEvent.change(depthInput, { target: { value: '5' } })
+    fireEvent.blur(depthInput)
+    const capacityInput = screen.getByLabelText(/max capacity/i) as HTMLInputElement
+    fireEvent.change(capacityInput, { target: { value: '10' } })
+    fireEvent.blur(capacityInput)
+
+    fireEvent.click(screen.getByRole('button', { name: /save item/i }))
+
+    await new Promise((r) => setTimeout(r, 0))
+
+    expect(createVenue).toHaveBeenCalledTimes(1)
+    expect(screen.queryByLabelText(/pool name/i)).toBeNull()
+  })
+
+  it('post-create phantom suppression: re-rendering with the saved row produces no duplicate draft', async () => {
+    venues = []
+
+    const { rerender } = render(<VenueCapabilitiesSection {...baseProps} />)
+
+    const nameInput = screen.getByLabelText(/pool name/i) as HTMLInputElement
+    fireEvent.change(nameInput, { target: { value: 'New Pool' } })
+    const emailInput = screen.getByLabelText(/email/i) as HTMLInputElement
+    fireEvent.change(emailInput, { target: { value: 'pool@test.com' } })
+    const phoneInputs = screen.getAllByLabelText(/phone/i)
+    const phoneInput = phoneInputs.find((el) => (el as HTMLInputElement).type === 'tel') as HTMLInputElement
+    fireEvent.change(phoneInput, { target: { value: '+66100000077' } })
+    fireEvent.click(screen.getByRole('button', { name: /pick location/i }))
+    const depthInput = screen.getByLabelText(/max depth/i) as HTMLInputElement
+    fireEvent.change(depthInput, { target: { value: '5' } })
+    fireEvent.blur(depthInput)
+    const capacityInput = screen.getByLabelText(/max capacity/i) as HTMLInputElement
+    fireEvent.change(capacityInput, { target: { value: '10' } })
+    fireEvent.blur(capacityInput)
+
+    fireEvent.click(screen.getByRole('button', { name: /save item/i }))
+
+    await new Promise((r) => setTimeout(r, 0))
+
+    venues = [baseVenue({ kind: 'pool', name: 'New Pool' })]
+    rerender(<VenueCapabilitiesSection {...baseProps} />)
+
+    expect(screen.getByText('New Pool')).toBeInTheDocument()
+    expect(screen.queryByLabelText(/pool name/i)).toBeNull()
+  })
+
+  it('removing a non-last row does not duplicate any blank draft', async () => {
+    venues = [
+      baseVenue({ _id: 'v1' as Doc<'venues'>['_id'], kind: 'pool', name: 'Pool A' }),
+      baseVenue({ _id: 'v2' as Doc<'venues'>['_id'], kind: 'pool', name: 'Pool B' }),
+    ]
+
+    const { rerender } = render(<VenueCapabilitiesSection {...baseProps} />)
+
+    expect(screen.getByText('Pool A')).toBeInTheDocument()
+    expect(screen.getByText('Pool B')).toBeInTheDocument()
+    expect(screen.queryByLabelText(/pool name/i)).toBeNull()
+
+    venues = [baseVenue({ _id: 'v2' as Doc<'venues'>['_id'], kind: 'pool', name: 'Pool B' })]
+    rerender(<VenueCapabilitiesSection {...baseProps} />)
+
+    expect(screen.queryByText('Pool A')).toBeNull()
+    expect(screen.getByText('Pool B')).toBeInTheDocument()
+    expect(screen.queryByLabelText(/pool name/i)).toBeNull()
+  })
+
+  it('removing the last row reseeds exactly one fresh draft once state settles', async () => {
+    venues = [baseVenue({ kind: 'pool', name: 'Lonely Pool' })]
+
+    const { rerender } = render(<VenueCapabilitiesSection {...baseProps} />)
+
+    expect(screen.queryByLabelText(/pool name/i)).toBeNull()
+
+    venues = []
+    rerender(<VenueCapabilitiesSection {...baseProps} />)
+
+    expect(screen.getAllByLabelText(/pool name/i)).toHaveLength(1)
+  })
+})
+
+describe('VenueCapabilitiesSection — dive_site create via inline Save', () => {
+  it('per-card Save dispatches venues.create with kind: "dive_site"', async () => {
+    venues = []
+
+    render(<VenueCapabilitiesSection {...baseProps} />)
+
+    const diveSiteTab = screen.getByRole('tab', { name: /dive site/i })
+    fireEvent.click(diveSiteTab)
 
     const nameInput = screen.getByLabelText(/dive site name/i) as HTMLInputElement
-    fireEvent.change(nameInput, { target: { value: 'New Dive Site' } })
+    fireEvent.change(nameInput, { target: { value: 'Reef Paradise' } })
 
     const emailInput = screen.getByLabelText(/email/i) as HTMLInputElement
     fireEvent.change(emailInput, { target: { value: 'site@test.com' } })
 
     const phoneLabels = screen.getAllByLabelText(/phone/i)
     const phoneInput = phoneLabels.find((el) => (el as HTMLInputElement).type === 'tel') as HTMLInputElement
-    expect(phoneInput).toBeInTheDocument()
+    fireEvent.change(phoneInput, { target: { value: '+66100000077' } })
+
+    fireEvent.click(screen.getByRole('button', { name: /pick location/i }))
+
+    const depthInput = screen.getByLabelText(/max depth/i) as HTMLInputElement
+    fireEvent.change(depthInput, { target: { value: '30' } })
+    fireEvent.blur(depthInput)
+
+    expect(screen.queryByLabelText(/max capacity/i)).toBeNull()
+
+    const saveButton = screen.getByRole('button', { name: /save item/i })
+    fireEvent.click(saveButton)
+
+    await new Promise((r) => setTimeout(r, 0))
+
+    expect(createVenue).toHaveBeenCalledTimes(1)
+    const payload = createVenue.mock.calls[0]![0] as { kind: string; name: string; maxCapacity?: number }
+    expect(payload.kind).toBe('dive_site')
+    expect(payload.name).toBe('Reef Paradise')
+    expect(payload.maxCapacity).toBeUndefined()
+  })
+
+  it('editing an existing dive_site row dispatches venues.update without kind flip', async () => {
+    venues = [baseVenue({ kind: 'dive_site', name: 'Existing Site' })]
+
+    render(<VenueCapabilitiesSection {...baseProps} />)
+
+    const diveSiteTab = screen.getByRole('tab', { name: /dive site/i })
+    fireEvent.click(diveSiteTab)
+
+    fireEvent.click(screen.getByRole('button', { name: /^expand$/i }))
+
+    const nameInput = screen.getByLabelText(/dive site name/i) as HTMLInputElement
+    fireEvent.change(nameInput, { target: { value: 'Renamed Site' } })
+
+    const saveButton = screen.getByRole('button', { name: /save item/i })
+    fireEvent.click(saveButton)
+
+    await new Promise((r) => setTimeout(r, 0))
+
+    expect(updateVenue).toHaveBeenCalledTimes(1)
+    const payload = updateVenue.mock.calls[0]![0] as { kind: string; name: string; venueId: string }
+    expect(payload.kind).toBe('dive_site')
+    expect(payload.name).toBe('Renamed Site')
+  })
+})
+
+describe('VenueCapabilitiesSection — pool create via inline Save', () => {
+  it('per-card Save dispatches venues.create with kind: "pool"', async () => {
+    venues = []
+
+    render(<VenueCapabilitiesSection {...baseProps} />)
+
+    const nameInput = screen.getByLabelText(/pool name/i) as HTMLInputElement
+    fireEvent.change(nameInput, { target: { value: 'New Pool' } })
+
+    const emailInput = screen.getByLabelText(/email/i) as HTMLInputElement
+    fireEvent.change(emailInput, { target: { value: 'pool@test.com' } })
+
+    const phoneLabels = screen.getAllByLabelText(/phone/i)
+    const phoneInput = phoneLabels.find((el) => (el as HTMLInputElement).type === 'tel') as HTMLInputElement
     fireEvent.change(phoneInput, { target: { value: '+66100000099' } })
 
     fireEvent.click(screen.getByRole('button', { name: /pick location/i }))
 
     const depthInput = screen.getByLabelText(/max depth/i) as HTMLInputElement
-    fireEvent.change(depthInput, { target: { value: '20' } })
+    fireEvent.change(depthInput, { target: { value: '5' } })
     fireEvent.blur(depthInput)
 
-    fireEvent.click(screen.getByRole('tab', { name: /^features$/i }))
+    const capacityInput = screen.getByLabelText(/max capacity/i) as HTMLInputElement
+    fireEvent.change(capacityInput, { target: { value: '10' } })
+    fireEvent.blur(capacityInput)
 
-    const featuresGroup = screen.getByRole('group', { name: /features/i })
-    const reef = within(featuresGroup).getByRole('checkbox', { name: /^reef$/i })
-    const wreck = within(featuresGroup).getByRole('checkbox', { name: /^wreck$/i })
-    fireEvent.click(reef)
-    fireEvent.click(wreck)
-
-    const footer = screen.getByRole('dialog')
-    const submit = within(footer).getAllByRole('button', { name: /add dive site/i }).pop()!
-    fireEvent.click(submit)
+    const saveButton = screen.getByRole('button', { name: /save item/i })
+    fireEvent.click(saveButton)
 
     await new Promise((r) => setTimeout(r, 0))
 
     expect(createVenue).toHaveBeenCalledTimes(1)
-    const payload = createVenue.mock.calls[0]![0] as { features: string[]; kind: string }
-    expect(payload.kind).toBe('dive_site')
-    expect(payload.features).toEqual(['reef', 'wreck'])
+    const payload = createVenue.mock.calls[0]![0] as { kind: string; name: string }
+    expect(payload.kind).toBe('pool')
+    expect(payload.name).toBe('New Pool')
   })
 })
 
-describe('VenueCapabilitiesSection — edit seeds features from venue', () => {
-  it('preloads venue.features into CheckboxGroup state and emits edits', async () => {
-    venues = [
-      baseVenue({
-        kind: 'dive_site',
-        confinedCapable: false,
-        features: ['cave'] as VenueFeature[],
-      }),
-    ]
+
+
+describe('VenueCapabilitiesSection — signup intent consumption', () => {
+  beforeEach(() => {
+    window.sessionStorage.clear()
+  })
+
+  it('seeds active sub-tab from "pool" intent when no venues exist', () => {
+    venues = []
+    window.sessionStorage.setItem(VENUE_SIGNUP_INTENT_STORAGE_KEY, 'pool')
 
     render(<VenueCapabilitiesSection {...baseProps} />)
 
-    fireEvent.click(screen.getByRole('tab', { name: /dive site/i }))
-    fireEvent.click(screen.getByRole('button', { name: /^edit$/i }))
+    const poolTab = screen.getByRole('tab', { name: /pool/i })
+    expect(poolTab.getAttribute('aria-selected')).toBe('true')
+  })
 
-    fireEvent.click(screen.getByRole('tab', { name: /^features$/i }))
+  it('seeds active sub-tab from "dive_site" intent when no venues exist', () => {
+    venues = []
+    window.sessionStorage.setItem(VENUE_SIGNUP_INTENT_STORAGE_KEY, 'dive_site')
 
-    const featuresGroup = screen.getByRole('group', { name: /features/i })
-    const cave = within(featuresGroup).getByRole('checkbox', { name: /^cave$/i }) as HTMLInputElement
-    const wreck = within(featuresGroup).getByRole('checkbox', { name: /^wreck$/i })
-    expect(cave.checked).toBe(true)
+    render(<VenueCapabilitiesSection {...baseProps} />)
 
-    fireEvent.click(cave)
-    fireEvent.click(wreck)
+    const diveSiteTab = screen.getByRole('tab', { name: /dive site/i })
+    expect(diveSiteTab.getAttribute('aria-selected')).toBe('true')
+  })
 
-    const footer = screen.getByRole('dialog')
-    const submit = within(footer).getAllByRole('button', { name: /^save$/i })[0]!
-    fireEvent.click(submit)
+  it('renders dive site form fields when "dive_site" intent is stored', async () => {
+    venues = []
+    window.sessionStorage.setItem(VENUE_SIGNUP_INTENT_STORAGE_KEY, 'dive_site')
+
+    render(<VenueCapabilitiesSection {...baseProps} />)
 
     await new Promise((r) => setTimeout(r, 0))
 
-    expect(updateVenue).toHaveBeenCalledTimes(1)
-    const payload = updateVenue.mock.calls[0]![0] as { features: string[] }
-    expect(payload.features).toEqual(['wreck'])
-  })
-})
-
-
-describe('venueCapabilitiesFromProfile', () => {
-  it('maps a pool profile with features and caps to form state', () => {
-    const form = venueCapabilitiesFromProfile({
-      kind: 'pool',
-      features: ['reef', 'wreck'],
-      confinedCapable: true,
-      maxDepth: 5,
-      maxCapacity: 20,
-    })
-    expect(form).toEqual({
-      kind: 'pool',
-      features: ['reef', 'wreck'],
-      confinedCapable: true,
-      maxDepth: 5,
-      maxCapacity: 20,
-    })
+    expect(screen.getByLabelText(/dive site name/i)).toBeInTheDocument()
   })
 
-  it('falls back to pool kind with zero caps when profile is empty', () => {
-    const form = venueCapabilitiesFromProfile({})
-    expect(form).toEqual({
-      kind: 'pool',
-      features: [],
-      confinedCapable: false,
-      maxDepth: 0,
-      maxCapacity: 0,
-    })
+  it('does not pre-seed an extra draft when intent kind already has a venue row', () => {
+    venues = [baseVenue({ kind: 'pool', name: 'Existing Pool' })]
+    window.sessionStorage.setItem(VENUE_SIGNUP_INTENT_STORAGE_KEY, 'pool')
+
+    render(<VenueCapabilitiesSection {...baseProps} />)
+
+    expect(screen.getByText('Existing Pool')).toBeInTheDocument()
+    expect(screen.queryByLabelText(/pool name/i)).toBeNull()
   })
 
-  it('preserves dive_site kind', () => {
-    const form = venueCapabilitiesFromProfile({
-      kind: 'dive_site',
-      features: ['cave'],
-      maxDepth: 40,
-    })
-    expect(form.kind).toBe('dive_site')
-    expect(form.features).toEqual(['cave'])
-    expect(form.maxDepth).toBe(40)
-  })
-})
+  it('clears stored intent immediately when a matching venue row already exists (no sticky state)', async () => {
+    venues = [baseVenue({ kind: 'pool' })]
+    window.sessionStorage.setItem(VENUE_SIGNUP_INTENT_STORAGE_KEY, 'pool')
 
-describe('venueCapabilitiesToPayload', () => {
-  it('round-trips complete form state into a schema-valid payload', () => {
-    const form: VenueCapabilitiesFormState = {
-      kind: 'pool',
-      features: ['reef'],
-      confinedCapable: true,
-      maxDepth: 5,
-      maxCapacity: 20,
-    }
-    const payload = venueCapabilitiesToPayload(form)
-    expect(payload).toEqual({
-      kind: 'pool',
-      features: ['reef'],
-      confinedCapable: true,
-      maxDepth: 5,
-      maxCapacity: 20,
-    })
-    expect(venueCapabilitiesSchema.safeParse(payload).success).toBe(true)
+    render(<VenueCapabilitiesSection {...baseProps} />)
+
+    await new Promise((r) => setTimeout(r, 0))
+
+    expect(window.sessionStorage.getItem(VENUE_SIGNUP_INTENT_STORAGE_KEY)).toBe(null)
   })
 
-  it('omits maxDepth and maxCapacity when zero', () => {
-    const payload = venueCapabilitiesToPayload({
-      kind: 'dive_site',
-      features: [],
-      maxDepth: 0,
-      maxCapacity: 0,
-    })
-    expect(payload).not.toHaveProperty('maxDepth')
-    expect(payload).not.toHaveProperty('maxCapacity')
-    expect(payload.kind).toBe('dive_site')
-    expect(payload.features).toEqual([])
+  it('clears stored "dive_site" intent immediately when a matching dive_site row already exists', async () => {
+    venues = [baseVenue({ kind: 'dive_site' })]
+    window.sessionStorage.setItem(VENUE_SIGNUP_INTENT_STORAGE_KEY, 'dive_site')
+
+    render(<VenueCapabilitiesSection {...baseProps} />)
+
+    await new Promise((r) => setTimeout(r, 0))
+
+    expect(window.sessionStorage.getItem(VENUE_SIGNUP_INTENT_STORAGE_KEY)).toBe(null)
   })
 
-  it('passes confinedCapable through when defined (including false)', () => {
-    const payload = venueCapabilitiesToPayload({
-      kind: 'dive_site',
-      features: [],
-      confinedCapable: false,
-      maxDepth: 0,
-      maxCapacity: 0,
-    })
-    expect(payload.confinedCapable).toBe(false)
-  })
-})
+  it('ignores invalid stored intent value (no dive site form, pool draft still pre-seeded)', () => {
+    venues = []
+    window.sessionStorage.setItem(VENUE_SIGNUP_INTENT_STORAGE_KEY, 'garbage')
 
-describe('INITIAL_VENUE_CAPABILITIES_FORM', () => {
-  it('defaults to pool kind with empty features and zero caps', () => {
-    expect(INITIAL_VENUE_CAPABILITIES_FORM.kind).toBe('pool')
-    expect(INITIAL_VENUE_CAPABILITIES_FORM.features).toEqual([])
-    expect(INITIAL_VENUE_CAPABILITIES_FORM.confinedCapable).toBe(false)
-    expect(INITIAL_VENUE_CAPABILITIES_FORM.maxDepth).toBe(0)
-    expect(INITIAL_VENUE_CAPABILITIES_FORM.maxCapacity).toBe(0)
+    render(<VenueCapabilitiesSection {...baseProps} />)
+
+    expect(screen.queryByLabelText(/dive site name/i)).toBeNull()
+    expect(screen.getByLabelText(/pool name/i)).toBeInTheDocument()
+  })
+
+  it('clears stored intent after a successful inline Save', async () => {
+    venues = []
+    window.sessionStorage.setItem(VENUE_SIGNUP_INTENT_STORAGE_KEY, 'pool')
+
+    render(<VenueCapabilitiesSection {...baseProps} />)
+
+    await new Promise((r) => setTimeout(r, 0))
+
+    const nameInput = screen.getByLabelText(/pool name/i) as HTMLInputElement
+    fireEvent.change(nameInput, { target: { value: 'Auto Pool' } })
+    const emailInput = screen.getByLabelText(/email/i) as HTMLInputElement
+    fireEvent.change(emailInput, { target: { value: 'pool@test.com' } })
+    const phoneLabels = screen.getAllByLabelText(/phone/i)
+    const phoneInput = phoneLabels.find((el) => (el as HTMLInputElement).type === 'tel') as HTMLInputElement
+    fireEvent.change(phoneInput, { target: { value: '+66100000077' } })
+    fireEvent.click(screen.getByRole('button', { name: /pick location/i }))
+    const depthInput = screen.getByLabelText(/max depth/i) as HTMLInputElement
+    fireEvent.change(depthInput, { target: { value: '5' } })
+    fireEvent.blur(depthInput)
+    const capacityInput = screen.getByLabelText(/max capacity/i) as HTMLInputElement
+    fireEvent.change(capacityInput, { target: { value: '10' } })
+    fireEvent.blur(capacityInput)
+
+    const saveButton = screen.getByRole('button', { name: /save item/i })
+    fireEvent.click(saveButton)
+
+    await new Promise((r) => setTimeout(r, 0))
+
+    expect(createVenue).toHaveBeenCalledTimes(1)
+    expect(window.sessionStorage.getItem(VENUE_SIGNUP_INTENT_STORAGE_KEY)).toBe(null)
   })
 })

@@ -121,6 +121,26 @@ describe('Sign-up wizard (3-step: Clerk + Role + Profile)', () => {
     expect(getByText("What's your role?")).toBeInTheDocument()
   })
 
+  it('renders Dive Site signup tile as selectable (no aria-disabled)', () => {
+    mockConvexAuth.mockReturnValue({ isLoading: false, isAuthenticated: true })
+    mockUserMe = null
+    mockUserRoles = []
+
+    const { getByText } = render(<SignUpPage />)
+    const diveSiteTile = getByText('Dive Site').closest('button')
+    expect(diveSiteTile).not.toHaveAttribute('aria-disabled', 'true')
+  })
+
+  it('Pool signup tile remains selectable (no aria-disabled)', () => {
+    mockConvexAuth.mockReturnValue({ isLoading: false, isAuthenticated: true })
+    mockUserMe = null
+    mockUserRoles = []
+
+    const { getByText } = render(<SignUpPage />)
+    const poolTile = getByText('Pool').closest('button')
+    expect(poolTile).not.toHaveAttribute('aria-disabled', 'true')
+  })
+
   it('does NOT show resume prompt — role selection is shown directly', () => {
     mockConvexAuth.mockReturnValue({ isLoading: false, isAuthenticated: true })
     mockUserMe = null

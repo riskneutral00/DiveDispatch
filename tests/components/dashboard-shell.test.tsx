@@ -57,6 +57,14 @@ vi.mock('@/components/layout/top-nav', () => ({ TopNav: () => null }))
 vi.mock('@/components/notifications/notification-bell', () => ({ NotificationBell: () => null }))
 vi.mock('@/components/onboarding/radial-progress', () => ({ RadialProgress: () => null }))
 
+const mockProfileOverlay = vi.fn()
+vi.mock('@/components/profiles/profile-overlay', () => ({
+  ProfileOverlay: (props: Record<string, unknown>) => {
+    mockProfileOverlay(props)
+    return null
+  },
+}))
+
 // ─── Import after mocks ─────────────────────────────────────────────────────
 import { DashboardShell } from '@/components/layout/dashboard-shell'
 
@@ -153,6 +161,52 @@ describe('DashboardShell redirect logic', () => {
     )
 
     expect(mockReplace).toHaveBeenCalledWith('/sign-up')
+  })
+
+  it('auto-opens role:venue tab (not roles tab) when venue intent + incomplete Venue role exist', async () => {
+    window.sessionStorage.setItem('dd-signup-venue-intent', 'pool')
+    mockMyRoles = [
+      { role: 'Venue', profileComplete: false },
+    ]
+    mockSession.mockReturnValue({ user: { slug: 'abc', role: 'Venue' }, status: 'ready' })
+
+    render(
+      <DashboardShell roleSlug="venue" slug="abc">
+        <div>content</div>
+      </DashboardShell>,
+    )
+
+    await new Promise((r) => setTimeout(r, 0))
+
+    const opened = mockProfileOverlay.mock.calls.find((c) => c[0]?.open === true)
+    expect(opened, 'overlay should auto-open when intent + incomplete Venue role').toBeTruthy()
+    expect(opened?.[0]?.initialTab).toBe('role:venue')
+    expect(opened?.[0]?.initialTab).not.toBe('roles')
+    expect(opened?.[0]?.initialSection).toBe('capabilities')
+    expect(opened?.[0]).not.toHaveProperty('initialOnboardingRole')
+    expect(opened?.[0]).not.toHaveProperty('venueSignupIntent')
+
+    window.sessionStorage.clear()
+  })
+
+  it('does not auto-open overlay when Venue role is already complete (clears stale intent)', async () => {
+    window.sessionStorage.setItem('dd-signup-venue-intent', 'pool')
+    mockMyRoles = [
+      { role: 'Venue', profileComplete: true },
+    ]
+    mockSession.mockReturnValue({ user: { slug: 'abc', role: 'Venue' }, status: 'ready' })
+
+    render(
+      <DashboardShell roleSlug="venue" slug="abc">
+        <div>content</div>
+      </DashboardShell>,
+    )
+
+    await new Promise((r) => setTimeout(r, 0))
+
+    const opened = mockProfileOverlay.mock.calls.find((c) => c[0]?.open === true)
+    expect(opened).toBeUndefined()
+    expect(window.sessionStorage.getItem('dd-signup-venue-intent')).toBe(null)
   })
 
   it('NEVER redirects to /role-select in any scenario', () => {

@@ -1,12 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import {
   VENUE_SIGNUP_INTENT_STORAGE_KEY,
   type VenueSignupIntent,
 } from '@/lib/constants/signup-role-tiles'
 
-const VALID_INTENTS: ReadonlySet<string> = new Set(['pool', 'dive_site', 'multi'])
+const VALID_INTENTS: ReadonlySet<string> = new Set(['pool', 'dive_site'])
 
 function readStoredIntent(): VenueSignupIntent | null {
   if (typeof window === 'undefined') return null
@@ -15,10 +15,7 @@ function readStoredIntent(): VenueSignupIntent | null {
 }
 
 export function useVenueSignupIntent(): VenueSignupIntent | null {
-  const [intent, setIntent] = useState<VenueSignupIntent | null>(null)
-  useEffect(() => {
-    setIntent(readStoredIntent())
-  }, [])
+  const [intent] = useState<VenueSignupIntent | null>(() => readStoredIntent())
   return intent
 }
 

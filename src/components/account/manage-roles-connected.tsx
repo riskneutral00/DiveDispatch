@@ -13,7 +13,6 @@ import { RoleOnboarding } from './role-onboarding'
 import { Spinner } from '@/components/ui/spinner'
 import type { ClerkRole } from '@/lib/constants/roles'
 import { ROLE_BY_CLERK_ROLE } from '@/lib/constants/roles'
-import type { VenueSignupIntent } from '@/lib/constants/signup-role-tiles'
 import { useDashboardSession } from '@/lib/hooks/use-dashboard-session'
 import { useMutationWithFeedback } from '@/lib/hooks/use-mutation-with-feedback'
 import { ErrorCode } from '@/lib/errors'
@@ -21,11 +20,9 @@ import { ErrorCode } from '@/lib/errors'
 interface ManageRolesConnectedProps {
   onNavigateToRole?: (roleKey: string) => void
   activeClerkRole?: ClerkRole
-  initialOnboardingRole?: ClerkRole | null
-  venueSignupIntent?: VenueSignupIntent | null
 }
 
-export function ManageRolesConnected({ onNavigateToRole, activeClerkRole, initialOnboardingRole, venueSignupIntent }: ManageRolesConnectedProps = {}) {
+export function ManageRolesConnected({ onNavigateToRole, activeClerkRole }: ManageRolesConnectedProps = {}) {
   const tErr = useTranslations('errors')
   const tCommon = useTranslations('common')
   const tBooking = useTranslations('booking')
@@ -36,9 +33,7 @@ export function ManageRolesConnected({ onNavigateToRole, activeClerkRole, initia
   const deleteRole = useMutation(api.userRoles.deleteRole)
 
   const [modalOpen, setModalOpen] = useState(false)
-  const [onboardingRole, setOnboardingRole] = useState<ClerkRole | null>(
-    initialOnboardingRole ?? null,
-  )
+  const [onboardingRole, setOnboardingRole] = useState<ClerkRole | null>(null)
 
   const { execute: executeAddRole, loading, error, clearError } = useMutationWithFeedback(
     async (role: ClerkRole) => addRole({ role }),
@@ -115,7 +110,6 @@ export function ManageRolesConnected({ onNavigateToRole, activeClerkRole, initia
       <RoleOnboarding
         role={onboardingRole}
         onComplete={handleOnboardingComplete}
-        venueSignupIntent={onboardingRole === 'Venue' ? (venueSignupIntent ?? null) : null}
       />
     )
   }

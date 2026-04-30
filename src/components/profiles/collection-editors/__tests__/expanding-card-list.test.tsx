@@ -212,6 +212,96 @@ describe('ExpandingCardList', () => {
     expect(screen.getByText('Incomplete')).toBeInTheDocument()
   })
 
+  it('controlled mode: expanded follows expandedKeys prop and onExpandedKeysChange fires on toggle', () => {
+    const onExpandedKeysChange = vi.fn()
+    const { rerender } = render(
+      <ExpandingCardList<Vessel>
+        label="Fleet"
+        addLabel="Add"
+        items={[
+          { id: 'a', name: 'Sea Raptor' },
+          { id: 'b', name: 'Dragon' },
+        ]}
+        renderCardTitle={(item) => <span>{item.name}</span>}
+        renderExpandedBody={(item) => (
+          <span data-testid={`body-${item.id}`}>body</span>
+        )}
+        itemKey={(item) => item.id}
+        expandedKeys={new Set(['a'])}
+        onExpandedKeysChange={onExpandedKeysChange}
+      />,
+    )
+    expect(screen.getByTestId('body-a')).toBeInTheDocument()
+    expect(screen.queryByTestId('body-b')).toBeNull()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Expand' }))
+    expect(onExpandedKeysChange).toHaveBeenCalled()
+    const lastCall = onExpandedKeysChange.mock.calls.at(-1)![0] as Set<string>
+    expect(lastCall.has('a')).toBe(true)
+    expect(lastCall.has('b')).toBe(true)
+
+    rerender(
+      <ExpandingCardList<Vessel>
+        label="Fleet"
+        addLabel="Add"
+        items={[
+          { id: 'a', name: 'Sea Raptor' },
+          { id: 'b', name: 'Dragon' },
+        ]}
+        renderCardTitle={(item) => <span>{item.name}</span>}
+        renderExpandedBody={(item) => (
+          <span data-testid={`body-${item.id}`}>body</span>
+        )}
+        itemKey={(item) => item.id}
+        expandedKeys={new Set(['a'])}
+        onExpandedKeysChange={onExpandedKeysChange}
+      />,
+    )
+    expect(screen.queryByTestId('body-b')).toBeNull()
+  })
+
+  it('controlled mode: onExpandedKeysChange fires on add', () => {
+    const onExpandedKeysChange = vi.fn()
+    const onAdd = vi.fn()
+    render(
+      <ExpandingCardList<Vessel>
+        label="Fleet"
+        addLabel="Add vessel"
+        items={[{ id: 'a', name: 'Sea Raptor' }]}
+        renderCardTitle={(item) => <span>{item.name}</span>}
+        renderExpandedBody={() => null}
+        itemKey={(item) => item.id}
+        expandedKeys={new Set()}
+        onExpandedKeysChange={onExpandedKeysChange}
+        onAdd={onAdd}
+      />,
+    )
+    fireEvent.click(screen.getByRole('button', { name: /add vessel/i }))
+    expect(onAdd).toHaveBeenCalled()
+  })
+
+  it('uncontrolled mode: defaultExpandFirst still expands the first item (backwards compat)', () => {
+    render(
+      <ExpandingCardList<Vessel>
+        label="Fleet"
+        addLabel="Add"
+        items={[
+          { id: 'a', name: 'Sea Raptor' },
+          { id: 'b', name: 'Dragon' },
+        ]}
+        onChange={() => {}}
+        emptyItem={() => ({ id: 'x', name: '' })}
+        renderCardTitle={(item) => <span>{item.name}</span>}
+        renderExpandedBody={(item) => (
+          <span data-testid={`body-${item.id}`}>body</span>
+        )}
+        itemKey={(item) => item.id}
+        defaultExpandFirst
+      />,
+    )
+    expect(screen.getByTestId('body-a')).toBeInTheDocument()
+  })
+
   it('hides remove button when items.length === minItems', () => {
     render(
       <ExpandingCardList<Vessel>

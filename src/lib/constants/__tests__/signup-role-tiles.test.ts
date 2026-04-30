@@ -92,10 +92,10 @@ describe('deriveVenueSignupIntent', () => {
     expect(deriveVenueSignupIntent([tileByKey('dive-site')])).toBe('dive_site')
   })
 
-  it('both -> "multi"', () => {
+  it('Pool + Dive Site -> null (no specific kind hint)', () => {
     expect(
       deriveVenueSignupIntent([tileByKey('pool'), tileByKey('dive-site')]),
-    ).toBe('multi')
+    ).toBe(null)
   })
 
   it('no venue tile -> null', () => {
@@ -104,6 +104,16 @@ describe('deriveVenueSignupIntent', () => {
 
   it('empty -> null', () => {
     expect(deriveVenueSignupIntent([])).toBe(null)
+  })
+})
+
+describe('SignupRoleTileConfig — selectability', () => {
+  it('Dive Site tile is not marked comingSoon', () => {
+    expect(tileByKey('dive-site').comingSoon).toBeFalsy()
+  })
+
+  it('Pool tile is not marked comingSoon', () => {
+    expect(tileByKey('pool').comingSoon).toBeFalsy()
   })
 })
 

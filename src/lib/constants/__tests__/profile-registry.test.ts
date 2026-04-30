@@ -100,6 +100,21 @@ describe('Equipment role has gear tab', () => {
   })
 })
 
+describe('Venue role-level tab contract', () => {
+  it('venue tabs do not include a "contact" tab', () => {
+    expect(tabIds('venue')).not.toContain('contact')
+  })
+
+  it('venue exposes capabilities tab (host of Pool/Dive Site sub-tabs)', () => {
+    expect(tabIds('venue')).toContain('capabilities')
+  })
+
+  it('PROFILE_REGISTRY does not expose "pool" or "dive-site" as role-level entries', () => {
+    expect(PROFILE_REGISTRY['pool']).toBeUndefined()
+    expect(PROFILE_REGISTRY['dive-site']).toBeUndefined()
+  })
+})
+
 describe('Non-equipment roles do not have gear tab', () => {
   const nonEquipmentRoles: RoleKey[] = [
     'dive-center',

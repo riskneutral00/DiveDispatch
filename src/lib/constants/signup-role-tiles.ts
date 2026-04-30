@@ -12,7 +12,7 @@ import {
   type RoleConfig,
 } from './roles'
 
-export type VenueSignupIntent = 'pool' | 'dive_site' | 'multi'
+export type VenueSignupIntent = 'pool' | 'dive_site'
 
 export const VENUE_SIGNUP_INTENT_STORAGE_KEY = 'dd-signup-venue-intent'
 
@@ -24,6 +24,7 @@ export interface SignupRoleTileConfig {
   icon: ComponentType<RoleIconProps>
   displayGroup: 'operator' | 'resource'
   venueKindHint?: VenueKind
+  comingSoon?: boolean
 }
 
 const VENUE_KIND_TILES: Record<VenueKind, SignupRoleTileConfig> = {
@@ -94,10 +95,15 @@ export function collapseSignupTilesToRoles(
 export function deriveVenueSignupIntent(
   tiles: SignupRoleTileConfig[],
 ): VenueSignupIntent | null {
-  const kinds = tiles
-    .filter((t) => t.clerkRole === 'Venue' && t.venueKindHint)
-    .map((t) => t.venueKindHint as VenueKind)
-  if (kinds.length === 0) return null
-  if (kinds.length > 1) return 'multi'
-  return kinds[0]
+  const venueTiles = tiles.filter(
+    (t) => t.clerkRole === 'Venue' && !t.comingSoon,
+  )
+  const kinds = new Set(
+    venueTiles.map((t) => t.venueKindHint).filter((k): k is VenueKind => Boolean(k)),
+  )
+  if (kinds.size === 1) {
+    const [only] = kinds
+    if (only === 'pool' || only === 'dive_site') return only
+  }
+  return null
 }

@@ -1,15 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { useMutation, useQuery } from 'convex/react'
 import type { Doc, Id } from '@/lib/convex-generated'
 import { api } from '@/lib/convex-generated'
-import { EntityCardList } from '@/components/ui/entity-card-list'
-import { Button } from '@/components/ui/button'
-import { MenuButton } from '@/components/ui/menu-button'
+import { ExpandingCardList } from '@/components/profiles/collection-editors'
 import { Badge } from '@/components/ui/badge'
 import { LoadingCard } from '@/components/ui/loading-card'
+import { MenuButton } from '@/components/ui/menu-button'
+import { INLINE_SAVED_FLASH_MS } from '@/lib/constants/ui-timings'
 import {
   useInheritedContactDefaults,
   type BaseProfileSectionProps,
@@ -17,220 +17,403 @@ import {
 import type { VenueKind, VenueFeature } from '@/lib/constants/venue-subtypes'
 import type { GasMix } from '@/lib/constants/gas-mixes'
 import {
-  VenueEditDialog,
-  EMPTY_VENUE_EDIT,
-  type VenueEditValue,
-} from './venue-edit-dialog'
-
-export type VenueCapabilitiesFormState = {
-  kind: VenueKind
-  features: VenueFeature[]
-  confinedCapable?: boolean
-  maxDepth: number
-  maxCapacity: number
-}
-
-export const INITIAL_VENUE_CAPABILITIES_FORM: VenueCapabilitiesFormState = {
-  kind: 'pool',
-  features: [],
-  confinedCapable: false,
-  maxDepth: 0,
-  maxCapacity: 0,
-}
-
-export function venueCapabilitiesFromProfile(p: Record<string, unknown>): VenueCapabilitiesFormState {
-  const kind = (p.kind as VenueKind | undefined) ?? 'pool'
-  return {
-    kind,
-    features: (p.features as VenueFeature[]) ?? [],
-    confinedCapable: (p.confinedCapable as boolean) ?? false,
-    maxDepth: (p.maxDepth as number) ?? 0,
-    maxCapacity: (p.maxCapacity as number) ?? 0,
-  }
-}
-
-export function venueCapabilitiesToPayload(f: VenueCapabilitiesFormState): Record<string, unknown> {
-  return {
-    kind: f.kind,
-    features: f.features,
-    ...(f.maxDepth > 0 ? { maxDepth: f.maxDepth } : {}),
-    ...(f.maxCapacity > 0 ? { maxCapacity: f.maxCapacity } : {}),
-    ...(f.confinedCapable !== undefined ? { confinedCapable: f.confinedCapable } : {}),
-  }
-}
+  clearStoredVenueSignupIntent,
+  useVenueSignupIntent,
+} from '@/lib/hooks/use-venue-signup-intent'
+import {
+  VenueFormBody,
+  EMPTY_VENUE_FORM,
+  isVenueFormSubmittable,
+  type VenueFormValue,
+} from './venue-form-body'
 
 type VenueCapabilitiesSectionProps = BaseProfileSectionProps
-
-type VenueDoc = Doc<'venues'>
-
+type VenueDoc = Doc<'venues'> & { incomplete?: string[] }
 type SubTab = 'pool' | 'dive_site'
 
-function buildCreateDefaults(
-  kind: VenueKind,
-  venues: VenueDoc[],
-  inheritedDefaults: Record<string, unknown>,
-): VenueEditValue {
-  const sortedSameKind = venues
-    .filter((v) => (v.kind as VenueKind) === kind)
-    .sort((a, b) => b._creationTime - a._creationTime)
-  const sortedAny = [...venues].sort((a, b) => b._creationTime - a._creationTime)
-  const seed = sortedSameKind[0] ?? sortedAny[0] ?? null
+interface VenueEntry {
+  key: string
+  venueId: Id<'venues'> | null
+  kind: VenueKind
+  form: VenueFormValue
+  serverIncomplete: string[]
+}
 
-  if (seed) {
-    const existingGasMixes = (seed.gasMixes ?? []) as GasMix[]
-    return {
-      ...EMPTY_VENUE_EDIT,
-      kind,
-      email: seed.email ?? '',
-      phone: seed.phone ?? '',
+function venueToEntry(venue: VenueDoc): VenueEntry {
+  const gasMixes = (venue.gasMixes ?? []) as GasMix[]
+  return {
+    key: venue._id,
+    venueId: venue._id,
+    kind: venue.kind as VenueKind,
+    form: {
+      name: venue.name,
+      email: venue.email ?? '',
+      phone: venue.phone ?? '',
       location: {
-        address: seed.address,
-        placeId: seed.placeId,
-        lat: seed.lat,
-        lng: seed.lng,
+        address: venue.address,
+        placeId: venue.placeId,
+        lat: venue.lat,
+        lng: venue.lng,
       },
-      isAllowed: seed.isAllowed ?? [],
-      notAllowed: seed.notAllowed ?? [],
-      hasCompressorOnSite: existingGasMixes.length > 0,
-      compressorGasMixes: existingGasMixes,
-      compressorNitroxMin: seed.nitroxMin ?? undefined,
-      compressorNitroxMax: seed.nitroxMax ?? undefined,
+      maxDepth: venue.maxDepth ?? 0,
+      maxCapacity: venue.maxCapacity ?? 0,
+      confinedCapable: venue.confinedCapable ?? false,
+      features: (venue.features ?? []) as VenueFeature[],
+      isAllowed: venue.isAllowed ?? [],
+      notAllowed: venue.notAllowed ?? [],
+      hasCompressorOnSite: gasMixes.length > 0,
+      compressorGasMixes: gasMixes,
+      compressorNitroxMin: venue.nitroxMin,
+      compressorNitroxMax: venue.nitroxMax,
+    },
+    serverIncomplete: venue.incomplete ?? [],
+  }
+}
+
+function inheritDraftForm(
+  prior: VenueEntry | null,
+  targetKind: VenueKind,
+  inherited: { email?: string; phone?: string },
+): VenueFormValue {
+  if (!prior) {
+    return {
+      ...EMPTY_VENUE_FORM,
+      email: inherited.email ?? '',
+      phone: inherited.phone ?? '',
     }
   }
-
+  const sameKind = prior.kind === targetKind
+  const targetIsPool = targetKind === 'pool'
   return {
-    ...EMPTY_VENUE_EDIT,
+    ...prior.form,
+    name: '',
+    confinedCapable: sameKind ? prior.form.confinedCapable : targetIsPool,
+    features: sameKind ? prior.form.features : [],
+    maxDepth: sameKind ? prior.form.maxDepth : 0,
+    maxCapacity: sameKind && targetIsPool ? prior.form.maxCapacity : 0,
+  }
+}
+
+function pickPriorEntry(
+  sortedAllEntries: VenueEntry[],
+  targetKind: VenueKind,
+): VenueEntry | null {
+  return (
+    sortedAllEntries.find((e) => e.kind === targetKind) ??
+    sortedAllEntries[0] ??
+    null
+  )
+}
+
+function makeDraft(
+  kind: VenueKind,
+  prior: VenueEntry | null,
+  inherited: { email?: string; phone?: string },
+  index: number,
+): VenueEntry {
+  return {
+    key: `draft-${kind}-${index}`,
+    venueId: null,
     kind,
-    email: (inheritedDefaults.email as string) || '',
-    phone: (inheritedDefaults.phone as string) || '',
+    form: inheritDraftForm(prior, kind, inherited),
+    serverIncomplete: [],
+  }
+}
+
+function selectInitialTab(
+  hasPool: boolean,
+  hasDiveSite: boolean,
+  intentKind: VenueKind | null,
+): SubTab {
+  if (!hasPool && !hasDiveSite) return intentKind ?? 'pool'
+  if (hasPool && !hasDiveSite) return 'pool'
+  if (!hasPool && hasDiveSite) return 'dive_site'
+  return intentKind ?? 'pool'
+}
+
+function localIncomplete(form: VenueFormValue, kind: VenueKind): string[] {
+  const missing: string[] = []
+  if (!form.name.trim()) missing.push('name')
+  if (!form.email.trim()) missing.push('email')
+  if (!form.phone.trim()) missing.push('phone')
+  if (!form.location) missing.push('address')
+  if (!(form.maxDepth > 0)) missing.push('maxDepth')
+  if (kind === 'pool' && !(form.maxCapacity > 0)) missing.push('maxCapacity')
+  return missing
+}
+
+function buildGasMixPayload(form: VenueFormValue) {
+  if (!form.hasCompressorOnSite || !form.compressorGasMixes?.length) {
+    return { gasMixes: [] as GasMix[] }
+  }
+  const includesNitrox = form.compressorGasMixes.includes('nitrox')
+  return {
+    gasMixes: form.compressorGasMixes,
+    ...(includesNitrox && form.compressorNitroxMin !== undefined ? { nitroxMin: form.compressorNitroxMin } : {}),
+    ...(includesNitrox && form.compressorNitroxMax !== undefined ? { nitroxMax: form.compressorNitroxMax } : {}),
   }
 }
 
 export function VenueCapabilitiesSection({ me }: VenueCapabilitiesSectionProps) {
-  const t = useTranslations('common')
   const venues = useQuery(api.venues.mine)
+  if (venues === undefined) return <LoadingCard />
+  return <VenueCapabilitiesInner venues={venues as VenueDoc[]} me={me} />
+}
+
+function VenueCapabilitiesInner({
+  venues,
+  me,
+}: {
+  venues: VenueDoc[]
+  me: BaseProfileSectionProps['me']
+}) {
+  const t = useTranslations('common')
   const createVenue = useMutation(api.venues.create)
   const updateVenue = useMutation(api.venues.update)
   const removeVenue = useMutation(api.venues.remove)
   const venueInheritedDefaults = useInheritedContactDefaults('Venue', me)
+  const venueSignupIntent = useVenueSignupIntent()
+  const intentKind: VenueKind | null =
+    venueSignupIntent === 'pool' || venueSignupIntent === 'dive_site'
+      ? venueSignupIntent
+      : null
 
-  const initialTab: SubTab =
-    venues && venues.length === 1 ? (venues[0].kind as SubTab) : 'pool'
-  const [activeTab, setActiveTab] = useState<SubTab>(initialTab)
-  const [dialogState, setDialogState] = useState<
-    | { open: false }
-    | { open: true; mode: 'create'; kind: VenueKind; initial: VenueEditValue }
-    | { open: true; mode: 'edit'; venueId: Id<'venues'>; kind: VenueKind; initial: VenueEditValue }
-  >({ open: false })
+  const sortedAllEntries = useMemo(() => {
+    const sorted = [...venues].sort((a, b) => b._creationTime - a._creationTime)
+    return sorted.map(venueToEntry)
+  }, [venues])
 
-  if (venues === undefined) {
-    return <LoadingCard />
-  }
+  const existingByKind = useMemo(
+    () => ({
+      pool: sortedAllEntries.filter((e) => e.kind === 'pool'),
+      dive_site: sortedAllEntries.filter((e) => e.kind === 'dive_site'),
+    }),
+    [sortedAllEntries],
+  )
 
-  const buildGasMixPayload = (value: VenueEditValue) => {
-    if (!value.hasCompressorOnSite || !value.compressorGasMixes?.length) {
-      return { gasMixes: [] as GasMix[] }
+  const inheritedEmail = (venueInheritedDefaults.email as string) || undefined
+  const inheritedPhone = (venueInheritedDefaults.phone as string) || undefined
+
+  const [activeTab, setActiveTab] = useState<SubTab>(() =>
+    selectInitialTab(
+      existingByKind.pool.length > 0,
+      existingByKind.dive_site.length > 0,
+      intentKind,
+    ),
+  )
+
+  const draftCounterRef = useRef(0)
+  const justCreatedKindsRef = useRef<Set<SubTab>>(new Set())
+
+  const [drafts, setDrafts] = useState<Record<SubTab, VenueEntry[]>>(() => {
+    const out: Record<SubTab, VenueEntry[]> = { pool: [], dive_site: [] }
+    const initial = selectInitialTab(
+      existingByKind.pool.length > 0,
+      existingByKind.dive_site.length > 0,
+      intentKind,
+    )
+    if (existingByKind[initial].length === 0) {
+      const idx = draftCounterRef.current++
+      const prior = pickPriorEntry(sortedAllEntries, initial)
+      out[initial] = [
+        makeDraft(initial, prior, { email: inheritedEmail, phone: inheritedPhone }, idx),
+      ]
     }
-    const includesNitrox = value.compressorGasMixes.includes('nitrox')
+    return out
+  })
+
+  useEffect(() => {
+    if (existingByKind[activeTab].length > 0) {
+      justCreatedKindsRef.current.delete(activeTab)
+      return
+    }
+    if (justCreatedKindsRef.current.has(activeTab)) return
+    if (drafts[activeTab].length > 0) return
+    const idx = draftCounterRef.current++
+    const prior = pickPriorEntry(sortedAllEntries, activeTab)
+    const newDraft = makeDraft(
+      activeTab,
+      prior,
+      { email: inheritedEmail, phone: inheritedPhone },
+      idx,
+    )
+    setDrafts((prev) => ({ ...prev, [activeTab]: [newDraft] }))
+    setExpandedByTab((prev) => ({
+      ...prev,
+      [activeTab]: new Set([newDraft.key]),
+    }))
+  }, [
+    activeTab,
+    existingByKind,
+    drafts,
+    inheritedEmail,
+    inheritedPhone,
+    sortedAllEntries,
+  ])
+
+  const [edits, setEdits] = useState<Record<string, VenueFormValue>>({})
+  const [savingKeys, setSavingKeys] = useState<Set<string>>(new Set())
+  const [savedKeys, setSavedKeys] = useState<Set<string>>(new Set())
+  const [saveErrors, setSaveErrors] = useState<Record<string, string>>({})
+
+  const [expandedByTab, setExpandedByTab] = useState<Record<SubTab, Set<string>>>(() => {
+    const out: Record<SubTab, Set<string>> = {
+      pool: new Set(),
+      dive_site: new Set(),
+    }
+    const initial = selectInitialTab(
+      existingByKind.pool.length > 0,
+      existingByKind.dive_site.length > 0,
+      intentKind,
+    )
+    if (existingByKind[initial].length === 0) {
+      out[initial] = new Set([`draft-${initial}-0`])
+    }
+    return out
+  })
+
+  const autoOpenedRef = useRef(false)
+  useEffect(() => {
+    if (autoOpenedRef.current) return
+    if (!intentKind) return
+    autoOpenedRef.current = true
+    if (venues.some((v) => (v.kind as VenueKind) === intentKind)) {
+      clearStoredVenueSignupIntent()
+    }
+  }, [intentKind, venues])
+
+  const existingWithEdits = existingByKind[activeTab].map((entry) =>
+    edits[entry.key] ? { ...entry, form: edits[entry.key]! } : entry,
+  )
+  const items: VenueEntry[] = [...existingWithEdits, ...drafts[activeTab]]
+
+  const buildVenueArgs = (entry: VenueEntry) => {
+    if (!entry.form.location) throw new Error( // error-ok: developer contract — isVenueFormSubmittable gates location !== null upstream
+      'LOCATION_REQUIRED',
+    )
     return {
-      gasMixes: value.compressorGasMixes,
-      ...(includesNitrox && value.compressorNitroxMin !== undefined ? { nitroxMin: value.compressorNitroxMin } : {}),
-      ...(includesNitrox && value.compressorNitroxMax !== undefined ? { nitroxMax: value.compressorNitroxMax } : {}),
+      name: entry.form.name,
+      address: entry.form.location.address,
+      placeId: entry.form.location.placeId,
+      lat: entry.form.location.lat,
+      lng: entry.form.location.lng,
+      email: entry.form.email,
+      phone: entry.form.phone,
+      kind: entry.kind,
+      features: entry.form.features,
+      confinedCapable: entry.form.confinedCapable,
+      maxDepth: entry.form.maxDepth > 0 ? entry.form.maxDepth : undefined,
+      maxCapacity:
+        entry.kind === 'pool' && entry.form.maxCapacity > 0
+          ? entry.form.maxCapacity
+          : undefined,
+      isAllowed: entry.form.isAllowed,
+      notAllowed: entry.form.notAllowed,
+      ...buildGasMixPayload(entry.form),
     }
   }
 
-  const handleCreate = async (value: VenueEditValue) => {
-    if (!value.location) return
-    await createVenue({
-      name: value.name,
-      address: value.location.address,
-      placeId: value.location.placeId,
-      lat: value.location.lat,
-      lng: value.location.lng,
-      email: value.email,
-      phone: value.phone,
-      kind: value.kind,
-      features: value.features,
-      confinedCapable: value.confinedCapable,
-      maxDepth: value.maxDepth > 0 ? value.maxDepth : undefined,
-      maxCapacity: value.maxCapacity > 0 ? value.maxCapacity : undefined,
-      isAllowed: value.isAllowed,
-      notAllowed: value.notAllowed,
-      ...buildGasMixPayload(value),
+  const handleAdd = () => {
+    const idx = draftCounterRef.current++
+    const prior = pickPriorEntry(sortedAllEntries, activeTab)
+    const newDraft = makeDraft(
+      activeTab,
+      prior,
+      { email: inheritedEmail, phone: inheritedPhone },
+      idx,
+    )
+    setDrafts((prev) => ({
+      ...prev,
+      [activeTab]: [...prev[activeTab], newDraft],
+    }))
+    setExpandedByTab((prev) => ({
+      ...prev,
+      [activeTab]: new Set(prev[activeTab]).add(newDraft.key),
+    }))
+  }
+
+  const handleEntryChange = (entry: VenueEntry, nextForm: VenueFormValue) => {
+    if (entry.venueId) {
+      setEdits((prev) => ({ ...prev, [entry.key]: nextForm }))
+    } else {
+      setDrafts((prev) => ({
+        ...prev,
+        [entry.kind]: prev[entry.kind].map((d) =>
+          d.key === entry.key ? { ...d, form: nextForm } : d,
+        ),
+      }))
+    }
+  }
+
+  const handleSave = async (entry: VenueEntry) => {
+    if (!isVenueFormSubmittable(entry.form, entry.kind)) {
+      setSaveErrors((prev) => ({
+        ...prev,
+        [entry.key]: t('fillRequiredFields'),
+      }))
+      return
+    }
+    setSavingKeys((prev) => new Set(prev).add(entry.key))
+    setSaveErrors((prev) => {
+      const next = { ...prev }
+      delete next[entry.key]
+      return next
     })
+    try {
+      if (entry.venueId) {
+        await updateVenue({ venueId: entry.venueId, ...buildVenueArgs(entry) })
+        setEdits((prev) => {
+          const next = { ...prev }
+          delete next[entry.key]
+          return next
+        })
+      } else {
+        await createVenue(buildVenueArgs(entry))
+        justCreatedKindsRef.current.add(entry.kind as SubTab)
+        setDrafts((prev) => ({
+          ...prev,
+          [entry.kind]: prev[entry.kind].filter((d) => d.key !== entry.key),
+        }))
+        if (intentKind) clearStoredVenueSignupIntent()
+      }
+      setSavedKeys((prev) => new Set(prev).add(entry.key))
+      setTimeout(() => {
+        setSavedKeys((prev) => {
+          const next = new Set(prev)
+          next.delete(entry.key)
+          return next
+        })
+      }, INLINE_SAVED_FLASH_MS)
+    } catch (e) {
+      setSaveErrors((prev) => ({
+        ...prev,
+        [entry.key]:
+          e instanceof Error ? e.message : t('actionFailed', { action: t('save') }),
+      }))
+    } finally {
+      setSavingKeys((prev) => {
+        const next = new Set(prev)
+        next.delete(entry.key)
+        return next
+      })
+    }
   }
 
-  const handleEdit = async (venueId: Id<'venues'>, value: VenueEditValue) => {
-    if (!value.location) return
-    await updateVenue({
-      venueId,
-      name: value.name,
-      address: value.location.address,
-      placeId: value.location.placeId,
-      lat: value.location.lat,
-      lng: value.location.lng,
-      email: value.email,
-      phone: value.phone,
-      kind: value.kind,
-      features: value.features,
-      confinedCapable: value.confinedCapable,
-      maxDepth: value.maxDepth > 0 ? value.maxDepth : undefined,
-      maxCapacity: value.maxCapacity > 0 ? value.maxCapacity : undefined,
-      isAllowed: value.isAllowed,
-      notAllowed: value.notAllowed,
-      ...buildGasMixPayload(value),
-    })
+  const handleRemove = async (entry: VenueEntry) => {
+    if (entry.venueId) {
+      await removeVenue({ venueId: entry.venueId })
+    } else {
+      setDrafts((prev) => ({
+        ...prev,
+        [entry.kind]: prev[entry.kind].filter((d) => d.key !== entry.key),
+      }))
+    }
   }
 
-  const handleRemove = async (venueId: Id<'venues'>) => {
-    await removeVenue({ venueId })
-  }
-
-  const openCreate = (kind: VenueKind) => {
-    setDialogState({
-      open: true,
-      mode: 'create',
-      kind,
-      initial: buildCreateDefaults(kind, venues, venueInheritedDefaults),
-    })
-  }
-
-  const openEditFor = (venue: VenueDoc) => {
-    const existingGasMixes = (venue.gasMixes ?? []) as GasMix[]
-    setDialogState({
-      open: true,
-      mode: 'edit',
-      venueId: venue._id,
-      kind: venue.kind as VenueKind,
-      initial: {
-        name: venue.name,
-        kind: venue.kind as VenueKind,
-        email: venue.email ?? '',
-        phone: venue.phone ?? '',
-        location: {
-          address: venue.address,
-          placeId: venue.placeId,
-          lat: venue.lat,
-          lng: venue.lng,
-        },
-        maxDepth: venue.maxDepth ?? 0,
-        maxCapacity: venue.maxCapacity ?? 0,
-        confinedCapable: venue.confinedCapable ?? false,
-        features: (venue.features ?? []) as VenueFeature[],
-        isAllowed: venue.isAllowed ?? [],
-        notAllowed: venue.notAllowed ?? [],
-        hasCompressorOnSite: existingGasMixes.length > 0,
-        compressorGasMixes: existingGasMixes,
-        compressorNitroxMin: venue.nitroxMin ?? undefined,
-        compressorNitroxMax: venue.nitroxMax ?? undefined,
-      },
-    })
-  }
-
-  const filtered = venues.filter((v) => (v.kind as VenueKind) === activeTab)
+  const tabLabel = activeTab === 'pool' ? t('venueKinds.pool') : t('venueKinds.dive_site')
   const addLabel = activeTab === 'pool' ? t('addPool') : t('addDiveSite')
-  const emptyMessage = activeTab === 'pool' ? t('noPoolsYet') : t('noDiveSitesYet')
-  const removeAriaKey = activeTab === 'pool' ? 'removePool' : 'removeDiveSite'
+  const newDefaultLabel = activeTab === 'pool' ? t('newPool') : t('newDiveSite')
+  const removeLabelTemplate = activeTab === 'pool' ? 'removePool' : 'removeDiveSite'
 
   return (
     <>
@@ -257,77 +440,51 @@ export function VenueCapabilitiesSection({ me }: VenueCapabilitiesSectionProps) 
         </MenuButton>
       </nav>
 
-      <EntityCardList
-        label={activeTab === 'pool' ? t('venueKinds.pool') : t('venueKinds.dive_site')}
-        items={filtered}
+      <ExpandingCardList<VenueEntry>
+        label={tabLabel}
         addLabel={addLabel}
-        emptyMessage={emptyMessage}
-        onAdd={() => openCreate(activeTab)}
-        onRemove={(venue) => void handleRemove(venue._id)}
-        itemKey={(venue) => venue._id}
-        removeAriaLabel={(venue) => t(removeAriaKey, { name: venue.name })}
-        getCompleteness={(venue) => ({
-          complete: venue.profileComplete === true,
-          incomplete: [],
-        })}
+        items={items}
+        itemKey={(entry) => entry.key}
+        expandedKeys={expandedByTab[activeTab]}
+        onExpandedKeysChange={(next) =>
+          setExpandedByTab((prev) => ({ ...prev, [activeTab]: next }))
+        }
+        onAdd={handleAdd}
+        onSave={handleSave}
+        onRemove={handleRemove}
+        savingKeys={savingKeys}
+        savedKeys={savedKeys}
+        saveErrors={saveErrors}
         completeLabel={t('complete')}
         incompleteLabel={t('incomplete')}
-        renderCard={(venue) => {
-          const features = (venue.features ?? []) as VenueFeature[]
-          return (
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center gap-2">
-                <span className="font-medium text-primary truncate">{venue.name}</span>
-                <Badge variant="muted">{t(`venueKinds.${venue.kind as VenueKind}`)}</Badge>
-              </div>
-              <div className="text-body-sm text-secondary">
-                {venue.maxDepth ? `${venue.maxDepth} m` : '—'}
-                {' · '}
-                {venue.maxCapacity ? `${venue.maxCapacity} cap` : '—'}
-                {venue.confinedCapable ? ' · Confined' : ''}
-              </div>
-              {features.length > 0 && (
-                <div className="flex flex-wrap gap-1">
-                  {features.map((f) => (
-                    <Badge key={f} variant="info" size="sm">
-                      {t(`venueFeatures.${f}`)}
-                    </Badge>
-                  ))}
-                </div>
-              )}
-              {venue.address?.city && (
-                <div className="text-body-sm text-secondary truncate">
-                  {venue.address.city}
-                  {venue.address.country ? `, ${venue.address.country}` : ''}
-                </div>
-              )}
-              <Button
-                type="button"
-                size="sm"
-                variant="secondary"
-                onClick={() => openEditFor(venue)}
-                className="self-start"
-              >
-                {t('edit')}
-              </Button>
-            </div>
-          )
-        }}
-      />
-
-      <VenueEditDialog
-        open={dialogState.open}
-        onClose={() => setDialogState({ open: false })}
-        mode={dialogState.open && dialogState.mode === 'edit' ? 'edit' : 'create'}
-        lockedKind={dialogState.open ? dialogState.kind : undefined}
-        initialValue={dialogState.open ? dialogState.initial : EMPTY_VENUE_EDIT}
-        onSubmit={async (value) => {
-          if (dialogState.open && dialogState.mode === 'edit') {
-            await handleEdit(dialogState.venueId, value)
-          } else {
-            await handleCreate(value)
+        getCompleteness={(entry) => {
+          if (entry.venueId) {
+            return {
+              complete: entry.serverIncomplete.length === 0,
+              incomplete: entry.serverIncomplete,
+            }
           }
+          const inc = localIncomplete(entry.form, entry.kind)
+          return { complete: inc.length === 0, incomplete: inc }
         }}
+        removeAriaLabel={(entry) =>
+          t(removeLabelTemplate, { name: entry.form.name || newDefaultLabel })
+        }
+        renderCardTitle={(entry) => (
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="font-medium text-primary truncate">
+              {entry.form.name || newDefaultLabel}
+            </span>
+            <Badge variant="muted" size="sm">{t(`venueKinds.${entry.kind}`)}</Badge>
+          </div>
+        )}
+        renderExpandedBody={(entry) => (
+          <VenueFormBody
+            kind={entry.kind}
+            value={entry.form}
+            onChange={(next) => handleEntryChange(entry, next)}
+          />
+        )}
       />
     </>
   )

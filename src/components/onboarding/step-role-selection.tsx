@@ -58,6 +58,16 @@ export function StepRoleSelection({
   const canContinue = selectedTiles.length > 0
   const summary = buildSummary(selectedTiles)
 
+  const renderTile = (tile: SignupRoleTileConfig) => (
+    <div key={tile.tileKey}>
+      <RoleTile
+        role={tile}
+        selected={selectedSet.has(tile.tileKey)}
+        onClick={() => onToggle(tile)}
+      />
+    </div>
+  )
+
   return (
     <>
       <div className="mb-6 text-center">
@@ -73,28 +83,14 @@ export function StepRoleSelection({
             Organizers
           </p>
         </div>
-        {OPERATOR_TILES.map((tile) => (
-          <RoleTile
-            key={tile.tileKey}
-            role={tile}
-            selected={selectedSet.has(tile.tileKey)}
-            onClick={() => onToggle(tile)}
-          />
-        ))}
+        {OPERATOR_TILES.map(renderTile)}
 
         <div className="col-span-2 mt-3 mb-0.5">
           <p className="text-label font-medium uppercase tracking-wide text-secondary">
             Resources
           </p>
         </div>
-        {RESOURCE_TILES.map((tile) => (
-          <RoleTile
-            key={tile.tileKey}
-            role={tile}
-            selected={selectedSet.has(tile.tileKey)}
-            onClick={() => onToggle(tile)}
-          />
-        ))}
+        {RESOURCE_TILES.map(renderTile)}
       </div>
 
       <div className="w-full" data-testid="wizard-nav">

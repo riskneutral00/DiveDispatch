@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery } from 'convex/react'
 import { useTranslations } from 'next-intl'
 import { api } from '@/lib/convex-generated'
-import { type ClerkRole, type RoleKey, ROLE_BY_KEY } from '@/lib/constants/roles'
+import { type RoleKey, ROLE_BY_KEY } from '@/lib/constants/roles'
 import { DASHBOARD_CONTENT_GUTTER_X } from '@/lib/constants/dashboard-layout'
 import { cn } from '@/lib/utils/cn'
 import { useDashboardSession } from '@/lib/hooks/use-dashboard-session'
@@ -32,18 +32,15 @@ export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps
   const [overlayOpen, setOverlayOpen] = useState(false)
   const [overlayTab, setOverlayTab] = useState<ProfileOverlayTab>('profile')
   const [overlaySection, setOverlaySection] = useState<string | undefined>(undefined)
-  const [overlayOnboardingRole, setOverlayOnboardingRole] = useState<ClerkRole | null>(null)
 
   const openProfileOverlay = useCallback((tab: ProfileOverlayTab = 'profile', section?: string) => {
     setOverlayTab(tab)
     setOverlaySection(section)
-    setOverlayOnboardingRole(null)
     setOverlayOpen(true)
   }, [])
 
   const closeProfileOverlay = useCallback(() => {
     setOverlayOpen(false)
-    setOverlayOnboardingRole(null)
   }, [])
 
   const venueSignupIntent = useVenueSignupIntent()
@@ -64,9 +61,8 @@ export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps
       clearStoredVenueSignupIntent()
       return
     }
-    setOverlayTab('roles')
-    setOverlaySection(undefined)
-    setOverlayOnboardingRole('Venue')
+    setOverlayTab('role:venue')
+    setOverlaySection('capabilities')
     setOverlayOpen(true)
   }, [status, venueSignupIntent, venueRoleEntry, venueRoleIncomplete])
 
@@ -116,8 +112,6 @@ export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps
         onClose={closeProfileOverlay}
         initialTab={overlayTab}
         initialSection={overlaySection}
-        initialOnboardingRole={overlayOnboardingRole}
-        venueSignupIntent={venueSignupIntent}
         roleSlug={roleSlug}
         slug={slug}
       />
