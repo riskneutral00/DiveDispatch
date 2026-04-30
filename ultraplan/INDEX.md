@@ -50,7 +50,7 @@ This folder holds the canonical spec for the DiveDispatch happy path. Five artif
 
 ## Resume pointer
 
-**Resuming the audit?** Open `happy-path-spec-skeleton.md` → §14. All 9 stops + admin locked. Next work is §9 P0 closure via `/post-spec` (12 ticketed, 14 backfill-needed). The 2026-04-18 extension subsection captures Stop 2 Gear overlay readiness for walkthrough.
+**Resuming the audit?** Open `happy-path-spec-skeleton.md` → §14. Stops 1, 2, 4 locked. **PENDING: Stop 3 (Boat), Stop 6 (Pool), Stop 7 (DiveCenter), Stop 8 (Customer), Stop 9 (Agent), admin_venues.** Next up: Stop 3 (Boat). The 2026-04-18 extension subsection captures Stop 2 Gear overlay readiness for walkthrough.
 
 **Running the happy-path?** Open `choreography.md` → Act I Phase 1. Follow `§15 Execution Conventions` in skeleton (pause rule, post-run observation routing).
 

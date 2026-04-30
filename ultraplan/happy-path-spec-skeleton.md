@@ -958,7 +958,7 @@ Do not:
 
 **Last session:** 2026-04-14.
 
-**State at handoff:** Stops 1–6 + `admin_venues.kata_beach` locked in `canonical.json`. §9 holds P0-1 through P0-14. §14 is the resume pointer; joint ledger per Lesson #1 is: `skeleton.md` + `canonical.json` + `canonical.schema.json` + `choreography.md` + `assertions.yaml` (see [`INDEX.md`](./INDEX.md)). Three stops remain: Stop 7 (DiveCenter), Stop 8 (Customer — lighter portal template), Stop 9 (Agent — renumbered from old Stop 10; Stop 10 deleted). DC / Customer / Agent placeholder entries already in `canonical.json` with `_pending` markers — replace in place when the stop locks.
+**State at handoff:** Stops 1 (Compressor), 2 (Equipment Manager), 4 (Instructor) locked in `canonical.json`. Stops 3 (Boat), 6 (Pool), 7 (DiveCenter), 8 (Customer), 9 (Agent) + `admin_venues` are PENDING. §9 holds P0-1 through P0-26. §14 is the resume pointer; joint ledger per Lesson #1 is: `skeleton.md` + `canonical.json` + `canonical.schema.json` + `choreography.md` + `assertions.yaml` (see [`INDEX.md`](./INDEX.md)). Placeholder entries for pending stops already exist in `canonical.json` with `_pending` markers — replace in place when the stop locks.
 
 **Retroactive re-audit owed on Stops 1–6:** previous audits used `convex/schema.ts` as the yardstick (schema-driven). New framing is three-way: canonical intent ∪ schema ∪ FE. Fields silently omitted as "schema-optional" may be canonical-required (e.g., `confinedCapable` on pools, now added). Re-audit surfaces any missed canonical values as new P0s.
 
@@ -1001,14 +1001,14 @@ These rules fire from mistakes already made this audit. Do not relearn.
 |---|---|---|---|---|---|---|
 | 1 | Resource | Compressor ×2 | DONE (retro-patched 2026-04-14 — +P0-18 gasMixes gate) | compressor_1 (Scuba Market), compressor_2 (Chalong Pier, gasMixes-gap) | P0-2, P0-3, P0-4, P0-5, P0-18 (5) | harmonized |
 | 2 | Resource | Equipment Manager ×3 | DONE (retro-patched 2026-04-14 — +P0-24 isAllowed FE, +P0-25 nitroxCertified) | equipment_manager_1 (Hug), equipment_manager_2 (Scuba Revolution), equipment_manager_3 (Nicole — mask-empty) | P0-6, P0-7, P0-8, P0-24, P0-25 (5) | harmonized |
-| 3 | Resource | Boat ×2 | DONE (retro-patched 2026-04-14 — +P0-22 hasCompressor, +P0-24 isAllowed FE) | boat_1 (Hug, M.V. Hug Ocean), boat_2 (PHUKET_DC, MQ5+MQ7) | P0-9, P0-10, P0-11, P0-22, P0-24 (5) | harmonized |
+| 3 | Resource | Boat ×2 | PENDING | boat_1 (Hug, M.V. Hug Ocean), boat_2 (PHUKET_DC, MQ5+MQ7) | P0-9, P0-10, P0-11, P0-22, P0-24 (5) | harmonized |
 | 4 | Resource | Instructor ×4 | DONE (retro-patched 2026-04-14; Stop 5 absorbed 2026-04-17 post DM-user-role collapse) | instructor_1 (Ryan), instructor_2 (Li Ming), instructor_3 (Wei Chen, teachingLanguages-gap), instructor_4 (Arisa, PADI DM credential, teachingLanguages-gap) | P0-12 ✓, P0-19 ✓, P0-20 ✓, P0-24, P0-25 ✓ (5) | harmonized |
 | 5 | Resource | (merged into Stop 4) | MERGED 2026-04-17 — DM collapsed to credential-level on Instructor role. Arisa moved to Stop 4 as instructor_4. | — | — | — |
-| 6 | Resource | Pool ×4 | DONE (retro-patched 2026-04-14 — +P0-21 confinedCapable FE, +P0-22 hasCompressor, +P0-24 isAllowed FE) | pool_1 (Hug), pool_2 (Neptune isAllowed), pool_3 (Water Pro maxCapacity-gap), pool_4 (Shark Bites) | P0-13, P0-14, P0-21, P0-22, P0-24 (5) | harmonized |
-| admin | Admin | AdminVenue | DONE (Kata Beach = single sufficient exemplar) | `admin_venues.kata_beach` | none | harmonized |
-| 7 | Operator | DiveCenter | DONE | dive_center_1 (Hug Ocean, slug n7rq5j), dive_center_2 (Nicole Dive Center, slug q9bz7r, associations-gap) | none (no new three-way gaps) | harmonized |
-| 8 | Customer | Customer | DONE | customer_1 (Mei-Ling Chen, zh-TW), customer_2 (Jun Wang, zh-CN, medical-block), customer_3 (James Thompson, en, emergencyContact-gap) | P0-15, P0-16 (2) | harmonized (Cluster B.1/B.2/B.3 answered) |
-| 9 | Operator | Agent | DONE | agent (Alex Walker, fresh-signup, defaultReferral → dive_center_1 via n7rq5j) | P0-17 (1) | harmonized |
+| 6 | Resource | Pool ×4 | PENDING | pool_1 (Hug), pool_2 (Neptune isAllowed), pool_3 (Water Pro maxCapacity-gap), pool_4 (Shark Bites) | P0-13, P0-14, P0-21, P0-22, P0-24 (5) | harmonized |
+| admin | Admin | AdminVenue | PENDING | `admin_venues.kata_beach` | none | harmonized |
+| 7 | Operator | DiveCenter | PENDING | dive_center_1 (Hug Ocean, slug n7rq5j), dive_center_2 (Nicole Dive Center, slug q9bz7r, associations-gap) | none (no new three-way gaps) | harmonized |
+| 8 | Customer | Customer | PENDING | customer_1 (Mei-Ling Chen, zh-TW), customer_2 (Jun Wang, zh-CN, medical-block), customer_3 (James Thompson, en, emergencyContact-gap) | P0-15, P0-16 (2) | harmonized (Cluster B.1/B.2/B.3 answered) |
+| 9 | Operator | Agent | PENDING | agent (Alex Walker, fresh-signup, defaultReferral → dive_center_1 via n7rq5j) | P0-17 (1) | harmonized |
 | — | Cross-cutting | Act II spine (submitToDraft bug) | OPEN | n/a (bug, not ledger entry) | P0-1 (1) | — |
 
 **§11 harmonization rule:** when a stop locks DONE, update its §11 recommendation status the same turn. The "§11 rec" column flips `pending` → `harmonized` as part of the same-turn discipline.
@@ -1050,18 +1050,18 @@ Additional per-entry checks (enforced by schema where possible):
 
 ### Next-stop staging rule
 
-Only **one stop's interview state** is queued in §14 at a time. When the queued stop locks DONE, overwrite its interview-state block with the next unlocked stop's in the same turn. **All stops 1–9 + admin venues now locked. The next queue entry is the retro re-audit of Stops 1–6.**
+Only **one stop's interview state** is queued in §14 at a time. When the queued stop locks DONE, overwrite its interview-state block with the next unlocked stop's in the same turn. **Next up: Stop 3 (Boat).**
 
-### Audit COMPLETE (2026-04-14)
+### Audit IN PROGRESS (last updated 2026-04-29)
 
-All stakeholder ledger stops locked:
+Locked stops:
 
-- **Stops 1–6 (Resources) + admin_venues.kata_beach** — previously locked; retro-patched 2026-04-14 under three-way framing. 9 new P0s filed (P0-18 through P0-26). Canonical patch: `autoAccept` added to `instructor_1/_2/_3.instructors` + `dive_master.diveMasters` per Lesson #8; canonical schema `entryDiveMaster.diveMasters.autoAccept: const true` added.
-- **Stop 7 DiveCenter** — `dive_center_1` (Hug Ocean, n7rq5j), `dive_center_2` (Nicole Dive Center, q9bz7r). No new P0s.
-- **Stop 8 Customer** — `customer_1/_2/_3` (Mei-Ling / Jun / James). Cluster B.1/B.2/B.3 answered; migrated to `choreography.md` Phase II.4 notes. New P0s: P0-15, P0-16.
-- **Stop 9 Agent** — `agent` (Alex Walker, defaultReferral → dive_center_1). New P0: P0-17.
+- **Stops 1–2 (Compressor, Equipment Manager)** — retro-patched 2026-04-14 under three-way framing. 9 new P0s filed (P0-18 through P0-26). Canonical patch: `autoAccept` added to `instructor_1/_2/_3.instructors` + `dive_master.diveMasters` per Lesson #8; canonical schema `entryDiveMaster.diveMasters.autoAccept: const true` added.
+- **Stop 4 Instructor** — retro-patched 2026-04-14; Stop 5 (DiveMaster) absorbed 2026-04-17 post DM-user-role collapse.
 
-§9 P0 count: **P0-1 through P0-26 (26 total)**. Pre-run gate still blocking — all 26 must close before `/happypath` can fire. Retirement criteria (INDEX.md + §16): audit COMPLETE ✓ · one fully green happy-path run ✗ · V1 shipped ✗. Artifact set retires when all three hold.
+Pending stops: **3 (Boat), 6 (Pool), 7 (DiveCenter), 8 (Customer), 9 (Agent), admin_venues**.
+
+§9 P0 count: **P0-1 through P0-26 (26 total)**. Pre-run gate blocking — all 26 must close before `/happypath` can fire. Retirement criteria (INDEX.md + §16): audit COMPLETE ✗ · one fully green happy-path run ✗ · V1 shipped ✗. Artifact set retires when all three hold.
 
 ### 2026-04-18 extension — Stop 2 Gear overlay ready for walkthrough
 
