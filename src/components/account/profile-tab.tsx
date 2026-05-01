@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { useMutation } from 'convex/react'
 import { z } from 'zod'
@@ -8,7 +9,7 @@ import { api } from '@/lib/convex-generated'
 import { useDashboardSession } from '@/lib/hooks/use-dashboard-session'
 import { isValidISODate } from '@/lib/utils/date'
 import { NameField } from '@/components/ui/name-field'
-import { MetaField } from '@/components/ui/meta-field'
+import { EmailField } from '@/components/ui/email-field'
 import { PhoneField } from '@/components/ui/phone-field'
 import { BirthdayField } from '@/components/ui/birthday-field'
 import { FieldRow } from '@/components/ui/field-row'
@@ -16,7 +17,7 @@ import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 import { findLanguageByCode, languageToCode } from '@/lib/constants/dive-languages'
 import { LanguageField } from '@/components/ui/language-field'
-import Link from 'next/link'
+import { EmailChangeSheet } from '@/components/account/email-change-sheet'
 
 export type ProfileValues = {
   firstName: string
@@ -77,6 +78,7 @@ export function ProfileTab({ onClose }: { onClose?: () => void }) {
   const { user } = useDashboardSession()
   const updateProfile = useMutation(api.users.updateProfile)
   const accountEmail = typeof user?.email === 'string' ? user.email : ''
+  const [emailChangeOpen, setEmailChangeOpen] = useState(false)
 
   const {
     form,
@@ -157,17 +159,14 @@ export function ProfileTab({ onClose }: { onClose?: () => void }) {
             error={errors.phone}
             required
           />
-          <MetaField label={t('email')} className="field-lg">
-            <span className="flex items-center gap-2">
-              <span>{accountEmail || '—'}</span>
-              <Link
-                href="/account"
-                className="text-accent text-body underline-offset-2 hover:underline"
-              >
-                {t('changeEmail')}
-              </Link>
-            </span>
-          </MetaField>
+          <EmailField
+            label={t('email')}
+            value={accountEmail}
+            onChange={() => {}}
+            readOnly
+            onClick={() => setEmailChangeOpen(true)}
+            className="cursor-pointer"
+          />
           <BirthdayField
             label={t('dateOfBirth')}
             value={form.dateOfBirth || null}
@@ -188,6 +187,7 @@ export function ProfileTab({ onClose }: { onClose?: () => void }) {
           }}
         />
       </div>
+      <EmailChangeSheet open={emailChangeOpen} onClose={() => setEmailChangeOpen(false)} />
     </ProfileFormShell>
   )
 }

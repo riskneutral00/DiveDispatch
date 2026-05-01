@@ -238,7 +238,14 @@
     "stepBusiness": "Business",
     "stepProfile": "Profile",
     "syncingOrganization": "Setting up your organization…",
-    "noActiveOrg": "No active organization. Please refresh and try again."
+    "noActiveOrg": "No active organization. Please refresh and try again.",
+    "changeEmail": "Change email",
+    "newEmailLabel": "New email",
+    "sendCode": "Send code",
+    "verifyCodeLabel": "Verification code",
+    "verifyCode": "Verify",
+    "codeSentTo": "We sent a code to {email}.",
+    "emailVerificationFailed": "Verification failed. Check the code and try again."
   },
   "booking": {
     "status": {
