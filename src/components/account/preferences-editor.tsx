@@ -9,7 +9,6 @@ import { prefsSchema, type PrefsFormData } from '@/lib/preferences/prefs-schema'
 import { SAVE_FEEDBACK_MS } from '@/lib/constants/ui-timings'
 import { useMutation, useQuery } from 'convex/react'
 import { api } from '@/lib/convex-generated'
-import { useDirectoryByRoleKey } from '@/lib/hooks/use-directory-by-role-key'
 import { ROLE_BY_KEY, DISPLAY_OPERATOR_ROLES, type RoleKey } from '@/lib/constants/roles'
 import { BottomActionBar } from '@/components/ui/bottom-action-bar'
 import { SaveButton } from '@/components/ui/save-button'
@@ -29,7 +28,7 @@ import { useProfileForm } from '@/lib/hooks/use-profile-form'
 import { SimpleSelect } from '@/components/ui/simple-select'
 import { PreferredOperatorPicker } from '@/components/account/preferred-operator-picker'
 import {
-  computeResourceTabRequirement,
+  RESOURCE_TAB_REQUIRED,
   type ResourceSubTab as ResourceSubTabId,
 } from '@/lib/preferences/resource-tab-requirement'
 
@@ -150,33 +149,9 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp,
 
   const showResourcePrefs = activeRole != null && DISPLAY_OPERATOR_ROLE_KEYS.has(activeRole)
 
-  const boatDirectory = useDirectoryByRoleKey(showResourcePrefs ? 'boat' : null)
-
-  const resourceTabRequirement = useMemo(
-    () =>
-      computeResourceTabRequirement(
-        {
-          preferredInstructorSlugs: form.preferredInstructorSlugs,
-          preferredEquipmentSlugs: form.preferredEquipmentSlugs,
-          preferredVenueSlugs: form.preferredVenueSlugs,
-          preferredBoatSlugs: form.preferredBoatSlugs,
-          preferredCompressorSlugs: form.preferredCompressorSlugs,
-        },
-        boatDirectory,
-      ),
-    [
-      form.preferredInstructorSlugs,
-      form.preferredEquipmentSlugs,
-      form.preferredVenueSlugs,
-      form.preferredBoatSlugs,
-      form.preferredCompressorSlugs,
-      boatDirectory,
-    ],
-  )
-
   const resourceSubTabs = useMemo(
-    () => buildResourceSubTabs(activeRole, resourceTabRequirement),
-    [activeRole, resourceTabRequirement],
+    () => buildResourceSubTabs(activeRole, RESOURCE_TAB_REQUIRED),
+    [activeRole],
   )
 
   const saveStakeholderPreferences = useCallback(async () => {

@@ -139,92 +139,42 @@ describe('PreferencesEditor — resources section', () => {
   })
 })
 
-describe('PreferencesEditor — Row 3 dynamic asterisk transitions', () => {
-  // Alternate-initial-state pattern: render with different initial prefs and
-  // assert the sub-tab's aria-required reflects helper output. This exercises
-  // the helper → buildResourceSubTabs → Tabs path; user-event interaction would
-  // also work but render-with-different-state is enough to catch wiring drift.
-
-  function getResourceSubTab(label: 'Instructors' | 'Venues' | 'Boats' | 'Equipment' | 'Compressors') {
+describe('PreferencesEditor — Row 3 persistent required indicator', () => {
+  function getResourceSubTab(label: 'Instructors' | 'Venues' | 'Boats' | 'Equipment' | 'Compressors' | 'Operator') {
     return screen.getAllByRole('tab').find((t) => (t.textContent ?? '').replace('*', '').trim() === label)
   }
 
-  it('marks all 5 resource tabs required when no preferences are set (compressors required when no compressor source)', () => {
-    mockPrefs = {
-      autoAccept: true,
-      preferredInstructorSlugs: [],
-      preferredVenueSlugs: [],
-      preferredEquipmentSlugs: [],
-      preferredBoatSlugs: [],
-      preferredCompressorSlugs: [],
-      confirmOnAccept: false,
-      confirmOnDecline: false,
-      autoAssignPreferred: true,
-    }
+  const fullyPopulated = {
+    autoAccept: true,
+    preferredInstructorSlugs: ['i1'],
+    preferredVenueSlugs: ['v1'],
+    preferredEquipmentSlugs: ['e1'],
+    preferredBoatSlugs: ['b1'],
+    preferredCompressorSlugs: ['c1'],
+    confirmOnAccept: false,
+    confirmOnDecline: false,
+    autoAssignPreferred: true,
+  }
+
+  const empty = {
+    ...fullyPopulated,
+    preferredInstructorSlugs: [],
+    preferredVenueSlugs: [],
+    preferredEquipmentSlugs: [],
+    preferredBoatSlugs: [],
+    preferredCompressorSlugs: [],
+  }
+
+  it.each([
+    ['empty preferences', empty],
+    ['fully populated preferences', fullyPopulated],
+  ])('marks all 5 resource tabs required regardless of fill state (%s)', (_label, prefs) => {
+    mockPrefs = prefs
     render(<PreferencesEditor section="resources" roleSlug="dive-center" />)
     expect(getResourceSubTab('Instructors')).toHaveAttribute('aria-required', 'true')
     expect(getResourceSubTab('Venues')).toHaveAttribute('aria-required', 'true')
     expect(getResourceSubTab('Boats')).toHaveAttribute('aria-required', 'true')
     expect(getResourceSubTab('Equipment')).toHaveAttribute('aria-required', 'true')
-    expect(getResourceSubTab('Compressors')).toHaveAttribute('aria-required', 'true')
-  })
-
-  it('clears Venues + Boats when at least one venue is set (OR substitution); Compressors still required without a compressor source', () => {
-    mockPrefs = {
-      autoAccept: true,
-      preferredInstructorSlugs: [],
-      preferredVenueSlugs: ['venue-a'],
-      preferredEquipmentSlugs: [],
-      preferredBoatSlugs: [],
-      preferredCompressorSlugs: [],
-      confirmOnAccept: false,
-      confirmOnDecline: false,
-      autoAssignPreferred: true,
-    }
-    render(<PreferencesEditor section="resources" roleSlug="dive-center" />)
-    expect(getResourceSubTab('Venues')).not.toHaveAttribute('aria-required', 'true')
-    expect(getResourceSubTab('Boats')).not.toHaveAttribute('aria-required', 'true')
-    expect(getResourceSubTab('Instructors')).toHaveAttribute('aria-required', 'true')
-    expect(getResourceSubTab('Equipment')).toHaveAttribute('aria-required', 'true')
-    expect(getResourceSubTab('Compressors')).toHaveAttribute('aria-required', 'true')
-  })
-
-  it('clears Compressors when a preferred boat with hasCompressor:true is set', () => {
-    mockBoatDirectory = [{ slug: 'boat-with-comp', hasCompressor: true }]
-    mockPrefs = {
-      autoAccept: true,
-      preferredInstructorSlugs: [],
-      preferredVenueSlugs: [],
-      preferredEquipmentSlugs: [],
-      preferredBoatSlugs: ['boat-with-comp'],
-      preferredCompressorSlugs: [],
-      confirmOnAccept: false,
-      confirmOnDecline: false,
-      autoAssignPreferred: true,
-    }
-    render(<PreferencesEditor section="resources" roleSlug="dive-center" />)
-    // boat substitutes for both venue and compressor
-    expect(getResourceSubTab('Boats')).not.toHaveAttribute('aria-required', 'true')
-    expect(getResourceSubTab('Venues')).not.toHaveAttribute('aria-required', 'true')
-    expect(getResourceSubTab('Compressors')).not.toHaveAttribute('aria-required', 'true')
-  })
-
-  it('boat without hasCompressor leaves Compressors required (no compressor source)', () => {
-    mockBoatDirectory = [{ slug: 'boat-bare', hasCompressor: false }]
-    mockPrefs = {
-      autoAccept: true,
-      preferredInstructorSlugs: [],
-      preferredVenueSlugs: [],
-      preferredEquipmentSlugs: [],
-      preferredBoatSlugs: ['boat-bare'],
-      preferredCompressorSlugs: [],
-      confirmOnAccept: false,
-      confirmOnDecline: false,
-      autoAssignPreferred: true,
-    }
-    render(<PreferencesEditor section="resources" roleSlug="dive-center" />)
-    expect(getResourceSubTab('Boats')).not.toHaveAttribute('aria-required', 'true')
-    expect(getResourceSubTab('Venues')).not.toHaveAttribute('aria-required', 'true')
     expect(getResourceSubTab('Compressors')).toHaveAttribute('aria-required', 'true')
   })
 })
