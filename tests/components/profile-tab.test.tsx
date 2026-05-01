@@ -16,6 +16,10 @@ vi.mock('@/components/profiles/language-field', () => ({
   ),
 }))
 
+vi.mock('@/components/account/email-change-sheet', () => ({
+  EmailChangeSheet: () => null,
+}))
+
 let mockUser: unknown = undefined
 const mockCreateUser = vi.fn()
 const mockUpdateProfile = vi.fn()
@@ -87,7 +91,7 @@ describe('ProfileTab', () => {
     render(<ProfileTab />)
 
     expect(screen.getByDisplayValue('Alice')).toBeInTheDocument()
-    expect(screen.getByText('alice@dive.co')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('alice@dive.co')).toBeInTheDocument()
   })
 
   it('renders form fields with defaults when user record is null (new user)', () => {
