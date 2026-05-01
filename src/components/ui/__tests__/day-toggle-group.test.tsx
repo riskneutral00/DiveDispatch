@@ -59,4 +59,43 @@ describe('DayToggleGroup', () => {
     const mon = screen.getByRole('button', { name: 'Mon' })
     expect(mon.className).not.toContain('px-2.5')
   })
+
+  it('renders no group label when label prop is omitted, while seven day buttons remain accessible by name', () => {
+    const { container } = render(<DayToggleGroup selected={[]} onChange={vi.fn()} />)
+    expect(container.querySelector('label')).toBeNull()
+    expect(container.querySelector('fieldset')).toBeNull()
+    expect(screen.queryByRole('group')).toBeNull()
+
+    const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+    dayNames.forEach((name) => {
+      const btn = screen.getByRole('button', { name })
+      expect(btn).not.toBeNull()
+      expect(btn.tagName).toBe('BUTTON')
+    })
+  })
+
+  it('renders InlineError as a DOM descendant of the reading-plane wrapper when error is provided', () => {
+    const { container } = render(
+      <DayToggleGroup selected={[]} onChange={vi.fn()} error="Pick at least one day" />,
+    )
+    const wrapper = container.querySelector('.reading-plane') as HTMLElement | null
+    expect(wrapper).not.toBeNull()
+    const errorEl = container.querySelector('[role="alert"]')
+    expect(errorEl).not.toBeNull()
+    expect(errorEl!.textContent).toContain('Pick at least one day')
+    expect(wrapper!.contains(errorEl)).toBe(true)
+  })
+
+  it('clicking a disabled day does NOT call onChange and does NOT flip aria-pressed', () => {
+    const onChange = vi.fn()
+    render(
+      <DayToggleGroup selected={[]} onChange={onChange} disabledDays={[2]} />,
+    )
+    const tue = screen.getByRole('button', { name: 'Tue' })
+    expect(tue).toBeDisabled()
+    expect(tue).toHaveAttribute('aria-pressed', 'false')
+    fireEvent.click(tue)
+    expect(onChange).not.toHaveBeenCalled()
+    expect(tue).toHaveAttribute('aria-pressed', 'false')
+  })
 })
