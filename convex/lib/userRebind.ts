@@ -2,6 +2,7 @@ import type { UserIdentity } from 'convex/server'
 import type { MutationCtx } from '../_generated/server'
 import type { Doc } from '../_generated/dataModel'
 import { isAllowedRebind, parseTokenIdentifier } from './tokenIdentifier'
+import { normalizeEmail } from './validators'
 
 export type RebindOutcome =
   | { kind: 'matched'; user: Doc<'users'> }
@@ -19,7 +20,7 @@ export async function resolveOrRebindUser(
     .unique()
   if (byToken) return { kind: 'matched', user: byToken }
 
-  const email = identity.email
+  const email = normalizeEmail(identity.email)
   if (!email) return { kind: 'none' }
 
   const byEmail = await ctx.db

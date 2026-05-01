@@ -19,6 +19,7 @@ import {
   assertCountryCode,
   assertPhoneE164,
   assertLanguageCodes,
+  normalizeEmail,
   normalizeAppLanguage,
 } from '../convex/lib/validators'
 import { normalizeAppLanguage as feNormalizeAppLanguage } from '../src/lib/constants/i18n'
@@ -276,20 +277,22 @@ describe('src Zod schemas — i18n', () => {
   })
 })
 
-describe('convex normalizeAppLanguage — Chinese script normalization, otherwise permissive', () => {
+describe('convex normalizeAppLanguage — canonical supported locale normalization', () => {
   it.each([
     ['en', 'en'],
-    ['en-GB', 'en-GB'],
+    ['en-GB', 'en'],
     ['zh-CN', 'zh-CN'],
     ['zh-TW', 'zh-TW'],
     ['zh-Hans', 'zh-CN'],
     ['zh-Hans-HK', 'zh-CN'],
     ['zh-Hant', 'zh-TW'],
     ['zh-Hant-HK', 'zh-TW'],
-    ['th-TH', 'th-TH'],
-    ['de', 'de'],
-    ['ja', 'ja'],
-    ['es', 'es'],
+    ['th-TH', 'th'],
+    ['fr-FR', 'fr'],
+    ['ko-KR', 'ko'],
+    ['de', 'en'],
+    ['ja', 'en'],
+    ['es', 'en'],
   ])('normalizes %s -> %s', (input, expected) => {
     expect(normalizeAppLanguage(input)).toBe(expected)
   })
@@ -301,24 +304,15 @@ describe('convex normalizeAppLanguage — Chinese script normalization, otherwis
   it('mirrors FE behavior', () => {
     expect(feNormalizeAppLanguage('zh-Hans-HK')).toBe('zh-CN')
     expect(feNormalizeAppLanguage('en-GB')).toBe('en')
+    expect(normalizeAppLanguage('en-GB')).toBe(feNormalizeAppLanguage('en-GB'))
     expect(feNormalizeAppLanguage(null)).toBe('en')
     expect(feNormalizeAppLanguage(undefined)).toBe('en')
   })
 })
 
-describe('convex normalizeAppLanguage — permissive', () => {
-  it('collapses Chinese script tags', () => {
-    expect(normalizeAppLanguage('zh-Hant-HK')).toBe('zh-TW')
-  })
-
-  it('preserves unsupported but well-formed codes', () => {
-    expect(normalizeAppLanguage('de-DE')).toBe('de-DE')
-    expect(normalizeAppLanguage('ja')).toBe('ja')
-    expect(normalizeAppLanguage('en-GB')).toBe('en-GB')
-  })
-
-  it('returns "en" on empty input', () => {
-    expect(normalizeAppLanguage('')).toBe('en')
+describe('convex normalizeEmail', () => {
+  it('lowercases and trims identity email values', () => {
+    expect(normalizeEmail('  USER@Example.COM ')).toBe('user@example.com')
   })
 })
 

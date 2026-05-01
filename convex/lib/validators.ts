@@ -6,6 +6,7 @@ import { addressStructuredValidator } from '../shared/addressValidator'
 import {
   ISO_COUNTRY_CODES,
   E164_REGEX,
+  SUPPORTED_LOCALE_CODES,
   normalizeChineseScript,
 } from '../shared/i18nConstants'
 import { RANGE_BY_KIND, type VenueKind } from '../shared/venueTypes'
@@ -142,11 +143,16 @@ export function assertLanguageCodes(codes: readonly string[], field: string): vo
   }
 }
 
+export function normalizeEmail(email: string | undefined | null): string {
+  return typeof email === 'string' ? email.trim().toLowerCase() : ''
+}
+
 export function normalizeAppLanguage(code: string): string {
   if (typeof code !== 'string' || code.length === 0) return 'en'
   const scripted = normalizeChineseScript(code)
-  assertLanguageCodes([scripted], 'appLanguage')
-  return scripted
+  const collapsed = scripted.startsWith('zh-') ? scripted : (scripted.split('-')[0] || 'en')
+  assertLanguageCodes([collapsed], 'appLanguage')
+  return SUPPORTED_LOCALE_CODES.has(collapsed) ? collapsed : 'en'
 }
 
 export function assertVenueRange(

@@ -6,7 +6,7 @@ import { createUserDefaults } from './helpers/createUser'
 describe('submitSupportRequest', () => {
   it('persists a support request for authenticated user', async () => {
     const t = makeT()
-    const identity = { tokenIdentifier: 'clerk|support-req-1' }
+    const identity = { tokenIdentifier: 'clerk|support-req-1', email: 'support-1@test.com' }
     vi.useFakeTimers({ now: Date.now() })
     await t.withIdentity(identity).mutation(api.users.createUser, {
       ...createUserDefaults,
@@ -33,7 +33,7 @@ describe('submitSupportRequest', () => {
 
   it('rejects message shorter than 10 characters after trim', async () => {
     const t = makeT()
-    const identity = { tokenIdentifier: 'clerk|support-short-msg' }
+    const identity = { tokenIdentifier: 'clerk|support-short-msg', email: 'support-2@test.com' }
     vi.useFakeTimers({ now: Date.now() })
     await t.withIdentity(identity).mutation(api.users.createUser, {
       ...createUserDefaults,

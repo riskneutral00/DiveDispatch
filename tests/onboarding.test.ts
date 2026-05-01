@@ -10,7 +10,7 @@ describe('onboarding schema', () => {
   it('new user created via createUser exists', async () => {
     const t = makeT()
     vi.useFakeTimers({ now: Date.now() })
-    const userId = await t.withIdentity({ tokenIdentifier: 'clerk|new-dc' })
+    const userId = await t.withIdentity({ tokenIdentifier: 'clerk|new-dc', email: 'new-dc@test.com' })
       .mutation(api.users.createUser, { ...createUserDefaults, role: 'DiveCenter' })
 
     await t.finishAllScheduledFunctions(vi.runAllTimers)

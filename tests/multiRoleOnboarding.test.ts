@@ -10,7 +10,7 @@ import { api } from '../convex/_generated/api'
 import { makeT } from './helpers/convex-helpers'
 import { createUserDefaults } from './helpers/createUser'
 
-const IDENTITY = { tokenIdentifier: 'clerk|multi-role-user' }
+const IDENTITY = { tokenIdentifier: 'clerk|multi-role-user', email: 'multi-role@test.com' }
 
 describe('createUser with roles array (DD-032)', () => {
   it('creates userRoles entries for each role in the array', async () => {

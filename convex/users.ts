@@ -19,7 +19,7 @@ import { extractErrorCode, ISOLATABLE_ERRORS } from './lib/errorCodes'
 import { batchDelete, batchPatch } from './lib/batch'
 import { sanitizeFields, USER_FIELDS } from './lib/sanitize'
 import { isAdult, MIN_SIGNUP_AGE_YEARS } from './lib/timeConstants'
-import { normalizeAppLanguage, assertPhoneE164 } from './lib/validators'
+import { normalizeAppLanguage, normalizeEmail, assertPhoneE164 } from './lib/validators'
 import { readOrgClaims } from './lib/activeOrg'
 import { parseTokenIdentifier, isAllowedRebind } from './lib/tokenIdentifier'
 import { resolveOrRebindUser } from './lib/userRebind'
@@ -119,7 +119,7 @@ export const createUser = mutation({
     }
     const existing = outcome.kind === 'none' ? null : outcome.user
 
-    const email = identity.email ?? ''
+    const email = normalizeEmail(identity.email)
     const now = Date.now()
 
     const { orgId: clerkOrgId, orgRole: clerkOrgRole } = readOrgClaims(identity)
@@ -141,6 +141,7 @@ export const createUser = mutation({
         ...(args.nickname !== undefined && { nickname: args.nickname }),
         ...(args.phone !== undefined && { phone: args.phone }),
         ...(args.appLanguage !== undefined && { appLanguage: normalizeAppLanguage(args.appLanguage) }),
+        ...(((existing.email ?? '') === '' && email !== '') && { email }),
         ...(existing.tcAcceptedAt === undefined && { tcAcceptedAt: now }),
         ...(args.tcVersion !== existing.tcVersion && { tcVersion: args.tcVersion, tcAcceptedAt: now }),
       })
@@ -180,6 +181,13 @@ export const createUser = mutation({
       }
 
       return existing._id
+    }
+
+    if (email === '') {
+      throw new ConvexError({
+        code: ErrorCode.VALIDATION,
+        reason: 'identity_email_required_at_signup',
+      })
     }
 
     const slug = await generateUniqueSlug(ctx.db)
@@ -235,7 +243,6 @@ export const createUser = mutation({
 
 export const updateProfile = mutation({
   args: {
-    email: v.optional(v.string()),
     firstName: v.optional(v.string()),
     lastName: v.optional(v.string()),
     nickname: v.optional(v.string()),
@@ -244,8 +251,9 @@ export const updateProfile = mutation({
     appLanguage: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const { user } = await authorize(ctx, null, 'profile:manage', { type: 'profile' })
+    const { user, identity } = await authorize(ctx, null, 'profile:manage', { type: 'profile' })
     const sanitized = sanitizeFields(args, USER_FIELDS)
+    const identityEmail = normalizeEmail(identity.email)
 
     if (args.dateOfBirth !== undefined && !isAdult(args.dateOfBirth)) {
       throw new ConvexError({ code: ErrorCode.VALIDATION, reason: `Must be at least ${MIN_SIGNUP_AGE_YEARS} years old` })
@@ -256,13 +264,13 @@ export const updateProfile = mutation({
     }
 
     await ctx.db.patch(user._id, {
-      ...(sanitized.email !== undefined && { email: sanitized.email }),
       ...(sanitized.firstName !== undefined && { firstName: sanitized.firstName }),
       ...(sanitized.lastName !== undefined && { lastName: sanitized.lastName }),
       ...(sanitized.nickname !== undefined && { nickname: sanitized.nickname }),
       ...(sanitized.phone !== undefined && { phone: sanitized.phone }),
       ...(args.dateOfBirth !== undefined && { dateOfBirth: args.dateOfBirth }),
       ...(args.appLanguage !== undefined && { appLanguage: normalizeAppLanguage(args.appLanguage) }),
+      ...(((user.email ?? '') === '' && identityEmail !== '') && { email: identityEmail }),
     })
 
     await syncDiveStaffName(
@@ -448,6 +456,8 @@ export const upsertFromWebhook = internalMutation({
     svixId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const email = normalizeEmail(args.email)
+
     if (args.svixId) {
       const isDuplicate = await checkIdempotency(ctx, args.svixId, 'clerk_webhook_upsert')
       if (isDuplicate) {
@@ -470,7 +480,7 @@ export const upsertFromWebhook = internalMutation({
 
     if (existing) {
       await ctx.db.patch(existing._id, {
-        email: args.email,
+        email,
         firstName: args.firstName,
         lastName: args.lastName,
       })
@@ -478,10 +488,10 @@ export const upsertFromWebhook = internalMutation({
       return existing._id
     }
 
-    if (args.email !== '') {
+    if (email !== '') {
       const byEmail = await ctx.db
         .query('users')
-        .withIndex('by_email', (q) => q.eq('email', args.email))
+        .withIndex('by_email', (q) => q.eq('email', email))
         .unique()
       if (byEmail) {
         const allowed = isAllowedRebind(byEmail.tokenIdentifier, args.tokenIdentifier)
@@ -504,7 +514,7 @@ export const upsertFromWebhook = internalMutation({
             newTokenIdentifier: args.tokenIdentifier,
             oldIssuer,
             newIssuer,
-            email: args.email,
+            email,
             at: now,
           })
           await syncDiveStaffName(ctx, byEmail.organizationId, args.firstName, args.lastName)
@@ -518,7 +528,7 @@ export const upsertFromWebhook = internalMutation({
           newTokenIdentifier: args.tokenIdentifier,
           oldIssuer,
           newIssuer,
-          email: args.email,
+          email,
           at: now,
         })
         return byEmail._id
@@ -529,7 +539,7 @@ export const upsertFromWebhook = internalMutation({
     const userId = await ctx.db.insert('users', {
       tokenIdentifier: args.tokenIdentifier,
       slug,
-      email: args.email,
+      email,
       firstName: args.firstName,
       lastName: args.lastName,
       appLanguage: 'en',

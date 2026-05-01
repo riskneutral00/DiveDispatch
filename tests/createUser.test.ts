@@ -68,6 +68,30 @@ describe('createUser mutation', () => {
     expect(user?.email).toBe('real@clerk.dev')
   })
 
+  it('normalizes identity.email before storing new users', async () => {
+    const t = makeT()
+    const userId = await t
+      .withIdentity({
+        tokenIdentifier: 'clerk|email-normalize-new',
+        email: '  Real@Clerk.Dev ',
+      })
+      .mutation(api.users.createUser, {
+        ...createUserDefaults,
+        role: 'DiveCenter',
+      })
+
+    const user = await t.run(async (ctx) => ctx.db.get(userId))
+    expect(user?.email).toBe('real@clerk.dev')
+  })
+
+  it('rejects new-user signup when identity.email is missing', async () => {
+    const t = makeT()
+    await expect(
+      t.withIdentity({ tokenIdentifier: 'clerk|missing-email' })
+        .mutation(api.users.createUser, { ...createUserDefaults, role: 'DiveCenter' }),
+    ).rejects.toThrow(/identity_email_required_at_signup/)
+  })
+
   it('uses identity.email even when args.email differs (existing user path)', async () => {
     const t = makeT()
     const identity = {
@@ -97,7 +121,7 @@ describe('createUser mutation', () => {
     const t = makeT()
     vi.useFakeTimers({ now: Date.now() })
     const userId = await t
-      .withIdentity({ tokenIdentifier: 'clerk|phone-user' })
+      .withIdentity({ tokenIdentifier: 'clerk|phone-user', email: 'phone-user@test.dev' })
       .mutation(api.users.createUser, { ...createUserDefaults,
         role: 'DiveCenter',
         phone: '+66123456789',
@@ -114,7 +138,7 @@ describe('createUser mutation', () => {
     const t = makeT()
     vi.useFakeTimers({ now: Date.now() })
     const userId = await t
-      .withIdentity({ tokenIdentifier: 'clerk|named-user' })
+      .withIdentity({ tokenIdentifier: 'clerk|named-user', email: 'named-user@test.dev' })
       .mutation(api.users.createUser, { ...createUserDefaults,
         role: 'Instructor',
         firstName: 'Mike',
@@ -135,7 +159,7 @@ describe('createUser mutation', () => {
     const t = makeT()
     vi.useFakeTimers({ now: Date.now() })
     const userId = await t
-      .withIdentity({ tokenIdentifier: 'clerk|no-phone' })
+      .withIdentity({ tokenIdentifier: 'clerk|no-phone', email: 'no-phone@test.dev' })
       .mutation(api.users.createUser, { ...createUserDefaults,
         role: 'DiveCenter',
       })
@@ -149,7 +173,7 @@ describe('createUser mutation', () => {
 
   it('patches existing user with new fields on idempotent call', async () => {
     const t = makeT()
-    const identity = { tokenIdentifier: 'clerk|idem-user' }
+    const identity = { tokenIdentifier: 'clerk|idem-user', email: 'idem-user@test.dev' }
 
     vi.useFakeTimers({ now: Date.now() })
     await t.withIdentity(identity).mutation(api.users.createUser, { ...createUserDefaults,
@@ -174,6 +198,44 @@ describe('createUser mutation', () => {
       .query(api.users.me, {})
     expect(user?.phone).toBe('+66987654321')
     expect(user?.nickname).toBe('Updated Nick')
+  })
+
+  it('backfills empty email on idempotent createUser when identity email becomes available', async () => {
+    const t = makeT()
+    const tokenIdentifier = 'clerk|idem-email-backfill'
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert('users', {
+        tokenIdentifier,
+        slug: 'idem-email-backfill',
+        email: '',
+        firstName: 'Old',
+        lastName: 'Name',
+        appLanguage: 'en',
+      })
+    })
+
+    await t.withIdentity({ tokenIdentifier, email: ' Backfilled@Example.com ' }).mutation(api.users.createUser, {
+      ...createUserDefaults,
+      role: 'Agent',
+    })
+
+    const user = await t.withIdentity({ tokenIdentifier, email: 'backfilled@example.com' }).query(api.users.me, {})
+    expect(user?.email).toBe('backfilled@example.com')
+  })
+
+  it('canonicalizes appLanguage on createUser writes', async () => {
+    const t = makeT()
+    const userId = await t
+      .withIdentity({ tokenIdentifier: 'clerk|locale-canonicalize', email: 'locale@test.dev' })
+      .mutation(api.users.createUser, {
+        ...createUserDefaults,
+        role: 'DiveCenter',
+        appLanguage: 'th-TH',
+      })
+
+    const user = await t.run(async (ctx) => ctx.db.get(userId))
+    expect(user?.appLanguage).toBe('th')
   })
 })
 
@@ -206,7 +268,7 @@ describe('createUser age gate + T&C', () => {
     const t = makeT()
     const fixedNow = Date.UTC(2026, 0, 15)
     vi.useFakeTimers({ now: fixedNow })
-    const userId = await t.withIdentity({ tokenIdentifier: 'clerk|tc-accepter' })
+    const userId = await t.withIdentity({ tokenIdentifier: 'clerk|tc-accepter', email: 'tc-accepter@test.dev' })
       .mutation(api.users.createUser, {
         ...createUserDefaults,
         role: 'DiveCenter',
@@ -220,7 +282,7 @@ describe('createUser age gate + T&C', () => {
 
   it('does not overwrite tcAcceptedAt on idempotent re-call', async () => {
     const t = makeT()
-    const identity = { tokenIdentifier: 'clerk|tc-idem' }
+    const identity = { tokenIdentifier: 'clerk|tc-idem', email: 'tc-idem@test.dev' }
     const firstNow = Date.UTC(2026, 0, 15)
     const secondNow = Date.UTC(2026, 0, 20)
 
@@ -247,7 +309,7 @@ describe('createUser age gate + T&C', () => {
   it('stores tcVersion on new user insert', async () => {
     const t = makeT()
     vi.useFakeTimers({ now: Date.now() })
-    const userId = await t.withIdentity({ tokenIdentifier: 'clerk|tc-version-new' })
+    const userId = await t.withIdentity({ tokenIdentifier: 'clerk|tc-version-new', email: 'tc-version-new@test.dev' })
       .mutation(api.users.createUser, {
         ...createUserDefaults,
         role: 'DiveCenter',
@@ -262,7 +324,7 @@ describe('createUser age gate + T&C', () => {
 
   it('updates tcVersion and refreshes tcAcceptedAt on re-submission with new version', async () => {
     const t = makeT()
-    const identity = { tokenIdentifier: 'clerk|tc-version-upgrade' }
+    const identity = { tokenIdentifier: 'clerk|tc-version-upgrade', email: 'tc-version-upgrade@test.dev' }
     const firstNow = Date.UTC(2026, 0, 15)
     const secondNow = Date.UTC(2026, 5, 1)
 
@@ -291,7 +353,7 @@ describe('createUser age gate + T&C', () => {
 
   it('does not refresh tcAcceptedAt on re-submission with same version', async () => {
     const t = makeT()
-    const identity = { tokenIdentifier: 'clerk|tc-version-same' }
+    const identity = { tokenIdentifier: 'clerk|tc-version-same', email: 'tc-version-same@test.dev' }
     const firstNow = Date.UTC(2026, 0, 15)
     const secondNow = Date.UTC(2026, 5, 1)
 
@@ -322,7 +384,7 @@ describe('createUser age gate + T&C', () => {
 describe('createUser dateOfBirth immutability', () => {
   it('does not overwrite dateOfBirth on idempotent re-submission', async () => {
     const t = makeT()
-    const identity = { tokenIdentifier: 'clerk|dob-immutable' }
+    const identity = { tokenIdentifier: 'clerk|dob-immutable', email: 'dob-immutable@test.dev' }
 
     vi.useFakeTimers({ now: Date.now() })
     await t.withIdentity(identity).mutation(api.users.createUser, {
@@ -350,7 +412,7 @@ describe('createUser dateOfBirth immutability', () => {
 describe('createUser rate limiting', () => {
   it('rejects the 4th call within a minute with RATE_LIMITED', async () => {
     const t = makeT()
-    const identity = { tokenIdentifier: 'clerk|rate-limit-user' }
+    const identity = { tokenIdentifier: 'clerk|rate-limit-user', email: 'rate-limit-user@test.dev' }
 
     for (let i = 0; i < 3; i++) {
       vi.useFakeTimers({ now: Date.now() })
@@ -380,8 +442,8 @@ describe('createUser rate limiting', () => {
 
   it('allows calls from a different identity after one is exhausted', async () => {
     const t = makeT()
-    const identityA = { tokenIdentifier: 'clerk|rate-a' }
-    const identityB = { tokenIdentifier: 'clerk|rate-b' }
+    const identityA = { tokenIdentifier: 'clerk|rate-a', email: 'rate-a@test.dev' }
+    const identityB = { tokenIdentifier: 'clerk|rate-b', email: 'rate-b@test.dev' }
 
     for (let i = 0; i < 3; i++) {
       vi.useFakeTimers({ now: Date.now() })
@@ -445,6 +507,32 @@ describe('updateProfile email removed from args schema', () => {
     expect(user?.email).toBe('identity@clerk.dev')
     expect(user?.firstName).toBe('Updated')
     expect(user?.nickname).toBe('Updater')
+  })
+
+  it('backfills empty stored email from Clerk identity on profile update', async () => {
+    const t = makeT()
+    const identity = {
+      tokenIdentifier: 'clerk|profile-email-backfill',
+      email: ' Backfill@Clerk.dev ',
+    }
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert('users', {
+        tokenIdentifier: identity.tokenIdentifier,
+        slug: 'profile-email-backfill',
+        email: '',
+        firstName: 'Old',
+        lastName: 'Name',
+        appLanguage: 'en',
+      })
+    })
+
+    await t.withIdentity(identity).mutation(api.users.updateProfile, {
+      firstName: 'Updated',
+    })
+
+    const user = await t.withIdentity(identity).query(api.users.me, {})
+    expect(user?.email).toBe('backfill@clerk.dev')
   })
 })
 
@@ -723,7 +811,7 @@ describe('createUser + updateProfile — phone validation at boundary', () => {
     const t = makeT()
     await expect(
       t
-        .withIdentity({ tokenIdentifier: 'clerk|bad-phone-create' })
+        .withIdentity({ tokenIdentifier: 'clerk|bad-phone-create', email: 'bad-phone-create@test.dev' })
         .mutation(api.users.createUser, {
           ...createUserDefaults,
           role: 'Compressor',
@@ -735,7 +823,7 @@ describe('createUser + updateProfile — phone validation at boundary', () => {
   it('updateProfile rejects non-E.164 phone with VALIDATION', async () => {
     const t = makeT()
     await t
-      .withIdentity({ tokenIdentifier: 'clerk|update-profile-phone' })
+      .withIdentity({ tokenIdentifier: 'clerk|update-profile-phone', email: 'update-profile-phone@test.dev' })
       .mutation(api.users.createUser, {
         ...createUserDefaults,
         role: 'Compressor',
@@ -743,7 +831,7 @@ describe('createUser + updateProfile — phone validation at boundary', () => {
 
     await expect(
       t
-        .withIdentity({ tokenIdentifier: 'clerk|update-profile-phone' })
+        .withIdentity({ tokenIdentifier: 'clerk|update-profile-phone', email: 'update-profile-phone@test.dev' })
         .mutation(api.users.updateProfile, { phone: 'abc' }),
     ).rejects.toThrow(/VALIDATION/)
   })
@@ -751,7 +839,7 @@ describe('createUser + updateProfile — phone validation at boundary', () => {
   it('updateProfile accepts empty-string phone (clear convention)', async () => {
     const t = makeT()
     await t
-      .withIdentity({ tokenIdentifier: 'clerk|clear-phone' })
+      .withIdentity({ tokenIdentifier: 'clerk|clear-phone', email: 'clear-phone@test.dev' })
       .mutation(api.users.createUser, {
         ...createUserDefaults,
         role: 'Compressor',
@@ -759,7 +847,7 @@ describe('createUser + updateProfile — phone validation at boundary', () => {
 
     await expect(
       t
-        .withIdentity({ tokenIdentifier: 'clerk|clear-phone' })
+        .withIdentity({ tokenIdentifier: 'clerk|clear-phone', email: 'clear-phone@test.dev' })
         .mutation(api.users.updateProfile, { phone: '' }),
     ).resolves.not.toThrow()
   })
@@ -785,6 +873,7 @@ describe('createUser + updateProfile — phone validation at boundary', () => {
       await t
         .withIdentity({
           tokenIdentifier,
+          email: 'permlevel-member@test.dev',
           orgId: clerkOrgIdClaim,
           orgRole: 'member',
           orgSlug: 'existing-org',
@@ -825,6 +914,7 @@ describe('createUser + updateProfile — phone validation at boundary', () => {
       await t
         .withIdentity({
           tokenIdentifier,
+          email: 'permlevel-admin@test.dev',
           orgId: clerkOrgIdClaim,
           orgRole: 'admin',
           orgSlug: 'admin-org',
@@ -847,7 +937,7 @@ describe('createUser + updateProfile — phone validation at boundary', () => {
       const t = makeT()
       vi.useFakeTimers({ now: Date.now() })
       await t
-        .withIdentity({ tokenIdentifier: 'clerk|personal-admin' })
+        .withIdentity({ tokenIdentifier: 'clerk|personal-admin', email: 'personal-admin@test.dev' })
         .mutation(api.users.createUser, {
           ...createUserDefaults,
           role: 'DiveCenter',

@@ -4,6 +4,7 @@ import {
   assertCountryCode,
   assertPhoneE164,
   assertLanguageCodes,
+  normalizeEmail,
   normalizeAppLanguage,
 } from '../convex/lib/validators'
 
@@ -113,16 +114,32 @@ describe('assertLanguageCodes', () => {
   })
 })
 
-describe('normalizeAppLanguage (permissive)', () => {
+describe('normalizeEmail', () => {
+  it('trims and lowercases input', () => {
+    expect(normalizeEmail('  USER@Example.COM  ')).toBe('user@example.com')
+  })
+
+  it('returns empty string for missing input', () => {
+    expect(normalizeEmail(undefined)).toBe('')
+    expect(normalizeEmail(null)).toBe('')
+  })
+})
+
+describe('normalizeAppLanguage (canonical)', () => {
   it('collapses Chinese script tags', () => {
     expect(normalizeAppLanguage('zh-Hans-CN')).toBe('zh-CN')
     expect(normalizeAppLanguage('zh-Hant-TW')).toBe('zh-TW')
   })
 
-  it('preserves unsupported but well-formed codes (storage trusts FE picker)', () => {
-    expect(normalizeAppLanguage('es')).toBe('es')
-    expect(normalizeAppLanguage('vi')).toBe('vi')
-    expect(normalizeAppLanguage('en-GB')).toBe('en-GB')
+  it('collapses non-Chinese dialect tags to supported base locales', () => {
+    expect(normalizeAppLanguage('th-TH')).toBe('th')
+    expect(normalizeAppLanguage('en-GB')).toBe('en')
+    expect(normalizeAppLanguage('ko-KR')).toBe('ko')
+  })
+
+  it('falls back to en for unsupported locales', () => {
+    expect(normalizeAppLanguage('es')).toBe('en')
+    expect(normalizeAppLanguage('vi')).toBe('en')
   })
 
   it('returns "en" on empty input', () => {

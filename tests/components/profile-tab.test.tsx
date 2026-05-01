@@ -87,7 +87,7 @@ describe('ProfileTab', () => {
     render(<ProfileTab />)
 
     expect(screen.getByDisplayValue('Alice')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('alice@dive.co')).toBeInTheDocument()
+    expect(screen.getByText('alice@dive.co')).toBeInTheDocument()
   })
 
   it('renders form fields with defaults when user record is null (new user)', () => {

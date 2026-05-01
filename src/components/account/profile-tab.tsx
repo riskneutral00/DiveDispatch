@@ -8,7 +8,7 @@ import { api } from '@/lib/convex-generated'
 import { useDashboardSession } from '@/lib/hooks/use-dashboard-session'
 import { isValidISODate } from '@/lib/utils/date'
 import { NameField } from '@/components/ui/name-field'
-import { EmailField } from '@/components/ui/email-field'
+import { MetaField } from '@/components/ui/meta-field'
 import { PhoneField } from '@/components/ui/phone-field'
 import { BirthdayField } from '@/components/ui/birthday-field'
 import { FieldRow } from '@/components/ui/field-row'
@@ -21,7 +21,6 @@ export type ProfileValues = {
   firstName: string
   lastName: string
   nickname: string
-  email: string
   phone: string
   dateOfBirth: string
   appLanguage: string
@@ -31,7 +30,6 @@ export const profileTabSchema = z.object({
   firstName: z.string().min(1, 'First name is required'),
   lastName: z.string().min(1, 'Last name is required'),
   nickname: z.string(),
-  email: z.string().email('Invalid email address'),
   phone: phoneSchema({ requiredMessage: 'Phone is required', invalidMessage: 'Invalid phone number' }),
   dateOfBirth: z
     .string()
@@ -45,7 +43,6 @@ export const PROFILE_DEFAULTS: ProfileValues = {
   firstName: '',
   lastName: '',
   nickname: '',
-  email: '',
   phone: '',
   dateOfBirth: '',
   appLanguage: 'en',
@@ -57,7 +54,6 @@ export function profileFromUser(p: Record<string, unknown>): ProfileValues {
     firstName: (typeof p.firstName === 'string' ? p.firstName : '') || '',
     lastName: (typeof p.lastName === 'string' ? p.lastName : '') || '',
     nickname: (typeof p.nickname === 'string' ? p.nickname : '') || '',
-    email: (typeof p.email === 'string' ? p.email : '') || '',
     phone: (typeof p.phone === 'string' ? p.phone : '') || '',
     dateOfBirth: isValidISODate(dob) ? dob : '',
     appLanguage: (typeof p.appLanguage === 'string' ? p.appLanguage : '') || 'en',
@@ -70,7 +66,6 @@ export function profileToPayload(form: ProfileValues) {
     lastName: form.lastName.trim(),
     nickname: form.nickname.trim() || undefined,
     phone: form.phone.trim() || undefined,
-    email: form.email.trim(),
     appLanguage: form.appLanguage,
     dateOfBirth: form.dateOfBirth || undefined,
   }
@@ -80,6 +75,7 @@ export function ProfileTab({ onClose }: { onClose?: () => void }) {
   const t = useTranslations('common')
   const { user } = useDashboardSession()
   const updateProfile = useMutation(api.users.updateProfile)
+  const accountEmail = typeof user?.email === 'string' ? user.email : ''
 
   const {
     form,
@@ -160,14 +156,9 @@ export function ProfileTab({ onClose }: { onClose?: () => void }) {
             error={errors.phone}
             required
           />
-          <EmailField
-            label={t('email')}
-            value={form.email}
-            onChange={(v) => setField('email', v)}
-            onBlur={() => validateField('email')}
-            error={errors.email}
-            required
-          />
+          <MetaField label={t('email')} className="field-lg">
+            {accountEmail || '—'}
+          </MetaField>
           <BirthdayField
             label={t('dateOfBirth')}
             value={form.dateOfBirth || null}
