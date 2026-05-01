@@ -1,13 +1,11 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { NameField } from '@/components/ui/name-field'
 import { NumberPicker } from '@/components/ui/number-picker'
-import { EmailField } from '@/components/ui/email-field'
-import { PhoneField } from '@/components/ui/phone-field'
 import { Checkbox } from '@/components/ui/checkbox'
 import { CheckboxGroup } from '@/components/ui/checkbox-group'
-import { LocationPicker, type LocationValue } from '@/components/profiles/location-picker'
+import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
+import { type LocationValue } from '@/components/profiles/location-picker'
 import { GasMixFields } from '@/components/capabilities/gas-mix-fields'
 import {
   AccessControlSection,
@@ -90,30 +88,20 @@ export function VenueFormBody({ kind, value, onChange }: VenueFormBodyProps) {
 
   return (
     <div className="space-y-4">
-      <NameField
-        scope="organization"
-        label={isPool ? t('poolName') : t('diveSiteName')}
-        value={value.name}
-        onChange={(v) => onChange({ ...value, name: v })}
-        required
-      />
-      <EmailField
-        label={t('email')}
-        value={value.email}
-        onChange={(v) => onChange({ ...value, email: v })}
-        required
-      />
-      <PhoneField
-        label={t('phone')}
-        value={value.phone}
-        onChange={(v) => onChange({ ...value, phone: v })}
-        required
-      />
-      <LocationPicker
-        label={t('location')}
-        value={value.location}
-        onChange={(loc) => onChange({ ...value, location: loc })}
-        required
+      <ProfileBasicInfo
+        nameLabel={isPool ? t('poolName') : t('diveSiteName')}
+        nameValue={value.name}
+        onNameChange={(v) => onChange({ ...value, name: v })}
+        nameRequired
+        emailValue={value.email}
+        onEmailChange={(v) => onChange({ ...value, email: v })}
+        emailRequired
+        phoneValue={value.phone}
+        onPhoneChange={(v) => onChange({ ...value, phone: v })}
+        phoneRequired
+        locationValue={value.location}
+        onLocationChange={(loc) => onChange({ ...value, location: loc })}
+        locationRequired
       />
       <div className="flex flex-wrap gap-3">
         <NumberPicker
