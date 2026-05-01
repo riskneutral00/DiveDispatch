@@ -12,6 +12,10 @@ import {
 import { RANGE_BY_KIND, type VenueKind } from '../shared/venueTypes'
 import { ErrorCode } from './errorCodes'
 
+export const stringArrayValidator = v.array(v.string())
+
+export const optionalStringArrayValidator = v.optional(v.array(v.string()))
+
 export const stakeholderTypeValidator = v.union(
   v.literal('DiveCenter'),
   v.literal('Agent'),

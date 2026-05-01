@@ -389,7 +389,7 @@ export async function _myDashboard(
     if (isResourceRole && callerUnitIds.size > 0) {
       const reservations = reservationMap.get(b._id as string) ?? []
       const callerRes = reservations.find(
-        (r) => callerUnitIds.has(r.inventoryUnitId as string) && r.status !== 'Vacated',
+        (r) => callerUnitIds.has(r.inventoryUnitId as string) && r.status !== RESERVATION_STATUS.Vacated,
       )
       cb.reservationStatus = callerRes?.status as string | undefined
     }

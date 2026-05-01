@@ -8,7 +8,7 @@ import { type CourseCode, courseCodeValidator } from './shared/courseCodes'
 import { batchDelete } from './lib/batch'
 import { dateStr, addDays, COURSE_DURATIONS } from './lib/seedUtils'
 import type { BookingStatus } from './shared/statuses'
-import { bookingStatusValidator } from './shared/statuses'
+import { BOOKING_STATUS, bookingStatusValidator } from './shared/statuses'
 import { operatorTypeValidator } from './shared/operatorTypes'
 import { resourceOwnerTypeValidator } from './shared/resourceOwnerTypes'
 
@@ -76,8 +76,8 @@ export const scheduleDemoBookings = internalAction({
       const duration = COURSE_DURATIONS[code] || 1
       const endDate = addDays(startDate, duration - 1)
 
-      const createdAt = cfg.status === 'Completed' ? NOW - 7 * 86400000
-        : cfg.status === 'Cancelled' ? NOW - 5 * 86400000
+      const createdAt = cfg.status === BOOKING_STATUS.Completed ? NOW - 7 * 86400000
+        : cfg.status === BOOKING_STATUS.Cancelled ? NOW - 5 * 86400000
         : NOW
 
       const divers = []
@@ -134,8 +134,8 @@ export const scheduleDemoBookings = internalAction({
         status: cfg.status,
         createdAt,
         holdTTL: HOLD_TTL_MS,
-        ...(cfg.status === 'Draft' && { expiresAt: createdAt + HOLD_TTL_MS }),
-        paid: cfg.status !== 'Draft',
+        ...(cfg.status === BOOKING_STATUS.Draft && { expiresAt: createdAt + HOLD_TTL_MS }),
+        paid: cfg.status !== BOOKING_STATUS.Draft,
         activityType: cfg.activityType,
         startDate,
         endDate,
@@ -146,7 +146,7 @@ export const scheduleDemoBookings = internalAction({
         portalWaiver: true,
         medicalHardBlock: false,
         bookingFormComplete: true,
-        customerFormComplete: cfg.status !== 'Draft',
+        customerFormComplete: cfg.status !== BOOKING_STATUS.Draft,
         isDemo: true,
       })
 
@@ -251,7 +251,7 @@ export const insertDemoBatch = internalMutation({
               expiresAt: now + BOOKING_LINK_TTL_MS,
               customerName: `${customerDoc.legalFirstName} ${customerDoc.legalLastName}`,
               email: customerDoc.email,
-              ...(bookingDoc?.status !== 'Draft' ? { usedAt: now } : {}),
+              ...(bookingDoc?.status !== BOOKING_STATUS.Draft ? { usedAt: now } : {}),
             })
           }),
       ),

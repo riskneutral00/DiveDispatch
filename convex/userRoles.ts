@@ -1,5 +1,6 @@
 import { ConvexError, v } from 'convex/values'
 import { mutation, query, internalMutation } from './_generated/server'
+import { BOOKING_STATUS } from './shared/statuses'
 import { getAuthUser, OPERATOR_ROLE_SET, authorize } from './lib/auth'
 import { getAllUserRoles, getUserRolesInOrg, insertUserRole, findMembership, type PermissionLevel } from './lib/userRoleHelpers'
 import type { QueryCtx, MutationCtx } from './_generated/server'
@@ -178,7 +179,7 @@ export const bookingCountForRole = query({
 
     const bookings = await batchGet(ctx, resources.map((r) => r.bookingId))
     return bookings.filter(
-      (b) => b !== null && (b.status === 'Draft' || b.status === 'Upcoming'),
+      (b) => b !== null && (b.status === BOOKING_STATUS.Draft || b.status === BOOKING_STATUS.Upcoming),
     ).length
   },
 })
@@ -219,7 +220,7 @@ async function countActiveBookings(
 
   const bookings = await batchGet(ctx, resources.map((r) => r.bookingId))
   return bookings.filter(
-    (b) => b !== null && (b.status === 'Draft' || b.status === 'Upcoming'),
+    (b) => b !== null && (b.status === BOOKING_STATUS.Draft || b.status === BOOKING_STATUS.Upcoming),
   ).length
 }
 

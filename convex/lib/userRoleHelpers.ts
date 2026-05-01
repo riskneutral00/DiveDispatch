@@ -39,7 +39,12 @@ export async function getUserRolesInOrg(
 
 type StakeholderType = Infer<typeof stakeholderTypeValidator>
 
-export type PermissionLevel = 'admin' | 'member'
+export const PERMISSION_LEVEL = {
+  Admin: 'admin',
+  Member: 'member',
+} as const
+
+export type PermissionLevel = (typeof PERMISSION_LEVEL)[keyof typeof PERMISSION_LEVEL]
 
 export async function insertUserRole(
   ctx: MutationCtx,
@@ -55,7 +60,7 @@ export async function insertUserRole(
     userId: args.userId,
     role: args.role,
     organizationId: args.organizationId,
-    permissionLevel: args.permissionLevel ?? 'admin',
+    permissionLevel: args.permissionLevel ?? PERMISSION_LEVEL.Admin,
     createdAt: args.createdAt ?? Date.now(),
   })
 }

@@ -4,7 +4,7 @@ import type { Doc } from '../_generated/dataModel'
 import type { DbCtx } from './auth'
 import { ErrorCode } from './errorCodes'
 import { log } from './logger'
-import { findMembership } from './userRoleHelpers'
+import { findMembership, PERMISSION_LEVEL, type PermissionLevel } from './userRoleHelpers'
 
 type OrgIdentityClaims = {
   orgId?: string
@@ -21,14 +21,14 @@ export function readOrgClaims(identity: UserIdentity): OrgIdentityClaims {
   }
 }
 
-function membershipOrgRole(row: Doc<'userRoles'>): 'admin' | 'member' {
-  return row.permissionLevel ?? 'admin'
+function membershipOrgRole(row: Doc<'userRoles'>): PermissionLevel {
+  return row.permissionLevel ?? PERMISSION_LEVEL.Admin
 }
 
 async function resolveOrgFromMembership(
   ctx: DbCtx,
   identity: UserIdentity,
-): Promise<{ org: Doc<'organizations'>; orgRole: 'admin' | 'member' } | null> {
+): Promise<{ org: Doc<'organizations'>; orgRole: PermissionLevel } | null> {
   const user = await ctx.db
     .query('users')
     .withIndex('by_tokenIdentifier', (q) => q.eq('tokenIdentifier', identity.tokenIdentifier))
@@ -47,7 +47,7 @@ async function resolveOrgFromJwtClaim(
   identity: UserIdentity,
   clerkOrgId: string,
   jwtOrgRole: string | undefined,
-): Promise<{ org: Doc<'organizations'>; orgRole: 'admin' | 'member' } | null> {
+): Promise<{ org: Doc<'organizations'>; orgRole: PermissionLevel } | null> {
   const org = await ctx.db
     .query('organizations')
     .withIndex('by_clerkOrgId', (q) => q.eq('clerkOrgId', clerkOrgId))
@@ -62,15 +62,15 @@ async function resolveOrgFromJwtClaim(
   const membership = await findMembership(ctx, user._id, org._id)
   if (!membership) return null
   const membershipRole = membershipOrgRole(membership)
-  const claimRole: 'admin' | 'member' = jwtOrgRole === 'admin' ? 'admin' : 'member'
-  const orgRole: 'admin' | 'member' =
-    membershipRole === 'admin' && claimRole === 'admin' ? 'admin' : 'member'
+  const claimRole: PermissionLevel = jwtOrgRole === PERMISSION_LEVEL.Admin ? PERMISSION_LEVEL.Admin : PERMISSION_LEVEL.Member
+  const orgRole: PermissionLevel =
+    membershipRole === PERMISSION_LEVEL.Admin && claimRole === PERMISSION_LEVEL.Admin ? PERMISSION_LEVEL.Admin : PERMISSION_LEVEL.Member
   return { org, orgRole }
 }
 
 export async function getActiveOrg(
   ctx: DbCtx,
-): Promise<{ org: Doc<'organizations'>; orgRole: 'admin' | 'member' }> {
+): Promise<{ org: Doc<'organizations'>; orgRole: PermissionLevel }> {
   const identity = await ctx.auth.getUserIdentity()
   if (!identity) throw new ConvexError({ code: ErrorCode.UNAUTHENTICATED })
 
@@ -102,7 +102,7 @@ export async function requireOrgAdmin(
   ctx: DbCtx,
 ): Promise<{ org: Doc<'organizations'> }> {
   const { org, orgRole } = await getActiveOrg(ctx)
-  if (orgRole !== 'admin') {
+  if (orgRole !== PERMISSION_LEVEL.Admin) {
     throw new ConvexError({ code: ErrorCode.FORBIDDEN, reason: 'org_admin_required' })
   }
   return { org }
