@@ -127,4 +127,8 @@
   .label-float-in {
     animation: label-float-in var(--transition-speed) ease;
   }
+
+  .motion-base {
+    transition: all var(--transition-speed) ease;
+  }
 }

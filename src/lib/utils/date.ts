@@ -21,6 +21,10 @@ export function toISODateString(date: Date): string {
   return `${y}-${m}-${d}`
 }
 
+export function getTodayISO(): string {
+  return toISODateString(new Date())
+}
+
 export function addDays(dateStr: string, days: number): string {
   const date = new Date(dateStr + 'T00:00:00')
   date.setDate(date.getDate() + days)

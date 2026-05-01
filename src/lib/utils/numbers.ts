@@ -8,3 +8,9 @@ export function parseOptionalInt(s: string): number | undefined {
   const n = parseInt(s, 10)
   return isNaN(n) ? undefined : n
 }
+
+export function parseOptionalNumber(s: string): number | undefined {
+  if (s === '') return undefined
+  const n = Number(s)
+  return isNaN(n) ? undefined : n
+}

@@ -1,4 +1,5 @@
 import type { MetadataRoute } from 'next'
+import { BRAND_DARK_BG } from '@/lib/constants/brand-colors'
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
@@ -7,8 +8,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: 'Multi-stakeholder booking platform for scuba diving',
     start_url: '/',
     display: 'standalone',
-    theme_color: '#0F172A',
-    background_color: '#0F172A',
+    theme_color: BRAND_DARK_BG,
+    background_color: BRAND_DARK_BG,
     icons: [
       {
         src: '/branding/icon-192x192.png',
