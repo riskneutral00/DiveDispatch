@@ -18,7 +18,7 @@ import { SimpleSelect } from '@/components/ui/simple-select'
 import { Textarea } from '@/components/ui/textarea'
 import { LanguageField } from '@/components/ui/language-field'
 import { FieldRow } from '@/components/ui/field-row'
-import { toISODateString } from '@/lib/utils/date'
+import { getTodayISO } from '@/lib/utils/date'
 import { makeCustomerContactSchema, useFormValidation } from '@/lib/validation'
 import type { CustomerContactData } from '@/lib/validation'
 import { languageToCode, findLanguageByCode } from '@/lib/constants/dive-languages'
@@ -214,7 +214,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
     const validated = result.data
 
     if (validated.dateOfBirth && context?.activityType?.length) {
-      const refDate = bookingStartDate ?? toISODateString(new Date())
+      const refDate = bookingStartDate ?? getTodayISO()
       const age = calcAgeAtDate(validated.dateOfBirth, refDate)
       const minAge = getMinAge(context.activityType as CourseCode[])
       if (age < minAge) {

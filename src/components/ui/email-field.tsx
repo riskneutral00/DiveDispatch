@@ -13,6 +13,8 @@ interface EmailFieldProps {
   helperText?: string
   placeholder?: string
   disabled?: boolean
+  readOnly?: boolean
+  onClick?: React.MouseEventHandler<HTMLInputElement>
   className?: string
   id?: string
   autoFocus?: boolean
@@ -28,6 +30,8 @@ export function EmailField({
   helperText,
   placeholder,
   disabled,
+  readOnly,
+  onClick,
   className,
   id,
   autoFocus,
@@ -49,6 +53,8 @@ export function EmailField({
       helperText={helperText}
       placeholder={placeholder}
       disabled={disabled}
+      readOnly={readOnly}
+      onClick={onClick}
       className={resolveFieldWidth('field-lg', className)}
       autoFocus={autoFocus}
     />

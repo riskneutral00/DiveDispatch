@@ -1,14 +1,11 @@
 import type { ReactNode } from 'react'
 import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { EmptyState } from '@/components/ui/empty-state'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
 import { ItemCard } from '@/components/ui/item-card'
 
 export type EntityCardListLayout = 'grid' | 'stack'
-
-export type CompletenessSummary = { complete: boolean; incomplete: string[] }
 
 interface EntityCardListProps<T> {
   label: string
@@ -28,9 +25,6 @@ interface EntityCardListProps<T> {
   onRemove?: (item: T, index: number) => void
   layout?: EntityCardListLayout
   hideEmptyState?: boolean
-  getCompleteness?: (item: T, index: number) => CompletenessSummary | null
-  completeLabel?: string
-  incompleteLabel?: string
 }
 
 const LAYOUT_CLASS: Record<EntityCardListLayout, string> = {
@@ -56,9 +50,6 @@ export function EntityCardList<T>({
   onRemove,
   layout = 'grid',
   hideEmptyState = false,
-  getCompleteness,
-  completeLabel = 'Complete',
-  incompleteLabel = 'Incomplete',
 }: EntityCardListProps<T>) {
   const canAdd = maxItems === undefined || items.length < maxItems
   const canRemoveAt = items.length > minItems
@@ -98,7 +89,6 @@ export function EntityCardList<T>({
         ) : (
           <div className={LAYOUT_CLASS[layout]}>
             {items.map((item, index) => {
-              const completeness = getCompleteness ? getCompleteness(item, index) : null
               return (
                 <ItemCard
                   key={itemKey ? itemKey(item, index) : index}
@@ -110,17 +100,6 @@ export function EntityCardList<T>({
                       : `Remove item ${index + 1}`
                   }
                 >
-                  {completeness && (
-                    <div className="mb-2 flex justify-end">
-                      <Badge
-                        variant={completeness.complete ? 'success' : 'warning'}
-                        size="sm"
-                        title={completeness.complete ? undefined : completeness.incomplete.join(', ')}
-                      >
-                        {completeness.complete ? completeLabel : incompleteLabel}
-                      </Badge>
-                    </div>
-                  )}
                   {renderCard(item, (next) => handleUpdate(index, next), index)}
                 </ItemCard>
               )

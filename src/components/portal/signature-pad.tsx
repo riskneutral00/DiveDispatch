@@ -4,6 +4,7 @@ import React, { useRef, useEffect, useImperativeHandle, useCallback, useState } 
 import { Button } from '../ui/button'
 import { InlineError } from '../ui/inline-error'
 import { Trash2 } from 'lucide-react'
+import { BRAND_BLACK } from '@/lib/constants/brand-colors'
 
 export interface SignaturePadHandle {
   getBlob(): Promise<Blob | null>
@@ -45,7 +46,7 @@ export const SignaturePad = React.forwardRef<SignaturePadHandle, SignaturePadPro
       const ctx = canvas.getContext('2d')
       if (!ctx) return
       ctx.scale(dpr, dpr)
-      ctx.strokeStyle = getComputedStyle(canvas).getPropertyValue('--color-text-primary') || '#000000'
+      ctx.strokeStyle = getComputedStyle(canvas).getPropertyValue('--color-text-primary') || BRAND_BLACK
       ctx.lineWidth = 2
       ctx.lineCap = 'round'
       ctx.lineJoin = 'round'
@@ -67,7 +68,7 @@ export const SignaturePad = React.forwardRef<SignaturePadHandle, SignaturePadPro
       if (!canvas) return null
       const ctx = canvas.getContext('2d')
       if (!ctx) return null
-      ctx.strokeStyle = getComputedStyle(canvas).getPropertyValue('--color-text-primary') || '#000000'
+      ctx.strokeStyle = getComputedStyle(canvas).getPropertyValue('--color-text-primary') || BRAND_BLACK
       ctx.lineWidth = 2.5
       ctx.lineCap = 'round'
       ctx.lineJoin = 'round'

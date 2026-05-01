@@ -6,7 +6,7 @@ import {
   validateStartDateNotInPast,
 } from '@/lib/booking/activity-validation'
 import { isValidPhoneE164 } from '@/lib/constants/i18n'
-import { toISODateString } from '@/lib/utils/date'
+import { getTodayISO } from '@/lib/utils/date'
 import { isVenueConfinedCapable } from '../../../convex/shared/venueTypes'
 
 export function isConfinedVenueType(vt: 'pool' | 'boat' | 'shore' | undefined): boolean {
@@ -589,7 +589,7 @@ export function canAdvanceFromItinerary(state: WizardState): boolean {
 
     if (validateNoDuplicateCourses(entries).length > 0) return false
 
-    if (validateStartDateNotInPast(entries, toISODateString(new Date())).length > 0) return false
+    if (validateStartDateNotInPast(entries, getTodayISO()).length > 0) return false
   }
 
   for (const day of state.days) {

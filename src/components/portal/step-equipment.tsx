@@ -17,6 +17,7 @@ import { FieldRow } from '@/components/ui/field-row'
 
 import type { HeightUnit, WeightUnit, ShoeSizeUnit } from '@/lib/utils/unit-conversion'
 import { toHeightCm, toWeightKg, toShoeSizeNum } from '@/lib/utils/unit-conversion'
+import { parseOptionalNumber } from '@/lib/utils/numbers'
 
 type RentalChoice = 'own' | 'rent'
 
@@ -265,7 +266,7 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
             <div className="flex gap-2 items-center">
               <div className="flex-1 min-w-0">
                 <NumberPicker
-                  value={heightValue === '' ? undefined : Number(heightValue)}
+                  value={parseOptionalNumber(heightValue)}
                   onChange={(v) => setHeightValue(v === undefined ? '' : String(v))}
                   min={heightUnit === 'cm' ? 100 : 36}
                   max={heightUnit === 'cm' ? 230 : 90}
@@ -290,7 +291,7 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
             <div className="flex gap-2 items-center">
               <div className="flex-1 min-w-0">
                 <NumberPicker
-                  value={weightValue === '' ? undefined : Number(weightValue)}
+                  value={parseOptionalNumber(weightValue)}
                   onChange={(v) => setWeightValue(v === undefined ? '' : String(v))}
                   min={weightUnit === 'kg' ? 30 : 66}
                   max={weightUnit === 'kg' ? 200 : 440}

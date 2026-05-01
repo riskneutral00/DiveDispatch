@@ -3,6 +3,7 @@
 import { useMemo } from 'react'
 import { SimpleSelect } from '@/components/ui/simple-select'
 import { resolveFieldWidth } from '@/lib/utils/field-width'
+import { parseOptionalNumber } from '@/lib/utils/numbers'
 
 interface NumberPickerProps {
   label?: string
@@ -59,7 +60,7 @@ export function NumberPicker({
     <SimpleSelect
       label={label}
       value={value !== undefined ? String(value) : ''}
-      onChange={(v) => onChange(v === '' ? undefined : Number(v))}
+      onChange={(v) => onChange(parseOptionalNumber(v))}
       onBlur={onBlur}
       options={options}
       required={required}

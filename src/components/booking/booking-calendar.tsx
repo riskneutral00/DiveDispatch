@@ -21,7 +21,7 @@ import { getBarBorderColor } from '@/lib/booking/bar-styles'
 import { useCalendarRange } from '@/lib/hooks/use-calendar-range'
 import { useClickOutside } from '@/lib/hooks/use-click-outside'
 import { deriveStatus, getDaysOfWeek, getFloorDate } from '@/lib/utils/calendar-range'
-import { parseDateLocal, toISODateString } from '@/lib/utils/date'
+import { getTodayISO, parseDateLocal, toISODateString } from '@/lib/utils/date'
 import { LOCKING_STATUSES, STATUS_COLORS, STATUS_OPACITY, STATUS_BORDER_STYLE, type CalendarDisplayStatus } from '@/lib/constants/status-colors'
 import type { StatusColorSet } from '@/lib/constants/vessel-colors'
 import type { CustomLegendItem } from '@/components/booking/calendar-legend'
@@ -132,7 +132,7 @@ export function BookingCalendar({
     return map
   }, [customCategories])
 
-  const todayStr = useMemo(() => toISODateString(new Date()), [])
+  const todayStr = useMemo(() => getTodayISO(), [])
   const blockedDatesSet = useMemo(() => new Set(blockedDates ?? []), [blockedDates])
   const dayHeaders = getDaysOfWeek()
 

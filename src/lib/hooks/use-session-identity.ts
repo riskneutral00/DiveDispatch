@@ -3,18 +3,15 @@
 import { useMemo } from 'react'
 import { useConvexAuth, useQuery } from 'convex/react'
 import { api } from '@/lib/convex-generated'
-import type { Doc } from '@/lib/convex-generated'
+import type { UserDoc, UserRoleDoc } from '@/lib/convex-generated'
 import { ROLE_BY_CLERK_ROLE, type ClerkRole, type RoleKey } from '@/lib/constants/roles'
 import { deriveDefaultRole } from '@/lib/utils/role'
 import { useStoreUserStatus } from './store-user-context'
 
-type User = Doc<'users'>
-type UserRoleDoc = Doc<'userRoles'>
-
 export type SessionStatus = 'loading' | 'unauthenticated' | 'ready'
 
 export interface SessionIdentity {
-  user: User | null | undefined
+  user: UserDoc | null | undefined
   roles: UserRoleDoc[] | undefined
   defaultRole: ClerkRole | null
   defaultRoleKey: RoleKey | null

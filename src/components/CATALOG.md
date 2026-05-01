@@ -94,6 +94,7 @@ Each primitive applies a default `field-*` width token internally via `resolveFi
 | `Badge` | `@/components/ui/badge` | Generic status pill. Variants: default, success, warning, destructive, info, muted. |
 | `StatusBadge` | `@/components/ui/status-badge` | Semantic status badge wired to booking/reservation/bag states. |
 | `ColorBadge` | `@/components/ui/color-badge` | Color swatch badge. |
+| `TextChip` | `@/components/ui/text-chip` | Compact label chip (`text-label px-1.5 py-0.5`) with `rounded-[var(--border-radius-button)]` and tone variants: default, elevated, muted. Used for agency / specialty / coming-soon labels inside cards. |
 
 ## Display helpers
 

@@ -2,6 +2,7 @@
 
 import { FlagPill } from '@/components/profiles/language-picker'
 import { resolveLanguages } from '@/lib/constants/dive-languages'
+import { TextChip } from '@/components/ui/text-chip'
 import { Tooltip } from '@/components/ui/tooltip'
 import type { DirectoryEntry } from '../../../convex/directory'
 
@@ -27,12 +28,7 @@ export function InstructorCardContent({ entry, slug, action, layout = 'row' }: I
         {entry && (entry.agencies?.length ?? 0) > 0 && (
           <div className="flex flex-wrap gap-1">
             {entry.agencies?.map((a) => (
-              <span
-                key={a}
-                className="text-label px-1.5 py-0.5 rounded-[var(--border-radius-button)] shrink-0 bg-glass-bg-elevated text-primary"
-              >
-                {a}
-              </span>
+              <TextChip key={a} tone="elevated">{a}</TextChip>
             ))}
           </div>
         )}
@@ -48,12 +44,7 @@ export function InstructorCardContent({ entry, slug, action, layout = 'row' }: I
         {uniqueRatings.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {uniqueRatings.slice(0, 3).map((rating) => (
-              <span
-                key={rating}
-                className="text-label px-1.5 py-0.5 rounded-[var(--border-radius-button)] shrink-0 bg-glass-bg text-primary"
-              >
-                {rating}
-              </span>
+              <TextChip key={rating}>{rating}</TextChip>
             ))}
             {uniqueRatings.length > 3 && (
               <Tooltip label={uniqueRatings.slice(3).join(', ')}>
@@ -77,12 +68,7 @@ export function InstructorCardContent({ entry, slug, action, layout = 'row' }: I
         <div className="flex items-center justify-between gap-2">
           <div className="flex flex-wrap gap-1 items-center">
             {entry.agencies?.map((a) => (
-              <span
-                key={a}
-                className="text-label px-1.5 py-0.5 rounded-[var(--border-radius-button)] shrink-0 bg-glass-bg-elevated text-primary"
-              >
-                {a}
-              </span>
+              <TextChip key={a} tone="elevated">{a}</TextChip>
             ))}
           </div>
           {resolvedLangs.length > 0 && (
@@ -98,12 +84,7 @@ export function InstructorCardContent({ entry, slug, action, layout = 'row' }: I
       {uniqueRatings.length > 0 && (
         <div className="flex flex-wrap gap-1 items-center">
           {uniqueRatings.slice(0, 3).map((rating) => (
-            <span
-              key={rating}
-              className="text-label px-1.5 py-0.5 rounded-[var(--border-radius-button)] shrink-0 bg-glass-bg text-primary"
-            >
-              {rating}
-            </span>
+            <TextChip key={rating}>{rating}</TextChip>
           ))}
           {uniqueRatings.length > 3 && (
             <Tooltip label={uniqueRatings.slice(3).join(', ')}>

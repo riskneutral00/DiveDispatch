@@ -3,7 +3,7 @@
 import { useCallback, useState } from 'react'
 import { PointerSensor, PointerActivationConstraints } from '@dnd-kit/dom'
 import { buildPreFill } from '@/lib/booking/compute-date-range'
-import { toISODateString } from '@/lib/utils/date'
+import { getTodayISO } from '@/lib/utils/date'
 import type { OperatorDefaults } from '@/lib/hooks/use-operator-defaults'
 import type { QuickBookTemplate } from '@/lib/booking/quick-book-templates'
 import type { BookingPreFill } from '@/lib/booking/wizard-state'
@@ -71,7 +71,7 @@ export function useBookingDnd({
       const template = sourceData.template
       if (!date || !template) return
 
-      const today = toISODateString(new Date())
+      const today = getTodayISO()
       if (date < today) return
 
       const courses = template.courses as string[]

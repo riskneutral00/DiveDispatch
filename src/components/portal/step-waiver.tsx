@@ -10,7 +10,7 @@ import { Input } from '../ui/input'
 import { DateField } from '../ui/date-field'
 import { SignaturePad, SignaturePadHandle } from './signature-pad'
 import { ShieldCheck } from 'lucide-react'
-import { toISODateString } from '@/lib/utils/date'
+import { getTodayISO } from '@/lib/utils/date'
 import { calcAgeAtDate } from '@/lib/constants/activity-rules'
 import { NON_AGENCY_DISCLOSURE, LIABILITY_RELEASE_TEXT } from '@/lib/constants/waiver-text'
 import { usePortalStep } from '@/lib/hooks/use-portal-step'
@@ -38,7 +38,7 @@ interface StepWaiverProps {
   bookingStartDate?: string
 }
 
-const todayLocal = () => toISODateString(new Date())
+const todayLocal = getTodayISO
 
 function LegalBlock({ text }: { text: string }) {
   return (

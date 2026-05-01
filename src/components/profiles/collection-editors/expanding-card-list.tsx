@@ -1,7 +1,6 @@
 import { useState, useCallback } from 'react'
 import { Plus, ChevronDown, ChevronRight, Trash2, Save, Check, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { EmptyState } from '@/components/ui/empty-state'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
 import { IconButton } from '@/components/ui/icon-button'
@@ -13,8 +12,6 @@ import type {
   RenderCardTitle,
   RenderExpandedBody,
 } from './types'
-
-export type ExpandingCardCompleteness = { complete: boolean; incomplete: string[] }
 
 interface ExpandingCardListProps<T> {
   label: string
@@ -42,9 +39,6 @@ interface ExpandingCardListProps<T> {
   savedKeys?: Set<string>
   saveErrors?: Record<string, string>
   removeErrors?: Record<string, string>
-  getCompleteness?: (item: T, index: number) => ExpandingCardCompleteness | null
-  completeLabel?: string
-  incompleteLabel?: string
 }
 
 export function ExpandingCardList<T>({
@@ -73,9 +67,6 @@ export function ExpandingCardList<T>({
   savedKeys,
   saveErrors,
   removeErrors,
-  getCompleteness,
-  completeLabel = 'Complete',
-  incompleteLabel = 'Incomplete',
 }: ExpandingCardListProps<T>) {
   const [internalKeys, setInternalKeys] = useState<Set<string>>(() => {
     if (defaultExpandFirst && items.length > 0) {
@@ -160,7 +151,6 @@ export function ExpandingCardList<T>({
             {items.map((item, index) => {
               const key = itemKey(item, index)
               const expanded = expandedKeys.has(key)
-              const completeness = getCompleteness ? getCompleteness(item, index) : null
               const saving = savingKeys?.has(key) ?? false
               const saved = savedKeys?.has(key) ?? false
               const saveError = saveErrors?.[key]
@@ -188,19 +178,6 @@ export function ExpandingCardList<T>({
                         {renderCardTitle(item, index)}
                       </div>
                     </button>
-                    {completeness && (
-                      <Badge
-                        variant={completeness.complete ? 'success' : 'warning'}
-                        size="sm"
-                        title={
-                          completeness.complete
-                            ? undefined
-                            : completeness.incomplete.join(', ')
-                        }
-                      >
-                        {completeness.complete ? completeLabel : incompleteLabel}
-                      </Badge>
-                    )}
                     {onSave && (
                       <IconButton
                         onClick={() => onSave(item, index)}

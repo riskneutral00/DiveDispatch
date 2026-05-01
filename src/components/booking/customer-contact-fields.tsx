@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 import { Trash2 } from 'lucide-react'
 import { Button, ButtonGroup, Input, PhoneField } from '@/components/ui'
 import type { ButtonGroupOption } from '@/components/ui'
+import { EmailField } from '@/components/ui/email-field'
 import { NameField } from '@/components/ui/name-field'
 import { LanguageField } from '@/components/ui/language-field'
 import type { Language } from '@/lib/types/language'
@@ -106,12 +107,11 @@ export function CustomerContactFields({
             required={contactRequired}
           />
         ) : contactType === 'email' ? (
-          <Input
-            label={labels.emailField}
+          <EmailField
+            label={labels.emailField ?? labels.emailOption}
             value={contactValue}
-            onChange={(e) => onContactValueChange(e.target.value)}
+            onChange={onContactValueChange}
             placeholder={labels.emailPlaceholder}
-            type="email"
             required={contactRequired}
           />
         ) : (

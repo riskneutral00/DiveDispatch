@@ -13,7 +13,8 @@ import { DayRow } from './day-row'
 import { ResourceStep } from './resource-step'
 import { generateDays, getAvailableDives, autoDistributeFromDive, buildDiveSequence, cascadeRemoveOrphans } from '@/lib/booking/generate-days'
 import { getEndDateDefault, validatePrerequisites, validatePrerequisiteOrder, validateCourseCombo, validateCourseDateOverlap, validateNoDuplicateCourses, validateStartDateNotInPast, calculateComboDates, getUnavailableCodes, detectReferralWarnings } from '@/lib/booking/activity-validation'
-import { toISODateString } from '@/lib/utils/date'
+import { getTodayISO } from '@/lib/utils/date'
+import { TextChip } from '@/components/ui/text-chip'
 import type { WizardState, WizardAction, CourseEntry, DiveSlot } from '@/lib/booking/wizard-state'
 import type { CourseCode } from '@/lib/constants/course-catalog'
 import { COURSE_CATALOG, COURSE_DISPLAY_LABELS, COMBO_COURSES, COURSE_CODES } from '@/lib/constants/course-catalog'
@@ -416,7 +417,7 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
 
   const hasDateRange = state.startDate && state.endDate
 
-  const today = toISODateString(new Date())
+  const today = getTodayISO()
   const hardErrors: string[] = []
   for (const c of sameForAll ? customers.slice(0, 1) : customers) {
     const entries = (c.courseEntries ?? []).map((e) => ({ activityCode: e.activityCode, dates: e.dates }))
@@ -568,9 +569,9 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
             label={
               <>
                 {tItin('sameCoursesLabel')}
-                <span className="text-label px-1.5 py-0.5 rounded-[var(--border-radius-button)] text-secondary bg-glass-border">
+                <TextChip tone="muted">
                   {tCommon('comingSoon')}
-                </span>
+                </TextChip>
               </>
             }
             checked={false}

@@ -2,7 +2,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook } from '@testing-library/react'
 import type { SessionIdentity } from '../use-session-identity'
-import type { Doc } from '@/lib/convex-generated'
+import type { UserDoc, UserRoleDoc as RoleDoc } from '@/lib/convex-generated'
 
 const mockUseSessionIdentity = vi.fn(() => makeIdentity({ status: 'loading' }))
 
@@ -12,8 +12,6 @@ vi.mock('../use-session-identity', () => ({
 
 import { useDashboardSession } from '../use-dashboard-session'
 
-type UserDoc = Doc<'users'>
-type RoleDoc = Doc<'userRoles'>
 
 function makeIdentity(partial: Partial<SessionIdentity>): SessionIdentity {
   return {

@@ -6,6 +6,7 @@ import { Bug, Loader2, ArrowRight, Check } from 'lucide-react'
 import { api } from '@/lib/convex-generated'
 import { useCurrentUser } from '@/lib/hooks/use-current-user'
 import { useClickOutside } from '@/lib/hooks/use-click-outside'
+import { useEscapeKey } from '@/lib/hooks/use-escape-key'
 import { useDevSwitching } from './dev-switch-context'
 import {
   ROLES,
@@ -14,6 +15,7 @@ import {
 } from '@/lib/constants/roles'
 import { Card } from '@/components/ui/card'
 import { parseConvexError } from '@/lib/utils/convex-error'
+import { BRAND_DARK_BG } from '@/lib/constants/brand-colors'
 
 const DEV_SWITCHER_EXCLUDED_ROLE_KEYS = new Set<RoleKey>([])
 
@@ -76,14 +78,7 @@ function DevSwitcherInner() {
 
   const closePanel = useCallback(() => setOpen(false), [])
   useClickOutside(containerRef, closePanel, open)
-  useEffect(() => {
-    if (!open) return
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false)
-    }
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [open])
+  useEscapeKey(closePanel, open)
 
   const grouped = useMemo(() => groupByRole(allUsers ?? []), [allUsers])
 
@@ -133,7 +128,7 @@ function DevSwitcherInner() {
       {switching && (
         <div
           className="fixed inset-0 z-[var(--z-dev)] flex items-center justify-center"
-          style={{ background: 'var(--body-bg, #0f172a)' }}
+          style={{ background: `var(--body-bg, ${BRAND_DARK_BG})` }}
         >
           <Loader2 className="h-6 w-6 animate-spin text-secondary" />
         </div>

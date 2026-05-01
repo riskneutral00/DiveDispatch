@@ -185,33 +185,6 @@ describe('ExpandingCardList', () => {
     expect(screen.getByText('Save failed')).toBeInTheDocument()
   })
 
-  it('renders completeness badge when getCompleteness returns a result', () => {
-    render(
-      <ExpandingCardList<Vessel>
-        label="Fleet"
-        addLabel="Add"
-        items={[
-          { id: 'a', name: 'Sea Raptor' },
-          { id: 'b', name: 'Dragon' },
-        ]}
-        onChange={() => {}}
-        emptyItem={() => ({ id: 'x', name: '' })}
-        renderCardTitle={(item) => <span>{item.name}</span>}
-        renderExpandedBody={() => null}
-        itemKey={(item) => item.id}
-        getCompleteness={(item) =>
-          item.id === 'a'
-            ? { complete: true, incomplete: [] }
-            : { complete: false, incomplete: ['gas mixes'] }
-        }
-        completeLabel="Complete"
-        incompleteLabel="Incomplete"
-      />,
-    )
-    expect(screen.getByText('Complete')).toBeInTheDocument()
-    expect(screen.getByText('Incomplete')).toBeInTheDocument()
-  })
-
   it('controlled mode: expanded follows expandedKeys prop and onExpandedKeysChange fires on toggle', () => {
     const onExpandedKeysChange = vi.fn()
     const { rerender } = render(
