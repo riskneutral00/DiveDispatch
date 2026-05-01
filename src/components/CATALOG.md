@@ -18,6 +18,7 @@ Governance: `.claude/rules/existing-components-first.md` + `.claude/rules/dry-fi
 | `ButtonGroup` | `@/components/ui/button-group` | Segmented control / grouped toggle buttons. |
 | `TabButton` | `@/components/ui/tab-button` | Tab-bar triggers. |
 | `PillToggle` / `PillToggleGroup` | `@/components/ui/pill-toggle` | Multi-select pill UI. |
+| `PillToggleSection` | `@/components/ui/pill-toggle-section` | Labeled `<fieldset>`+`<legend>` wrapper with reading-plane chrome. Used by both pill groups and `CheckboxGroup`. Props: `hideLabel` (sr-only legend, preserves a11y) + `gap` (`'sm'` = `gap-1.5` for pills, `'md'` = `gap-2` for checkbox groups). Consumer provides layout as children. |
 
 ## Form fields
 

@@ -2,7 +2,7 @@
 
 import { useId } from 'react'
 import { FieldError } from '@/components/ui/field-shell'
-import { RequiredAsterisk } from '@/components/ui/required-asterisk'
+import { PillToggleSection } from '@/components/ui/pill-toggle-section'
 
 interface CheckboxGroupProps {
   label: string
@@ -26,11 +26,7 @@ function CheckboxGroup({ label, items, selected, onChange, error, required, hide
   }
 
   return (
-    <fieldset className="flex flex-col gap-2 w-full border-0 m-0 min-w-0 reading-plane rounded-theme p-2">
-      <legend className={hideLabel ? 'sr-only' : 'text-body font-medium text-secondary w-full px-0'}>
-        {label}
-        {required && !hideLabel && <RequiredAsterisk />}
-      </legend>
+    <PillToggleSection label={label} required={required} hideLabel={hideLabel} gap="md">
       <div className={`grid gap-2 ${columns === 3 ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2'}`}>
         {items.map(({ value, label: itemLabel }) => {
           const checked = selected.includes(value)
@@ -52,7 +48,7 @@ function CheckboxGroup({ label, items, selected, onChange, error, required, hide
         })}
       </div>
       <FieldError id={`${baseId}-error`} message={error} />
-    </fieldset>
+    </PillToggleSection>
   )
 }
 

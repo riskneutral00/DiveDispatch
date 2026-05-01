@@ -46,6 +46,7 @@ export type { SortableOverlayListProps } from "./sortable-overlay-list";
 export { PageTitle } from "./page-title";
 export { EmptyState } from "./empty-state";
 export { PillToggle, PillToggleGroup } from "./pill-toggle";
+export { PillToggleSection } from "./pill-toggle-section";
 export { SaveButton } from "./save-button";
 export { BottomActionBar } from "./bottom-action-bar";
 export { ItemCard } from "./item-card";
