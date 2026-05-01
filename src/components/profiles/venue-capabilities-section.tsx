@@ -3,12 +3,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { useMutation, useQuery } from 'convex/react'
-import type { Doc, Id } from '@/lib/convex-generated'
+import type { Id, VenueDoc } from '@/lib/convex-generated'
 import { api } from '@/lib/convex-generated'
 import { ExpandingCardList } from '@/components/profiles/collection-editors'
 import { Badge } from '@/components/ui/badge'
 import { LoadingCard } from '@/components/ui/loading-card'
 import { MenuButton } from '@/components/ui/menu-button'
+import { RequiredAsterisk } from '@/components/ui/required-asterisk'
 import { INLINE_SAVED_FLASH_MS } from '@/lib/constants/ui-timings'
 import {
   useInheritedContactDefaults,
@@ -28,7 +29,6 @@ import {
 } from './venue-form-body'
 
 type VenueCapabilitiesSectionProps = BaseProfileSectionProps
-type VenueDoc = Doc<'venues'> & { incomplete?: string[] }
 type SubTab = 'pool' | 'dive_site'
 
 interface VenueEntry {
@@ -36,7 +36,6 @@ interface VenueEntry {
   venueId: Id<'venues'> | null
   kind: VenueKind
   form: VenueFormValue
-  serverIncomplete: string[]
 }
 
 function venueToEntry(venue: VenueDoc): VenueEntry {
@@ -66,7 +65,6 @@ function venueToEntry(venue: VenueDoc): VenueEntry {
       compressorNitroxMin: venue.nitroxMin,
       compressorNitroxMax: venue.nitroxMax,
     },
-    serverIncomplete: venue.incomplete ?? [],
   }
 }
 
@@ -116,7 +114,6 @@ function makeDraft(
     venueId: null,
     kind,
     form: inheritDraftForm(prior, kind, inherited),
-    serverIncomplete: [],
   }
 }
 
@@ -129,17 +126,6 @@ function selectInitialTab(
   if (hasPool && !hasDiveSite) return 'pool'
   if (!hasPool && hasDiveSite) return 'dive_site'
   return intentKind ?? 'pool'
-}
-
-function localIncomplete(form: VenueFormValue, kind: VenueKind): string[] {
-  const missing: string[] = []
-  if (!form.name.trim()) missing.push('name')
-  if (!form.email.trim()) missing.push('email')
-  if (!form.phone.trim()) missing.push('phone')
-  if (!form.location) missing.push('address')
-  if (!(form.maxDepth > 0)) missing.push('maxDepth')
-  if (kind === 'pool' && !(form.maxCapacity > 0)) missing.push('maxCapacity')
-  return missing
 }
 
 function buildGasMixPayload(form: VenueFormValue) {
@@ -423,20 +409,24 @@ function VenueCapabilitiesInner({
           size="sm"
           role="tab"
           aria-selected={activeTab === 'pool'}
+          aria-required
           active={activeTab === 'pool'}
           onClick={() => setActiveTab('pool')}
         >
           {t('venueKinds.pool')}
+          <RequiredAsterisk />
         </MenuButton>
         <MenuButton
           variant="pill"
           size="sm"
           role="tab"
           aria-selected={activeTab === 'dive_site'}
+          aria-required
           active={activeTab === 'dive_site'}
           onClick={() => setActiveTab('dive_site')}
         >
           {t('venueKinds.dive_site')}
+          <RequiredAsterisk />
         </MenuButton>
       </nav>
 
@@ -455,18 +445,6 @@ function VenueCapabilitiesInner({
         savingKeys={savingKeys}
         savedKeys={savedKeys}
         saveErrors={saveErrors}
-        completeLabel={t('complete')}
-        incompleteLabel={t('incomplete')}
-        getCompleteness={(entry) => {
-          if (entry.venueId) {
-            return {
-              complete: entry.serverIncomplete.length === 0,
-              incomplete: entry.serverIncomplete,
-            }
-          }
-          const inc = localIncomplete(entry.form, entry.kind)
-          return { complete: inc.length === 0, incomplete: inc }
-        }}
         removeAriaLabel={(entry) =>
           t(removeLabelTemplate, { name: entry.form.name || newDefaultLabel })
         }

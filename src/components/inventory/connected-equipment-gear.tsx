@@ -3,7 +3,7 @@
 import { useMutation, useQuery } from 'convex/react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { Plus, Check } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { api } from '@/lib/convex-generated'
 import type { Id } from '@/lib/convex-generated'
 import {
@@ -28,7 +28,6 @@ import { Button } from '@/components/ui/button'
 import { LoadingCard } from '@/components/ui/loading-card'
 import { ConfirmActionDialog } from '@/components/ui/confirm-dialog'
 import { InlineError } from '@/components/ui/inline-error'
-import { RequiredAsterisk } from '@/components/ui/required-asterisk'
 import {
   ManufacturerMatrixSection,
   type InventoryCellRow,
@@ -138,17 +137,6 @@ export function ConnectedEquipmentGear() {
     () => pendingMatrices.filter((p) => p.gearType === activeGearType),
     [pendingMatrices, activeGearType],
   )
-
-  const tabStatus = useMemo<Record<GearType, 'complete' | 'incomplete'>>(() => {
-    const out = {} as Record<GearType, 'complete' | 'incomplete'>
-    for (const gt of GEAR_TYPES) {
-      const gearItems = grouped?.[gt] ?? []
-      out[gt] = gearItems.length > 0 && gearItems.every((item) => isGearItemComplete(item, gt))
-        ? 'complete'
-        : 'incomplete'
-    }
-    return out
-  }, [grouped])
 
   const hasAutoSeededRef = useRef<Partial<Record<GearType, boolean>>>({})
 
@@ -373,16 +361,8 @@ export function ConnectedEquipmentGear() {
         onChange={(id) => setActiveGearType(id as GearType)}
         tabs={GEAR_TYPES.map<TabItem>((gt) => ({
           id: gt,
-          label: (
-            <>
-              {GEAR_TYPE_LABELS[gt]}
-              {tabStatus[gt] === 'complete' ? (
-                <Check size={12} className="text-success" aria-hidden />
-              ) : (
-                <RequiredAsterisk />
-              )}
-            </>
-          ),
+          label: GEAR_TYPE_LABELS[gt],
+          required: true,
         }))}
       />
 
