@@ -16,6 +16,7 @@ import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 import { findLanguageByCode, languageToCode } from '@/lib/constants/dive-languages'
 import { LanguageField } from '@/components/ui/language-field'
+import Link from 'next/link'
 
 export type ProfileValues = {
   firstName: string
@@ -157,7 +158,15 @@ export function ProfileTab({ onClose }: { onClose?: () => void }) {
             required
           />
           <MetaField label={t('email')} className="field-lg">
-            {accountEmail || '—'}
+            <span className="flex items-center gap-2">
+              <span>{accountEmail || '—'}</span>
+              <Link
+                href="/account"
+                className="text-accent text-body underline-offset-2 hover:underline"
+              >
+                {t('changeEmail')}
+              </Link>
+            </span>
           </MetaField>
           <BirthdayField
             label={t('dateOfBirth')}

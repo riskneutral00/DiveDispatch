@@ -71,6 +71,7 @@
     "nickname": "Nickname",
     "phone": "Phone",
     "email": "Email",
+    "changeEmail": "Change",
     "dateOfBirth": "Date of birth",
     "year": "Year",
     "month": "Month",
