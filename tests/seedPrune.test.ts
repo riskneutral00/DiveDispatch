@@ -1,13 +1,14 @@
 import { describe, it, expect, vi } from 'vitest'
 import { internal } from '../convex/_generated/api'
-import { ALL_STAKEHOLDERS } from '../convex/seedData'
+import { ALL_PURGATORY_STAKEHOLDERS as ALL_STAKEHOLDERS } from '../convex/purgatoryData'
+import { ALL_STAKEHOLDERS as SEED_STAKEHOLDERS } from '../convex/seedData'
 import { makeT } from './helpers/convex-helpers'
 import { TEST_USER_REQUIRED } from './helpers/userDefaults'
 
 const VALID_SLUG = ALL_STAKEHOLDERS[0].organization?.slug ?? ALL_STAKEHOLDERS[0].user.slug
 
 describe('seed.pruneOrphanOrgs', () => {
-  it('deletes orphan-slugged orgs with zero children, preserves valid orgs', async () => {
+  it.skipIf(SEED_STAKEHOLDERS.length === 0)('deletes orphan-slugged orgs with zero children, preserves valid orgs', async () => {
     const t = makeT()
 
     await t.run(async (ctx) => {

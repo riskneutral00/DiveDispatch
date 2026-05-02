@@ -82,6 +82,7 @@ export const rentalChecklistValidator = v.object({
 export const BASE_PROFILE_CREATE_FIELDS = {
   address: addressStructuredValidator,
   placeId: v.optional(v.string()),
+  formattedAddress: v.optional(v.string()),
   lat: v.number(),
   lng: v.number(),
   email: v.string(),
@@ -91,6 +92,7 @@ export const BASE_PROFILE_CREATE_FIELDS = {
 export const BASE_PROFILE_UPDATE_FIELDS = {
   address: v.optional(addressStructuredValidator),
   placeId: v.optional(v.string()),
+  formattedAddress: v.optional(v.string()),
   lat: v.optional(v.number()),
   lng: v.optional(v.number()),
   email: v.optional(v.string()),

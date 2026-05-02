@@ -1,9 +1,10 @@
 import { describe, it, expect } from 'vitest'
 import { internal } from '../../convex/_generated/api'
 import { checkProfileCompleteness } from '../../convex/lib/profileCompleteness'
+import { ALL_STAKEHOLDERS } from '../../convex/seedData'
 import { makeT } from '../helpers/convex-helpers'
 
-describe('seed denorm + sea-fun autofilled prefs', () => {
+describe.skipIf(ALL_STAKEHOLDERS.length === 0)('seed denorm + sea-fun autofilled prefs', () => {
   it('sea-fun has a stakeholderPreferences row populated from self-owned resources after seedAll', async () => {
     const t = makeT()
     await t.action(internal.seed.seedAll, {})

@@ -5,8 +5,8 @@ import {
   isValidSupportedLocale,
   SUPPORTED_LOCALE_CODES,
 } from '../convex/shared/i18nConstants'
-import { ALL_STAKEHOLDERS } from '../convex/seedData'
-import { ALL_INSTRUCTORS } from '../convex/seedData'
+import { ALL_PURGATORY_STAKEHOLDERS as ALL_STAKEHOLDERS } from '../convex/purgatoryData'
+import { ALL_PURGATORY_INSTRUCTORS as ALL_INSTRUCTORS } from '../convex/purgatoryData'
 
 const LANGUAGE_CODE_PATTERN = /^[a-z]{2,3}(-[A-Z][a-z]{3})?(-[A-Z]{2})?$/
 

@@ -69,8 +69,8 @@ describe('users.upsertFromWebhook', () => {
       expect(all).toHaveLength(1)
       expect(all[0]._id).toBe(seedUserId!)
       expect(all[0].tokenIdentifier).toBe('https://clerk.example|user_abc')
-      expect(all[0].firstName).toBe('Real')
-      expect(all[0].lastName).toBe('Name')
+      expect(all[0].firstName).toBe('Seed')
+      expect(all[0].lastName).toBe('Stub')
     })
   })
 

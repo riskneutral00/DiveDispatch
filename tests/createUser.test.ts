@@ -713,7 +713,7 @@ describe('upsertFromWebhook email-rebind safety', () => {
     expect(resultId).toBe(seedId)
     const user = await t.run(async (ctx) => ctx.db.get(seedId))
     expect(user?.tokenIdentifier).toBe(newToken)
-    expect(user?.firstName).toBe('Clerk')
+    expect(user?.firstName).toBe('Seed')
 
     const audit = await t.run(async (ctx) => {
       return await ctx.db

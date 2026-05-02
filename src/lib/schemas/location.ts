@@ -4,6 +4,7 @@ import { addressSchema } from './i18n'
 export const addressLocationSchema = z.object({
   address: addressSchema,
   placeId: z.string().optional(),
+  formattedAddress: z.string().optional(),
   lat: z.number(),
   lng: z.number(),
 })

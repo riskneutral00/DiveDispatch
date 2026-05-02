@@ -43,7 +43,7 @@ function detectViolations(orgs: OrgShape[], canonical: Set<string>): string[] {
   return violations
 }
 
-describe('architecture: one org per stakeholder canonical slug', () => {
+describe.skipIf(ALL_STAKEHOLDERS.length === 0)('architecture: one org per stakeholder canonical slug', () => {
   it('after seedAll, organizations exactly mirror ALL_STAKEHOLDERS canonical slugs', async () => {
     const t = makeT()
 

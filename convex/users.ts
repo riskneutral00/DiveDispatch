@@ -27,8 +27,9 @@ import { insertUserRole, getAllUserRoles, type PermissionLevel } from './lib/use
 import { setUserOrganization } from './lib/userOrg'
 import { ensureSystemThemesInline } from './lib/ensureSystemThemes'
 import { ROLE_PRECEDENCE } from './lib/rolePrecedence'
-import { personProfileMine, entityProfilesMine } from './lib/profileHelpers'
+import { personProfileMine, entityProfilesMine, personProfileCreate, entityProfileCreate } from './lib/profileHelpers'
 import { isPersonRole, isEntityRole, type PersonRole, type EntityRole } from './shared/roleKinds'
+import type { UserIdentity } from 'convex/server'
 import { tryGetActiveOrg } from './lib/activeOrg'
 import type { AddressStructured } from './shared/addressValidator'
 
@@ -78,6 +79,51 @@ async function ensurePersonalOrg(
   const orgId = await createPersonalOrgRow(ctx, userSlug, firstName, lastName, email, now)
   await setUserOrganization(ctx, userId, orgId)
   return orgId
+}
+
+const BOOTSTRAP_ADDRESS: AddressStructured = { city: '', country: '' }
+
+async function bootstrapRoleProfiles(
+  ctx: MutationCtx,
+  actor: { user: Doc<'users'>; identity: UserIdentity },
+  roles: ReadonlyArray<EntityRole | PersonRole>,
+  org: Doc<'organizations'>,
+): Promise<void> {
+  const fullName = `${actor.user.firstName ?? ''} ${actor.user.lastName ?? ''}`.trim()
+
+  for (const role of roles) {
+    if (role === 'Venue') continue
+
+    if (isPersonRole(role)) {
+      const baseArgs: Record<string, unknown> = {
+        name: fullName,
+        address: BOOTSTRAP_ADDRESS,
+        lat: 0,
+        lng: 0,
+      }
+      if (role === 'Instructor') {
+        baseArgs.role = 'Instructor'
+        baseArgs.credential = []
+        baseArgs.teachingLanguages = []
+      } else if (role === 'Agent') {
+        baseArgs.associations = []
+      }
+      await personProfileCreate(ctx, baseArgs, role, { verified: false }, actor) // batch-exempt: roles is a tiny bounded array (max ~5)
+    } else if (isEntityRole(role)) {
+      const baseArgs: Record<string, unknown> = {
+        name: org.name,
+        address: BOOTSTRAP_ADDRESS,
+        lat: 0,
+        lng: 0,
+      }
+      if (role === 'DiveCenter') {
+        baseArgs.associations = []
+      } else if (role === 'Boat') {
+        baseArgs.fleet = []
+      }
+      await entityProfileCreate(ctx, baseArgs, role, { verified: false }, actor) // batch-exempt: roles is a tiny bounded array (max ~5)
+    }
+  }
 }
 
 export const store = mutation({
@@ -169,6 +215,7 @@ export const createUser = mutation({
 
       if (!resolvedOrgId) throw new ConvexError({ code: ErrorCode.INVARIANT_VIOLATION, reason: 'no_resolved_org' })
 
+      const insertedRoles: Array<EntityRole | PersonRole> = []
       if (args.roles && args.roles.length > 0) {
         const existingRoles = await ctx.db
           .query('userRoles')
@@ -187,7 +234,16 @@ export const createUser = mutation({
               permissionLevel,
               createdAt: now,
             })
+            insertedRoles.push(role as EntityRole | PersonRole)
           }
+        }
+      }
+
+      if (insertedRoles.length > 0) {
+        const userDoc = await ctx.db.get(existing._id)
+        const orgDoc = await ctx.db.get(resolvedOrgId)
+        if (userDoc && orgDoc) {
+          await bootstrapRoleProfiles(ctx, { user: userDoc, identity }, insertedRoles, orgDoc)
         }
       }
 
@@ -220,6 +276,7 @@ export const createUser = mutation({
       appLanguage: args.appLanguage ? normalizeAppLanguage(args.appLanguage) : 'en',
     })
 
+    const insertedRoles: Array<EntityRole | PersonRole> = []
     if (args.roles && args.roles.length > 0) {
       const uniqueRoles = [...new Set(args.roles)]
       const insertAt = Date.now()
@@ -233,6 +290,15 @@ export const createUser = mutation({
           permissionLevel,
           createdAt: insertAt,
         })
+        insertedRoles.push(uniqueRoles[i] as EntityRole | PersonRole)
+      }
+    }
+
+    if (insertedRoles.length > 0) {
+      const userDoc = await ctx.db.get(userId)
+      const orgDoc = await ctx.db.get(resolvedOrgId)
+      if (userDoc && orgDoc) {
+        await bootstrapRoleProfiles(ctx, { user: userDoc, identity }, insertedRoles, orgDoc)
       }
     }
 
@@ -486,12 +552,22 @@ export const upsertFromWebhook = internalMutation({
       .unique()
 
     if (existing) {
+      const fillFirstName = (existing.firstName ?? '') === '' && args.firstName !== ''
+      const fillLastName = (existing.lastName ?? '') === '' && args.lastName !== ''
+      const updateEmail = email !== '' && email !== (existing.email ?? '')
       await ctx.db.patch(existing._id, {
-        email,
-        firstName: args.firstName,
-        lastName: args.lastName,
+        ...(updateEmail && { email }),
+        ...(fillFirstName && { firstName: args.firstName }),
+        ...(fillLastName && { lastName: args.lastName }),
       })
-      await syncDiveStaffName(ctx, existing.organizationId, args.firstName, args.lastName)
+      if (fillFirstName || fillLastName) {
+        await syncDiveStaffName(
+          ctx,
+          existing.organizationId,
+          fillFirstName ? args.firstName : (existing.firstName ?? ''),
+          fillLastName ? args.lastName : (existing.lastName ?? ''),
+        )
+      }
       return existing._id
     }
 
@@ -509,10 +585,12 @@ export const upsertFromWebhook = internalMutation({
         const now = Date.now()
 
         if (allowed) {
+          const fillFirstName = (byEmail.firstName ?? '') === '' && args.firstName !== ''
+          const fillLastName = (byEmail.lastName ?? '') === '' && args.lastName !== ''
           await ctx.db.patch(byEmail._id, {
             tokenIdentifier: args.tokenIdentifier,
-            firstName: args.firstName,
-            lastName: args.lastName,
+            ...(fillFirstName && { firstName: args.firstName }),
+            ...(fillLastName && { lastName: args.lastName }),
           })
           await ctx.db.insert('webhookAuditLog', {
             eventType: 'user_rebind',
@@ -524,7 +602,14 @@ export const upsertFromWebhook = internalMutation({
             email,
             at: now,
           })
-          await syncDiveStaffName(ctx, byEmail.organizationId, args.firstName, args.lastName)
+          if (fillFirstName || fillLastName) {
+            await syncDiveStaffName(
+              ctx,
+              byEmail.organizationId,
+              fillFirstName ? args.firstName : (byEmail.firstName ?? ''),
+              fillLastName ? args.lastName : (byEmail.lastName ?? ''),
+            )
+          }
           return byEmail._id
         }
 
@@ -777,3 +862,4 @@ export const cascadeUserDeletion = internalAction({
     }
   },
 })
+

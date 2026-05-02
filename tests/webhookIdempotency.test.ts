@@ -100,6 +100,8 @@ describe('upsertFromWebhook idempotency', () => {
     })
 
     expect(user?.email).toBe('patched@test.com')
+    expect(user?.firstName).toBe('Seed')
+    expect(user?.lastName).toBe('User')
 
     const logEntries = await t.run(async (ctx) => {
       return await ctx.db
@@ -146,6 +148,26 @@ describe('upsertFromWebhook idempotency', () => {
     })
 
     expect(user?.email).toBe('second@test.com')
+    expect(user?.firstName).toBe('Seed')
+
+    const logEntries = await t.run(async (ctx) => {
+      return await ctx.db
+        .query('idempotencyLog')
+        .withIndex('by_key_mutationName', (q) =>
+          q.eq('key', svixIdA).eq('mutationName', 'clerk_webhook_upsert'),
+        )
+        .collect()
+    })
+    const logEntriesB = await t.run(async (ctx) => {
+      return await ctx.db
+        .query('idempotencyLog')
+        .withIndex('by_key_mutationName', (q) =>
+          q.eq('key', svixIdB).eq('mutationName', 'clerk_webhook_upsert'),
+        )
+        .collect()
+    })
+    expect(logEntries).toHaveLength(1)
+    expect(logEntriesB).toHaveLength(1)
   })
 
   it('audit-logs user_created_skipped on no-match and does not duplicate audit on svix replay', async () => {
@@ -312,6 +334,7 @@ describe('webhook backwards compatibility', () => {
     })
 
     expect(user?.email).toBe('second@test.com')
+    expect(user?.firstName).toBe('Seed')
   })
 
   it('deleteFromWebhook works without svixId (no guard applied)', async () => {

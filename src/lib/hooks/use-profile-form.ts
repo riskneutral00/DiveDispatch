@@ -92,7 +92,10 @@ export function useProfileForm<
   const touchedRef = useRef<Set<string>>(new Set())
 
   const baselineRef = useRef<TForm>(defaults)
+  const formRef = useRef<TForm>(defaults)
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+
+  useEffect(() => { formRef.current = form }, [form])
 
   useEffect(() => {
     if (saved) {
@@ -124,7 +127,11 @@ export function useProfileForm<
   }, [profile, me, initialized, fromProfile, fromMe, defaults, waitForMeBeforeInit])
 
   function setField<K extends keyof TForm>(key: K, value: TForm[K]) {
-    setForm((prev) => ({ ...prev, [key]: value }))
+    setForm((prev) => {
+      const next = { ...prev, [key]: value }
+      formRef.current = next
+      return next
+    })
     setSaved(false)
     touchedRef.current.add(key as string)
     if (errors[key as string]) {
@@ -143,7 +150,7 @@ export function useProfileForm<
   const validateField = useCallback(
     (field: string) => {
       touchedRef.current.add(field)
-      const result = schema.safeParse(form)
+      const result = schema.safeParse(formRef.current)
       if (result.success) {
         setErrors((prev) => {
           let changed = false
@@ -176,7 +183,7 @@ export function useProfileForm<
         return next
       })
     },
-    [schema, form],
+    [schema],
   )
 
   const fieldProps = useCallback(

@@ -90,6 +90,8 @@ export function BusinessContactSection({
     inheritFromOtherRoles ? { excludeRole: inheritFromOtherRoles } : 'skip',
   )
 
+  const myOrg = useQuery(api.organizations.mine, showName ? {} : 'skip')
+
   const languageBlock = languageKey ? LANGUAGE_BLOCK[languageKey] : null
 
   const mergedDefaults: BusinessContactForm = {
@@ -104,6 +106,10 @@ export function BusinessContactSection({
         ...contactFromProfile(inheritance as unknown as Record<string, unknown>),
       }
     : mergedDefaults
+
+  if (showName && !inheritedDefaults.name && myOrg?.name) {
+    inheritedDefaults.name = myOrg.name
+  }
 
   const waitingForInheritance = inheritFromOtherRoles !== undefined && inheritance === undefined
 
