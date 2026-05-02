@@ -28,12 +28,12 @@ export default defineSchema({
     lastName: v.string(),
     nickname: v.optional(v.string()),
     appLanguage: v.string(),
-    phone: v.optional(v.string()),
-    dateOfBirth: v.optional(v.string()),
+    phone: v.string(),
+    dateOfBirth: v.string(),
     selectedThemeId: v.optional(v.id('themes')),
     savedThemeIds: v.optional(v.array(v.id('themes'))),
-    tcAcceptedAt: v.optional(v.number()),
-    tcVersion: v.optional(v.string()),
+    tcAcceptedAt: v.number(),
+    tcVersion: v.string(),
     organizationId: v.optional(v.id('organizations')),
   })
     .index('by_tokenIdentifier', ['tokenIdentifier'])

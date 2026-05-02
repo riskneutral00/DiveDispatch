@@ -10,7 +10,9 @@
 
 import type * as admin_auditOrgRelationships from "../admin/auditOrgRelationships.js";
 import type * as admin_backfillPermissionLevels from "../admin/backfillPermissionLevels.js";
+import type * as admin_backfillUserRequiredFields from "../admin/backfillUserRequiredFields.js";
 import type * as admin_bindOrgClerkOrgId from "../admin/bindOrgClerkOrgId.js";
+import type * as admin_debugVenueEval from "../admin/debugVenueEval.js";
 import type * as admin_promoteAreaOrg from "../admin/promoteAreaOrg.js";
 import type * as admin_rebindOrgClerkOrgId from "../admin/rebindOrgClerkOrgId.js";
 import type * as admin_restoreOrg from "../admin/restoreOrg.js";
@@ -22,6 +24,7 @@ import type * as backfill_credentialSpecialtyRatings from "../backfill/credentia
 import type * as backfill_entityProfileComplete from "../backfill/entityProfileComplete.js";
 import type * as backfill_entitySlugs from "../backfill/entitySlugs.js";
 import type * as backfill_equipmentManufacturers from "../backfill/equipmentManufacturers.js";
+import type * as backfill_identityCanonical from "../backfill/identityCanonical.js";
 import type * as backfill_personalOrgs from "../backfill/personalOrgs.js";
 import type * as backfill_stripUserVestigial from "../backfill/stripUserVestigial.js";
 import type * as boatWidget from "../boatWidget.js";
@@ -163,7 +166,9 @@ import type {
 declare const fullApi: ApiFromModules<{
   "admin/auditOrgRelationships": typeof admin_auditOrgRelationships;
   "admin/backfillPermissionLevels": typeof admin_backfillPermissionLevels;
+  "admin/backfillUserRequiredFields": typeof admin_backfillUserRequiredFields;
   "admin/bindOrgClerkOrgId": typeof admin_bindOrgClerkOrgId;
+  "admin/debugVenueEval": typeof admin_debugVenueEval;
   "admin/promoteAreaOrg": typeof admin_promoteAreaOrg;
   "admin/rebindOrgClerkOrgId": typeof admin_rebindOrgClerkOrgId;
   "admin/restoreOrg": typeof admin_restoreOrg;
@@ -175,6 +180,7 @@ declare const fullApi: ApiFromModules<{
   "backfill/entityProfileComplete": typeof backfill_entityProfileComplete;
   "backfill/entitySlugs": typeof backfill_entitySlugs;
   "backfill/equipmentManufacturers": typeof backfill_equipmentManufacturers;
+  "backfill/identityCanonical": typeof backfill_identityCanonical;
   "backfill/personalOrgs": typeof backfill_personalOrgs;
   "backfill/stripUserVestigial": typeof backfill_stripUserVestigial;
   boatWidget: typeof boatWidget;

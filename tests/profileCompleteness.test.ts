@@ -74,7 +74,7 @@ describe('checkProfileCompleteness', () => {
       const userId = await seedUser(ctx, {
         role: 'Equipment',
       })
-      await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en', dateOfBirth: undefined })
+      await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en', dateOfBirth: '' })
       await seedEquipmentProfile(ctx, userId)
 
       const result = await checkProfileCompleteness(ctx, { _id: userId }, 'Equipment')

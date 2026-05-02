@@ -157,20 +157,13 @@ describe('createUser mutation', () => {
     expect(user?.nickname).toBe('Captain Mike')
   })
 
-  it('defaults phone to undefined when omitted', async () => {
+  it('requires phone at the mutation boundary', async () => {
     const t = makeT()
-    vi.useFakeTimers({ now: Date.now() })
-    const userId = await t
-      .withIdentity({ tokenIdentifier: 'clerk|no-phone', email: 'no-phone@test.dev' })
-      .mutation(api.users.createUser, { ...createUserDefaults,
-        role: 'DiveCenter',
-      })
-
-    await t.finishAllScheduledFunctions(vi.runAllTimers)
-    vi.useRealTimers()
-
-    const user = await t.run(async (ctx) => ctx.db.get(userId))
-    expect(user?.phone).toBeUndefined()
+    const { phone: _phone, ...withoutPhone } = createUserDefaults
+    await expect(
+      t.withIdentity({ tokenIdentifier: 'clerk|no-phone', email: 'no-phone@test.dev' })
+        .mutation(api.users.createUser, { ...withoutPhone, role: 'DiveCenter' } as unknown as Parameters<typeof t.mutation>[1]),
+    ).rejects.toThrow()
   })
 
   it('patches existing user with new fields on idempotent call', async () => {

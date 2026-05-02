@@ -209,6 +209,7 @@ describe('createUser email-rebind safety', () => {
         dateOfBirth: '1990-01-01',
         tcAccepted: true,
         tcVersion: '1.0',
+        phone: '+66812345678',
       })
 
     expect(resultId).toBe(originalId)

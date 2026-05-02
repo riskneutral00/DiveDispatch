@@ -193,6 +193,8 @@ async function insertUser(ctx: MutationCtx, s: SeedStakeholder) {
   return ctx.db.insert('users', {
     ...userFields,
     tokenIdentifier: token,
+    tcAcceptedAt: Date.now(),
+    tcVersion: '1.0',
   })
 }
 

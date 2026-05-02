@@ -174,6 +174,7 @@ describe('userRoles.organizationId stays in sync with users.organizationId', () 
       dateOfBirth: '1990-01-01',
       tcAccepted: true,
       tcVersion: 'v1',
+      phone: '+66812345678',
     })
 
     await t.run(async (ctx) => {
@@ -208,6 +209,7 @@ describe('userRoles.organizationId stays in sync with users.organizationId', () 
       dateOfBirth: '1990-01-01',
       tcAccepted: true,
       tcVersion: 'v1',
+      phone: '+66812345678',
     })
 
     await t.run(async (ctx) => {

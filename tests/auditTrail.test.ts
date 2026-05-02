@@ -16,6 +16,10 @@ async function seedUser(ctx: unknown, slug = 'dc-test') {
     firstName: 'Test',
     lastName: 'User',
     appLanguage: 'en',
+    phone: '+66812345678',
+    dateOfBirth: '1990-01-01',
+    tcAcceptedAt: 1700000000000,
+    tcVersion: '1.0',
   })
 }
 

@@ -91,7 +91,7 @@ export const createUser = mutation({
     tcAccepted: v.literal(true),
     tcVersion: v.string(),
     nickname: v.optional(v.string()),
-    phone: v.optional(v.string()),
+    phone: v.string(),
     appLanguage: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -139,7 +139,7 @@ export const createUser = mutation({
         lastName: args.lastName,
         ...(existing.dateOfBirth === undefined && { dateOfBirth: args.dateOfBirth }),
         ...(args.nickname !== undefined && { nickname: args.nickname }),
-        ...(args.phone !== undefined && { phone: args.phone }),
+        phone: args.phone,
         ...(args.appLanguage !== undefined && { appLanguage: normalizeAppLanguage(args.appLanguage) }),
         ...(((existing.email ?? '') === '' && email !== '') && { email }),
         ...(existing.tcAcceptedAt === undefined && { tcAcceptedAt: now }),
@@ -200,8 +200,8 @@ export const createUser = mutation({
       dateOfBirth: args.dateOfBirth,
       tcAcceptedAt: now,
       tcVersion: args.tcVersion,
+      phone: args.phone,
       ...(args.nickname !== undefined && { nickname: args.nickname }),
-      ...(args.phone !== undefined && { phone: args.phone }),
       appLanguage: args.appLanguage ? normalizeAppLanguage(args.appLanguage) : 'en',
     })
 
@@ -575,6 +575,10 @@ export const deleteFromWebhook = internalMutation({
       email: 'deleted@deleted.invalid',
       firstName: '',
       lastName: '',
+      phone: user.phone ?? 'deleted',
+      dateOfBirth: user.dateOfBirth ?? '1970-01-01',
+      tcAcceptedAt: user.tcAcceptedAt ?? 0,
+      tcVersion: user.tcVersion ?? 'deleted',
     })
 
     await ctx.scheduler.runAfter(0, internal.users.cascadeUserDeletion, {
