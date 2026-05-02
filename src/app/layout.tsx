@@ -38,7 +38,7 @@ export default async function RootLayout({
           signInUrl="/sign-in"
           signUpUrl="/sign-up"
           signInFallbackRedirectUrl="/dashboard"
-          signUpFallbackRedirectUrl="/sign-up"
+          signUpFallbackRedirectUrl="/dashboard"
         >
           <ConvexClerkProvider>
             <StoreUserProvider>

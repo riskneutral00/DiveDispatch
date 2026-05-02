@@ -180,6 +180,9 @@ export default function SignUpPage() {
           />
         </div>
         <SignUp
+          routing="path"
+          path="/sign-up"
+          signInUrl="/sign-in"
           fallbackRedirectUrl="/sign-up"
           appearance={clerkGlassAppearance}
         />
