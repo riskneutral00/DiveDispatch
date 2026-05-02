@@ -29,10 +29,12 @@ describe('FieldLabel', () => {
 })
 
 describe('FieldError', () => {
-  it('returns null when message is undefined', () => {
+  it('renders an empty hidden slot when message is undefined', () => {
     const { container } = render(<FieldError id="e1" />)
     const el = container.querySelector('#e1')
-    expect(el).toBeNull()
+    expect(el).not.toBeNull()
+    expect(el).toHaveAttribute('aria-hidden', 'true')
+    expect(el).not.toHaveAttribute('role')
   })
 
   it('renders alert with id and message when provided', () => {

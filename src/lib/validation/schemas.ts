@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { COURSE_CODES } from '@/lib/constants/course-catalog'
 import { phoneSchema } from '@/lib/schemas/i18n'
+import { ERROR_REQUIRED } from '@/lib/validation/error-codes'
 import {
   CERT_REQUIRED_ACTIVITIES,
   calcAgeAtDate,
@@ -22,29 +23,29 @@ function requireEndAfterStart(
 }
 
 const phoneField = phoneSchema({
-  requiredMessage: 'Required',
+  requiredMessage: ERROR_REQUIRED,
   invalidMessage: 'Use a valid international phone number',
 })
 
-const dateField = z.string().min(1, 'Required')
+const dateField = z.string().min(1, ERROR_REQUIRED)
 
 const courseCodes = COURSE_CODES
 
 const baseCustomerContactSchema = z.object({
-  legalFirstName: z.string().min(1, 'Required'),
-  legalLastName: z.string().min(1, 'Required'),
+  legalFirstName: z.string().min(1, ERROR_REQUIRED),
+  legalLastName: z.string().min(1, ERROR_REQUIRED),
   preferredName: z.string().optional(),
   email: z.string().email('Invalid email address'),
   phone: phoneField,
   dateOfBirth: dateField,
   gender: z.enum(['M', 'F', 'Other']),
-  nationality: z.string().min(1, 'Required'),
-  passportNumber: z.string().min(1, 'Required'),
-  passportIssuingCountry: z.string().min(1, 'Required'),
+  nationality: z.string().min(1, ERROR_REQUIRED),
+  passportNumber: z.string().min(1, ERROR_REQUIRED),
+  passportIssuingCountry: z.string().min(1, ERROR_REQUIRED),
   passportExpirationDate: dateField,
-  emergencyContactName: z.string().min(1, 'Required'),
+  emergencyContactName: z.string().min(1, ERROR_REQUIRED),
   emergencyContactPhone: phoneField,
-  emergencyContactRelation: z.string().min(1, 'Required'),
+  emergencyContactRelation: z.string().min(1, ERROR_REQUIRED),
   agency: z.string().optional(),
   agencyID: z.string().optional(),
   allergies: z.string().optional(),
@@ -156,7 +157,7 @@ export const bookingDetailsSchema = z
 export type BookingDetailsData = z.infer<typeof bookingDetailsSchema>
 
 export const diverEntryBaseSchema = z.object({
-  name: z.string().min(1, 'Diver name is required'),
+  name: z.string().min(1, ERROR_REQUIRED),
   abbrev: z.string().optional(),
   flag: z.object({
     code: z.string(),
@@ -225,10 +226,10 @@ export function makeBookingDiversSchema(
     .extend({
       abbrev: z
         .string()
-        .min(1, 'Abbreviation required')
+        .min(1, ERROR_REQUIRED)
         .max(4, 'Abbreviation must be at most 4 characters'),
       flag: z.object({
-        code: z.string().min(1, 'Nationality required'),
+        code: z.string().min(1, ERROR_REQUIRED),
         label: z.string(),
       }),
     })

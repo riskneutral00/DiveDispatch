@@ -8,7 +8,7 @@ import {
   Label,
 } from 'react-aria-components'
 import { CalendarDate, parseDate } from '@internationalized/date'
-import { FieldError } from '@/components/ui/field-shell'
+import { FieldMessage } from '@/components/ui/field-shell'
 import { RequiredAsterisk } from '@/components/ui/required-asterisk'
 import { cn } from '@/lib/utils/cn'
 import { isValidISODate } from '@/lib/utils/date'
@@ -89,12 +89,7 @@ export function DateField({
         </DateInput>
       </div>
 
-      {error && <FieldError id={`${id}-error`} message={error} />}
-      {!error && helperText && (
-        <p id={`${id}-helper`} className="text-body text-secondary truncate">
-          {helperText}
-        </p>
-      )}
+      <FieldMessage id={`${id}-error`} error={error} helperText={helperText} />
     </AriaDateField>
   )
 }

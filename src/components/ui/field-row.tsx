@@ -1,10 +1,11 @@
 import { useId, type ReactNode } from "react";
+import { FieldMessage } from "@/components/ui/field-shell";
 import { RequiredAsterisk } from "@/components/ui/required-asterisk";
 import { cn } from "@/lib/utils/cn";
 
 const LITERAL = {
-  default: "grid grid-cols-6 gap-x-3 gap-y-4 sm:flex sm:flex-wrap sm:items-end sm:gap-4", // design-ok: 6-col mobile baseline with field-* width tokens, flex-wrap items-end on sm+
-  compact: "grid grid-cols-6 gap-x-3 gap-y-4 sm:flex sm:flex-wrap sm:items-end sm:gap-3", // design-ok: same 6-col baseline, compact desktop gap (sm:gap-3) for dense data
+  default: "grid grid-cols-6 gap-x-3 gap-y-0 sm:flex sm:flex-wrap sm:items-end sm:gap-x-4 sm:gap-y-0", // design-ok: 6-col mobile baseline with field-* width tokens; per-field h-4 message slot provides row separation when fields wrap, items-end keeps underlines aligned
+  compact: "grid grid-cols-6 gap-x-3 gap-y-0 sm:flex sm:flex-wrap sm:items-end sm:gap-x-3 sm:gap-y-0", // design-ok: same 6-col baseline, compact desktop gap (sm:gap-x-3) for dense data
 } as const;
 
 interface FieldRowProps {
@@ -44,11 +45,7 @@ export function FieldRow({
         {required ? <RequiredAsterisk /> : null}
       </legend>
       <div className={cn(inner, innerClassName)}>{children}</div>
-      {error ? (
-        <p id={errorId} role="alert">
-          {error}
-        </p>
-      ) : null}
+      <FieldMessage id={errorId} error={error} />
     </fieldset>
   );
 }

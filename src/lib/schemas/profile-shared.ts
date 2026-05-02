@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { addressLocationSchema } from './location'
 import { e164Schema } from './i18n'
+import { ERROR_REQUIRED } from '@/lib/validation/error-codes'
 import { AOW_REQUIRED_SPECIALTY_COUNT } from '@/lib/constants/agencies'
 import { BOAT_TYPES } from '@/lib/constants/boat-types'
 import { GAS_MIXES } from '@/lib/constants/gas-mixes'
@@ -14,21 +15,21 @@ import {
 export { addressLocationSchema, type AddressLocationValue } from './location'
 
 export const contactSchema = z.object({
-  name: z.string().min(1, 'Business name is required'),
-  location: addressLocationSchema.nullable().refine((v) => v !== null, { message: 'Location is required' }),
+  name: z.string().min(1, ERROR_REQUIRED),
+  location: addressLocationSchema.nullable().refine((v) => v !== null, { message: ERROR_REQUIRED }),
   email: z.email('Invalid email address'),
   phone: e164Schema,
 })
 
 export const associationSchema = z.object({
-  agency: z.string().min(1, 'Agency is required'),
-  number: z.string().min(1, 'Member ID is required'),
+  agency: z.string().min(1, ERROR_REQUIRED),
+  number: z.string().min(1, ERROR_REQUIRED),
 })
 
 export const credentialSchema = z.object({
-  agency: z.string().min(1, 'Agency is required'),
-  level: z.string().min(1, 'Certification level is required'),
-  agencyID: z.string().min(1, 'Agency ID is required'),
+  agency: z.string().min(1, ERROR_REQUIRED),
+  level: z.string().min(1, ERROR_REQUIRED),
+  agencyID: z.string().min(1, ERROR_REQUIRED),
 })
 
 export const instructorCredentialSchema = credentialSchema.extend({
@@ -42,8 +43,8 @@ export const diveCenterLanguagesSchema = z.object({
 export const diveCenterContactMergedSchema = contactSchema.extend(diveCenterLanguagesSchema.shape)
 
 const diveCenterAssociationItemSchema = z.object({
-  agency: z.string().min(1, 'Agency is required'),
-  number: z.string().min(1, 'Member ID is required'),
+  agency: z.string().min(1, ERROR_REQUIRED),
+  number: z.string().min(1, ERROR_REQUIRED),
   owDays: z.number().min(1),
   aowDays: z.number().min(1),
   oaDays: z.number().min(1),
@@ -154,8 +155,8 @@ export const compressorGasMixesSchema = z
   )
 
 export const diveSiteDetailsSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  location: addressLocationSchema.nullable().refine((v) => v !== null, { message: 'Location is required' }),
+  name: z.string().min(1, ERROR_REQUIRED),
+  location: addressLocationSchema.nullable().refine((v) => v !== null, { message: ERROR_REQUIRED }),
   kind: z.enum(VENUE_KINDS),
   features: z.array(z.enum(VENUE_FEATURES)).default([]),
 })

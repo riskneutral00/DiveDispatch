@@ -2,7 +2,7 @@
 
 import { useId, useState } from "react";
 import { cn } from "@/lib/utils/cn";
-import { FieldError } from "@/components/ui/field-shell";
+import { FieldMessage } from "@/components/ui/field-shell";
 import { RequiredAsterisk } from "@/components/ui/required-asterisk";
 import { useFloatingLabel } from "@/lib/hooks/use-floating-label";
 
@@ -24,6 +24,7 @@ interface SimpleSelectProps {
   disabled?: boolean;
   underline?: boolean;
   className?: string;
+  suppressMessageSlot?: boolean;
   "aria-label"?: string;
   "data-testid"?: string;
 }
@@ -40,6 +41,7 @@ export function SimpleSelect({
   disabled,
   underline = true,
   className,
+  suppressMessageSlot,
   "aria-label": ariaLabel,
   "data-testid": testId,
 }: SimpleSelectProps) {
@@ -153,7 +155,7 @@ export function SimpleSelect({
         </svg>
       </span>
 
-      {error && <FieldError id={`${id}-error`} message={error} />}
+      {!suppressMessageSlot && <FieldMessage id={`${id}-error`} error={error} />}
     </div>
   );
 }

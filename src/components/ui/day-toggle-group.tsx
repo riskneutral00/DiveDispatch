@@ -1,7 +1,7 @@
 'use client'
 
-import { FieldLabel } from '@/components/ui/field-shell'
-import { InlineError } from '@/components/ui/inline-error'
+import { useId } from 'react'
+import { FieldLabel, FieldMessage } from '@/components/ui/field-shell'
 import { TOUCH_TARGET_CLASS } from '@/lib/constants/button-sizes'
 import { cn } from '@/lib/utils/cn'
 
@@ -30,6 +30,7 @@ export function DayToggleGroup({
   error,
   label,
 }: DayToggleGroupProps) {
+  const baseId = useId()
   function toggle(day: number) {
     if (disabledDays.includes(day)) return
     onChange(
@@ -77,7 +78,7 @@ export function DayToggleGroup({
           )
         })}
       </div>
-      {error && <InlineError size="sm">{error}</InlineError>}
+      <FieldMessage id={`${baseId}-error`} error={error} />
     </div>
   )
 }

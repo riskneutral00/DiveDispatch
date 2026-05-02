@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useId, useState } from 'react'
-import { FieldError } from '@/components/ui/field-shell'
+import { FieldMessage } from '@/components/ui/field-shell'
 import { RequiredAsterisk } from '@/components/ui/required-asterisk'
 import { useFloatingLabel } from '@/lib/hooks/use-floating-label'
 import { cn } from '@/lib/utils/cn'
@@ -12,6 +12,7 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   helperText?: string
   leadingIcon?: React.ReactNode
   trailingIcon?: React.ReactNode
+  suppressMessageSlot?: boolean
 }
 
 export function Input({
@@ -20,6 +21,7 @@ export function Input({
   helperText,
   leadingIcon,
   trailingIcon,
+  suppressMessageSlot,
   disabled,
   className = "",
   id: externalId,
@@ -104,12 +106,7 @@ export function Input({
         </span>
       )}
 
-      {error && <FieldError id={`${id}-error`} message={error} />}
-      {!error && helperText && (
-        <p id={`${id}-helper`} className="text-body text-secondary truncate">
-          {helperText}
-        </p>
-      )}
+      {!suppressMessageSlot && <FieldMessage id={`${id}-error`} error={error} helperText={helperText} />}
     </div>
   );
 }

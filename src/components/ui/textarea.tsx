@@ -1,6 +1,6 @@
 import React, { useId, useState } from "react";
 import { cn } from "@/lib/utils/cn";
-import { FieldError } from "@/components/ui/field-shell";
+import { FieldMessage } from "@/components/ui/field-shell";
 import { RequiredAsterisk } from "@/components/ui/required-asterisk";
 import { useFloatingLabel } from "@/lib/hooks/use-floating-label";
 import { resolveFieldWidth } from "@/lib/utils/field-width";
@@ -72,12 +72,7 @@ export function Textarea({
         </label>
       )}
 
-      {error && <FieldError id={`${id}-error`} message={error} />}
-      {!error && helperText && (
-        <p id={`${id}-helper`} className="text-body text-secondary truncate">
-          {helperText}
-        </p>
-      )}
+      <FieldMessage id={`${id}-error`} error={error} helperText={helperText} />
     </div>
   );
 }

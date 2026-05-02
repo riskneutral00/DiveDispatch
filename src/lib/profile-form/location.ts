@@ -1,6 +1,7 @@
 import countries from 'i18n-iso-countries'
 import enCountries from 'i18n-iso-countries/langs/en.json'
 import { addressLocationSchema, type AddressLocationValue } from '@/lib/schemas/location'
+import { ERROR_REQUIRED } from '@/lib/validation/error-codes'
 import { APP_LANGUAGE_TO_LOCALE, findLanguageByCode, CHINESE_SCRIPT_LABELS } from '@/lib/constants/dive-languages'
 import type { SupportedLocale } from '@/lib/constants/locales'
 import type { LanguageCode } from '@/lib/constants/dive-languages'
@@ -16,7 +17,7 @@ function toIsoCountryCode(value: string | undefined): string | undefined {
   return iso || undefined
 }
 
-const DEFAULT_LOCATION_REQUIRED = 'Location is required'
+const DEFAULT_LOCATION_REQUIRED = ERROR_REQUIRED
 
 export function nullableProfileLocation(
   message: string = DEFAULT_LOCATION_REQUIRED,
@@ -39,6 +40,7 @@ type ProfileLocationDoc = {
   placeName?: string
   country?: string
   placeId?: string
+  formattedAddress?: string
   lat: number
   lng: number
 }
@@ -56,6 +58,7 @@ export function locationFromProfileDoc(p: ProfileLocationDoc): ProfileLocationVa
       postalCode: addr?.postalCode,
     },
     placeId: (p.placeId as string | null | undefined) ?? undefined,
+    formattedAddress: p.formattedAddress,
     lat: p.lat,
     lng: p.lng,
   }
@@ -74,6 +77,7 @@ export function contactFieldsFromProfile(p: Record<string, unknown>): {
       placeName: p.placeName as string | undefined,
       country: p.country as string | undefined,
       placeId: p.placeId as string | undefined,
+      formattedAddress: p.formattedAddress as string | undefined,
       lat: (p.lat as number) ?? 0,
       lng: (p.lng as number) ?? 0,
     }),
@@ -126,6 +130,7 @@ export function locationToPayload(loc: ProfileLocationValue): Record<string, unk
   return {
     address: loc.address,
     placeId: loc.placeId,
+    formattedAddress: loc.formattedAddress,
     lat: loc.lat,
     lng: loc.lng,
   }

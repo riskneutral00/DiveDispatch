@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl'
 import { X } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import { Dialog } from '@/components/ui/dialog'
+import { FieldMessage } from '@/components/ui/field-shell'
 import { RequiredAsterisk } from '@/components/ui/required-asterisk'
 
 import type { AddressLocationValue } from '@/lib/schemas/location'
@@ -98,11 +99,7 @@ function LocationPickerTrigger({ value, onOpen, onClear, error, label, required,
           {required && <RequiredAsterisk />}
         </label>
       )}
-      {error && (
-        <p role="alert" className="text-body text-destructive">
-          {error}
-        </p>
-      )}
+      <FieldMessage id={inputId} error={error} />
     </div>
   )
 }

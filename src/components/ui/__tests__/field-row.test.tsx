@@ -4,9 +4,9 @@ import { render, screen } from '@testing-library/react'
 import { FieldRow } from '../field-row'
 
 const DEFAULT_LITERAL =
-  'grid grid-cols-6 gap-x-3 gap-y-4 sm:flex sm:flex-wrap sm:items-end sm:gap-4'
+  'grid grid-cols-6 gap-x-3 gap-y-0 sm:flex sm:flex-wrap sm:items-end sm:gap-x-4 sm:gap-y-0'
 const COMPACT_LITERAL =
-  'grid grid-cols-6 gap-x-3 gap-y-4 sm:flex sm:flex-wrap sm:items-end sm:gap-3'
+  'grid grid-cols-6 gap-x-3 gap-y-0 sm:flex sm:flex-wrap sm:items-end sm:gap-x-3 sm:gap-y-0'
 
 describe('FieldRow', () => {
   describe('unlabeled mode (no label prop)', () => {

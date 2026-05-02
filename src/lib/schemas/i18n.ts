@@ -5,6 +5,7 @@ import {
   isValidLocale,
   isValidLanguageCode,
 } from '@/lib/constants/i18n'
+import { ERROR_REQUIRED } from '@/lib/validation/error-codes'
 
 interface PhoneSchemaOptions {
   requiredMessage?: string
@@ -12,7 +13,7 @@ interface PhoneSchemaOptions {
 }
 
 export function phoneSchema({
-  requiredMessage = 'Phone is required',
+  requiredMessage = ERROR_REQUIRED,
   invalidMessage = 'Phone must be valid E.164 format',
 }: PhoneSchemaOptions = {}) {
   return z
@@ -39,7 +40,7 @@ export const languageCodeSchema = z
 
 export const addressSchema = z.object({
   street: z.string().optional(),
-  city: z.string().min(1, 'City is required'),
+  city: z.string().min(1, ERROR_REQUIRED),
   state: z.string().optional(),
   country: countryCodeSchema,
   postalCode: z.string().optional(),

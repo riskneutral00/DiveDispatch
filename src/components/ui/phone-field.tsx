@@ -6,7 +6,7 @@ import PhoneInputWithCountrySelect from 'react-phone-number-input/core'
 import enLabels from 'react-phone-number-input/locale/en.json'
 import metadata from 'libphonenumber-js/metadata.max.json'
 import { getCountryCallingCode, type CountryCode } from 'libphonenumber-js/min'
-import { FieldError } from '@/components/ui/field-shell'
+import { FieldMessage } from '@/components/ui/field-shell'
 import { RequiredAsterisk } from '@/components/ui/required-asterisk'
 import { FlagEmoji, countryCodeToEmoji } from '@/components/ui/flag-emoji'
 import { useFloatingLabel } from '@/lib/hooks/use-floating-label'
@@ -148,15 +148,7 @@ export function PhoneField({
         </label>
       )}
 
-      {displayError && <FieldError id={`${id}-error`} message={displayError} />}
-      {!displayError && helperText && (
-        <p
-          id={`${id}-helper`}
-          className="text-body text-secondary truncate"
-        >
-          {helperText}
-        </p>
-      )}
+      <FieldMessage id={`${id}-error`} error={displayError} helperText={helperText} />
     </div>
   )
 }

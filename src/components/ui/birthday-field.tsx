@@ -3,7 +3,7 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import { SimpleSelect } from '@/components/ui/simple-select'
-import { FieldError } from '@/components/ui/field-shell'
+import { FieldMessage } from '@/components/ui/field-shell'
 import { RequiredAsterisk } from '@/components/ui/required-asterisk'
 import { MIN_AGE_YEARS, MIN_BIRTH_YEAR } from '@/lib/constants/age'
 import { isValidISODate } from '@/lib/utils/date'
@@ -123,7 +123,7 @@ export function BirthdayField({
         onBlur()
       }}
     >
-      <legend className="text-label text-secondary mb-1">
+      <legend className="text-[10px] font-medium text-secondary">
         {label}
         {required && <RequiredAsterisk />}
       </legend>
@@ -137,6 +137,7 @@ export function BirthdayField({
             disabled={disabled}
             aria-label={tCommon('year')}
             className="w-full"
+            suppressMessageSlot
           />
         </div>
         <div className="flex-1 min-w-0 basis-[72px]">
@@ -148,6 +149,7 @@ export function BirthdayField({
             disabled={disabled}
             aria-label={tCommon('month')}
             className="w-full"
+            suppressMessageSlot
           />
         </div>
         <div className="flex-1 min-w-0 basis-[56px]">
@@ -159,15 +161,11 @@ export function BirthdayField({
             disabled={disabled}
             aria-label={tCommon('day')}
             className="w-full"
+            suppressMessageSlot
           />
         </div>
       </div>
-      {error && <FieldError id={`${fieldsetId}-error`} message={error} />}
-      {!error && helperText && (
-        <p id={`${fieldsetId}-helper`} className="text-body text-secondary truncate">
-          {helperText}
-        </p>
-      )}
+      <FieldMessage id={`${fieldsetId}-error`} error={error} helperText={helperText} />
     </fieldset>
   )
 }

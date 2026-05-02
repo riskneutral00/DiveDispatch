@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 import { useMutation } from 'convex/react'
 import { z } from 'zod'
 import { phoneSchema } from '@/lib/schemas/i18n'
+import { ERROR_REQUIRED } from '@/lib/validation/error-codes'
 import { api } from '@/lib/convex-generated'
 import { useDashboardSession } from '@/lib/hooks/use-dashboard-session'
 import { isValidISODate } from '@/lib/utils/date'
@@ -29,16 +30,16 @@ export type ProfileValues = {
 }
 
 export const profileTabSchema = z.object({
-  firstName: z.string().min(1, 'First name is required'),
-  lastName: z.string().min(1, 'Last name is required'),
+  firstName: z.string().min(1, ERROR_REQUIRED),
+  lastName: z.string().min(1, ERROR_REQUIRED),
   nickname: z.string(),
-  phone: phoneSchema({ requiredMessage: 'Phone is required', invalidMessage: 'Invalid phone number' }),
+  phone: phoneSchema({ requiredMessage: ERROR_REQUIRED, invalidMessage: 'Invalid phone number' }),
   dateOfBirth: z
     .string()
     .refine((v) => v === '' || isValidISODate(v), {
       message: 'Invalid date',
     }),
-  appLanguage: z.string().min(1, 'App language is required'),
+  appLanguage: z.string().min(1, ERROR_REQUIRED),
 })
 
 export const PROFILE_DEFAULTS: ProfileValues = {
@@ -164,6 +165,7 @@ export function ProfileTab({ onClose }: { onClose?: () => void }) {
             value={accountEmail}
             onChange={() => {}}
             readOnly
+            required
             onClick={() => setEmailChangeOpen(true)}
             className="cursor-pointer"
           />

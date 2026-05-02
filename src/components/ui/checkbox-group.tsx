@@ -1,7 +1,7 @@
 'use client'
 
 import { useId } from 'react'
-import { FieldError } from '@/components/ui/field-shell'
+import { FieldMessage } from '@/components/ui/field-shell'
 import { PillToggleSection } from '@/components/ui/pill-toggle-section'
 
 interface CheckboxGroupProps {
@@ -47,7 +47,7 @@ function CheckboxGroup({ label, items, selected, onChange, error, required, hide
           )
         })}
       </div>
-      <FieldError id={`${baseId}-error`} message={error} />
+      <FieldMessage id={`${baseId}-error`} error={error} />
     </PillToggleSection>
   )
 }

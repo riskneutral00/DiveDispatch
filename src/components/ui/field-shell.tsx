@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
 import { RequiredAsterisk } from "@/components/ui/required-asterisk";
+import { ERROR_REQUIRED } from "@/lib/validation/error-codes";
 import { cn } from "@/lib/utils/cn";
 
 interface FieldLabelProps {
@@ -38,10 +39,31 @@ interface FieldErrorProps {
 }
 
 export function FieldError({ id, message }: FieldErrorProps) {
-  if (!message) return null;
+  return <FieldMessage id={id} error={message} />;
+}
+
+interface FieldMessageProps {
+  id: string;
+  error?: string;
+  helperText?: string;
+}
+
+export function FieldMessage({ id, error, helperText }: FieldMessageProps) {
+  const isRequiredEmpty = error === ERROR_REQUIRED;
+  const message = isRequiredEmpty ? "" : (error ?? helperText ?? "");
+  const tone = error ? "text-destructive" : "text-secondary";
   return (
-    <p id={id} role="alert" className="text-body text-destructive truncate">
-      {message}
+    <p
+      id={id}
+      role={error && !isRequiredEmpty ? "alert" : undefined}
+      aria-hidden={!message || undefined}
+      className={cn(
+        "h-4 text-body truncate transition-opacity",
+        tone,
+        message ? "opacity-100" : "opacity-0",
+      )}
+    >
+      {message || " "}
     </p>
   );
 }
@@ -66,7 +88,6 @@ export function FieldShell({
   className,
 }: FieldShellProps) {
   const errorId = `${id}-error`;
-  const helperId = `${id}-help`;
   return (
     <div
       className={cn(
@@ -80,12 +101,7 @@ export function FieldShell({
         </FieldLabel>
       )}
       {children}
-      {error && <FieldError id={errorId} message={error} />}
-      {!error && helperText && (
-        <p id={helperId} className="text-body text-secondary truncate">
-          {helperText}
-        </p>
-      )}
+      <FieldMessage id={errorId} error={error} helperText={helperText} />
     </div>
   );
 }
