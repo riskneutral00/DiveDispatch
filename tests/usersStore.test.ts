@@ -16,8 +16,14 @@ describe('users.store mutation', () => {
   it('returns the existing user._id when tokenIdentifier matches', async () => {
     const t = makeT()
     const tokenIdentifier = `${DEV_ISSUER}|user_match_${crypto.randomUUID().slice(0, 8)}`
-    const userId = await t.run(async (ctx) =>
-      ctx.db.insert('users', {
+    const userId = await t.run(async (ctx) => {
+      const orgId = await ctx.db.insert('organizations', {
+        slug: 'matching-slug',
+        name: 'Test Org',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      })
+      return ctx.db.insert('users', {
         tokenIdentifier,
         slug: 'matching-slug',
         email: 'match@test.com',
@@ -25,8 +31,9 @@ describe('users.store mutation', () => {
         lastName: 'User',
         appLanguage: 'en',
         ...TEST_USER_REQUIRED,
-      }),
-    )
+        organizationId: orgId,
+      })
+    })
 
     const result = await t
       .withIdentity({ tokenIdentifier, email: 'match@test.com' })
@@ -43,8 +50,14 @@ describe('users.store mutation', () => {
     const oldToken = `${DEV_ISSUER}|user_old_${crypto.randomUUID().slice(0, 8)}`
     const newToken = `${DEV_ISSUER}|user_new_${crypto.randomUUID().slice(0, 8)}`
 
-    const userId = await t.run(async (ctx) =>
-      ctx.db.insert('users', {
+    const userId = await t.run(async (ctx) => {
+      const orgId = await ctx.db.insert('organizations', {
+        slug: 'rebind-slug',
+        name: 'Test Org',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      })
+      return ctx.db.insert('users', {
         tokenIdentifier: oldToken,
         slug: 'rebind-slug',
         email,
@@ -52,8 +65,9 @@ describe('users.store mutation', () => {
         lastName: 'Token',
         appLanguage: 'en',
         ...TEST_USER_REQUIRED,
-      }),
-    )
+        organizationId: orgId,
+      })
+    })
 
     const result = await t
       .withIdentity({ tokenIdentifier: newToken, email })
@@ -78,8 +92,14 @@ describe('users.store mutation', () => {
     const seedToken = `seed|seed-slug-${crypto.randomUUID().slice(0, 8)}`
     const newToken = `${DEV_ISSUER}|user_${crypto.randomUUID().slice(0, 8)}`
 
-    const userId = await t.run(async (ctx) =>
-      ctx.db.insert('users', {
+    const userId = await t.run(async (ctx) => {
+      const orgId = await ctx.db.insert('organizations', {
+        slug: 'seed-rebind-slug',
+        name: 'Test Org',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      })
+      return ctx.db.insert('users', {
         tokenIdentifier: seedToken,
         slug: 'seed-rebind-slug',
         email,
@@ -87,8 +107,9 @@ describe('users.store mutation', () => {
         lastName: 'User',
         appLanguage: 'en',
         ...TEST_USER_REQUIRED,
-      }),
-    )
+        organizationId: orgId,
+      })
+    })
 
     const result = await t
       .withIdentity({ tokenIdentifier: newToken, email })
@@ -119,14 +140,32 @@ describe('users.store mutation', () => {
     expect(result).toBeNull()
   })
 
+  it('api.users.me returns null for authenticated identity with no DD row (bootstrap contract)', async () => {
+    const t = makeT()
+    const tokenIdentifier = `${DEV_ISSUER}|user_bootstrap_${crypto.randomUUID().slice(0, 8)}`
+    const email = `bootstrap-${crypto.randomUUID().slice(0, 8)}@test.com`
+
+    const me = await t
+      .withIdentity({ tokenIdentifier, email })
+      .query(api.users.me, {})
+
+    expect(me).toBeNull()
+  })
+
   it('returns null and audit-logs the rejection when a different Clerk issuer presents the same email', async () => {
     const t = makeT()
     const email = `cross-issuer-${crypto.randomUUID().slice(0, 8)}@test.com`
     const victimToken = `${DEV_ISSUER}|user_victim_${crypto.randomUUID().slice(0, 8)}`
     const attackerToken = `${PROD_ISSUER}|user_attacker_${crypto.randomUUID().slice(0, 8)}`
 
-    const victimId = await t.run(async (ctx) =>
-      ctx.db.insert('users', {
+    const victimId = await t.run(async (ctx) => {
+      const orgId = await ctx.db.insert('organizations', {
+        slug: 'victim-slug',
+        name: 'Test Org',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      })
+      return ctx.db.insert('users', {
         tokenIdentifier: victimToken,
         slug: 'victim-slug',
         email,
@@ -134,8 +173,9 @@ describe('users.store mutation', () => {
         lastName: 'Tim',
         appLanguage: 'en',
         ...TEST_USER_REQUIRED,
-      }),
-    )
+        organizationId: orgId,
+      })
+    })
 
     const result = await t
       .withIdentity({ tokenIdentifier: attackerToken, email })
@@ -158,8 +198,14 @@ describe('users.store mutation', () => {
     const oldToken = `${DEV_ISSUER}|user_old_${crypto.randomUUID().slice(0, 8)}`
     const newToken = `${DEV_ISSUER}|user_new_${crypto.randomUUID().slice(0, 8)}`
 
-    const originalId = await t.run(async (ctx) =>
-      ctx.db.insert('users', {
+    const originalId = await t.run(async (ctx) => {
+      const orgId = await ctx.db.insert('organizations', {
+        slug: 'no-dup-slug',
+        name: 'Test Org',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      })
+      return ctx.db.insert('users', {
         tokenIdentifier: oldToken,
         slug: 'no-dup-slug',
         email,
@@ -167,8 +213,9 @@ describe('users.store mutation', () => {
         lastName: 'B',
         appLanguage: 'en',
         ...TEST_USER_REQUIRED,
-      }),
-    )
+        organizationId: orgId,
+      })
+    })
 
     await t.withIdentity({ tokenIdentifier: newToken, email }).mutation(api.users.store, {})
 
@@ -188,8 +235,14 @@ describe('createUser email-rebind safety', () => {
     const oldToken = `${DEV_ISSUER}|user_old_${crypto.randomUUID().slice(0, 8)}`
     const newToken = `${DEV_ISSUER}|user_new_${crypto.randomUUID().slice(0, 8)}`
 
-    const originalId = await t.run(async (ctx) =>
-      ctx.db.insert('users', {
+    const originalId = await t.run(async (ctx) => {
+      const orgId = await ctx.db.insert('organizations', {
+        slug: 'createuser-rebind-slug',
+        name: 'Test Org',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      })
+      return ctx.db.insert('users', {
         tokenIdentifier: oldToken,
         slug: 'createuser-rebind-slug',
         email,
@@ -197,8 +250,9 @@ describe('createUser email-rebind safety', () => {
         lastName: 'Profile',
         appLanguage: 'en',
         ...TEST_USER_REQUIRED,
-      }),
-    )
+        organizationId: orgId,
+      })
+    })
 
     const resultId = await t
       .withIdentity({ tokenIdentifier: newToken, email })

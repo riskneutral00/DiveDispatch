@@ -9,6 +9,13 @@ describe('operatorCoverage — boat/venue OR logic', () => {
   it('boat preference satisfies venue+boat requirement even when org slug differs from user slug', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
+      const dcOrgId = await ctx.db.insert('organizations', {
+        clerkOrgId: 'org_dc_cov_mismatch',
+        name: 'DC Biz Corp',
+        slug: 'dc-biz-corp-slug',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      })
       const dcUserId = await ctx.db.insert('users', {
         tokenIdentifier: 'clerk|dc-cov-mismatch',
         slug: 'dc-cov-mismatch',
@@ -17,22 +24,20 @@ describe('operatorCoverage — boat/venue OR logic', () => {
         lastName: 'User',
         appLanguage: 'en',
         ...TEST_USER_REQUIRED,
+        organizationId: dcOrgId,
       })
-      const dcOrgId = await ctx.db.insert('organizations', {
-        clerkOrgId: 'org_dc_cov_mismatch',
-        name: 'DC Biz Corp',
-        slug: 'dc-biz-corp-slug',
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-      })
-      await ctx.db.patch(dcUserId, { organizationId: dcOrgId })
       await ctx.db.insert('userRoles', {
         userId: dcUserId,
         role: 'DiveCenter',
         organizationId: dcOrgId,
         createdAt: Date.now(),
       })
-
+      const boatOrgId = await ctx.db.insert('organizations', {
+        slug: 'boat-cov-mismatch',
+        name: 'Boat Cov Org',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      })
       await ctx.db.insert('users', {
         tokenIdentifier: 'clerk|boat-cov-mismatch',
         slug: 'boat-cov-mismatch',
@@ -41,6 +46,7 @@ describe('operatorCoverage — boat/venue OR logic', () => {
         lastName: 'Owner',
         appLanguage: 'en',
         ...TEST_USER_REQUIRED,
+        organizationId: boatOrgId,
       })
 
       await seedStakeholderPreferences(ctx, 'dc-cov-mismatch', {
@@ -67,6 +73,13 @@ describe('operatorCoverage — boat/venue OR logic', () => {
   it('preferredCompressor IS in incomplete when no compressor source exists (no slug, no boat with gasMixes)', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
+      const dcOrgId = await ctx.db.insert('organizations', {
+        clerkOrgId: 'org_dc_no_comp',
+        name: 'DC Biz',
+        slug: 'dc-biz-no-comp',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      })
       const dcUserId = await ctx.db.insert('users', {
         tokenIdentifier: 'clerk|dc-no-comp',
         slug: 'dc-no-comp',
@@ -75,22 +88,20 @@ describe('operatorCoverage — boat/venue OR logic', () => {
         lastName: 'User',
         appLanguage: 'en',
         ...TEST_USER_REQUIRED,
+        organizationId: dcOrgId,
       })
-      const dcOrgId = await ctx.db.insert('organizations', {
-        clerkOrgId: 'org_dc_no_comp',
-        name: 'DC Biz',
-        slug: 'dc-biz-no-comp',
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-      })
-      await ctx.db.patch(dcUserId, { organizationId: dcOrgId })
       await ctx.db.insert('userRoles', {
         userId: dcUserId,
         role: 'DiveCenter',
         organizationId: dcOrgId,
         createdAt: Date.now(),
       })
-
+      const boatOrgId = await ctx.db.insert('organizations', {
+        slug: 'boat-no-comp',
+        name: 'Boat No Comp Org',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      })
       await ctx.db.insert('users', {
         tokenIdentifier: 'clerk|boat-no-comp',
         slug: 'boat-no-comp',
@@ -99,6 +110,7 @@ describe('operatorCoverage — boat/venue OR logic', () => {
         lastName: 'Owner',
         appLanguage: 'en',
         ...TEST_USER_REQUIRED,
+        organizationId: boatOrgId,
       })
 
       await seedStakeholderPreferences(ctx, 'dc-no-comp', {

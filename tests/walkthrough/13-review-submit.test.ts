@@ -25,6 +25,12 @@ import { TEST_USER_REQUIRED } from '../helpers/userDefaults'
 type Ctx = Parameters<Parameters<ReturnType<typeof makeT>['run']>[0]>[0]
 
 async function seedDcUser(ctx: Ctx, slug: string) {
+  const orgId = await ctx.db.insert('organizations', {
+    slug,
+    name: `Test Org for ${slug}`,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  })
   await ctx.db.insert('users', {
     tokenIdentifier: `clerk|${slug}`,
     slug,
@@ -33,10 +39,17 @@ async function seedDcUser(ctx: Ctx, slug: string) {
     lastName: 'DC',
     appLanguage: 'en',
     ...TEST_USER_REQUIRED,
+    organizationId: orgId,
   })
 }
 
 async function seedInstructorUser(ctx: Ctx, slug: string) {
+  const orgId = await ctx.db.insert('organizations', {
+    slug,
+    name: `Test Org for ${slug}`,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  })
   await ctx.db.insert('users', {
     tokenIdentifier: `clerk|${slug}`,
     slug,
@@ -45,6 +58,7 @@ async function seedInstructorUser(ctx: Ctx, slug: string) {
     lastName: 'Instructor',
     appLanguage: 'en',
     ...TEST_USER_REQUIRED,
+    organizationId: orgId,
   })
 }
 

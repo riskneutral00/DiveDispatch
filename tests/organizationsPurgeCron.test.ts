@@ -71,7 +71,11 @@ describe('organizations.purgeSoftDeletedOrgs cron', () => {
     expect(org).toBeNull()
     expect(role).toBeNull()
     expect(dc).toBeNull()
-    expect(user?.organizationId).toBeUndefined()
+    expect(user?.organizationId).toBeDefined()
+    const tombstone = await t.run(async (ctx) =>
+      user?.organizationId ? ctx.db.get(user.organizationId) : null,
+    )
+    expect(tombstone?.slug).toBe('__deleted__')
   })
 
   it('leaves orgs whose deletedAt is within the 7-day window untouched', async () => {

@@ -34,7 +34,7 @@ export default defineSchema({
     savedThemeIds: v.optional(v.array(v.id('themes'))),
     tcAcceptedAt: v.number(),
     tcVersion: v.string(),
-    organizationId: v.optional(v.id('organizations')),
+    organizationId: v.id('organizations'),
   })
     .index('by_tokenIdentifier', ['tokenIdentifier'])
     .index('by_slug', ['slug'])

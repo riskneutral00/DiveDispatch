@@ -30,6 +30,13 @@ async function seedUser(
   slug: string,
   role: StakeholderRole = 'Instructor',
 ) {
+  const organizationId = await ctx.db.insert('organizations', {
+    clerkOrgId: `test_${slug}`,
+    name: `${slug} Display`,
+    slug,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  })
   const userId = await ctx.db.insert('users', {
     tokenIdentifier: `clerk|${slug}`,
     slug,
@@ -38,9 +45,9 @@ async function seedUser(
     lastName: 'Test',
     appLanguage: 'en',
     ...TEST_USER_REQUIRED,
+    organizationId,
   })
   if (role === 'Instructor') {
-    const organizationId = await getOrCreateTestOrg(ctx as SeedCtx, userId, `${slug} Display`)
     await ctx.db.insert('userRoles', {
       userId,
       role: 'Instructor',

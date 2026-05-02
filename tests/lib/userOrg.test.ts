@@ -7,15 +7,6 @@ describe('setUserOrganization — single-writer invariant', () => {
   it('patches user.organizationId and keeps userRoles in sync', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
-      const userId = await ctx.db.insert('users', {
-        tokenIdentifier: 'clerk|sync-user',
-        slug: 'sync-user',
-        email: 'sync@test.com',
-        firstName: 'Sync',
-        lastName: 'User',
-        appLanguage: 'en',
-        ...TEST_USER_REQUIRED,
-      })
       const now = Date.now()
       const oldOrg = await ctx.db.insert('organizations', {
         slug: 'old-org',
@@ -29,7 +20,16 @@ describe('setUserOrganization — single-writer invariant', () => {
         createdAt: now,
         updatedAt: now,
       })
-      await ctx.db.patch(userId, { organizationId: oldOrg })
+      const userId = await ctx.db.insert('users', {
+        tokenIdentifier: 'clerk|sync-user',
+        slug: 'sync-user',
+        email: 'sync@test.com',
+        firstName: 'Sync',
+        lastName: 'User',
+        appLanguage: 'en',
+        ...TEST_USER_REQUIRED,
+        organizationId: oldOrg,
+      })
       await ctx.db.insert('userRoles', {
         userId,
         role: 'DiveCenter',
@@ -61,15 +61,6 @@ describe('setUserOrganization — single-writer invariant', () => {
   it('re-syncs drift: a stale userRole gets patched back to the user org', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
-      const userId = await ctx.db.insert('users', {
-        tokenIdentifier: 'clerk|drift-user',
-        slug: 'drift-user',
-        email: 'drift@test.com',
-        firstName: 'Drift',
-        lastName: 'User',
-        appLanguage: 'en',
-        ...TEST_USER_REQUIRED,
-      })
       const now = Date.now()
       const orgA = await ctx.db.insert('organizations', {
         slug: 'org-a',
@@ -83,7 +74,16 @@ describe('setUserOrganization — single-writer invariant', () => {
         createdAt: now,
         updatedAt: now,
       })
-      await ctx.db.patch(userId, { organizationId: orgA })
+      const userId = await ctx.db.insert('users', {
+        tokenIdentifier: 'clerk|drift-user',
+        slug: 'drift-user',
+        email: 'drift@test.com',
+        firstName: 'Drift',
+        lastName: 'User',
+        appLanguage: 'en',
+        ...TEST_USER_REQUIRED,
+        organizationId: orgA,
+      })
       const role1 = await ctx.db.insert('userRoles', {
         userId,
         role: 'DiveCenter',
@@ -113,6 +113,13 @@ describe('setUserOrganization — single-writer invariant', () => {
   it('is a no-op when user and all roles already match the target org', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
+      const now = Date.now()
+      const orgId = await ctx.db.insert('organizations', {
+        slug: 'noop-org',
+        name: 'Noop Org',
+        createdAt: now,
+        updatedAt: now,
+      })
       const userId = await ctx.db.insert('users', {
         tokenIdentifier: 'clerk|noop-user',
         slug: 'noop-user',
@@ -121,15 +128,8 @@ describe('setUserOrganization — single-writer invariant', () => {
         lastName: 'User',
         appLanguage: 'en',
         ...TEST_USER_REQUIRED,
+        organizationId: orgId,
       })
-      const now = Date.now()
-      const orgId = await ctx.db.insert('organizations', {
-        slug: 'noop-org',
-        name: 'Noop Org',
-        createdAt: now,
-        updatedAt: now,
-      })
-      await ctx.db.patch(userId, { organizationId: orgId })
       const roleId = await ctx.db.insert('userRoles', {
         userId,
         role: 'Instructor',

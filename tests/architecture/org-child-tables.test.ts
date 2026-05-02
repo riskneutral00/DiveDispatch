@@ -10,6 +10,7 @@ const SCHEMA_PATH = resolve(REPO_ROOT, 'convex/schema.ts')
 
 const TABLES_HANDLED_OUTSIDE_ORG_CHILD_TABLES = new Set([
   'userRoles',
+  'users',
 ])
 
 function tablesWithRequiredOrganizationId(): string[] {

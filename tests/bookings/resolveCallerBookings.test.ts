@@ -15,6 +15,13 @@ describe('resolveCallerBookings ownerType isolation', () => {
     const slug = 'multi-role'
 
     await t.run(async (ctx) => {
+      const orgId = await ctx.db.insert('organizations', {
+        clerkOrgId: `test_${slug}`,
+        name: `${slug} Corp`,
+        slug,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      })
       const userId = await ctx.db.insert('users', {
         tokenIdentifier: token,
         slug,
@@ -23,16 +30,8 @@ describe('resolveCallerBookings ownerType isolation', () => {
         lastName: 'Role',
         appLanguage: 'en',
         ...TEST_USER_REQUIRED,
+        organizationId: orgId,
       })
-
-      const orgId = await ctx.db.insert('organizations', {
-        clerkOrgId: `test_${slug}`,
-        name: `${slug} Corp`,
-        slug,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-      })
-      await ctx.db.patch(userId, { organizationId: orgId })
 
       await ctx.db.insert('userRoles', {
         userId,

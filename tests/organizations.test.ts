@@ -73,6 +73,13 @@ describe('destinationScope — visibleOrgIds', () => {
     const t = makeT()
     const tokenIdentifier = 'clerk|lone-operator'
     const orgId = await t.run(async (ctx) => {
+      const now = Date.now()
+      const oid = await ctx.db.insert('organizations', {
+        slug: 'lone',
+        name: 'Lone Org',
+        createdAt: now,
+        updatedAt: now,
+      })
       const uid = await ctx.db.insert('users', {
         tokenIdentifier,
         slug: 'lone',
@@ -81,15 +88,8 @@ describe('destinationScope — visibleOrgIds', () => {
         lastName: 'Op',
         appLanguage: 'en',
         ...TEST_USER_REQUIRED,
+        organizationId: oid,
       })
-      const now = Date.now()
-      const oid = await ctx.db.insert('organizations', {
-        slug: 'lone',
-        name: 'Lone Org',
-        createdAt: now,
-        updatedAt: now,
-      })
-      await ctx.db.patch(uid, { organizationId: oid })
       await ctx.db.insert('userRoles', {
         userId: uid,
         role: 'DiveCenter',
@@ -131,8 +131,8 @@ describe('destinationScope — visibleOrgIds', () => {
         lastName: 'B',
         appLanguage: 'en',
         ...TEST_USER_REQUIRED,
+        organizationId: oid,
       })
-      await ctx.db.patch(uid, { organizationId: oid })
       await ctx.db.insert('userRoles', {
         userId: uid,
         role: 'DiveCenter',
@@ -174,8 +174,8 @@ describe('organizations.updateBusinessMetadata — destinationIds wire-up', () =
         lastName: 'B',
         appLanguage: 'en',
         ...TEST_USER_REQUIRED,
+        organizationId: oid,
       })
-      await ctx.db.patch(uid, { organizationId: oid })
       await ctx.db.insert('userRoles', {
         userId: uid,
         role: 'DiveCenter',
@@ -220,8 +220,8 @@ describe('organizations.updateBusinessMetadata — destinationIds wire-up', () =
         lastName: 'B',
         appLanguage: 'en',
         ...TEST_USER_REQUIRED,
+        organizationId: oid,
       })
-      await ctx.db.patch(uid, { organizationId: oid })
       await ctx.db.insert('userRoles', {
         userId: uid,
         role: 'DiveCenter',
@@ -309,6 +309,12 @@ describe('organizations.getBySlug — authenticated returns full org doc', () =>
         createdAt: now,
         updatedAt: now,
       })
+      const readerOrgId = await ctx.db.insert('organizations', {
+        slug: 'full-reader',
+        name: 'Full Reader Org',
+        createdAt: now,
+        updatedAt: now,
+      })
       await ctx.db.insert('users', {
         tokenIdentifier: 'clerk|full-reader',
         slug: 'full-reader',
@@ -317,6 +323,7 @@ describe('organizations.getBySlug — authenticated returns full org doc', () =>
         lastName: 'Reader',
         appLanguage: 'en',
         ...TEST_USER_REQUIRED,
+        organizationId: readerOrgId,
       })
     })
 

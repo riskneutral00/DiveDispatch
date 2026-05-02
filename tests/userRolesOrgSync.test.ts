@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { api, internal } from '../convex/_generated/api'
-import { makeT, expectConvexError } from './helpers/convex-helpers'
+import { makeT } from './helpers/convex-helpers'
 import { TEST_USER_REQUIRED } from './helpers/userDefaults'
 import type { Id } from '../convex/_generated/dataModel'
 
@@ -11,6 +11,12 @@ describe('userRoles.organizationId stays in sync with users.organizationId', () 
     const tokenIdentifier = `${issuer}|user_rene`
 
     const { userId } = await t.run(async (ctx) => {
+      const personalOrg = await ctx.db.insert('organizations', {
+        slug: 'rene',
+        name: 'Rene Personal',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      })
       const uid = await ctx.db.insert('users', {
         tokenIdentifier,
         slug: 'rene',
@@ -19,14 +25,8 @@ describe('userRoles.organizationId stays in sync with users.organizationId', () 
         lastName: 'Balot',
         appLanguage: 'en',
         ...TEST_USER_REQUIRED,
+        organizationId: personalOrg,
       })
-      const personalOrg = await ctx.db.insert('organizations', {
-        slug: 'rene',
-        name: 'Rene Personal',
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-      })
-      await ctx.db.patch(uid, { organizationId: personalOrg })
       await ctx.db.insert('userRoles', {
         userId: uid,
         role: 'DiveCenter',
@@ -60,29 +60,11 @@ describe('userRoles.organizationId stays in sync with users.organizationId', () 
     })
   })
 
-  it('2 — addRole throws if the user has no active org', async () => {
-    const t = makeT()
-    const tokenIdentifier = 'https://test.clerk.accounts.dev|user_orgless'
-
-    await t.run(async (ctx) => {
-      await ctx.db.insert('users', {
-        tokenIdentifier,
-        slug: 'orgless',
-        email: 'orgless@test.com',
-        firstName: 'No',
-        lastName: 'Org',
-        appLanguage: 'en',
-        ...TEST_USER_REQUIRED,
-      })
-    })
-
-    const asUser = t.withIdentity({ tokenIdentifier, subject: tokenIdentifier })
-    await expectConvexError(
-      asUser.mutation(api.userRoles.addRole, { role: 'DiveCenter' }),
-      'FORBIDDEN',
-      'no_active_org',
-    )
-  })
+  // (former test 2 "addRole throws if user has no active org" deleted post-DD-543:
+  // users.organizationId is now required at the schema level, so the no-org state
+  // is structurally impossible. The defensive `!user.organizationId` branch in
+  // userRoles.addRole remains as belt-and-suspenders but is no longer reachable
+  // from the test harness.)
 
   it('3 — addRole stamps the role with the user\'s current org', async () => {
     const t = makeT()
@@ -90,15 +72,6 @@ describe('userRoles.organizationId stays in sync with users.organizationId', () 
 
     let orgId: Id<'organizations'>
     await t.run(async (ctx) => {
-      const uid = await ctx.db.insert('users', {
-        tokenIdentifier,
-        slug: 'hasorg',
-        email: 'hasorg@test.com',
-        firstName: 'Has',
-        lastName: 'Org',
-        appLanguage: 'en',
-        ...TEST_USER_REQUIRED,
-      })
       orgId = await ctx.db.insert('organizations', {
         clerkOrgId: 'org_hasorg',
         slug: 'hasorg-co',
@@ -106,7 +79,16 @@ describe('userRoles.organizationId stays in sync with users.organizationId', () 
         createdAt: Date.now(),
         updatedAt: Date.now(),
       })
-      await ctx.db.patch(uid, { organizationId: orgId })
+      await ctx.db.insert('users', {
+        tokenIdentifier,
+        slug: 'hasorg',
+        email: 'hasorg@test.com',
+        firstName: 'Has',
+        lastName: 'Org',
+        appLanguage: 'en',
+        ...TEST_USER_REQUIRED,
+        organizationId: orgId,
+      })
     })
 
     const asUser = t.withIdentity({ tokenIdentifier, subject: tokenIdentifier })
@@ -126,6 +108,12 @@ describe('userRoles.organizationId stays in sync with users.organizationId', () 
     const tokenIdentifier = `${issuer}|user_rebinder`
 
     const { userId, personalOrgId, clerkOrgId } = await t.run(async (ctx) => {
+      const personalId = await ctx.db.insert('organizations', {
+        slug: 'rebinder',
+        name: 'Re Binder Personal',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      })
       const uid = await ctx.db.insert('users', {
         tokenIdentifier,
         slug: 'rebinder',
@@ -134,14 +122,8 @@ describe('userRoles.organizationId stays in sync with users.organizationId', () 
         lastName: 'Binder',
         appLanguage: 'en',
         ...TEST_USER_REQUIRED,
+        organizationId: personalId,
       })
-      const personalId = await ctx.db.insert('organizations', {
-        slug: 'rebinder',
-        name: 'Re Binder Personal',
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-      })
-      await ctx.db.patch(uid, { organizationId: personalId })
       await ctx.db.insert('userRoles', {
         userId: uid,
         role: 'Compressor',

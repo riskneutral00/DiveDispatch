@@ -8,7 +8,17 @@ import { makeT } from './helpers/convex-helpers'
 
 
 async function seedUser(ctx: unknown, slug = 'dc-test') {
-  const c = ctx as { db: { insert: (table: string, doc: unknown) => Promise<string> } }
+  const c = ctx as {
+    db: {
+      insert: (table: string, doc: unknown) => Promise<string>
+    }
+  }
+  const orgId = await c.db.insert('organizations', {
+    slug: `org-${slug}-${crypto.randomUUID().slice(0, 6)}`,
+    name: `Test Org ${slug}`,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  })
   await c.db.insert('users', {
     tokenIdentifier: `clerk|${slug}`,
     slug,
@@ -20,6 +30,7 @@ async function seedUser(ctx: unknown, slug = 'dc-test') {
     dateOfBirth: '1990-01-01',
     tcAcceptedAt: 1700000000000,
     tcVersion: '1.0',
+    organizationId: orgId,
   })
 }
 

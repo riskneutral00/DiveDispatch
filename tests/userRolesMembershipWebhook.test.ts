@@ -9,15 +9,6 @@ const CLERK_ORG_ID = 'org_member_webhook'
 async function seedUserOrgAndRole(): Promise<ReturnType<typeof makeT>> {
   const t = makeT()
   await t.run(async (ctx) => {
-    const uid = await ctx.db.insert('users', {
-      tokenIdentifier: TOKEN,
-      slug: 'mw-user',
-      email: 'mw@test.com',
-      firstName: 'Mem',
-      lastName: 'Ship',
-      appLanguage: 'en',
-      ...TEST_USER_REQUIRED,
-    })
     const now = Date.now()
     const oid = await ctx.db.insert('organizations', {
       clerkOrgId: CLERK_ORG_ID,
@@ -26,7 +17,16 @@ async function seedUserOrgAndRole(): Promise<ReturnType<typeof makeT>> {
       createdAt: now,
       updatedAt: now,
     })
-    await ctx.db.patch(uid, { organizationId: oid })
+    const uid = await ctx.db.insert('users', {
+      tokenIdentifier: TOKEN,
+      slug: 'mw-user',
+      email: 'mw@test.com',
+      firstName: 'Mem',
+      lastName: 'Ship',
+      appLanguage: 'en',
+      ...TEST_USER_REQUIRED,
+      organizationId: oid,
+    })
     await ctx.db.insert('userRoles', {
       userId: uid,
       role: 'DiveCenter',
@@ -109,15 +109,6 @@ describe('Clerk organizationMembership webhooks → userRoles permissionLevel', 
     let userSlug = ''
 
     await t.run(async (ctx) => {
-      const uid = await ctx.db.insert('users', {
-        tokenIdentifier: TOKEN,
-        slug: 'eq-user',
-        email: 'eq@test.com',
-        firstName: 'Eq',
-        lastName: 'User',
-        appLanguage: 'en',
-        ...TEST_USER_REQUIRED,
-      })
       userSlug = 'eq-user'
       const now = Date.now()
       const oid = await ctx.db.insert('organizations', {
@@ -127,7 +118,16 @@ describe('Clerk organizationMembership webhooks → userRoles permissionLevel', 
         createdAt: now,
         updatedAt: now,
       })
-      await ctx.db.patch(uid, { organizationId: oid })
+      const uid = await ctx.db.insert('users', {
+        tokenIdentifier: TOKEN,
+        slug: 'eq-user',
+        email: 'eq@test.com',
+        firstName: 'Eq',
+        lastName: 'User',
+        appLanguage: 'en',
+        ...TEST_USER_REQUIRED,
+        organizationId: oid,
+      })
       await ctx.db.insert('userRoles', {
         userId: uid,
         role: 'Equipment',

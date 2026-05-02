@@ -31,6 +31,12 @@ describe('createUser mutation', () => {
     const identity = { tokenIdentifier: 'clerk|backfill-personal-org', email: 'bf@test.com' }
 
     const userId = await t.run(async (ctx) => {
+      const orgId = await ctx.db.insert('organizations', {
+        slug: 'bf-slug',
+        name: 'Test Org',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      })
       return ctx.db.insert('users', {
         tokenIdentifier: identity.tokenIdentifier,
         slug: 'bf-slug',
@@ -39,6 +45,7 @@ describe('createUser mutation', () => {
         lastName: '',
         appLanguage: 'en',
         ...TEST_USER_REQUIRED,
+        organizationId: orgId,
       })
     })
 
@@ -200,6 +207,12 @@ describe('createUser mutation', () => {
     const tokenIdentifier = 'clerk|idem-email-backfill'
 
     await t.run(async (ctx) => {
+      const orgId = await ctx.db.insert('organizations', {
+        slug: 'idem-email-backfill',
+        name: 'Test Org',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      })
       await ctx.db.insert('users', {
         tokenIdentifier,
         slug: 'idem-email-backfill',
@@ -208,6 +221,7 @@ describe('createUser mutation', () => {
         lastName: 'Name',
         appLanguage: 'en',
         ...TEST_USER_REQUIRED,
+        organizationId: orgId,
       })
     })
 
@@ -513,6 +527,12 @@ describe('updateProfile email removed from args schema', () => {
     }
 
     await t.run(async (ctx) => {
+      const orgId = await ctx.db.insert('organizations', {
+        slug: 'profile-email-backfill',
+        name: 'Test Org',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      })
       await ctx.db.insert('users', {
         tokenIdentifier: identity.tokenIdentifier,
         slug: 'profile-email-backfill',
@@ -521,6 +541,7 @@ describe('updateProfile email removed from args schema', () => {
         lastName: 'Name',
         appLanguage: 'en',
         ...TEST_USER_REQUIRED,
+        organizationId: orgId,
       })
     })
 
@@ -664,6 +685,12 @@ describe('upsertFromWebhook email-rebind safety', () => {
     const newToken = `${DEV_ISSUER}|user_${crypto.randomUUID().slice(0, 8)}`
 
     const seedId = await t.run(async (ctx) => {
+      const orgId = await ctx.db.insert('organizations', {
+        slug: 'seed-slug',
+        name: 'Test Org',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      })
       return ctx.db.insert('users', {
         tokenIdentifier: seedToken,
         slug: 'seed-slug',
@@ -672,6 +699,7 @@ describe('upsertFromWebhook email-rebind safety', () => {
         lastName: 'User',
         appLanguage: 'en',
         ...TEST_USER_REQUIRED,
+        organizationId: orgId,
       })
     })
 
@@ -706,6 +734,12 @@ describe('upsertFromWebhook email-rebind safety', () => {
     const newToken = `${DEV_ISSUER}|user_new_${crypto.randomUUID().slice(0, 8)}`
 
     const userId = await t.run(async (ctx) => {
+      const orgId = await ctx.db.insert('organizations', {
+        slug: 'same-issuer-slug',
+        name: 'Test Org',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      })
       return ctx.db.insert('users', {
         tokenIdentifier: oldToken,
         slug: 'same-issuer-slug',
@@ -714,6 +748,7 @@ describe('upsertFromWebhook email-rebind safety', () => {
         lastName: 'Inal',
         appLanguage: 'en',
         ...TEST_USER_REQUIRED,
+        organizationId: orgId,
       })
     })
 
@@ -747,6 +782,12 @@ describe('upsertFromWebhook email-rebind safety', () => {
     const attackerToken = `${PROD_ISSUER}|user_attacker_${crypto.randomUUID().slice(0, 8)}`
 
     const victimId = await t.run(async (ctx) => {
+      const orgId = await ctx.db.insert('organizations', {
+        slug: 'victim-slug',
+        name: 'Test Org',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      })
       return ctx.db.insert('users', {
         tokenIdentifier: victimToken,
         slug: 'victim-slug',
@@ -755,6 +796,7 @@ describe('upsertFromWebhook email-rebind safety', () => {
         lastName: 'Tim',
         appLanguage: 'en',
         ...TEST_USER_REQUIRED,
+        organizationId: orgId,
       })
     })
 
@@ -797,6 +839,12 @@ describe('upsertFromWebhook email-rebind safety', () => {
     const newToken = `${DEV_ISSUER}|user_second_${crypto.randomUUID().slice(0, 8)}`
 
     const userId = await t.run(async (ctx) => {
+      const orgId = await ctx.db.insert('organizations', {
+        slug: 'rebind-delete-slug',
+        name: 'Test Org',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      })
       return ctx.db.insert('users', {
         tokenIdentifier: oldToken,
         slug: 'rebind-delete-slug',
@@ -805,6 +853,7 @@ describe('upsertFromWebhook email-rebind safety', () => {
         lastName: 'Inal',
         appLanguage: 'en',
         ...TEST_USER_REQUIRED,
+        organizationId: orgId,
       })
     })
 

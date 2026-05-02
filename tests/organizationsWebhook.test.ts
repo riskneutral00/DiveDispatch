@@ -113,6 +113,12 @@ describe('organizations.upsertFromWebhook', () => {
     const tokenIdentifier = 'clerk|org-creator'
 
     const userId = await t.run(async (ctx) => {
+      const orgId = await ctx.db.insert('organizations', {
+        slug: 'creator-slug',
+        name: 'Creator Pre-Org',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      })
       return ctx.db.insert('users', {
         tokenIdentifier,
         slug: 'creator-slug',
@@ -121,6 +127,7 @@ describe('organizations.upsertFromWebhook', () => {
         lastName: 'Ator',
         appLanguage: 'en',
         ...TEST_USER_REQUIRED,
+        organizationId: orgId,
       })
     })
 
@@ -751,6 +758,12 @@ describe('organizations.getBySlug', () => {
     })
 
     await t.run(async (ctx) => {
+      const orgId = await ctx.db.insert('organizations', {
+        slug: 'slug-reader',
+        name: 'Slug Reader Org',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      })
       await ctx.db.insert('users', {
         tokenIdentifier: 'clerk|slug-reader',
         slug: 'slug-reader',
@@ -759,6 +772,7 @@ describe('organizations.getBySlug', () => {
         lastName: 'Reader',
         appLanguage: 'en',
         ...TEST_USER_REQUIRED,
+        organizationId: orgId,
       })
     })
 
@@ -780,6 +794,12 @@ describe('organizations.getBySlug', () => {
   it('returns null for unknown slug (authenticated)', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
+      const orgId = await ctx.db.insert('organizations', {
+        slug: 'slug-reader',
+        name: 'Slug Reader Org',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      })
       await ctx.db.insert('users', {
         tokenIdentifier: 'clerk|slug-reader',
         slug: 'slug-reader',
@@ -788,6 +808,7 @@ describe('organizations.getBySlug', () => {
         lastName: 'Reader',
         appLanguage: 'en',
         ...TEST_USER_REQUIRED,
+        organizationId: orgId,
       })
     })
 

@@ -384,6 +384,13 @@ describe('userRoles.deleteRole', () => {
     let orgId: Id<'organizations'>
 
     await t.run(async (ctx) => {
+      orgId = await ctx.db.insert('organizations', {
+        clerkOrgId: 'org_seafun',
+        slug: 'sea-fun-divers',
+        name: 'Sea Fun Divers',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      })
       userId = await ctx.db.insert('users', {
         tokenIdentifier: 'clerk|rene',
         slug: 'rene-user-slug',
@@ -392,15 +399,8 @@ describe('userRoles.deleteRole', () => {
         lastName: 'Balot',
         appLanguage: 'en',
         ...TEST_USER_REQUIRED,
+        organizationId: orgId,
       })
-      orgId = await ctx.db.insert('organizations', {
-        clerkOrgId: 'org_seafun',
-        slug: 'sea-fun-divers',
-        name: 'Sea Fun Divers',
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-      })
-      await ctx.db.patch(userId, { organizationId: orgId })
 
       await ctx.db.insert('userRoles', {
         userId,

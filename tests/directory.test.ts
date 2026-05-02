@@ -8,6 +8,14 @@ import { TEST_USER_REQUIRED } from './helpers/userDefaults'
 // ─── Seed helpers ─────────────────────────────────────────────────────────────
 
 async function seedInstructorUser(ctx: SeedCtx, slug: string) {
+  const now = Date.now()
+  const organizationId = await ctx.db.insert('organizations', {
+    clerkOrgId: `test_${slug}`,
+    name: `Test Org for ${slug}`,
+    slug,
+    createdAt: now,
+    updatedAt: now,
+  })
   const userId = await ctx.db.insert('users', {
     tokenIdentifier: `user|${slug}`,
     slug,
@@ -16,8 +24,8 @@ async function seedInstructorUser(ctx: SeedCtx, slug: string) {
     lastName: 'Test',
     appLanguage: 'en',
     ...TEST_USER_REQUIRED,
+    organizationId,
   })
-  const organizationId = await getOrCreateTestOrg(ctx, userId)
   await ctx.db.insert('userRoles', {
     userId,
     role: 'Instructor',
@@ -61,6 +69,14 @@ async function markRoleComplete(ctx: SeedCtx, userId: Id<'users'>, role: 'Instru
 }
 
 async function seedCallerUser(ctx: SeedCtx, slug: string) {
+  const now = Date.now()
+  const organizationId = await ctx.db.insert('organizations', {
+    clerkOrgId: `test_${slug}`,
+    name: `Test Org for ${slug}`,
+    slug,
+    createdAt: now,
+    updatedAt: now,
+  })
   const userId = await ctx.db.insert('users', {
     tokenIdentifier: `user|${slug}`,
     slug,
@@ -69,8 +85,8 @@ async function seedCallerUser(ctx: SeedCtx, slug: string) {
     lastName: 'Caller',
     appLanguage: 'en',
     ...TEST_USER_REQUIRED,
+    organizationId,
   })
-  const organizationId = await getOrCreateTestOrg(ctx, userId)
   await ctx.db.insert('userRoles', {
     userId,
     role: 'DiveCenter',
@@ -245,6 +261,14 @@ describe('listByRole language propagation', () => {
     await t.run(async (ctx) => {
       const callerId = await seedCallerUser(ctx, 'caller-lang-dc')
       // Seed a DiveCenter with customerLanguages on user
+      const now = Date.now()
+      const dcOrgId = await ctx.db.insert('organizations', {
+        clerkOrgId: 'test_dc-lang',
+        name: 'Test DC',
+        slug: 'dc-lang',
+        createdAt: now,
+        updatedAt: now,
+      })
       const dcUserId = await ctx.db.insert('users', {
         tokenIdentifier: 'user|dc-lang',
         slug: 'dc-lang',
@@ -253,8 +277,8 @@ describe('listByRole language propagation', () => {
         lastName: 'Lang',
         appLanguage: 'en',
         ...TEST_USER_REQUIRED,
+        organizationId: dcOrgId,
       })
-      const dcOrgId = await getOrCreateTestOrg(ctx, dcUserId, 'Test DC')
       await ctx.db.insert('userRoles', {
         userId: dcUserId,
         role: 'DiveCenter',

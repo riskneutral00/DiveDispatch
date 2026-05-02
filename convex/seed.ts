@@ -187,7 +187,7 @@ export const wipeBatch = internalMutation({
   },
 })
 
-async function insertUser(ctx: MutationCtx, s: SeedStakeholder) {
+async function insertUser(ctx: MutationCtx, s: SeedStakeholder, organizationId: Id<'organizations'>) {
   const token = `seed|${s.user.slug}`
   const { customerLanguages: _customerLanguages, ...userFields } = s.user
   return ctx.db.insert('users', {
@@ -195,6 +195,9 @@ async function insertUser(ctx: MutationCtx, s: SeedStakeholder) {
     tokenIdentifier: token,
     tcAcceptedAt: Date.now(),
     tcVersion: '1.0',
+    phone: userFields.phone ?? '+66800000000',
+    dateOfBirth: userFields.dateOfBirth ?? '1990-01-01',
+    organizationId,
   })
 }
 
@@ -305,7 +308,6 @@ export const seedStakeholders = internalMutation({
     const orgSlugToId = new Map<string, Id<'organizations'>>()
 
     for (const s of ALL_STAKEHOLDERS) {
-      const userId = await insertUser(ctx, s) // batch-exempt
       const orgSlug = s.organization?.slug ?? s.user.slug
       const orgName = s.organization?.name
         ?? s.diveCenter?.name
@@ -323,6 +325,7 @@ export const seedStakeholders = internalMutation({
         destinationIds,
       })
       orgSlugToId.set(orgSlug, organizationId)
+      const userId = await insertUser(ctx, s, organizationId) // batch-exempt
       await setUserOrganization(ctx, userId, organizationId) // batch-exempt
 
       if (s.diveCenter) {
@@ -401,9 +404,10 @@ export const seedInstructors = internalMutation({
     if (existingInstructor) return 'Already seeded'
 
     for (const s of ALL_INSTRUCTORS) {
-      const userId = await insertUser(ctx, s)
+      const orgName = s.instructor?.name ?? (`${s.user.firstName} ${s.user.lastName}`.trim() || s.user.slug)
+      const organizationId = await getOrCreateSeedOrg(ctx, s.user.slug, orgName) // batch-exempt
+      const userId = await insertUser(ctx, s, organizationId)
       if (s.instructor) {
-        const organizationId = await getOrCreateSeedOrg(ctx, s.user.slug, s.instructor.name ?? `${s.user.firstName} ${s.user.lastName}`.trim()) // batch-exempt
         await setUserOrganization(ctx, userId, organizationId) // batch-exempt
         await ctx.db.insert('diveStaff', { organizationId, ...s.instructor, role: 'Instructor' }) // batch-exempt: sequential per-instructor seed
       }

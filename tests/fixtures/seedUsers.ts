@@ -88,17 +88,26 @@ export async function seedUser(
 ) {
   const role = overrides.role ?? 'DiveCenter'
   const token = overrides.tokenIdentifier ?? TEST_TOKENS.diveCenter
+  const slug = overrides.slug ?? TEST_SLUGS.diveCenter
+  const now = Date.now()
+  const orgId = await ctx.db.insert('organizations', {
+    clerkOrgId: `test_${slug}`,
+    name: `Test Org for ${slug}`,
+    slug,
+    createdAt: now,
+    updatedAt: now,
+  })
   const userId = await ctx.db.insert('users', {
     tokenIdentifier: token,
-    slug: overrides.slug ?? TEST_SLUGS.diveCenter,
+    slug,
     email: overrides.email ?? 'test@test.com',
     firstName: overrides.firstName ?? 'Test',
     lastName: overrides.lastName ?? 'User',
     appLanguage: 'en',
     ...TEST_USER_REQUIRED,
+    organizationId: orgId,
   })
   if (!overrides.skipUserRoles) {
-    const orgId = await getOrCreateTestOrg(ctx, userId)
     await ctx.db.insert('userRoles', {
       userId,
       role,

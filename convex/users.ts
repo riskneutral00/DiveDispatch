@@ -49,6 +49,23 @@ async function generateUniqueSlug(db: DatabaseWriter): Promise<string> {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 6)
 }
 
+async function createPersonalOrgRow(
+  ctx: MutationCtx,
+  userSlug: string,
+  firstName: string,
+  lastName: string,
+  email: string,
+  now: number,
+): Promise<Id<'organizations'>> {
+  const displayName = `${firstName} ${lastName}`.trim() || email || userSlug
+  return await ctx.db.insert('organizations', {
+    slug: userSlug,
+    name: displayName,
+    createdAt: now,
+    updatedAt: now,
+  })
+}
+
 async function ensurePersonalOrg(
   ctx: MutationCtx,
   userId: Id<'users'>,
@@ -58,13 +75,7 @@ async function ensurePersonalOrg(
   email: string,
   now: number,
 ): Promise<Id<'organizations'>> {
-  const displayName = `${firstName} ${lastName}`.trim() || email || userSlug
-  const orgId = await ctx.db.insert('organizations', {
-    slug: userSlug,
-    name: displayName,
-    createdAt: now,
-    updatedAt: now,
-  })
+  const orgId = await createPersonalOrgRow(ctx, userSlug, firstName, lastName, email, now)
   await setUserOrganization(ctx, userId, orgId)
   return orgId
 }
@@ -191,6 +202,9 @@ export const createUser = mutation({
     }
 
     const slug = await generateUniqueSlug(ctx.db)
+    const resolvedOrgId: Id<'organizations'> = activeOrgId
+      ?? await createPersonalOrgRow(ctx, slug, args.firstName, args.lastName, email, now)
+
     const userId = await ctx.db.insert('users', {
       tokenIdentifier: identity.tokenIdentifier,
       slug,
@@ -201,17 +215,10 @@ export const createUser = mutation({
       tcAcceptedAt: now,
       tcVersion: args.tcVersion,
       phone: args.phone,
+      organizationId: resolvedOrgId,
       ...(args.nickname !== undefined && { nickname: args.nickname }),
       appLanguage: args.appLanguage ? normalizeAppLanguage(args.appLanguage) : 'en',
     })
-
-    let resolvedOrgId: Id<'organizations'>
-    if (activeOrgId) {
-      await setUserOrganization(ctx, userId, activeOrgId)
-      resolvedOrgId = activeOrgId
-    } else {
-      resolvedOrgId = await ensurePersonalOrg(ctx, userId, slug, args.firstName, args.lastName, email, now)
-    }
 
     if (args.roles && args.roles.length > 0) {
       const uniqueRoles = [...new Set(args.roles)]

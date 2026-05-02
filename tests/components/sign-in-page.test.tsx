@@ -4,6 +4,7 @@ import { render } from '../helpers/render'
 
 vi.mock('@clerk/nextjs', () => ({
   SignIn: () => <div data-testid="clerk-signin">Clerk Sign In</div>,
+  useClerk: () => ({ loaded: true, client: { signUp: { id: null } }, session: null }),
 }))
 
 vi.mock('@/app/(auth)/clerk-glass-appearance', () => ({

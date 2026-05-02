@@ -5,6 +5,23 @@ import { cleanupInventoryForOwner } from './inventoryCleanup'
 
 export const SOFT_DELETE_TTL_MS = 7 * 24 * 60 * 60 * 1000
 
+export const TOMBSTONE_ORG_SLUG = '__deleted__'
+
+export async function getOrCreateTombstoneOrg(ctx: MutationCtx): Promise<Id<'organizations'>> {
+  const existing = await ctx.db
+    .query('organizations')
+    .withIndex('by_slug', (q) => q.eq('slug', TOMBSTONE_ORG_SLUG))
+    .unique()
+  if (existing) return existing._id
+  const now = Date.now()
+  return await ctx.db.insert('organizations', {
+    slug: TOMBSTONE_ORG_SLUG,
+    name: 'Deleted',
+    createdAt: now,
+    updatedAt: now,
+  })
+}
+
 export const ORG_CHILD_TABLES = [
   'diveCenters',
   'diveStaff',
@@ -41,10 +58,13 @@ export async function cascadeOrgDelete(
     .query('users')
     .withIndex('by_organizationId', (q) => q.eq('organizationId', orgId))
     .collect() // bounded: one org has O(members) users, practically <500
-  await batchPatch(
-    ctx,
-    users.map((u) => [u._id, { organizationId: undefined }] as const),
-  )
+  if (users.length > 0) {
+    const tombstoneId = await getOrCreateTombstoneOrg(ctx)
+    await batchPatch(
+      ctx,
+      users.map((u) => [u._id, { organizationId: tombstoneId }] as const),
+    )
+  }
   counts.usersUnbound = users.length
 
   const userRoles = await ctx.db
