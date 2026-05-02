@@ -6,6 +6,7 @@ import type { UserDoc, UserRoleDoc as RoleDoc } from '@/lib/convex-generated'
 
 const mockUseSessionIdentity = vi.fn(() => makeIdentity({ status: 'loading' }))
 
+// comments-ok: useDashboardSession is pure derivation over SessionIdentity; mocking the composite hook isolates the unit from Convex subscription lifecycle (use-session-identity itself is covered by integration tests).
 vi.mock('../use-session-identity', () => ({
   useSessionIdentity: () => mockUseSessionIdentity(),
 }))
@@ -43,16 +44,31 @@ describe('useDashboardSession', () => {
     expect(result.current.redirectPath).toBeNull()
   })
 
-  it('status is unauthenticated when identity is unauthenticated', () => {
+  it('status is unauthenticated (no Clerk session) and redirects to /sign-in', () => {
     mockUseSessionIdentity.mockReturnValue(
       makeIdentity({
         status: 'unauthenticated',
         user: null,
         roles: [],
+        isAuthenticated: false,
       }),
     )
     const { result } = renderHook(() => useDashboardSession())
     expect(result.current.status).toBe('unauthenticated')
+    expect(result.current.redirectPath).toBe('/sign-in')
+  })
+
+  it('status is unprovisioned (Clerk authed, no Convex user) and redirects to /sign-up', () => {
+    mockUseSessionIdentity.mockReturnValue(
+      makeIdentity({
+        status: 'unprovisioned',
+        user: null,
+        roles: [],
+        isAuthenticated: true,
+      }),
+    )
+    const { result } = renderHook(() => useDashboardSession())
+    expect(result.current.status).toBe('unprovisioned')
     expect(result.current.redirectPath).toBe('/sign-up')
   })
 

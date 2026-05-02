@@ -8,7 +8,7 @@ import { ROLE_BY_CLERK_ROLE, type ClerkRole, type RoleKey } from '@/lib/constant
 import { deriveDefaultRole } from '@/lib/utils/role'
 import { useStoreUserStatus } from './store-user-context'
 
-export type SessionStatus = 'loading' | 'unauthenticated' | 'ready'
+export type SessionStatus = 'loading' | 'unauthenticated' | 'unprovisioned' | 'ready'
 
 export interface SessionIdentity {
   user: UserDoc | null | undefined
@@ -31,8 +31,10 @@ export function useSessionIdentity(): SessionIdentity {
     let status: SessionStatus
     if (isAuthLoading || storeStatus === 'pending' || user === undefined || roles === undefined) {
       status = 'loading'
-    } else if (user === null) {
+    } else if (!isAuthenticated) {
       status = 'unauthenticated'
+    } else if (user === null) {
+      status = 'unprovisioned'
     } else {
       status = 'ready'
     }

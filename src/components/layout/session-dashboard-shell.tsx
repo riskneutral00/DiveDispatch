@@ -21,11 +21,14 @@ export function useSessionRoleContext(): SessionRoleContextValue | null {
 
 export function SessionDashboardShell({ children }: { children: React.ReactNode }) {
   const t = useTranslations('common')
-  const { defaultRoleKey, slug, status } = useDashboardSession()
+  const { defaultRoleKey, slug, status, redirectPath } = useDashboardSession()
 
   useGuardedRedirect({
-    to: '/sign-up',
-    enabled: status === 'unauthenticated',
+    to: redirectPath,
+    enabled:
+      status === 'unauthenticated' ||
+      status === 'unprovisioned' ||
+      status === 'no-role',
   })
 
   const contextValue = useMemo(
@@ -37,7 +40,11 @@ export function SessionDashboardShell({ children }: { children: React.ReactNode 
     return <FullPageSpinner label={t('loading')} />
   }
 
-  if (status === 'unauthenticated') {
+  if (
+    status === 'unauthenticated' ||
+    status === 'unprovisioned' ||
+    status === 'no-role'
+  ) {
     return <FullPageSpinner label={t('redirecting')} />
   }
 

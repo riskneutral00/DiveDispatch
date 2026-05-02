@@ -10,8 +10,9 @@ import {
   type ClerkRole,
   type RoleKey,
 } from '@/lib/constants/roles'
+import { resolveAuthDestination } from '@/lib/auth/resolve-destination'
 
-export type DashboardStatus = 'loading' | 'unauthenticated' | 'no-role' | 'ready'
+export type DashboardStatus = 'loading' | 'unauthenticated' | 'unprovisioned' | 'no-role' | 'ready'
 
 export type SlugMatch = 'ok' | 'mismatch' | 'unknown'
 export type RoleMatch = 'ok' | 'mismatch' | 'unknown'
@@ -36,15 +37,15 @@ export function useDashboardSession(): DashboardSession {
     let status: DashboardStatus
     if (identity.status === 'loading') status = 'loading'
     else if (identity.status === 'unauthenticated') status = 'unauthenticated'
+    else if (identity.status === 'unprovisioned') status = 'unprovisioned'
     else if (!identity.defaultRoleKey || !identity.slug) status = 'no-role'
     else status = 'ready'
 
-    let redirectPath: string | null = null
-    if (status === 'unauthenticated' || status === 'no-role') {
-      redirectPath = '/sign-up'
-    } else if (status === 'ready' && identity.slug && identity.defaultRoleKey) {
-      redirectPath = `/${identity.slug}/${identity.defaultRoleKey}/dashboard`
-    }
+    const redirectPath = resolveAuthDestination({
+      status,
+      slug: identity.slug,
+      defaultRoleKey: identity.defaultRoleKey,
+    })
 
     const hasRole = (clerkRole: ClerkRole) =>
       (identity.roles ?? []).some((r) => r.role === clerkRole)
