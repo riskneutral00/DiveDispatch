@@ -465,7 +465,7 @@ export const upsertFromWebhook = internalMutation({
           .query('users')
           .withIndex('by_tokenIdentifier', (q) => q.eq('tokenIdentifier', args.tokenIdentifier))
           .unique()
-        if (existing) return existing._id
+        return existing ? existing._id : null
       }
     }
 
@@ -535,17 +535,17 @@ export const upsertFromWebhook = internalMutation({
       }
     }
 
-    const slug = await generateUniqueSlug(ctx.db)
-    const userId = await ctx.db.insert('users', {
-      tokenIdentifier: args.tokenIdentifier,
-      slug,
+    const incomingParsed = parseTokenIdentifier(args.tokenIdentifier)
+    const newIssuer = incomingParsed?.issuer ?? '(unparseable)'
+    await ctx.db.insert('webhookAuditLog', {
+      eventType: 'user_created_skipped',
+      newTokenIdentifier: args.tokenIdentifier,
+      newIssuer,
       email,
-      firstName: args.firstName,
-      lastName: args.lastName,
-      appLanguage: 'en',
+      at: Date.now(),
     })
 
-    return userId
+    return null
   },
 })
 

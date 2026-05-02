@@ -11,6 +11,7 @@ import { seedBookingResource } from './fixtures/seedBookings'
 import { seedInventoryUnit, seedSnapshot } from './fixtures/seedInventory'
 import { seedInstructorProfile } from './fixtures/seedProfiles'
 import { makeT } from './helpers/convex-helpers'
+import { TEST_USER_REQUIRED } from './helpers/userDefaults'
 import type { Id } from '../convex/_generated/dataModel'
 
 // ─── bookingCountForRole ─────────────────────────────────────────────────────
@@ -390,6 +391,7 @@ describe('userRoles.deleteRole', () => {
         firstName: 'Rene',
         lastName: 'Balot',
         appLanguage: 'en',
+        ...TEST_USER_REQUIRED,
       })
       orgId = await ctx.db.insert('organizations', {
         clerkOrgId: 'org_seafun',
@@ -524,6 +526,7 @@ describe('userRoles.deleteRole', () => {
         lastName: 'A',
         organizationId: orgId,
         appLanguage: 'en',
+        ...TEST_USER_REQUIRED,
       })
       const bobId = await ctx.db.insert('users', {
         tokenIdentifier: 'clerk|bob',
@@ -533,6 +536,7 @@ describe('userRoles.deleteRole', () => {
         lastName: 'B',
         organizationId: orgId,
         appLanguage: 'en',
+        ...TEST_USER_REQUIRED,
       })
 
       await ctx.db.insert('userRoles', { userId: aliceId, role: 'DiveCenter', organizationId: orgId, createdAt: Date.now() })

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { api, internal } from '../convex/_generated/api'
 import { makeT, expectConvexError } from './helpers/convex-helpers'
+import { TEST_USER_REQUIRED } from './helpers/userDefaults'
 import type { Id } from '../convex/_generated/dataModel'
 
 describe('userRoles.organizationId stays in sync with users.organizationId', () => {
@@ -17,6 +18,7 @@ describe('userRoles.organizationId stays in sync with users.organizationId', () 
         firstName: 'Rene',
         lastName: 'Balot',
         appLanguage: 'en',
+        ...TEST_USER_REQUIRED,
       })
       const personalOrg = await ctx.db.insert('organizations', {
         slug: 'rene',
@@ -70,6 +72,7 @@ describe('userRoles.organizationId stays in sync with users.organizationId', () 
         firstName: 'No',
         lastName: 'Org',
         appLanguage: 'en',
+        ...TEST_USER_REQUIRED,
       })
     })
 
@@ -94,6 +97,7 @@ describe('userRoles.organizationId stays in sync with users.organizationId', () 
         firstName: 'Has',
         lastName: 'Org',
         appLanguage: 'en',
+        ...TEST_USER_REQUIRED,
       })
       orgId = await ctx.db.insert('organizations', {
         clerkOrgId: 'org_hasorg',
@@ -129,6 +133,7 @@ describe('userRoles.organizationId stays in sync with users.organizationId', () 
         firstName: 'Re',
         lastName: 'Binder',
         appLanguage: 'en',
+        ...TEST_USER_REQUIRED,
       })
       const personalId = await ctx.db.insert('organizations', {
         slug: 'rebinder',

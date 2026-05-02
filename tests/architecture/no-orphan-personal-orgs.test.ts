@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { internal } from '../../convex/_generated/api'
 import { makeT } from '../helpers/convex-helpers'
+import { TEST_USER_REQUIRED } from '../helpers/userDefaults'
 
 function makeSvixId(): string {
   return `msg_${crypto.randomUUID()}`
@@ -32,6 +33,7 @@ describe('architecture: creator-rebind webhook prevents orphan personal orgs', (
         lastName: 'Instructor',
         appLanguage: 'en',
         organizationId: seedOrgId,
+        ...TEST_USER_REQUIRED,
       })
       await ctx.db.insert('userRoles', {
         userId,

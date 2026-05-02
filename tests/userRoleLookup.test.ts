@@ -13,7 +13,7 @@ describe('users.upsertUser — removed', () => {
 
 
 describe('users.upsertFromWebhook', () => {
-  it('creates new user when none exists', async () => {
+  it('returns null and audit-logs user_created_skipped when none exists', async () => {
     const t = makeT()
 
     const userId = await t.mutation(internal.users.upsertFromWebhook, {
@@ -23,14 +23,20 @@ describe('users.upsertFromWebhook', () => {
       lastName: 'User',
     })
 
-    expect(typeof userId).toBe('string')
-    expect(userId.length).toBeGreaterThan(0)
+    expect(userId).toBeNull()
 
     await t.run(async (ctx) => {
-      const user = await ctx.db.get(userId)
-      expect(user).not.toBeNull()
-      expect(user!.email).toBe('new@test.com')
-      expect(user!.slug).toBeTruthy()
+      const byEmail = await ctx.db
+        .query('users')
+        .withIndex('by_email', (q) => q.eq('email', 'new@test.com'))
+        .collect()
+      expect(byEmail).toHaveLength(0)
+
+      const audit = await ctx.db.query('webhookAuditLog').collect()
+      const skipped = audit.filter((a) => a.eventType === 'user_created_skipped')
+      expect(skipped).toHaveLength(1)
+      expect(skipped[0].newTokenIdentifier).toBe('clerk|brand-new')
+      expect(skipped[0].email).toBe('new@test.com')
     })
   })
 
@@ -84,13 +90,14 @@ describe('users.upsertFromWebhook', () => {
       lastName: 'Y',
     })
 
+    expect(newId).toBeNull()
     await t.run(async (ctx) => {
       const all = await ctx.db
         .query('users')
         .withIndex('by_email', (q) => q.eq('email', ''))
         .collect()
-      expect(all).toHaveLength(2)
-      expect(all.some((u) => u._id === newId)).toBe(true)
+      expect(all).toHaveLength(1)
+      expect(all[0].tokenIdentifier).toBe('seed|no-email')
     })
   })
 
@@ -107,15 +114,16 @@ describe('users.upsertFromWebhook', () => {
       lastName: 'Name',
     })
 
+    expect(userId).not.toBeNull()
     await t.run(async (ctx) => {
-      const user = await ctx.db.get(userId)
+      const user = await ctx.db.get(userId!)
       expect(user!.email).toBe('updated@test.com')
     })
   })
 })
 
 describe('users.upsertFromWebhook — userRoles', () => {
-  it('does not assign any role when creating a new user (role selection owned by signup wizard)', async () => {
+  it('does not create users or roles when no DD row exists (signup wizard owns creation)', async () => {
     const t = makeT()
 
     const userId = await t.mutation(internal.users.upsertFromWebhook, {
@@ -125,12 +133,10 @@ describe('users.upsertFromWebhook — userRoles', () => {
       lastName: 'User',
     })
 
+    expect(userId).toBeNull()
     await t.run(async (ctx) => {
-      const roles = await ctx.db
-        .query('userRoles')
-        .withIndex('by_userId', (q) => q.eq('userId', userId))
-        .collect()
-      expect(roles).toHaveLength(0)
+      const allRoles = await ctx.db.query('userRoles').collect()
+      expect(allRoles).toHaveLength(0)
     })
   })
 

@@ -3,6 +3,7 @@ import { api } from '../convex/_generated/api'
 import type { Id } from '../convex/_generated/dataModel'
 import { getOrCreateTestOrg, type SeedCtx, findProfileByUser} from './fixtures'
 import { makeT, expectConvexError } from './helpers/convex-helpers'
+import { TEST_USER_REQUIRED } from './helpers/userDefaults'
 
 // ─── Seed helpers ─────────────────────────────────────────────────────────────
 
@@ -13,8 +14,8 @@ async function seedInstructorUser(ctx: SeedCtx, slug: string) {
     email: `${slug}@test.com`,
     firstName: slug,
     lastName: 'Test',
-    dateOfBirth: '1990-01-01',
     appLanguage: 'en',
+    ...TEST_USER_REQUIRED,
   })
   const organizationId = await getOrCreateTestOrg(ctx, userId)
   await ctx.db.insert('userRoles', {
@@ -66,8 +67,8 @@ async function seedCallerUser(ctx: SeedCtx, slug: string) {
     email: `${slug}@test.com`,
     firstName: slug,
     lastName: 'Caller',
-    dateOfBirth: '1990-01-01',
     appLanguage: 'en',
+    ...TEST_USER_REQUIRED,
   })
   const organizationId = await getOrCreateTestOrg(ctx, userId)
   await ctx.db.insert('userRoles', {
@@ -250,8 +251,8 @@ describe('listByRole language propagation', () => {
         email: 'dc-lang@test.com',
         firstName: 'DC',
         lastName: 'Lang',
-        dateOfBirth: '1990-01-01',
         appLanguage: 'en',
+        ...TEST_USER_REQUIRED,
       })
       const dcOrgId = await getOrCreateTestOrg(ctx, dcUserId, 'Test DC')
       await ctx.db.insert('userRoles', {

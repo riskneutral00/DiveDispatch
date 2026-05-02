@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { api, internal } from '../convex/_generated/api'
 import { makeT, expectConvexError } from './helpers/convex-helpers'
+import { TEST_USER_REQUIRED } from './helpers/userDefaults'
 
 function makeSvixId(): string {
   return `msg_${crypto.randomUUID()}`
@@ -119,6 +120,7 @@ describe('organizations.upsertFromWebhook', () => {
         firstName: 'Cre',
         lastName: 'Ator',
         appLanguage: 'en',
+        ...TEST_USER_REQUIRED,
       })
     })
 
@@ -260,6 +262,7 @@ describe('organizations.upsertFromWebhook', () => {
         lastName: 'Yong',
         appLanguage: 'en',
         organizationId: orgId,
+        ...TEST_USER_REQUIRED,
       })
       return { userId, orgId }
     })
@@ -318,6 +321,7 @@ describe('organizations.upsertFromWebhook', () => {
         lastName: 'Deleted',
         appLanguage: 'en',
         organizationId: orgId,
+        ...TEST_USER_REQUIRED,
       })
       return { userId, deletedOrgId: orgId }
     })
@@ -373,6 +377,7 @@ describe('organizations.upsertFromWebhook', () => {
         lastName: 'Creator',
         appLanguage: 'en',
         organizationId: orgId,
+        ...TEST_USER_REQUIRED,
       })
       return { existingOrgId: orgId }
     })
@@ -616,6 +621,7 @@ describe('organizations.deleteFromWebhook', () => {
         lastName: 'User',
         appLanguage: 'en',
         organizationId: orgId,
+        ...TEST_USER_REQUIRED,
       })
       const userRoleId = await ctx.db.insert('userRoles', {
         userId,
@@ -752,6 +758,7 @@ describe('organizations.getBySlug', () => {
         firstName: 'Slug',
         lastName: 'Reader',
         appLanguage: 'en',
+        ...TEST_USER_REQUIRED,
       })
     })
 
@@ -780,6 +787,7 @@ describe('organizations.getBySlug', () => {
         firstName: 'Slug',
         lastName: 'Reader',
         appLanguage: 'en',
+        ...TEST_USER_REQUIRED,
       })
     })
 
@@ -851,6 +859,7 @@ describe('organizations.updateBusinessMetadata (admin gate)', () => {
         lastName: 'User',
         appLanguage: 'en',
         organizationId: orgId,
+        ...TEST_USER_REQUIRED,
       })
       await ctx.db.insert('userRoles', {
         userId: uid,
@@ -904,6 +913,7 @@ describe('organizations.updateBusinessMetadata (admin gate)', () => {
         lastName: 'Empty',
         appLanguage: 'en',
         organizationId: orgId,
+        ...TEST_USER_REQUIRED,
       })
       await ctx.db.insert('userRoles', {
         userId: uid,

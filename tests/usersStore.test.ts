@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { api } from '../convex/_generated/api'
 import { makeT } from './helpers/convex-helpers'
+import { TEST_USER_REQUIRED } from './helpers/userDefaults'
 
 const DEV_ISSUER = 'https://canonical-clerk.test'
 const PROD_ISSUER = 'https://other-clerk.test'
@@ -23,6 +24,7 @@ describe('users.store mutation', () => {
         firstName: 'Match',
         lastName: 'User',
         appLanguage: 'en',
+        ...TEST_USER_REQUIRED,
       }),
     )
 
@@ -49,6 +51,7 @@ describe('users.store mutation', () => {
         firstName: 'Old',
         lastName: 'Token',
         appLanguage: 'en',
+        ...TEST_USER_REQUIRED,
       }),
     )
 
@@ -83,6 +86,7 @@ describe('users.store mutation', () => {
         firstName: 'Seed',
         lastName: 'User',
         appLanguage: 'en',
+        ...TEST_USER_REQUIRED,
       }),
     )
 
@@ -129,6 +133,7 @@ describe('users.store mutation', () => {
         firstName: 'Vic',
         lastName: 'Tim',
         appLanguage: 'en',
+        ...TEST_USER_REQUIRED,
       }),
     )
 
@@ -161,6 +166,7 @@ describe('users.store mutation', () => {
         firstName: 'A',
         lastName: 'B',
         appLanguage: 'en',
+        ...TEST_USER_REQUIRED,
       }),
     )
 
@@ -190,6 +196,7 @@ describe('createUser email-rebind safety', () => {
         firstName: 'Old',
         lastName: 'Profile',
         appLanguage: 'en',
+        ...TEST_USER_REQUIRED,
       }),
     )
 

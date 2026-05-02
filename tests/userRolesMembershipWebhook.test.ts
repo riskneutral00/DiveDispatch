@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { internal } from '../convex/_generated/api'
 import { makeT } from './helpers/convex-helpers'
+import { TEST_USER_REQUIRED } from './helpers/userDefaults'
 
 const TOKEN = 'clerk|member-webhook-user'
 const CLERK_ORG_ID = 'org_member_webhook'
@@ -15,6 +16,7 @@ async function seedUserOrgAndRole(): Promise<ReturnType<typeof makeT>> {
       firstName: 'Mem',
       lastName: 'Ship',
       appLanguage: 'en',
+      ...TEST_USER_REQUIRED,
     })
     const now = Date.now()
     const oid = await ctx.db.insert('organizations', {
@@ -114,6 +116,7 @@ describe('Clerk organizationMembership webhooks → userRoles permissionLevel', 
         firstName: 'Eq',
         lastName: 'User',
         appLanguage: 'en',
+        ...TEST_USER_REQUIRED,
       })
       userSlug = 'eq-user'
       const now = Date.now()
@@ -219,6 +222,7 @@ describe('Clerk organizationMembership webhooks → userRoles permissionLevel', 
         lastName: 'A',
         appLanguage: 'en',
         organizationId: oid,
+        ...TEST_USER_REQUIRED,
       })
       const bid = await ctx.db.insert('users', {
         tokenIdentifier: TOKEN_B,
@@ -228,6 +232,7 @@ describe('Clerk organizationMembership webhooks → userRoles permissionLevel', 
         lastName: 'B',
         appLanguage: 'en',
         organizationId: oid,
+        ...TEST_USER_REQUIRED,
       })
       await ctx.db.insert('userRoles', {
         userId: aid,

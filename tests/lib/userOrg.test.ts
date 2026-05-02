@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { setUserOrganization } from '../../convex/lib/userOrg'
 import { makeT } from '../helpers/convex-helpers'
+import { TEST_USER_REQUIRED } from '../helpers/userDefaults'
 
 describe('setUserOrganization — single-writer invariant', () => {
   it('patches user.organizationId and keeps userRoles in sync', async () => {
@@ -13,6 +14,7 @@ describe('setUserOrganization — single-writer invariant', () => {
         firstName: 'Sync',
         lastName: 'User',
         appLanguage: 'en',
+        ...TEST_USER_REQUIRED,
       })
       const now = Date.now()
       const oldOrg = await ctx.db.insert('organizations', {
@@ -66,6 +68,7 @@ describe('setUserOrganization — single-writer invariant', () => {
         firstName: 'Drift',
         lastName: 'User',
         appLanguage: 'en',
+        ...TEST_USER_REQUIRED,
       })
       const now = Date.now()
       const orgA = await ctx.db.insert('organizations', {
@@ -117,6 +120,7 @@ describe('setUserOrganization — single-writer invariant', () => {
         firstName: 'Noop',
         lastName: 'User',
         appLanguage: 'en',
+        ...TEST_USER_REQUIRED,
       })
       const now = Date.now()
       const orgId = await ctx.db.insert('organizations', {

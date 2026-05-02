@@ -3,6 +3,7 @@ import { ConvexError, type Value } from 'convex/values'
 import { api, internal } from '../convex/_generated/api'
 import { makeT } from './helpers/convex-helpers'
 import { createUserDefaults } from './helpers/createUser'
+import { TEST_USER_REQUIRED } from './helpers/userDefaults'
 
 describe('createUser mutation', () => {
   it('auto-creates a personal org and links user.organizationId on new user', async () => {
@@ -37,6 +38,7 @@ describe('createUser mutation', () => {
         firstName: '',
         lastName: '',
         appLanguage: 'en',
+        ...TEST_USER_REQUIRED,
       })
     })
 
@@ -212,6 +214,7 @@ describe('createUser mutation', () => {
         firstName: 'Old',
         lastName: 'Name',
         appLanguage: 'en',
+        ...TEST_USER_REQUIRED,
       })
     })
 
@@ -524,6 +527,7 @@ describe('updateProfile email removed from args schema', () => {
         firstName: 'Old',
         lastName: 'Name',
         appLanguage: 'en',
+        ...TEST_USER_REQUIRED,
       })
     })
 
@@ -537,7 +541,7 @@ describe('updateProfile email removed from args schema', () => {
 })
 
 describe('upsertFromWebhook email path', () => {
-  it('sets email from webhook args on new user creation', async () => {
+  it('returns null on new identity (webhook stub-create removed; signup owns creation)', async () => {
     const t = makeT()
     const token = `clerk|webhook-email-new-${crypto.randomUUID().slice(0, 8)}`
 
@@ -548,19 +552,37 @@ describe('upsertFromWebhook email path', () => {
       lastName: 'User',
     })
 
-    const user = await t.run(async (ctx) => ctx.db.get(userId))
-    expect(user?.email).toBe('webhook@clerk.dev')
+    expect(userId).toBeNull()
+    await t.run(async (ctx) => {
+      const byToken = await ctx.db
+        .query('users')
+        .withIndex('by_tokenIdentifier', (q) => q.eq('tokenIdentifier', token))
+        .unique()
+      expect(byToken).toBeNull()
+    })
   })
 
   it('updates email from webhook args on existing user', async () => {
     const t = makeT()
     const token = `clerk|webhook-email-update-${crypto.randomUUID().slice(0, 8)}`
 
-    await t.mutation(internal.users.upsertFromWebhook, {
-      tokenIdentifier: token,
-      email: 'old@clerk.dev',
-      firstName: 'Old',
-      lastName: 'Name',
+    await t.run(async (ctx) => {
+      const orgId = await ctx.db.insert('organizations', {
+        slug: 'webhook-email-update-org',
+        name: 'Webhook Email Update Org',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      })
+      await ctx.db.insert('users', {
+        tokenIdentifier: token,
+        slug: `webhook-email-update-${crypto.randomUUID().slice(0, 8)}`,
+        email: 'old@clerk.dev',
+        firstName: 'Old',
+        lastName: 'Name',
+        appLanguage: 'en',
+        ...TEST_USER_REQUIRED,
+        organizationId: orgId,
+      })
     })
 
     await t.mutation(internal.users.upsertFromWebhook, {
@@ -656,6 +678,7 @@ describe('upsertFromWebhook email-rebind safety', () => {
         firstName: 'Seed',
         lastName: 'User',
         appLanguage: 'en',
+        ...TEST_USER_REQUIRED,
       })
     })
 
@@ -697,6 +720,7 @@ describe('upsertFromWebhook email-rebind safety', () => {
         firstName: 'Orig',
         lastName: 'Inal',
         appLanguage: 'en',
+        ...TEST_USER_REQUIRED,
       })
     })
 
@@ -737,6 +761,7 @@ describe('upsertFromWebhook email-rebind safety', () => {
         firstName: 'Vic',
         lastName: 'Tim',
         appLanguage: 'en',
+        ...TEST_USER_REQUIRED,
       })
     })
 
@@ -786,6 +811,7 @@ describe('upsertFromWebhook email-rebind safety', () => {
         firstName: 'Orig',
         lastName: 'Inal',
         appLanguage: 'en',
+        ...TEST_USER_REQUIRED,
       })
     })
 

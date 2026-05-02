@@ -3,6 +3,7 @@ import { operatorCoverage } from '../../convex/lib/completeness/operatorEvaluato
 import type { EvaluatorContext } from '../../convex/lib/completeness/types'
 import { seedStakeholderPreferences } from '../fixtures/seedStakeholders'
 import { makeT } from '../helpers/convex-helpers'
+import { TEST_USER_REQUIRED } from '../helpers/userDefaults'
 
 describe('operatorCoverage — boat/venue OR logic', () => {
   it('boat preference satisfies venue+boat requirement even when org slug differs from user slug', async () => {
@@ -14,9 +15,8 @@ describe('operatorCoverage — boat/venue OR logic', () => {
         email: 'dc@test.com',
         firstName: 'DC',
         lastName: 'User',
-        phone: '+66812345678',
-        dateOfBirth: '1990-01-01',
         appLanguage: 'en',
+        ...TEST_USER_REQUIRED,
       })
       const dcOrgId = await ctx.db.insert('organizations', {
         clerkOrgId: 'org_dc_cov_mismatch',
@@ -39,9 +39,8 @@ describe('operatorCoverage — boat/venue OR logic', () => {
         email: 'boat@test.com',
         firstName: 'Boat',
         lastName: 'Owner',
-        phone: '+66812345679',
-        dateOfBirth: '1990-01-01',
         appLanguage: 'en',
+        ...TEST_USER_REQUIRED,
       })
 
       await seedStakeholderPreferences(ctx, 'dc-cov-mismatch', {
@@ -74,9 +73,8 @@ describe('operatorCoverage — boat/venue OR logic', () => {
         email: 'dc@test.com',
         firstName: 'DC',
         lastName: 'User',
-        phone: '+66812345678',
-        dateOfBirth: '1990-01-01',
         appLanguage: 'en',
+        ...TEST_USER_REQUIRED,
       })
       const dcOrgId = await ctx.db.insert('organizations', {
         clerkOrgId: 'org_dc_no_comp',
@@ -99,9 +97,8 @@ describe('operatorCoverage — boat/venue OR logic', () => {
         email: 'boat@test.com',
         firstName: 'Boat',
         lastName: 'Owner',
-        phone: '+66812345679',
-        dateOfBirth: '1990-01-01',
         appLanguage: 'en',
+        ...TEST_USER_REQUIRED,
       })
 
       await seedStakeholderPreferences(ctx, 'dc-no-comp', {

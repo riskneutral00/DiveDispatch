@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { internal } from '../convex/_generated/api'
 import { ALL_STAKEHOLDERS } from '../convex/seedData'
 import { makeT } from './helpers/convex-helpers'
+import { TEST_USER_REQUIRED } from './helpers/userDefaults'
 
 const VALID_SLUG = ALL_STAKEHOLDERS[0].organization?.slug ?? ALL_STAKEHOLDERS[0].user.slug
 
@@ -57,6 +58,7 @@ describe('seed.pruneOrphanOrgs', () => {
         lastName: 'Blocker',
         appLanguage: 'en',
         organizationId: oid,
+        ...TEST_USER_REQUIRED,
       })
       return oid
     })

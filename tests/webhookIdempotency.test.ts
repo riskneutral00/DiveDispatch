@@ -10,8 +10,29 @@
 
 import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest'
 import { internal } from '../convex/_generated/api'
+import type { MutationCtx } from '../convex/_generated/server'
 import { seedUser } from './fixtures'
 import { makeT } from './helpers/convex-helpers'
+import { TEST_USER_REQUIRED } from './helpers/userDefaults'
+
+async function seedUpsertUser(ctx: MutationCtx, token: string, email: string) {
+  const orgId = await ctx.db.insert('organizations', {
+    slug: `idem-${crypto.randomUUID().slice(0, 8)}`,
+    name: 'Idempotency Test Org',
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  })
+  return ctx.db.insert('users', {
+    tokenIdentifier: token,
+    slug: `idem-${crypto.randomUUID().slice(0, 8)}`,
+    email,
+    firstName: 'Seed',
+    lastName: 'User',
+    appLanguage: 'en',
+    ...TEST_USER_REQUIRED,
+    organizationId: orgId,
+  })
+}
 
 /** Generate a unique svixId per test to prevent cross-test collision. */
 function makeSvixId(): string {
@@ -26,10 +47,12 @@ function makeTokenIdentifier(label: string): string {
 // ── upsertFromWebhook idempotency ─────────────────────────────────────────
 
 describe('upsertFromWebhook idempotency', () => {
-  it('processes the first event normally', async () => {
+  it('returns existing id for first event (post-stub-removal: requires pre-existing row)', async () => {
     const t = makeT()
     const token = makeTokenIdentifier('first')
     const svixId = makeSvixId()
+
+    const seededId = await t.run(async (ctx) => seedUpsertUser(ctx, token, 'user1@test.com'))
 
     const userId = await t.mutation(internal.users.upsertFromWebhook, {
       tokenIdentifier: token,
@@ -39,17 +62,7 @@ describe('upsertFromWebhook idempotency', () => {
       svixId,
     })
 
-    expect(userId).not.toBeNull()
-
-    const user = await t.run(async (ctx) => {
-      return await ctx.db
-        .query('users')
-        .withIndex('by_tokenIdentifier', (q) =>
-          q.eq('tokenIdentifier', token),
-        )
-        .unique()
-    })
-    expect(user?.email).toBe('user1@test.com')
+    expect(userId).toBe(seededId)
   })
 
   it('skips duplicate svixId on upsert (second call is no-op)', async () => {
@@ -57,11 +70,13 @@ describe('upsertFromWebhook idempotency', () => {
     const token = makeTokenIdentifier('dup')
     const svixId = makeSvixId()
 
-    // First call — creates the user
+    await t.run(async (ctx) => seedUpsertUser(ctx, token, 'original@test.com'))
+
+    // First call — patches the existing user
     await t.mutation(internal.users.upsertFromWebhook, {
       tokenIdentifier: token,
-      email: 'original@test.com',
-      firstName: 'Original',
+      email: 'patched@test.com',
+      firstName: 'Patched',
       lastName: 'Name',
       svixId,
     })
@@ -75,7 +90,6 @@ describe('upsertFromWebhook idempotency', () => {
       svixId,
     })
 
-    // User should still have original data (second call was no-op)
     const user = await t.run(async (ctx) => {
       return await ctx.db
         .query('users')
@@ -85,9 +99,8 @@ describe('upsertFromWebhook idempotency', () => {
         .unique()
     })
 
-    expect(user?.email).toBe('original@test.com')
+    expect(user?.email).toBe('patched@test.com')
 
-    // idempotencyLog should contain exactly one entry for this svixId
     const logEntries = await t.run(async (ctx) => {
       return await ctx.db
         .query('idempotencyLog')
@@ -105,7 +118,8 @@ describe('upsertFromWebhook idempotency', () => {
     const svixIdA = makeSvixId()
     const svixIdB = makeSvixId()
 
-    // First event — creates user
+    await t.run(async (ctx) => seedUpsertUser(ctx, token, 'seed@test.com'))
+
     await t.mutation(internal.users.upsertFromWebhook, {
       tokenIdentifier: token,
       email: 'first@test.com',
@@ -114,7 +128,6 @@ describe('upsertFromWebhook idempotency', () => {
       svixId: svixIdA,
     })
 
-    // Second event — different svixId, updates user
     await t.mutation(internal.users.upsertFromWebhook, {
       tokenIdentifier: token,
       email: 'second@test.com',
@@ -123,7 +136,6 @@ describe('upsertFromWebhook idempotency', () => {
       svixId: svixIdB,
     })
 
-    // User should have data from second event (both processed)
     const user = await t.run(async (ctx) => {
       return await ctx.db
         .query('users')
@@ -134,6 +146,36 @@ describe('upsertFromWebhook idempotency', () => {
     })
 
     expect(user?.email).toBe('second@test.com')
+  })
+
+  it('audit-logs user_created_skipped on no-match and does not duplicate audit on svix replay', async () => {
+    const t = makeT()
+    const token = makeTokenIdentifier('skip')
+    const svixId = makeSvixId()
+
+    const r1 = await t.mutation(internal.users.upsertFromWebhook, {
+      tokenIdentifier: token,
+      email: 'noone@test.com',
+      firstName: 'No',
+      lastName: 'One',
+      svixId,
+    })
+    expect(r1).toBeNull()
+
+    const r2 = await t.mutation(internal.users.upsertFromWebhook, {
+      tokenIdentifier: token,
+      email: 'noone@test.com',
+      firstName: 'No',
+      lastName: 'One',
+      svixId,
+    })
+    expect(r2).toBeNull()
+
+    const audit = await t.run(async (ctx) => {
+      const all = await ctx.db.query('webhookAuditLog').collect()
+      return all.filter((a) => a.eventType === 'user_created_skipped' && a.newTokenIdentifier === token)
+    })
+    expect(audit).toHaveLength(1)
   })
 })
 
@@ -244,7 +286,8 @@ describe('webhook backwards compatibility', () => {
     const t = makeT()
     const token = makeTokenIdentifier('no-svix')
 
-    // First call without svixId
+    await t.run(async (ctx) => seedUpsertUser(ctx, token, 'seed@test.com'))
+
     await t.mutation(internal.users.upsertFromWebhook, {
       tokenIdentifier: token,
       email: 'first@test.com',
@@ -252,7 +295,6 @@ describe('webhook backwards compatibility', () => {
       lastName: 'User',
     })
 
-    // Second call without svixId — should still process
     await t.mutation(internal.users.upsertFromWebhook, {
       tokenIdentifier: token,
       email: 'second@test.com',

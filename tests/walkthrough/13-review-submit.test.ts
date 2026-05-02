@@ -19,6 +19,7 @@ import type { Id } from '../../convex/_generated/dataModel'
 import { HOLD_TTL_MS as HOLD_TTL } from '../../convex/lib/auth'
 import { testDate } from '../helpers/dates'
 import { makeT, expectConvexError } from '../helpers/convex-helpers'
+import { TEST_USER_REQUIRED } from '../helpers/userDefaults'
 
 
 type Ctx = Parameters<Parameters<ReturnType<typeof makeT>['run']>[0]>[0]
@@ -30,8 +31,8 @@ async function seedDcUser(ctx: Ctx, slug: string) {
     email: `${slug}@test.com`,
     firstName: slug,
     lastName: 'DC',
-    dateOfBirth: '1990-01-01',
     appLanguage: 'en',
+    ...TEST_USER_REQUIRED,
   })
 }
 
@@ -42,8 +43,8 @@ async function seedInstructorUser(ctx: Ctx, slug: string) {
     email: `${slug}@test.com`,
     firstName: slug,
     lastName: 'Instructor',
-    dateOfBirth: '1990-01-01',
     appLanguage: 'en',
+    ...TEST_USER_REQUIRED,
   })
 }
 

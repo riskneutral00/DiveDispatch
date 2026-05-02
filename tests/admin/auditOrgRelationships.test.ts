@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { api } from '../../convex/_generated/api'
 import { makeT } from '../helpers/convex-helpers'
+import { TEST_USER_REQUIRED } from '../helpers/userDefaults'
 
 beforeEach(() => {
   vi.stubEnv('ENVIRONMENT', 'development')
@@ -24,6 +25,7 @@ async function seedCleanGraph(t: ReturnType<typeof makeT>) {
       lastName: 'Balot',
       appLanguage: 'en',
       organizationId: orgId,
+      ...TEST_USER_REQUIRED,
     })
     await ctx.db.insert('userRoles', {
       userId,
@@ -69,6 +71,7 @@ describe('api.admin.auditOrgRelationships.run', () => {
         lastName: 'User',
         appLanguage: 'en',
         organizationId: ghostOrgId,
+        ...TEST_USER_REQUIRED,
       })
       await ctx.db.delete(ghostOrgId)
     })

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { api } from '../convex/_generated/api'
 import { makeT, expectConvexError } from './helpers/convex-helpers'
+import { TEST_USER_REQUIRED } from './helpers/userDefaults'
 
 describe('getActiveOrg — membership-gated denorm fallback', () => {
   it('(b) resolves user.organizationId when JWT has no orgId AND a matching userRoles row exists', async () => {
@@ -15,6 +16,7 @@ describe('getActiveOrg — membership-gated denorm fallback', () => {
         firstName: 'Free',
         lastName: 'Lancer',
         appLanguage: 'en',
+        ...TEST_USER_REQUIRED,
       })
       const now = Date.now()
       const oid = await ctx.db.insert('organizations', {
@@ -54,6 +56,7 @@ describe('getActiveOrg — membership-gated denorm fallback', () => {
         firstName: 'See',
         lastName: 'Eed',
         appLanguage: 'en',
+        ...TEST_USER_REQUIRED,
       })
       const now = Date.now()
       const oid = await ctx.db.insert('organizations', {
@@ -94,6 +97,7 @@ describe('getActiveOrg — membership-gated denorm fallback', () => {
         firstName: 'Or',
         lastName: 'Phan',
         appLanguage: 'en',
+        ...TEST_USER_REQUIRED,
       })
       const now = Date.now()
       const oid = await ctx.db.insert('organizations', {
@@ -127,6 +131,7 @@ describe('getActiveOrg — membership-gated denorm fallback', () => {
         firstName: 'No',
         lastName: 'Denorm',
         appLanguage: 'en',
+        ...TEST_USER_REQUIRED,
       })
     })
 
@@ -153,6 +158,7 @@ describe('getActiveOrg — membership-gated denorm fallback', () => {
         firstName: 'J',
         lastName: 'WT',
         appLanguage: 'en',
+        ...TEST_USER_REQUIRED,
       })
       const now = Date.now()
       const oid = await ctx.db.insert('organizations', {
@@ -198,6 +204,7 @@ describe('getActiveOrg — membership-gated denorm fallback', () => {
         firstName: 'JWT',
         lastName: 'Fall',
         appLanguage: 'en',
+        ...TEST_USER_REQUIRED,
       })
       const now = Date.now()
       const oid = await ctx.db.insert('organizations', {
@@ -243,6 +250,7 @@ describe('getActiveOrg — membership-gated denorm fallback', () => {
         firstName: 'JWT',
         lastName: 'Wrong',
         appLanguage: 'en',
+        ...TEST_USER_REQUIRED,
       })
       const now = Date.now()
       const correctOrgId = await ctx.db.insert('organizations', {
@@ -294,6 +302,7 @@ describe('getActiveOrg — membership-gated denorm fallback', () => {
         firstName: 'Mem',
         lastName: 'Ber',
         appLanguage: 'en',
+        ...TEST_USER_REQUIRED,
       })
       const now = Date.now()
       const oid = await ctx.db.insert('organizations', {
@@ -335,6 +344,7 @@ describe('getActiveOrg — membership-gated denorm fallback', () => {
         firstName: 'JWT',
         lastName: 'Member',
         appLanguage: 'en',
+        ...TEST_USER_REQUIRED,
       })
       const now = Date.now()
       const oid = await ctx.db.insert('organizations', {

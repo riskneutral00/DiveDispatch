@@ -2,6 +2,7 @@ import type { GenericMutationCtx, GenericActionCtx } from 'convex/server'
 import type { DataModel, Doc, Id, TableNames } from '../../convex/_generated/dataModel'
 import type { StakeholderRole } from '../../convex/lib/validators'
 import { TEST_TOKENS, TEST_SLUGS } from '../helpers/testData'
+import { TEST_USER_REQUIRED } from '../helpers/userDefaults'
 
 export type SeedCtx = GenericMutationCtx<DataModel> &
   Pick<GenericActionCtx<DataModel>, 'storage'>
@@ -93,9 +94,8 @@ export async function seedUser(
     email: overrides.email ?? 'test@test.com',
     firstName: overrides.firstName ?? 'Test',
     lastName: overrides.lastName ?? 'User',
-    phone: '+66812345678',
-    dateOfBirth: '1990-01-01',
     appLanguage: 'en',
+    ...TEST_USER_REQUIRED,
   })
   if (!overrides.skipUserRoles) {
     const orgId = await getOrCreateTestOrg(ctx, userId)

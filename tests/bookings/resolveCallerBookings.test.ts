@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { api } from '../../convex/_generated/api'
 import { makeT } from '../helpers/convex-helpers'
 import { testDate } from '../helpers/dates'
+import { TEST_USER_REQUIRED } from '../helpers/userDefaults'
 
 let t = makeT()
 beforeEach(() => {
@@ -20,9 +21,8 @@ describe('resolveCallerBookings ownerType isolation', () => {
         email: 'multi@test.com',
         firstName: 'Multi',
         lastName: 'Role',
-        phone: '+66812345678',
-        dateOfBirth: '1990-01-01',
         appLanguage: 'en',
+        ...TEST_USER_REQUIRED,
       })
 
       const orgId = await ctx.db.insert('organizations', {

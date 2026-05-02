@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { internal } from '../convex/_generated/api'
 import type { Id } from '../convex/_generated/dataModel'
 import { makeT } from './helpers/convex-helpers'
+import { TEST_USER_REQUIRED } from './helpers/userDefaults'
 
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000
 
@@ -27,6 +28,7 @@ async function seedSoftDeletedOrgWithChildren(
       lastName: 'User',
       appLanguage: 'en',
       organizationId: orgId,
+      ...TEST_USER_REQUIRED,
     })
     await ctx.db.insert('userRoles', {
       userId,

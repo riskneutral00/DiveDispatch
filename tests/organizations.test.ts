@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { api } from '../convex/_generated/api'
 import { assertDestinationOrgsValid, visibleOrgIds } from '../convex/lib/destinationScope'
 import { makeT, expectConvexError } from './helpers/convex-helpers'
+import { TEST_USER_REQUIRED } from './helpers/userDefaults'
 
 describe('destinationScope — assertDestinationOrgsValid', () => {
   it('accepts an area-org id', async () => {
@@ -79,6 +80,7 @@ describe('destinationScope — visibleOrgIds', () => {
         firstName: 'Lone',
         lastName: 'Op',
         appLanguage: 'en',
+        ...TEST_USER_REQUIRED,
       })
       const now = Date.now()
       const oid = await ctx.db.insert('organizations', {
@@ -128,6 +130,7 @@ describe('destinationScope — visibleOrgIds', () => {
         firstName: 'Rene',
         lastName: 'B',
         appLanguage: 'en',
+        ...TEST_USER_REQUIRED,
       })
       await ctx.db.patch(uid, { organizationId: oid })
       await ctx.db.insert('userRoles', {
@@ -170,6 +173,7 @@ describe('organizations.updateBusinessMetadata — destinationIds wire-up', () =
         firstName: 'Rene',
         lastName: 'B',
         appLanguage: 'en',
+        ...TEST_USER_REQUIRED,
       })
       await ctx.db.patch(uid, { organizationId: oid })
       await ctx.db.insert('userRoles', {
@@ -215,6 +219,7 @@ describe('organizations.updateBusinessMetadata — destinationIds wire-up', () =
         firstName: 'Rene',
         lastName: 'B',
         appLanguage: 'en',
+        ...TEST_USER_REQUIRED,
       })
       await ctx.db.patch(uid, { organizationId: oid })
       await ctx.db.insert('userRoles', {
@@ -311,6 +316,7 @@ describe('organizations.getBySlug — authenticated returns full org doc', () =>
         firstName: 'Full',
         lastName: 'Reader',
         appLanguage: 'en',
+        ...TEST_USER_REQUIRED,
       })
     })
 

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { api } from '../convex/_generated/api'
 import { makeT, expectConvexError } from './helpers/convex-helpers'
+import { TEST_USER_REQUIRED } from './helpers/userDefaults'
 
 const OPERATOR_TOKEN = 'clerk|op-dest-scope'
 
@@ -31,6 +32,7 @@ async function seedOperatorWithDestination(deletedAt?: number) {
       lastName: 'Erator',
       appLanguage: 'en',
       organizationId: opOrgId,
+      ...TEST_USER_REQUIRED,
     })
     await ctx.db.insert('userRoles', {
       userId: uid,
@@ -113,6 +115,7 @@ describe('destinationScope — soft-deleted destination orgs', () => {
         lastName: 'Two',
         appLanguage: 'en',
         organizationId: opOrgId,
+        ...TEST_USER_REQUIRED,
       })
       await ctx.db.insert('userRoles', {
         userId: uid,
