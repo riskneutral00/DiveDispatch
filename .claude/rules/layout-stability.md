@@ -15,7 +15,7 @@ Use `type="email"`, `type="tel"`, `type="url"` — they provide the correct mobi
 ## Fixed-height hint/error containers
 Validation hints, error messages, and helper text that toggle visibility must use fixed height (`h-4`, `h-5`) with `truncate` or `line-clamp-1`. Never `min-h-*` — it allows growth. Toggle with `opacity` (reserves space) not `display:none` / conditional render (collapses space).
 
-**Exception for form fields:** Field error/helper text uses conditional render (not opacity toggle) because underline inputs have no fixed-height container — the error appears below the underline and pushes content down intentionally. This is acceptable for single-line field errors only. Non-field elements (toasts, banners, status indicators) still use fixed height + opacity.
+**Field error/helper messages** render via `FieldMessage` (`src/components/ui/field-shell.tsx`) in a reserved `h-4` slot below the control. Empty when no error/helper, error text when invalid, helper text otherwise — toggled via opacity, never conditional render. Layout is stable in all states. Every field primitive renders this slot; do not hand-roll `{error && <p>…</p>}` at callsites.
 
 ## No conditional render for layout-affecting elements
 If an element's presence/absence would shift siblings, keep it in the DOM and toggle `opacity` or `visibility`. Only conditionally render elements that don't affect layout (overlays, modals, tooltips).
