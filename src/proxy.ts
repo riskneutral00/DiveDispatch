@@ -6,6 +6,8 @@ const isPublicRoute = createRouteMatcher([
   '/',
   '/sign-in(.*)',
   '/sign-up(.*)',
+  '/terms(.*)',
+  '/privacy(.*)',
   '/portal(.*)',   // Customer portal is tokenized, no auth required
   '/api/webhooks(.*)',
   '/api/health',
@@ -14,7 +16,7 @@ const isPublicRoute = createRouteMatcher([
 export default clerkMiddleware(async (auth, req) => {
   if (isPublicRoute(req)) return NextResponse.next()
 
-  const { userId, sessionClaims } = await auth()
+  const { userId } = await auth()
 
   if (!userId) {
     const signInUrl = new URL('/sign-in', req.url)
@@ -30,25 +32,15 @@ export default clerkMiddleware(async (auth, req) => {
     )
   }
 
-  const claimsSlug = (sessionClaims?.publicMetadata as { slug?: string } | undefined)?.slug
-
   const dashboardPath = /^\/([^/]+)\/([^/]+)(\/.*)?$/.exec(req.nextUrl.pathname)
 
   if (dashboardPath) {
     const [, urlSlug, urlRole, subPath] = dashboardPath
 
-    if (ROLE_BY_KEY[urlRole as RoleKey]) {
-      if (claimsSlug && urlSlug !== claimsSlug) {
-        return NextResponse.redirect(new URL('/dashboard', req.url))
-      }
-
-      if (!subPath || subPath === '/') {
-        return NextResponse.redirect(
-          new URL(`/${urlSlug}/${urlRole}/dashboard`, req.url),
-        )
-      }
-    } else if (claimsSlug && urlSlug === claimsSlug) {
-      return NextResponse.redirect(new URL('/dashboard', req.url))
+    if (ROLE_BY_KEY[urlRole as RoleKey] && (!subPath || subPath === '/')) {
+      return NextResponse.redirect(
+        new URL(`/${urlSlug}/${urlRole}/dashboard`, req.url),
+      )
     }
   }
 

@@ -74,6 +74,12 @@ function displayLabel(value: AddressLocationValue): string {
   return city || countryName || ''
 }
 
+function displayFullAddress(value: AddressLocationValue): string {
+  const { street, city, state, postalCode, country } = value.address
+  const countryName = country ? countries.getName(country, 'en') ?? country : ''
+  return [street, city, state, postalCode, countryName].filter((p): p is string => Boolean(p)).join(', ')
+}
+
 function FlyEffect({ target, zoom = 20 }: { target: { lat: number; lng: number } | null; zoom?: number }) {
   const map = useMap()
   useEffect(() => {
@@ -102,7 +108,7 @@ function LocationPickerModalInner({ value, onConfirm, onCancel }: ModalInnerProp
     value ? { lat: value.lat, lng: value.lng } : DEFAULT_CENTER,
   )
   const [displayAddress, setDisplayAddress] = useState(
-    value ? displayLabel(value) : '',
+    value ? (value.formattedAddress ?? displayFullAddress(value)) : '',
   )
   const [pendingAddress, setPendingAddress] = useState<AddressLocationValue['address'] | null>(
     value ? value.address : null,
@@ -312,6 +318,7 @@ function LocationPickerModalInner({ value, onConfirm, onCancel }: ModalInnerProp
     onConfirm({
       address,
       placeId: pendingPlaceId,
+      formattedAddress: displayAddress || undefined,
       lat: center.lat,
       lng: center.lng,
     })

@@ -266,7 +266,6 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp,
               <FormSectionHeader
                 className="mb-4"
                 label={tBooking('confirmationAlerts')}
-                required
               />
               <div className="space-y-3">
                 {(

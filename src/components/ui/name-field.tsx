@@ -50,7 +50,7 @@ export function NameField({
       label={label}
       value={value}
       onChange={(e) => onChange(e.target.value.slice(0, NAME_MAX_LENGTH))}
-      onBlur={() => { onChange(value.trim()); onBlur?.() }}
+      onBlur={() => { onBlur?.() }}
       autoComplete={AUTOCOMPLETE_MAP[scope]}
       autoCapitalize={scope === 'nickname' ? 'none' : 'words'}
       spellCheck={false}
