@@ -2,7 +2,7 @@ import { Fragment } from "react";
 import { Plus } from "lucide-react";
 
 import { SpecialtyField } from "@/components/profiles/specialty-field";
-import { DayPicker } from "@/components/ui/day-picker";
+import { NumberPicker } from "@/components/ui/number-picker";
 import { InlineError } from "@/components/ui/inline-error";
 import { FormSectionHeader } from "@/components/ui/form-section-header";
 import { Button } from "@/components/ui/button";
@@ -121,33 +121,39 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
             Default course days
           </FieldLabel>
           <div className="flex gap-2 reading-plane">
-            <DayPicker
+            <NumberPicker
               label={
                 agencyPrefix?.courses.find((c: AgencyCourse) => c.code === "OW")
                   ?.label ?? "OW"
               }
-              value={Number((item as AgencyRow).owDays)}
+              value={(item as AgencyRow).owDays as number | undefined}
               min={COURSE_DAY_RANGES.OW.min}
               max={COURSE_DAY_RANGES.OW.max}
               onChange={(v) => handleUpdate(idx, { owDays: v })}
+              required
+              error={errors[`associations.${idx}.owDays`]}
             />
-            <DayPicker
+            <NumberPicker
               label={
                 agencyPrefix?.courses.find(
                   (c: AgencyCourse) => c.code === "AOW",
                 )?.label ?? "AOW"
               }
-              value={Number((item as AgencyRow).aowDays)}
+              value={(item as AgencyRow).aowDays as number | undefined}
               min={COURSE_DAY_RANGES.AOW.min}
               max={COURSE_DAY_RANGES.AOW.max}
               onChange={(v) => handleUpdate(idx, { aowDays: v })}
+              required
+              error={errors[`associations.${idx}.aowDays`]}
             />
-            <DayPicker
+            <NumberPicker
               label={agencyPrefix?.combinedLabel ?? "O+A"}
-              value={Number((item as AgencyRow).oaDays)}
+              value={(item as AgencyRow).oaDays as number | undefined}
               min={COURSE_DAY_RANGES.combined.min}
               max={COURSE_DAY_RANGES.combined.max}
               onChange={(v) => handleUpdate(idx, { oaDays: v })}
+              required
+              error={errors[`associations.${idx}.oaDays`]}
             />
           </div>
         </div>

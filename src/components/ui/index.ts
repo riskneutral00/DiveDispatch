@@ -55,7 +55,6 @@ export { FormSectionHeader } from "./form-section-header";
 export { FlagEmoji } from "./flag-emoji";
 export { AppToaster } from "./app-toaster";
 export { Spinner } from "./spinner";
-export { DayPicker } from "./day-picker";
 export { ListRow } from "./list-row";
 export { Skeleton } from "./skeleton";
 export { ConfirmActionDialog } from "./confirm-dialog";

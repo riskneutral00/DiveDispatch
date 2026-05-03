@@ -30,7 +30,6 @@ Governance: `.claude/rules/existing-components-first.md` + `.claude/rules/dry-fi
 | `NumberPicker` | `@/components/ui/number-picker` | Numeric dropdown — SimpleSelect with auto-generated options from min/max/step. Use for any bounded numeric field (ranges, counts, percentages, depths, passengers, days). Matches BirthdayField's dropdown pattern for app-wide consistency. |
 | `Checkbox` | `@/components/ui/checkbox` | Raw `<input type="checkbox">`. |
 | `CheckboxGroup` | `@/components/ui/checkbox-group` | Multiple checkboxes sharing a label. |
-| `DayPicker` | `@/components/ui/day-picker` | Single-date calendar picker. |
 | `DayToggleGroup` | `@/components/ui/day-toggle-group` | Day-of-week selection (Mon–Sun). |
 | `SortableOverlayList` | `@/components/ui/sortable-overlay-list` | DnD-reorderable list with overlay preview. |
 

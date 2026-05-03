@@ -177,13 +177,13 @@ describe('NumberPicker — truthful empty state (Task 3)', () => {
 
 describe('DayPicker — scheduled deletion (Task 4)', () => {
   it('day-picker.tsx is removed from src/components/ui/', async () => {
-    let imported: unknown = null
-    try {
-      imported = await import('@/components/ui/day-picker')
-    } catch {
-      imported = null
-    }
-    expect(imported, 'src/components/ui/day-picker.tsx must be deleted (Task 4)').toBeNull()
+    const { existsSync } = await import('node:fs')
+    const { resolve } = await import('node:path')
+    const filePath = resolve(process.cwd(), 'src/components/ui/day-picker.tsx')
+    expect(
+      existsSync(filePath),
+      'src/components/ui/day-picker.tsx must be deleted (Task 4)',
+    ).toBe(false)
   })
 })
 
