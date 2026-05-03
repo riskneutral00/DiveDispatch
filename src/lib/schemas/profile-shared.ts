@@ -283,9 +283,9 @@ export interface VenueFormValue {
   email: string
   phone: string
   location: AddressLocationValue | null
-  maxDepth: number
-  maxCapacity: number
-  confinedCapable: boolean
+  maxDepth?: number
+  maxCapacity?: number
+  confinedCapable?: boolean
   features: VenueFeature[]
   isAllowed: string[]
   notAllowed: string[]
@@ -301,9 +301,9 @@ export function makeDefaultVenueForm(overrides?: Partial<VenueFormValue>): Venue
     email: '',
     phone: '',
     location: null,
-    maxDepth: 0,
-    maxCapacity: 0,
-    confinedCapable: false,
+    maxDepth: undefined,
+    maxCapacity: undefined,
+    confinedCapable: undefined,
     features: [],
     isAllowed: [],
     notAllowed: [],
@@ -332,10 +332,10 @@ export function makeVenueDraftFromPrior(args: {
   return {
     ...prior.form,
     name: '',
-    confinedCapable: sameKind ? prior.form.confinedCapable : targetIsPool,
+    confinedCapable: sameKind ? prior.form.confinedCapable : (targetIsPool ? true : undefined),
     features: sameKind ? prior.form.features : [],
-    maxDepth: sameKind ? prior.form.maxDepth : 0,
-    maxCapacity: sameKind && targetIsPool ? prior.form.maxCapacity : 0,
+    maxDepth: sameKind ? prior.form.maxDepth : undefined,
+    maxCapacity: sameKind && targetIsPool ? prior.form.maxCapacity : undefined,
   }
 }
 

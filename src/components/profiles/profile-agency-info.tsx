@@ -51,8 +51,17 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
   const keys = useStableKeys(items);
 
   function handleAdd() {
-    const next = makeRow ? makeRow() : (makeDefaultAgentAssociation() as unknown as TItem);
-    onChange([...items, next]);
+    if (makeRow) {
+      onChange([...items, makeRow()]);
+      return;
+    }
+    if (variant === "agent") {
+      onChange([...items, makeDefaultAgentAssociation() as unknown as TItem]);
+      return;
+    }
+    throw new Error(
+      "ProfileAgencyInfo: variant='dive-center' requires makeRow prop (no default factory available)",
+    );
   }
 
   function handleRemove(idx: number) {

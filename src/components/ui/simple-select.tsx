@@ -190,7 +190,6 @@ export function SimpleSelect({
             value={staleValue}
             disabled
             aria-disabled="true"
-            aria-label={staleLabelText}
           >
             {staleLabelText}
           </option>

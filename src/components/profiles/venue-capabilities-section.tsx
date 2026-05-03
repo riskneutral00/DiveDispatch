@@ -54,9 +54,9 @@ function venueToEntry(venue: VenueDoc): VenueEntry {
         lat: venue.lat,
         lng: venue.lng,
       },
-      maxDepth: venue.maxDepth ?? 0,
-      maxCapacity: venue.maxCapacity ?? 0,
-      confinedCapable: venue.confinedCapable ?? false,
+      maxDepth: venue.maxDepth,
+      maxCapacity: venue.maxCapacity,
+      confinedCapable: venue.confinedCapable,
       features: (venue.features ?? []) as VenueFeature[],
       isAllowed: venue.isAllowed ?? [],
       notAllowed: venue.notAllowed ?? [],
@@ -264,9 +264,14 @@ function VenueCapabilitiesInner({
       kind: entry.kind,
       features: entry.form.features,
       confinedCapable: entry.form.confinedCapable,
-      maxDepth: entry.form.maxDepth > 0 ? entry.form.maxDepth : undefined,
+      maxDepth:
+        entry.form.maxDepth !== undefined && entry.form.maxDepth > 0
+          ? entry.form.maxDepth
+          : undefined,
       maxCapacity:
-        entry.kind === 'pool' && entry.form.maxCapacity > 0
+        entry.kind === 'pool' &&
+        entry.form.maxCapacity !== undefined &&
+        entry.form.maxCapacity > 0
           ? entry.form.maxCapacity
           : undefined,
       isAllowed: entry.form.isAllowed,

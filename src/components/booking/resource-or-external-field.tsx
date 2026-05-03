@@ -18,6 +18,7 @@ interface ResourceOrExternalFieldProps {
   onExternalNameChange: (name: string) => void
   placeholder?: string
   className?: string
+  loading?: boolean
 }
 
 export function ResourceOrExternalField({
@@ -31,6 +32,7 @@ export function ResourceOrExternalField({
   onExternalNameChange,
   placeholder,
   className,
+  loading,
 }: ResourceOrExternalFieldProps) {
   if (isExternal) {
     return (
@@ -68,6 +70,7 @@ export function ResourceOrExternalField({
         }}
         options={options}
         placeholder={placeholder ?? `Select ${label.toLowerCase()}…`}
+        loading={loading}
       />
     </div>
   )

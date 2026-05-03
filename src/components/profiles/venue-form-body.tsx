@@ -27,8 +27,8 @@ export function isVenueFormSubmittable(form: VenueFormValue, kind: VenueKind): b
     form.email.trim().length > 0 &&
     form.phone.trim().length > 0 &&
     form.location !== null &&
-    form.maxDepth > 0
-  if (kind === 'pool') return baseValid && form.maxCapacity > 0
+    form.maxDepth !== undefined && form.maxDepth > 0
+  if (kind === 'pool') return baseValid && form.maxCapacity !== undefined && form.maxCapacity > 0
   return baseValid
 }
 
@@ -74,8 +74,8 @@ export function VenueFormBody({ kind, value, onChange }: VenueFormBodyProps) {
       <div className="flex flex-wrap gap-3">
         <NumberPicker
           label={t('maxDepthM')}
-          value={value.maxDepth || undefined}
-          onChange={(v) => onChange({ ...value, maxDepth: v ?? 0 })}
+          value={value.maxDepth}
+          onChange={(v) => onChange({ ...value, maxDepth: v })}
           min={1}
           max={range.maxDepth}
           step={0.5}
@@ -85,8 +85,8 @@ export function VenueFormBody({ kind, value, onChange }: VenueFormBodyProps) {
         {isPool && (
           <NumberPicker
             label={t('maxCapacity')}
-            value={value.maxCapacity || undefined}
-            onChange={(v) => onChange({ ...value, maxCapacity: v ?? 0 })}
+            value={value.maxCapacity}
+            onChange={(v) => onChange({ ...value, maxCapacity: v })}
             min={1}
             max={range.maxCapacity}
             required
@@ -95,7 +95,7 @@ export function VenueFormBody({ kind, value, onChange }: VenueFormBodyProps) {
         {!isPool && (
           <Checkbox
             label={t('confinedCapable')}
-            checked={value.confinedCapable}
+            checked={value.confinedCapable ?? false}
             onChange={(checked) => onChange({ ...value, confinedCapable: checked })}
           />
         )}
