@@ -17,6 +17,7 @@ export function PreferredOperatorPicker({ value, onChange }: PreferredOperatorPi
   const dc = useDirectoryByRoleKey('dive-center')
   const ag = useDirectoryByRoleKey('agent')
 
+  const loading = dc === undefined || ag === undefined
   const options = useMemo(() => {
     const merged = [...(dc ?? []), ...(ag ?? [])]
     return merged
@@ -38,6 +39,7 @@ export function PreferredOperatorPicker({ value, onChange }: PreferredOperatorPi
       <p className="text-body mb-4 text-secondary">{t('preferredOperatorDesc')}</p>
       <SimpleSelect
         label={t('targetOperator')}
+        loading={loading}
         value={selectValue}
         onChange={(v) => {
           if (!v) {

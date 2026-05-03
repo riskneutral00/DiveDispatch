@@ -552,6 +552,7 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
         <SimpleSelect
           label={tItin('targetDiveCenter')}
           value={state.targetOperatorSlug ?? ''}
+          loading={operatorDirectoryRaw === undefined}
           disabled={!state.isReferral}
           onChange={(v) => dispatch({ type: 'SET_TARGET_OPERATOR_SLUG', value: v || undefined })}
           options={targetOperatorOptions}

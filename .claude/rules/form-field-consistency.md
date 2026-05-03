@@ -2,7 +2,37 @@
 Every field label in forms must use `FieldLabel` from `field-shell.tsx`. Never hand-roll `<label>` with inline required asterisks.
 
 ## Field primitives own their label
-Every field primitive under `src/components/ui/` (`input.tsx`, `textarea.tsx`, `simple-select.tsx`, `select.tsx`, `number-picker.tsx`, `checkbox.tsx`, `checkbox-group.tsx`, `day-picker.tsx`, `day-toggle-group.tsx`, `phone-field.tsx`, `email-field.tsx`, `name-field.tsx`, `country-field.tsx`, `birthday-field.tsx`, `date-field.tsx`, `language-field.tsx`) takes `label?: string` and renders `FieldLabel` internally via `FieldShell`. Never wrap a single field primitive in an external `FieldShell` at a callsite — if the primitive lacks a label prop, that's the bug; fix the primitive, not the callsite. `FieldShell` is reserved for composite sections that render multiple controls under one legend; for row-of-fields legends use `FieldRow` with its `label` prop instead.
+Every field primitive under `src/components/ui/` (`input.tsx`, `textarea.tsx`, `simple-select.tsx`, `select.tsx`, `number-picker.tsx`, `checkbox.tsx`, `checkbox-group.tsx`, `day-toggle-group.tsx`, `phone-field.tsx`, `email-field.tsx`, `name-field.tsx`, `country-field.tsx`, `birthday-field.tsx`, `date-field.tsx`, `language-field.tsx`) takes `label?: string` and renders `FieldLabel` internally via `FieldShell`. Never wrap a single field primitive in an external `FieldShell` at a callsite — if the primitive lacks a label prop, that's the bug; fix the primitive, not the callsite. `FieldShell` is reserved for composite sections that render multiple controls under one legend; for row-of-fields legends use `FieldRow` with its `label` prop instead.
+
+`DayPicker` was deleted as a primitive (single callsite — the year-of-birth dropdown — uses a generic `SimpleSelect` with explicit `field-xs` instead). Do not reintroduce a day-of-month wrapper; if you need one, the right primitive is `DayToggleGroup` (day-of-week) or `BirthdayField` (full date). Never hand-roll a day dropdown.
+
+## Truthful select values: the `SelectValue` discriminated union
+
+`SimpleSelect` (and any wrapper select primitive) accepts a discriminated-union `SelectValue` instead of an overloaded `string | undefined`:
+
+```
+type SelectValue =
+  | { kind: "empty" }                                       // no value chosen
+  | { kind: "set"; value: string }                          // value is one of the options
+  | { kind: "stale"; value: string; label?: string }        // persisted value no longer in options
+  | { kind: "loading" };                                    // options still loading
+```
+
+Use `fromOptional(value)` (exported from `simple-select.tsx`) when adapting a legacy `string | undefined` form-state field — it normalizes to the union. The primitive auto-detects `stale` when a `set` value is not in `options`, and renders the loading placeholder when `loading` is `true`. Empty / loading / stale states are visibly distinct and ARIA-correct; never overload them onto `""` at the callsite.
+
+**Stale-label resolver.** Pass `getStaleLabel?: (value: string) => string` to render a human label for a deprecated/missing option (e.g., agency renamed). When omitted, the primitive falls back to the i18n `common.deprecatedValue` template — never a raw value string. Placeholder, loading, and deprecated-value copy all flow through `useTranslations("common")` (`select`, `loading`, `deprecatedValue`) — no hardcoded English in the primitive or at callsites.
+
+**Async option flows.** Any select whose options arrive from a query must thread `loading={isOptionsLoading}` so the primitive renders the loading kind instead of pretending the value is empty. Anchor: `PreferredOperatorPicker` and the booking itinerary select.
+
+Locked by `tests/architecture/select-truth-contract.test.ts` — it covers empty, explicit-empty, stale (with and without resolver), loading, and required-empty cases. New select primitives or new "missing" states must extend the union and the test, not bypass it.
+
+## Canonical row factories live next to their Zod schema
+
+For every repeating-row Zod schema in `src/lib/schemas/profile-shared.ts` (agent associations, instructor credentials, dive-center associations, boat routes, boat fleet entries, venue capabilities, venue form), the file exports a `makeDefault<Row>(overrides?: Partial<Row>)` factory colocated with the schema. Editors and `fromProfile` adapters MUST import these factories — never define a component-local "blank row" builder, and never spread literal defaults inline at a callsite. `Partial<Row>` overrides are the only escape hatch for partial-record loads.
+
+**Why colocated, not in the editor file.** A required field added to the Zod schema must force a corresponding factory default in the same file, or `tests/architecture/row-factory-contract.test.ts` (the schema-introspective lock) fails CI. The arch test walks every `(schema, fromProfile, factory)` triple and asserts the factory satisfies `safeParse` for both empty and partial-load shapes. A component-local factory escapes that lock — that is the defect class this rule prevents.
+
+**The pool persistence corollary.** When a row's persisted shape differs from the input shape (e.g., `confinedCapable` is forced to `true` by the backend for `kind: "pool"`), the row factory and the `toPayload` adapter own that asymmetry — never the editor component. Anchor: `convex/venues.ts:166-170` + the venue capabilities factory in `profile-shared.ts`.
 
 ## Required = `required` prop, not label text
 Required fields get `required` prop on Input/SimpleSelect/FieldShell → FieldLabel renders the asterisk. Never append "(optional)" to labels — absence of asterisk IS the optional signal.
