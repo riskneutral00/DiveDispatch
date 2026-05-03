@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   contactSchema,
   boatFleetSchema,
+  makeDefaultBoatFleetEntry,
 } from '@/lib/schemas/profile-shared'
 import {
   contactFromProfile as boatContactFromProfile,
@@ -13,9 +14,12 @@ import {
   applyDayToggle,
   boatFleetFromProfile,
   boatFleetToPayload,
-  emptyFleet,
   INITIAL_BOAT_FLEET_FORM,
 } from '../boat-profile-form'
+
+function emptyFleet() {
+  return { ...makeDefaultBoatFleetEntry(), routes: [] }
+}
 import type { BoatFleetFormState } from '../boat-profile-form'
 
 const VALID_LOCATION = {

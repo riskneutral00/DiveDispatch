@@ -5,7 +5,6 @@ import { NumberPicker } from '@/components/ui/number-picker'
 import { Checkbox } from '@/components/ui/checkbox'
 import { CheckboxGroup } from '@/components/ui/checkbox-group'
 import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
-import { type LocationValue } from '@/components/profiles/location-picker'
 import { GasMixFields } from '@/components/capabilities/gas-mix-fields'
 import {
   AccessControlSection,
@@ -18,40 +17,9 @@ import {
   type VenueKind,
 } from '@/lib/constants/venue-subtypes'
 import type { GasMix } from '@/lib/constants/gas-mixes'
+import type { VenueFormValue } from '@/lib/schemas/profile-shared'
 
-export interface VenueFormValue {
-  name: string
-  email: string
-  phone: string
-  location: LocationValue | null
-  maxDepth: number
-  maxCapacity: number
-  confinedCapable: boolean
-  features: VenueFeature[]
-  isAllowed: string[]
-  notAllowed: string[]
-  hasCompressorOnSite: boolean
-  compressorGasMixes?: GasMix[]
-  compressorNitroxMin?: number
-  compressorNitroxMax?: number
-}
-
-export const EMPTY_VENUE_FORM: VenueFormValue = {
-  name: '',
-  email: '',
-  phone: '',
-  location: null,
-  maxDepth: 0,
-  maxCapacity: 0,
-  confinedCapable: false,
-  features: [],
-  isAllowed: [],
-  notAllowed: [],
-  hasCompressorOnSite: false,
-  compressorGasMixes: [],
-  compressorNitroxMin: undefined,
-  compressorNitroxMax: undefined,
-}
+export type { VenueFormValue }
 
 export function isVenueFormSubmittable(form: VenueFormValue, kind: VenueKind): boolean {
   const baseValid =

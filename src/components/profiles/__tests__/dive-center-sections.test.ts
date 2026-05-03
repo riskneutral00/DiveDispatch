@@ -3,6 +3,7 @@ import {
   contactSchema,
   diveCenterLanguagesSchema,
   diveCenterAffiliationsSchema,
+  makeDefaultDiveCenterAssociation as makeDefaultAssoc,
 } from '@/lib/schemas/profile-shared'
 import {
   contactFromProfile,
@@ -13,7 +14,6 @@ import {
 import {
   affiliationsFromProfile,
   affiliationsToPayload,
-  makeDefaultAssoc,
   INITIAL_AFFILIATIONS_FORM,
 } from '../dive-center-profile-form'
 import type { DiveCenterAffiliationsFormState } from '../dive-center-profile-form'

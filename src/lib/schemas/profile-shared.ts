@@ -5,8 +5,10 @@ import { ERROR_REQUIRED } from '@/lib/validation/error-codes'
 import { AOW_REQUIRED_SPECIALTY_COUNT } from '@/lib/constants/agencies'
 import { BOAT_TYPES } from '@/lib/constants/boat-types'
 import { GAS_MIXES } from '@/lib/constants/gas-mixes'
-import { VENUE_KINDS } from '../../../convex/shared/venueTypes'
-import { VENUE_FEATURES } from '../../../convex/shared/venueFeatures'
+import { VENUE_KINDS, type VenueKind } from '../../../convex/shared/venueTypes'
+import { VENUE_FEATURES, type VenueFeature } from '../../../convex/shared/venueFeatures'
+import { type GasMix } from '../../../convex/shared/gasMixes'
+import type { AddressLocationValue } from './location'
 import {
   customerLanguagesFieldSchema,
   teachingLanguagesFieldSchema,
@@ -274,4 +276,84 @@ export function makeDefaultVenueCapabilities(
     features: [],
     ...overrides,
   }
+}
+
+export interface VenueFormValue {
+  name: string
+  email: string
+  phone: string
+  location: AddressLocationValue | null
+  maxDepth: number
+  maxCapacity: number
+  confinedCapable: boolean
+  features: VenueFeature[]
+  isAllowed: string[]
+  notAllowed: string[]
+  hasCompressorOnSite: boolean
+  compressorGasMixes?: GasMix[]
+  compressorNitroxMin?: number
+  compressorNitroxMax?: number
+}
+
+export function makeDefaultVenueForm(overrides?: Partial<VenueFormValue>): VenueFormValue {
+  return {
+    name: '',
+    email: '',
+    phone: '',
+    location: null,
+    maxDepth: 0,
+    maxCapacity: 0,
+    confinedCapable: false,
+    features: [],
+    isAllowed: [],
+    notAllowed: [],
+    hasCompressorOnSite: false,
+    compressorGasMixes: [],
+    compressorNitroxMin: undefined,
+    compressorNitroxMax: undefined,
+    ...overrides,
+  }
+}
+
+export function makeVenueDraftFromPrior(args: {
+  prior: { kind: VenueKind; form: VenueFormValue } | null
+  targetKind: VenueKind
+  inherited: { email?: string; phone?: string }
+}): VenueFormValue {
+  const { prior, targetKind, inherited } = args
+  if (!prior) {
+    return makeDefaultVenueForm({
+      email: inherited.email ?? '',
+      phone: inherited.phone ?? '',
+    })
+  }
+  const sameKind = prior.kind === targetKind
+  const targetIsPool = targetKind === 'pool'
+  return {
+    ...prior.form,
+    name: '',
+    confinedCapable: sameKind ? prior.form.confinedCapable : targetIsPool,
+    features: sameKind ? prior.form.features : [],
+    maxDepth: sameKind ? prior.form.maxDepth : 0,
+    maxCapacity: sameKind && targetIsPool ? prior.form.maxCapacity : 0,
+  }
+}
+
+export function venueCapabilitiesToCreatePayload(form: {
+  kind: VenueKind
+  features: VenueFeature[]
+  confinedCapable?: boolean
+  maxDepth?: number
+  maxCapacity?: number
+}): Record<string, unknown> {
+  const payload: Record<string, unknown> = {
+    kind: form.kind,
+    features: form.features,
+    maxDepth: form.maxDepth,
+    maxCapacity: form.kind === 'pool' ? form.maxCapacity : undefined,
+  }
+  if (form.kind !== 'pool' && form.confinedCapable !== undefined) {
+    payload.confinedCapable = form.confinedCapable
+  }
+  return payload
 }

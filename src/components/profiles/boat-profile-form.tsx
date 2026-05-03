@@ -18,44 +18,31 @@ import { GasMixFields } from '@/components/capabilities/gas-mix-fields'
 import {
   contactSchema,
   boatFleetSchema,
+  makeDefaultBoatFleetEntry,
+  makeDefaultBoatRoute,
+  type BoatFleetEntry,
+  type BoatRoute,
 } from '@/lib/schemas/profile-shared'
 import {
   buildParentContactDefaults,
   type BaseProfileSectionProps,
 } from '@/lib/profile-form'
-import { BoatType, BOAT_TYPE_OPTIONS } from '@/lib/constants/boat-types'
+import { BOAT_TYPE_OPTIONS } from '@/lib/constants/boat-types'
 import { type GasMix } from '@/lib/constants/gas-mixes'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 
 export type BoatProfileSection = 'contact' | 'fleet'
 
-interface RouteState {
-  venueIds: string[]
-  daysOfWeek: number[]
+type RouteState = BoatRoute
+
+type FleetState = Omit<BoatFleetEntry, 'routes'> & { routes: RouteState[] }
+
+function freshFleetEntry(): FleetState {
+  return { ...makeDefaultBoatFleetEntry(), routes: [] }
 }
 
-interface FleetState {
-  boatName: string
-  maxPax: number
-  minPax: number | undefined
-  boatType: BoatType | ''
-  routes: RouteState[]
-  cutoffHours: number | undefined
-}
-
-export function emptyFleet(): FleetState {
-  return {
-    boatName: '',
-    maxPax: 0,
-    minPax: undefined,
-    boatType: '',
-    routes: [],
-    cutoffHours: undefined,
-  }
-}
-
-export function emptyRoute(): RouteState {
-  return { venueIds: [], daysOfWeek: [] }
+function freshRoute(): RouteState {
+  return makeDefaultBoatRoute()
 }
 
 export function applyDayToggle(
@@ -108,7 +95,7 @@ export type BoatFleetFormState = {
 }
 
 export const INITIAL_BOAT_FLEET_FORM: BoatFleetFormState = {
-  fleet: [emptyFleet()],
+  fleet: [freshFleetEntry()],
   hasCompressor: false,
   gasMixes: [],
   nitroxMin: undefined,
@@ -125,9 +112,9 @@ export function boatFleetFromProfile(p: Record<string, unknown>): BoatFleetFormS
             const rawRoutes = (f.routes as Array<{ venueIds?: string[]; daysOfWeek?: number[] }> | undefined) ?? []
             return {
               boatName: f.boatName as string,
-              maxPax: (f.maxPax as number) ?? 0,
+              maxPax: (f.maxPax as number | undefined) ?? (undefined as unknown as number),
               minPax: f.minPax != null ? (f.minPax as number) : undefined,
-              boatType: f.boatType as BoatType,
+              boatType: f.boatType as BoatFleetEntry['boatType'],
               routes: rawRoutes.map((r) => ({
                 venueIds: r.venueIds ?? [],
                 daysOfWeek: r.daysOfWeek ?? [],
@@ -135,7 +122,7 @@ export function boatFleetFromProfile(p: Record<string, unknown>): BoatFleetFormS
               cutoffHours: f.cutoffHours != null ? (f.cutoffHours as number) : undefined,
             }
           })
-        : [emptyFleet()],
+        : [freshFleetEntry()],
     hasCompressor: gasMixes.length > 0,
     gasMixes,
     nitroxMin: typeof p.nitroxMin === 'number' ? p.nitroxMin : undefined,
@@ -149,7 +136,7 @@ export function boatFleetToPayload(f: BoatFleetFormState): Record<string, unknow
       boatName: v.boatName,
       maxPax: v.maxPax,
       minPax: v.minPax,
-      boatType: v.boatType as BoatType,
+      boatType: v.boatType,
       routes: v.routes.length > 0 ? v.routes : undefined,
       cutoffHours: v.cutoffHours,
     })),
@@ -229,7 +216,7 @@ export function BoatFleetSection({ profile: existing, me, create, update, onClos
         label="Fleet"
         addLabel="Add Vessel"
         items={form.fleet}
-        emptyItem={emptyFleet}
+        emptyItem={freshFleetEntry}
         onChange={(next) => setField('fleet', next)}
         itemKey={(_v, fi) => String(fi)}
         defaultExpandFirst
@@ -281,7 +268,7 @@ function FleetEntryBody({ vessel, fleetIdx: fi, errors, venueOptions, onUpdate, 
           label="Boat Type"
           required
           value={vessel.boatType}
-          onChange={(v) => onUpdate({ boatType: v as BoatType })}
+          onChange={(v) => onUpdate({ boatType: v as BoatFleetEntry['boatType'] })}
           options={BOAT_TYPE_OPTIONS}
           error={errors[`fleet.${fi}.boatType`]}
         />
@@ -291,8 +278,8 @@ function FleetEntryBody({ vessel, fleetIdx: fi, errors, venueOptions, onUpdate, 
           required
           min={1}
           max={100}
-          value={vessel.maxPax || undefined}
-          onChange={(v) => onUpdate({ maxPax: v ?? 0 })}
+          value={vessel.maxPax}
+          onChange={(v) => onUpdate({ maxPax: v as number })}
           error={errors[`fleet.${fi}.maxPax`]}
         />
         <NumberPicker
@@ -319,7 +306,7 @@ function FleetEntryBody({ vessel, fleetIdx: fi, errors, venueOptions, onUpdate, 
         label="Routes"
         addLabel="Add Route"
         items={vessel.routes}
-        emptyItem={emptyRoute}
+        emptyItem={freshRoute}
         onChange={onUpdateRoutes}
         emptyMessage="No routes added. Routes define which dive sites this vessel visits and on which days."
         removeAriaLabel={() => 'Remove route'}

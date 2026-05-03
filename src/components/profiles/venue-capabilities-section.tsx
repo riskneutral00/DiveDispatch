@@ -23,10 +23,10 @@ import {
 } from '@/lib/hooks/use-venue-signup-intent'
 import {
   VenueFormBody,
-  EMPTY_VENUE_FORM,
   isVenueFormSubmittable,
   type VenueFormValue,
 } from './venue-form-body'
+import { makeVenueDraftFromPrior } from '@/lib/schemas/profile-shared'
 
 type VenueCapabilitiesSectionProps = BaseProfileSectionProps
 type SubTab = 'pool' | 'dive_site'
@@ -68,30 +68,6 @@ function venueToEntry(venue: VenueDoc): VenueEntry {
   }
 }
 
-function inheritDraftForm(
-  prior: VenueEntry | null,
-  targetKind: VenueKind,
-  inherited: { email?: string; phone?: string },
-): VenueFormValue {
-  if (!prior) {
-    return {
-      ...EMPTY_VENUE_FORM,
-      email: inherited.email ?? '',
-      phone: inherited.phone ?? '',
-    }
-  }
-  const sameKind = prior.kind === targetKind
-  const targetIsPool = targetKind === 'pool'
-  return {
-    ...prior.form,
-    name: '',
-    confinedCapable: sameKind ? prior.form.confinedCapable : targetIsPool,
-    features: sameKind ? prior.form.features : [],
-    maxDepth: sameKind ? prior.form.maxDepth : 0,
-    maxCapacity: sameKind && targetIsPool ? prior.form.maxCapacity : 0,
-  }
-}
-
 function pickPriorEntry(
   sortedAllEntries: VenueEntry[],
   targetKind: VenueKind,
@@ -113,7 +89,7 @@ function makeDraft(
     key: `draft-${kind}-${index}`,
     venueId: null,
     kind,
-    form: inheritDraftForm(prior, kind, inherited),
+    form: makeVenueDraftFromPrior({ prior, targetKind: kind, inherited }),
   }
 }
 

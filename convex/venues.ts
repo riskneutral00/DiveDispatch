@@ -166,6 +166,8 @@ export const update = mutation({
     if (confinedCapable !== undefined) {
       assertVenueKindConsistent(effectiveKind, confinedCapable)
       patch.confinedCapable = effectiveKind === 'pool' ? true : confinedCapable
+    } else if (effectiveKind === 'pool') {
+      patch.confinedCapable = true
     }
 
     assertVenueRange(effectiveKind, args.maxDepth, args.maxCapacity)

@@ -6,7 +6,12 @@ import { ProfileAgencyInfo } from '@/components/profiles/profile-agency-info'
 import { Button } from '@/components/ui/button'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import { BusinessContactSection } from '@/components/profiles/business-contact-section'
-import { diveCenterAffiliationsSchema, diveCenterContactMergedSchema } from '@/lib/schemas/profile-shared'
+import {
+  diveCenterAffiliationsSchema,
+  diveCenterContactMergedSchema,
+  makeDefaultDiveCenterAssociation,
+  type DiveCenterAssociationItem as CanonicalDiveCenterAssociationItem,
+} from '@/lib/schemas/profile-shared'
 import {
   type ContactFormState as DiveCenterContactFormState,
   INITIAL_CONTACT_FORM,
@@ -37,32 +42,14 @@ export function DiveCenterContactSection(props: DiveCenterSectionProps) {
   )
 }
 
-export type DiveCenterAssociationItem = {
-  agency: string
-  number: string
-  owDays: number | undefined
-  aowDays: number | undefined
-  oaDays: number | undefined
-  selectedSpecialties: string[]
-}
+export type DiveCenterAssociationItem = CanonicalDiveCenterAssociationItem
 
 export type DiveCenterAffiliationsFormState = {
   associations: DiveCenterAssociationItem[]
 }
 
-export function makeDefaultAssoc(): DiveCenterAssociationItem {
-  return {
-    agency: '',
-    number: '',
-    owDays: undefined,
-    aowDays: undefined,
-    oaDays: undefined,
-    selectedSpecialties: [],
-  }
-}
-
 export const INITIAL_AFFILIATIONS_FORM: DiveCenterAffiliationsFormState = {
-  associations: [makeDefaultAssoc()],
+  associations: [makeDefaultDiveCenterAssociation()],
 }
 
 export function affiliationsFromProfile(p: Record<string, unknown>): DiveCenterAffiliationsFormState {
@@ -70,15 +57,19 @@ export function affiliationsFromProfile(p: Record<string, unknown>): DiveCenterA
   return {
     associations:
       assocs.length > 0
-        ? assocs.map((a) => ({
-            agency: String(a.agency ?? ''),
-            number: String(a.number ?? ''),
-            owDays: typeof a.owDays === 'number' ? a.owDays : undefined,
-            aowDays: typeof a.aowDays === 'number' ? a.aowDays : undefined,
-            oaDays: typeof a.oaDays === 'number' ? a.oaDays : undefined,
-            selectedSpecialties: Array.isArray(a.selectedSpecialties) ? a.selectedSpecialties : [],
-          }))
-        : [makeDefaultAssoc()],
+        ? assocs.map((a) =>
+            makeDefaultDiveCenterAssociation({
+              agency: String(a.agency ?? ''),
+              number: String(a.number ?? ''),
+              owDays: typeof a.owDays === 'number' ? a.owDays : (undefined as unknown as number),
+              aowDays: typeof a.aowDays === 'number' ? a.aowDays : (undefined as unknown as number),
+              oaDays: typeof a.oaDays === 'number' ? a.oaDays : (undefined as unknown as number),
+              selectedSpecialties: Array.isArray(a.selectedSpecialties)
+                ? (a.selectedSpecialties as string[])
+                : [],
+            }),
+          )
+        : [makeDefaultDiveCenterAssociation()],
   }
 }
 
@@ -112,13 +103,12 @@ export function DiveCenterAffiliationsSection({ profile: existing, me, create, u
 
   function handleAdd() {
     const first = form.associations[0]
-    const newAssoc: DiveCenterAssociationItem = {
-      ...makeDefaultAssoc(),
+    const newAssoc = makeDefaultDiveCenterAssociation({
       owDays: first?.owDays,
       aowDays: first?.aowDays,
       oaDays: first?.oaDays,
       selectedSpecialties: first?.selectedSpecialties ? [...first.selectedSpecialties] : [],
-    }
+    })
     setField('associations', [...form.associations, newAssoc])
   }
 

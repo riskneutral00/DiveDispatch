@@ -20,6 +20,7 @@ import {
   getDefaultSpecialties,
   type AgencyCourse,
 } from "@/lib/constants/agencies";
+import { makeDefaultAgentAssociation } from "@/lib/schemas/profile-shared";
 
 export type ProfileAgencyInfoVariant = "dive-center" | "agent";
 
@@ -30,6 +31,7 @@ export interface ProfileAgencyInfoProps<TItem extends AgencyRow = AgencyRow> {
   items: TItem[];
   onChange: (items: TItem[]) => void;
   errors?: Record<string, string>;
+  makeRow?: () => TItem;
 }
 
 export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
@@ -37,6 +39,7 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
   items,
   onChange,
   errors = {},
+  makeRow,
 }: ProfileAgencyInfoProps<TItem>) {
   const isAgent = variant === "agent";
   const isCenter = variant === "dive-center";
@@ -47,22 +50,9 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
 
   const keys = useStableKeys(items);
 
-  function makeDefaultItem() {
-    if (isCenter) {
-      return {
-        agency: "",
-        number: "",
-        owDays: COURSE_DAY_RANGES.OW.min,
-        aowDays: COURSE_DAY_RANGES.AOW.min,
-        oaDays: COURSE_DAY_RANGES.combined.min,
-        selectedSpecialties: getDefaultSpecialties("PADI"),
-      };
-    }
-    return { agency: "", number: "" };
-  }
-
   function handleAdd() {
-    onChange([...items, makeDefaultItem() as unknown as TItem]);
+    const next = makeRow ? makeRow() : (makeDefaultAgentAssociation() as unknown as TItem);
+    onChange([...items, next]);
   }
 
   function handleRemove(idx: number) {

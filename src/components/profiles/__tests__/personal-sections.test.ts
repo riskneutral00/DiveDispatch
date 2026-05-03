@@ -3,6 +3,7 @@ import {
   personalContactSchema,
   personalLanguagesSchema,
   instructorCredentialsSchema,
+  makeDefaultInstructorCredential as makeEmptyCredential,
 } from '@/lib/schemas/profile-shared'
 import {
   contactFromProfile,
@@ -17,7 +18,6 @@ import {
 import {
   credentialsFromProfile,
   credentialsToPayload,
-  makeEmptyCredential,
   getInitialCredentialsForm,
 } from '../personal-profile-form'
 import type { PersonalCredentialsFormState } from '../personal-profile-form'

@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest'
-import { EMPTY_VENUE_FORM, isVenueFormSubmittable, type VenueFormValue } from '../venue-form-body'
+import { isVenueFormSubmittable, type VenueFormValue } from '../venue-form-body'
+import { makeDefaultVenueForm } from '@/lib/schemas/profile-shared'
+
+const EMPTY_VENUE_FORM = makeDefaultVenueForm()
 
 describe('venue per-row contact semantics', () => {
   it('keeps name/email/phone/location as per-row fields on VenueFormValue', () => {

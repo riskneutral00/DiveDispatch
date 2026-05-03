@@ -13,6 +13,7 @@ import {
   personalContactMergedSchema,
   instructorCredentialsSchema,
   instructorCredentialSchema,
+  makeDefaultInstructorCredential,
 } from '@/lib/schemas/profile-shared'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 import { z } from 'zod'
@@ -27,12 +28,8 @@ export type PersonalCredentialsFormState = {
   credential: PersonalCredential[]
 }
 
-export function makeEmptyCredential(): PersonalCredential {
-  return { agency: '', level: '', agencyID: '', specialtyRatings: [] }
-}
-
 export function getInitialCredentialsForm(): PersonalCredentialsFormState {
-  return { credential: [makeEmptyCredential()] }
+  return { credential: [makeDefaultInstructorCredential()] }
 }
 
 export function credentialsFromProfile(p: Record<string, unknown>): PersonalCredentialsFormState {
@@ -41,7 +38,7 @@ export function credentialsFromProfile(p: Record<string, unknown>): PersonalCred
     credential:
       creds.length > 0
         ? creds
-        : [makeEmptyCredential()],
+        : [makeDefaultInstructorCredential()],
   }
 }
 
@@ -131,7 +128,7 @@ export function PersonalCredentialsSection({
         addLabel="Add Credential"
         items={form.credential}
         onChange={(items) => setField('credential', items)}
-        emptyItem={makeEmptyCredential}
+        emptyItem={makeDefaultInstructorCredential}
         renderRow={(cred, update, i) => (
           <CredentialFields
             value={cred}
