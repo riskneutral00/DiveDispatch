@@ -29,6 +29,8 @@
     "yes": "Yes",
     "no": "No",
     "none": "None",
+    "select": "Select…",
+    "deprecatedValue": "{value} (deprecated)",
     "verified": "Verified",
     "required": "Required.",
     "noResults": "No results.",

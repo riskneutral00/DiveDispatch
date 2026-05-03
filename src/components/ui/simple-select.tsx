@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils/cn";
 import { FieldMessage } from "@/components/ui/field-shell";
 import { RequiredAsterisk } from "@/components/ui/required-asterisk";
@@ -12,9 +13,21 @@ interface OptionItem {
   disabled?: boolean;
 }
 
+export type SelectValue =
+  | { kind: "empty" }
+  | { kind: "set"; value: string }
+  | { kind: "stale"; value: string; label?: string }
+  | { kind: "loading" };
+
+export function fromOptional(v: string | undefined | SelectValue): SelectValue {
+  if (v && typeof v === "object" && "kind" in v) return v;
+  if (v === undefined || v === "") return { kind: "empty" };
+  return { kind: "set", value: v };
+}
+
 interface SimpleSelectProps {
   label?: string;
-  value: string;
+  value: SelectValue | string | undefined;
   onChange: (value: string) => void;
   onBlur?: () => void;
   options: readonly string[] | readonly OptionItem[];
@@ -25,6 +38,8 @@ interface SimpleSelectProps {
   underline?: boolean;
   className?: string;
   suppressMessageSlot?: boolean;
+  loading?: boolean;
+  getStaleLabel?: (value: string) => string;
   "aria-label"?: string;
   "data-testid"?: string;
 }
@@ -42,20 +57,72 @@ export function SimpleSelect({
   underline = true,
   className,
   suppressMessageSlot,
+  loading,
+  getStaleLabel,
   "aria-label": ariaLabel,
   "data-testid": testId,
 }: SimpleSelectProps) {
   const generatedId = useId();
   const id = generatedId;
   const [focused, setFocused] = useState(false);
+  const t = useTranslations("common");
+
+  const normalized: SelectValue = loading
+    ? { kind: "loading" }
+    : fromOptional(value);
 
   const hasExplicitEmptyOption = options.some((opt) =>
     typeof opt === "string" ? opt === "" : opt.value === "",
   );
-  const showLeadingPlaceholder =
-    value === "" && !hasExplicitEmptyOption;
 
-  const { floated: baseFloated } = useFloatingLabel({ value, focused, required });
+  // Detect stale: a "set" value not in options means stale.
+  let effective: SelectValue = normalized;
+  if (normalized.kind === "set") {
+    const found = options.some((opt) =>
+      typeof opt === "string"
+        ? opt === normalized.value
+        : opt.value === normalized.value,
+    );
+    if (!found) {
+      effective = { kind: "stale", value: normalized.value };
+    }
+  }
+
+  const isLoading = effective.kind === "loading";
+  const isEmpty = effective.kind === "empty";
+  const staleValue = effective.kind === "stale" ? effective.value : null;
+
+  const selectValue =
+    effective.kind === "set"
+      ? effective.value
+      : effective.kind === "stale"
+        ? effective.value
+        : "";
+
+  const showLeadingPlaceholder =
+    (isEmpty || isLoading) && !hasExplicitEmptyOption;
+
+  const placeholderText = isLoading
+    ? t("loading")
+    : (placeholder ?? t("select"));
+
+  const staleLabelText = staleValue !== null
+    ? (getStaleLabel
+        ? getStaleLabel(staleValue)
+        : t("deprecatedValue", { value: staleValue }))
+    : "";
+
+  const stringForFloat: string =
+    effective.kind === "set"
+      ? effective.value
+      : effective.kind === "stale"
+        ? effective.value
+        : "";
+  const { floated: baseFloated } = useFloatingLabel({
+    value: stringForFloat,
+    focused,
+    required,
+  });
   const floated = baseFloated || hasExplicitEmptyOption;
 
   return (
@@ -72,12 +139,12 @@ export function SimpleSelect({
     >
       <select /* design-ok */
         id={label ? id : undefined}
-        value={value}
+        value={selectValue}
         onChange={(e) => onChange(e.target.value)}
         onFocus={() => setFocused(true)}
         onBlur={() => { setFocused(false); onBlur?.(); }}
         required={required}
-        disabled={disabled}
+        disabled={disabled || isLoading}
         aria-label={ariaLabel}
         aria-invalid={!!error}
         aria-describedby={error ? `${id}-error` : undefined}
@@ -98,7 +165,7 @@ export function SimpleSelect({
         )}
         style={{
           /* design-ok */
-          color: value
+          color: selectValue
             ? "var(--color-text-primary)"
             : "var(--color-text-secondary)",
           ...(underline && error
@@ -112,7 +179,22 @@ export function SimpleSelect({
             : {}),
         }}
       >
-        {showLeadingPlaceholder && <option value="" disabled>{placeholder ?? ""}</option>}
+        {showLeadingPlaceholder && (
+          <option value="" disabled>
+            {placeholderText}
+          </option>
+        )}
+        {staleValue !== null && (
+          <option
+            key={`__stale__${staleValue}`}
+            value={staleValue}
+            disabled
+            aria-disabled="true"
+            aria-label={staleLabelText}
+          >
+            {staleLabelText}
+          </option>
+        )}
         {options.map((opt) => {
           const optValue = typeof opt === "string" ? opt : opt.value;
           const optLabel = typeof opt === "string" ? opt : opt.label;

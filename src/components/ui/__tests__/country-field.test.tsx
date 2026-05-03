@@ -5,6 +5,12 @@ import { CountryField } from '../country-field'
 
 vi.mock('next-intl', () => ({
   useLocale: () => 'en',
+  useTranslations: () => (key: string, params?: Record<string, unknown>) => {
+    if (key === 'select') return 'Select…'
+    if (key === 'loading') return 'Loading…'
+    if (key === 'deprecatedValue') return `${params?.value} (deprecated)`
+    return key
+  },
 }))
 
 describe('CountryField', () => {
