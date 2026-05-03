@@ -26,6 +26,16 @@ export const associationSchema = z.object({
   number: z.string().min(1, ERROR_REQUIRED),
 })
 
+export type AgentAssociation = z.infer<typeof associationSchema>
+
+export const agentAssociationUserEntered = ['agency', 'number'] as const
+
+export function makeDefaultAgentAssociation(
+  overrides?: Partial<AgentAssociation>,
+): AgentAssociation {
+  return { agency: '', number: '', ...overrides }
+}
+
 export const credentialSchema = z.object({
   agency: z.string().min(1, ERROR_REQUIRED),
   level: z.string().min(1, ERROR_REQUIRED),
@@ -36,13 +46,23 @@ export const instructorCredentialSchema = credentialSchema.extend({
   specialtyRatings: z.array(z.string()),
 })
 
+export type InstructorCredential = z.infer<typeof instructorCredentialSchema>
+
+export const instructorCredentialUserEntered = ['agency', 'level', 'agencyID'] as const
+
+export function makeDefaultInstructorCredential(
+  overrides?: Partial<InstructorCredential>,
+): InstructorCredential {
+  return { agency: '', level: '', agencyID: '', specialtyRatings: [], ...overrides }
+}
+
 export const diveCenterLanguagesSchema = z.object({
   customerLanguages: customerLanguagesFieldSchema,
 })
 
 export const diveCenterContactMergedSchema = contactSchema.extend(diveCenterLanguagesSchema.shape)
 
-const diveCenterAssociationItemSchema = z.object({
+export const diveCenterAssociationItemSchema = z.object({
   agency: z.string().min(1, ERROR_REQUIRED),
   number: z.string().min(1, ERROR_REQUIRED),
   owDays: z.number().min(1),
@@ -50,6 +70,30 @@ const diveCenterAssociationItemSchema = z.object({
   oaDays: z.number().min(1),
   selectedSpecialties: z.array(z.string()),
 })
+
+export type DiveCenterAssociationItem = z.infer<typeof diveCenterAssociationItemSchema>
+
+export const diveCenterAssociationUserEntered = [
+  'agency',
+  'number',
+  'owDays',
+  'aowDays',
+  'oaDays',
+] as const
+
+export function makeDefaultDiveCenterAssociation(
+  overrides?: Partial<DiveCenterAssociationItem>,
+): DiveCenterAssociationItem {
+  return {
+    agency: '',
+    number: '',
+    owDays: undefined as unknown as number,
+    aowDays: undefined as unknown as number,
+    oaDays: undefined as unknown as number,
+    selectedSpecialties: [],
+    ...overrides,
+  }
+}
 
 export const diveCenterAffiliationsSchema = z
   .object({
@@ -91,12 +135,20 @@ export const instructorCredentialsSchema = z.object({
 
 const BOAT_TYPES_TUPLE = BOAT_TYPES
 
-const boatRouteSchema = z.object({
+export const boatRouteSchema = z.object({
   venueIds: z.array(z.string().min(1)).min(1, 'Select at least one venue'),
   daysOfWeek: z.array(z.number()).min(1, 'Select at least one day'),
 })
 
-const boatFleetEntrySchema = z.object({
+export type BoatRoute = z.infer<typeof boatRouteSchema>
+
+export const boatRouteUserEntered = ['venueIds', 'daysOfWeek'] as const
+
+export function makeDefaultBoatRoute(overrides?: Partial<BoatRoute>): BoatRoute {
+  return { venueIds: [], daysOfWeek: [], ...overrides }
+}
+
+export const boatFleetEntrySchema = z.object({
   boatName: z.string().min(1, 'Boat name required'),
   maxPax: z.number().int().min(1, 'At least 1 passenger'),
   minPax: z.number().int().min(1).optional(),
@@ -118,6 +170,21 @@ const boatFleetEntrySchema = z.object({
   },
   { message: 'Each day can only be assigned to one route per vessel', path: ['routes'] },
 )
+
+export type BoatFleetEntry = z.infer<typeof boatFleetEntrySchema>
+
+export const boatFleetEntryUserEntered = ['boatName', 'maxPax', 'boatType'] as const
+
+export function makeDefaultBoatFleetEntry(
+  overrides?: Partial<BoatFleetEntry>,
+): BoatFleetEntry {
+  return {
+    boatName: '',
+    maxPax: undefined as unknown as number,
+    boatType: undefined as unknown as BoatFleetEntry['boatType'],
+    ...overrides,
+  }
+}
 
 export const boatFleetSchema = z
   .object({
@@ -194,3 +261,17 @@ export const venueCapabilitiesSchema = z
       ctx.addIssue({ code: 'custom', path: ['maxCapacity'], message: 'Pool max capacity is 50' })
     }
   })
+
+export type VenueCapabilities = z.infer<typeof venueCapabilitiesSchema>
+
+export const venueCapabilitiesUserEntered = [] as const
+
+export function makeDefaultVenueCapabilities(
+  overrides?: Partial<VenueCapabilities>,
+): VenueCapabilities {
+  return {
+    kind: 'dive_site',
+    features: [],
+    ...overrides,
+  }
+}
