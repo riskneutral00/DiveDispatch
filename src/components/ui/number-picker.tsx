@@ -56,10 +56,12 @@ export function NumberPicker({
     return out
   }, [min, max, step, decimals, suffix])
 
+  const inRange =
+    value !== undefined && value >= min && value <= max
   return (
     <SimpleSelect
       label={label}
-      value={value !== undefined ? String(value) : ''}
+      value={inRange ? String(value) : ''}
       onChange={(v) => onChange(parseOptionalNumber(v))}
       onBlur={onBlur}
       options={options}
