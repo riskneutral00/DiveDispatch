@@ -1,6 +1,6 @@
 import { query } from '../_generated/server'
 import { v } from 'convex/values'
-import { queryDynamicTable } from '../lib/typedDb'
+import { queryAllDynamicTable } from '../lib/typedDb'
 import { requireDevEnvironment } from '../lib/devGuard'
 
 const PROFILE_TABLES = [
@@ -72,7 +72,7 @@ export const run = query({
     }
 
     for (const table of PROFILE_TABLES) {
-      const rows = await queryDynamicTable(ctx.db, table).collect() // bounded: dev verification, low cardinality
+      const rows = await queryAllDynamicTable(ctx.db, table).collect() // bounded: dev verification, low cardinality
       for (const row of rows) {
         const orgId = (row as { organizationId?: string }).organizationId
         if (orgId && !orgIds.has(orgId as never)) {

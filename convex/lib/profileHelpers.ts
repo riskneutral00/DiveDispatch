@@ -5,7 +5,7 @@ import type { UserIdentity } from 'convex/server'
 import { authorize, assertOrgOwnership } from './auth'
 import { checkHasRole } from '../userRoles'
 import { ErrorCode } from './errorCodes'
-import { queryDynamicTable, insertDynamicTable, patchDynamic } from './typedDb'
+import { queryActiveDynamicTable, queryAllDynamicTable, insertDynamicTable, patchDynamic } from './typedDb'
 import { getActiveOrg, tryGetActiveOrg } from './activeOrg'
 import { visibleOrgIds } from './destinationScope'
 import { assertCountryCode, assertPhoneE164, assertLanguageCodes } from './validators'
@@ -89,7 +89,7 @@ export async function personProfileMine<R extends PersonRole>(
 ): Promise<Doc<TableForRole<R>> | null> {
   const activeOrg = await tryGetActiveOrg(ctx)
   if (!activeOrg) return null
-  const doc = await queryDynamicTable(ctx.db, ROLE_SPECS[role].table)
+  const doc = await queryActiveDynamicTable(ctx.db, ROLE_SPECS[role].table)
     .withIndex('by_organizationId', (q) => q.eq('organizationId', activeOrg._id))
     .unique()
   return doc as Doc<TableForRole<R>> | null
@@ -102,7 +102,7 @@ export async function personProfileByUser<R extends PersonRole>(
 ): Promise<Doc<TableForRole<R>> | null> {
   const user = await ctx.db.get(userId)
   if (!user?.organizationId) return null
-  const doc = await queryDynamicTable(ctx.db, ROLE_SPECS[role].table)
+  const doc = await queryActiveDynamicTable(ctx.db, ROLE_SPECS[role].table)
     .withIndex('by_organizationId', (q) => q.eq('organizationId', user.organizationId!))
     .unique()
   return doc as Doc<TableForRole<R>> | null
@@ -118,14 +118,10 @@ export async function personProfileBySlug<R extends PersonRole>(
     .withIndex('by_slug', (q) => q.eq('slug', orgSlug))
     .unique()
   if (!org) return null
-  const doc = await queryDynamicTable(ctx.db, ROLE_SPECS[role].table)
+  const doc = await queryActiveDynamicTable(ctx.db, ROLE_SPECS[role].table)
     .withIndex('by_organizationId', (q) => q.eq('organizationId', org._id))
     .unique()
   return doc as Doc<TableForRole<R>> | null
-}
-
-function isActiveRow(row: unknown): boolean {
-  return (row as { archivedAt?: number } | null)?.archivedAt === undefined
 }
 
 export async function entityProfilesMine<R extends EntityRole>(
@@ -134,10 +130,10 @@ export async function entityProfilesMine<R extends EntityRole>(
 ): Promise<Array<Doc<TableForRole<R>>>> {
   const activeOrg = await tryGetActiveOrg(ctx)
   if (!activeOrg) return []
-  const docs = await queryDynamicTable(ctx.db, ROLE_SPECS[role].table)
+  const docs = await queryActiveDynamicTable(ctx.db, ROLE_SPECS[role].table)
     .withIndex('by_organizationId', (q) => q.eq('organizationId', activeOrg._id))
     .collect() // bounded: per-org entity-role row count, realistic cap ~20
-  return (docs as Array<Doc<TableForRole<R>>>).filter(isActiveRow)
+  return docs as Array<Doc<TableForRole<R>>>
 }
 
 export async function entityProfilesByUser<R extends EntityRole>(
@@ -147,10 +143,10 @@ export async function entityProfilesByUser<R extends EntityRole>(
 ): Promise<Array<Doc<TableForRole<R>>>> {
   const user = await ctx.db.get(userId)
   if (!user?.organizationId) return []
-  const docs = await queryDynamicTable(ctx.db, ROLE_SPECS[role].table)
+  const docs = await queryActiveDynamicTable(ctx.db, ROLE_SPECS[role].table)
     .withIndex('by_organizationId', (q) => q.eq('organizationId', user.organizationId!))
     .collect() // bounded: per-org entity-role row count
-  return (docs as Array<Doc<TableForRole<R>>>).filter(isActiveRow)
+  return docs as Array<Doc<TableForRole<R>>>
 }
 
 export async function entityProfileBySlug<R extends EntityRole>(
@@ -158,11 +154,10 @@ export async function entityProfileBySlug<R extends EntityRole>(
   slug: string,
   role: R,
 ): Promise<Doc<TableForRole<R>> | null> {
-  const doc = await queryDynamicTable(ctx.db, ROLE_SPECS[role].table)
+  const doc = await queryActiveDynamicTable(ctx.db, ROLE_SPECS[role].table)
     .withIndex('by_slug', (q) => q.eq('slug', slug))
     .unique()
   if (!doc) return null
-  if (!isActiveRow(doc as { archivedAt?: number })) return null
   return doc as Doc<TableForRole<R>>
 }
 
@@ -175,7 +170,7 @@ export async function personProfileUpdate<R extends PersonRole>(
   const { user } = await authorize(ctx, actor ?? null, 'profile:manage', { type: 'profile' })
   const { org: activeOrg } = await getActiveOrg(ctx)
 
-  const profile = await queryDynamicTable(ctx.db, ROLE_SPECS[role].table)
+  const profile = await queryActiveDynamicTable(ctx.db, ROLE_SPECS[role].table)
     .withIndex('by_organizationId', (q) => q.eq('organizationId', activeOrg._id))
     .unique()
   if (!profile) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
@@ -233,7 +228,7 @@ export async function personProfileCreate<R extends PersonRole>(
   const { org: activeOrg } = await getActiveOrg(ctx)
   const tableName = ROLE_SPECS[role].table
 
-  const existing = await queryDynamicTable(ctx.db, tableName)
+  const existing = await queryAllDynamicTable(ctx.db, tableName)
     .withIndex('by_organizationId', (q) => q.eq('organizationId', activeOrg._id))
     .unique()
   if (existing) return existing._id as Id<TableForRole<R>>
@@ -296,7 +291,7 @@ export async function entityProfileCreate<R extends EntityRole>(
       insertPayload.slug = await mintUniqueEntitySlug(ctx, tableName, baseName)
     } else if (typeof insertPayload.slug === 'string') {
       assertEntitySlug(insertPayload.slug)
-      const existing = await queryDynamicTable(ctx.db, tableName)
+      const existing = await queryAllDynamicTable(ctx.db, tableName)
         .withIndex('by_slug', (q) => q.eq('slug', insertPayload.slug as string))
         .unique()
       if (existing) {
@@ -357,12 +352,12 @@ export async function queryVisibleEntities<R extends EntityRole>(
   const tableName = ROLE_SPECS[role].table
   const results = await Promise.all(
     orgIds.map((orgId) =>
-      queryDynamicTable(ctx.db, tableName)
+      queryActiveDynamicTable(ctx.db, tableName)
         .withIndex('by_organizationId', (q) => q.eq('organizationId', orgId))
         .collect(), // bounded: per-org entity-role row count, realistic cap ~20
     ),
   )
-  return (results.flat() as Array<Doc<TableForRole<R>>>).filter(isActiveRow)
+  return results.flat() as Array<Doc<TableForRole<R>>>
 }
 
 export async function getProfileName(

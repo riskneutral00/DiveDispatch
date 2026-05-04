@@ -3,7 +3,7 @@ import type { Id, Doc, TableNames } from '../_generated/dataModel'
 import { checkProfileCompleteness } from './profileCompleteness'
 import { isPersonRole, isEntityRole, ROLE_SPECS as ROLE_KIND_SPECS } from '../shared/roleKinds'
 import { evaluateRowCompleteness } from './completeness/perRow'
-import { queryDynamicTable, patchDynamic } from './typedDb'
+import { queryActiveDynamicTable, patchDynamic } from './typedDb'
 
 async function aggregateEntityProfileComplete(
   ctx: MutationCtx,
@@ -12,7 +12,7 @@ async function aggregateEntityProfileComplete(
   table: TableNames,
 ): Promise<boolean> {
   if (!userDoc.organizationId) return false
-  const rows = await queryDynamicTable(ctx.db, table)
+  const rows = await queryActiveDynamicTable(ctx.db, table)
     .withIndex('by_organizationId', (q) => q.eq('organizationId', userDoc.organizationId!))
     .collect() // bounded: per-org entity-role row count
   if (rows.length === 0) return false
@@ -33,6 +33,39 @@ async function aggregateEntityProfileComplete(
     if (!complete) allComplete = false
   }
   return allComplete
+}
+
+export async function recomputeRoleProfileComplete(
+  ctx: QueryCtx | MutationCtx,
+  userId: Id<'users'>,
+  role: string,
+): Promise<boolean> {
+  if (isEntityRole(role)) {
+    const userDoc = await ctx.db.get(userId)
+    if (!userDoc?.organizationId) return false
+    const table = ROLE_KIND_SPECS[role].table
+    const rows = await queryActiveDynamicTable(ctx.db, table)
+      .withIndex('by_organizationId', (q) => q.eq('organizationId', userDoc.organizationId!))
+      .collect() // bounded: per-org entity-role row count
+    if (rows.length === 0) return false
+    for (const row of rows) {
+      const { complete } = await evaluateRowCompleteness( // batch-exempt: per-row read-only evaluator
+        ctx,
+        userDoc,
+        role,
+        row as Record<string, unknown>,
+        userDoc.organizationId,
+      )
+      if (!complete) return false
+    }
+    return true
+  }
+  if (isPersonRole(role)) {
+    const { percentage } = await checkProfileCompleteness(ctx, { _id: userId }, role)
+    return percentage === 100
+  }
+  const { percentage } = await checkProfileCompleteness(ctx, { _id: userId }, role)
+  return percentage === 100
 }
 
 export async function setRoleProfileComplete(

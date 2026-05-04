@@ -2,7 +2,7 @@ import { ConvexError } from 'convex/values'
 import { ErrorCode } from './errorCodes'
 import type { MutationCtx } from '../_generated/server'
 import type { TableNames } from '../_generated/dataModel'
-import { queryDynamicTable } from './typedDb'
+import { queryAllDynamicTable } from './typedDb'
 
 const SLUG_REGEX = /^[a-z0-9]+(-[a-z0-9]+)*$/
 const SLUG_MIN = 3
@@ -48,7 +48,7 @@ export async function mintUniqueEntitySlug(
   let candidate = base
   let suffix = 1
   while (true) {
-    const existing = await queryDynamicTable(ctx.db, table)
+    const existing = await queryAllDynamicTable(ctx.db, table)
       .withIndex('by_slug', (q) => q.eq('slug', candidate))
       .unique()
     if (!existing) return candidate

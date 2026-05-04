@@ -6,7 +6,7 @@ import type { Id } from './_generated/dataModel'
 import { internal } from './_generated/api'
 import { OPERATOR_ROLE_SET } from './lib/auth'
 import type { OperatorType } from './shared/operatorTypes'
-import { queryDynamicTable, deleteDynamic } from './lib/typedDb'
+import { queryAllDynamicTable, deleteDynamic } from './lib/typedDb'
 import { ALL_STAKEHOLDERS, ALL_INSTRUCTORS, SeedStakeholder, StakeholderRole } from './seedData'
 import { ensureSystemThemesInline } from './lib/ensureSystemThemes'
 import { stakeholderPreferenceIdsToDelete } from './lib/stakeholderPreferencesDedupe'
@@ -179,7 +179,7 @@ const TABLES_TO_WIPE = [
 export const wipeBatch = internalMutation({
   args: { table: v.string() },
   handler: async (ctx, { table }) => {
-    const rows = await queryDynamicTable(ctx.db, table).take(500)
+    const rows = await queryAllDynamicTable(ctx.db, table).take(500)
     for (const row of rows) {
       await deleteDynamic(ctx.db, row._id)
     }
@@ -662,7 +662,7 @@ const VERIFY_TABLES = [
 export const countTable = internalQuery({
   args: { table: v.string() },
   handler: async (ctx, { table }) => {
-    const rows = await queryDynamicTable(ctx.db, table).collect() // bounded: seed script, dev-only
+    const rows = await queryAllDynamicTable(ctx.db, table).collect() // bounded: seed script, dev-only
     return rows.length
   },
 })

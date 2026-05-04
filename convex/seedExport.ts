@@ -3,7 +3,7 @@ import { v, ConvexError } from 'convex/values'
 import { ROLE_TABLE_MAP } from './lib/profileHelpers'
 import { requireDevEnvironment } from './lib/devGuard'
 import { ErrorCode } from './lib/errorCodes'
-import { queryDynamicTable } from './lib/typedDb'
+import { queryAllDynamicTable } from './lib/typedDb'
 import { getAllUserRoles } from './lib/userRoleHelpers'
 
 const VENUE_KIND_FILTER_BY_ROLE: Record<string, (kind: string) => boolean> = {
@@ -50,7 +50,7 @@ export const captureBySlug = query({
           continue
         }
 
-        const profile = await queryDynamicTable(ctx.db, table)
+        const profile = await queryAllDynamicTable(ctx.db, table)
           .withIndex('by_organizationId', (q) => q.eq('organizationId', organization._id))
           .unique()
         if (profile) profiles[r.role] = profile

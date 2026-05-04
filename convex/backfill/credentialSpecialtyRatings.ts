@@ -2,6 +2,7 @@ import { ConvexError } from 'convex/values'
 import { internalMutation } from '../_generated/server'
 import { ErrorCode } from '../lib/errorCodes'
 import { isDevEnvironment } from '../lib/devGuard'
+import { queryAllDynamicTable } from '../lib/typedDb'
 
 type CredentialEntryIn = {
   agency: string
@@ -24,15 +25,14 @@ export const backfillCredentialSpecialtyRatings = internalMutation({
       throw new ConvexError({ code: ErrorCode.FORBIDDEN, reason: 'dev_only' })
     }
 
-    // bounded: dev-only backfill, small diveStaff row counts
-    const rows = await ctx.db.query('diveStaff').collect()
+    const rows = await queryAllDynamicTable(ctx.db, 'diveStaff').collect() // bounded: dev-only backfill, small diveStaff row counts
 
     let rowsTouched = 0
     let totalCredentialEntriesInspected = 0
     let entriesNormalized = 0
 
     for (const row of rows) {
-      const credential = row.credential as CredentialEntryIn[]
+      const credential = (row as { credential: CredentialEntryIn[] }).credential
       totalCredentialEntriesInspected += credential.length
 
       let needsPatch = false
@@ -46,7 +46,7 @@ export const backfillCredentialSpecialtyRatings = internalMutation({
       })
 
       if (needsPatch) {
-        await ctx.db.patch(row._id, { credential: normalized }) // batch-exempt: dev-only backfill, per-row sequential
+        await ctx.db.patch(row._id as never, { credential: normalized } as never) // batch-exempt: dev-only backfill, per-row sequential
         rowsTouched += 1
       }
     }

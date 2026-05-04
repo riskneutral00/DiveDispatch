@@ -1,7 +1,7 @@
 import type { QueryCtx } from '../../_generated/server'
 import type { Doc, Id, TableNames } from '../../_generated/dataModel'
 import { ROLE_TABLE_MAP } from '../profileHelpers'
-import { queryDynamicTable } from '../typedDb'
+import { queryActiveDynamicTable } from '../typedDb'
 import { findMembership } from '../userRoleHelpers'
 import { isEntityRole } from '../../shared/roleKinds'
 import { str } from './types'
@@ -97,20 +97,20 @@ export async function resolveRoleProfile(
 
   const picker = PICKERS[role]
   if (picker) {
-    const docs = await queryDynamicTable(ctx.db, table)
+    const docs = await queryActiveDynamicTable(ctx.db, table)
       .withIndex('by_organizationId', (q) => q.eq('organizationId', activeOrgId))
       .collect() // bounded: per-org multi-row entity-role rows ~20
     return { profile: picker(docs as unknown as ProfileDoc[]), activeOrgId }
   }
 
   if (isEntityRole(role)) {
-    const docs = await queryDynamicTable(ctx.db, table)
+    const docs = await queryActiveDynamicTable(ctx.db, table)
       .withIndex('by_organizationId', (q) => q.eq('organizationId', activeOrgId))
       .collect() // bounded: per-org multi-row entity-role rows
     return { profile: ((docs[0] as ProfileDoc | undefined) ?? null), activeOrgId }
   }
 
-  const doc = await queryDynamicTable(ctx.db, table)
+  const doc = await queryActiveDynamicTable(ctx.db, table)
     .withIndex('by_organizationId', (q) => q.eq('organizationId', activeOrgId))
     .unique()
   return { profile: (doc as ProfileDoc | null), activeOrgId }

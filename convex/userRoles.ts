@@ -10,7 +10,7 @@ import { ErrorCode } from './lib/errorCodes'
 import { deriveDefaultRole, ROLE_PRECEDENCE } from './lib/rolePrecedence'
 import { batchGet, batchDelete, batchPatch } from './lib/batch'
 import { ROLE_TABLE_MAP } from './lib/profileHelpers'
-import { queryDynamicTable, deleteDynamic } from './lib/typedDb'
+import { queryAllDynamicTable, deleteDynamic } from './lib/typedDb'
 import { checkProfileCompleteness } from './lib/profileCompleteness'
 import { cleanupInventoryForOwner } from './lib/inventoryCleanup'
 import { checkIdempotency } from './lib/idempotency'
@@ -305,7 +305,7 @@ async function deleteProfileForRole(
     return
   }
 
-  const p = await queryDynamicTable(ctx.db, tableName)
+  const p = await queryAllDynamicTable(ctx.db, tableName)
     .withIndex('by_organizationId', (q) => q.eq('organizationId', organizationId))
     .unique()
   if (p) await deleteDynamic(ctx.db, p._id)

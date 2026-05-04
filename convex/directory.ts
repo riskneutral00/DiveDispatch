@@ -5,7 +5,7 @@ import { requireAuth, authorize, isResourceAccessible } from './lib/auth'
 import { requireActiveRole } from './userRoles'
 import { stakeholderTypeValidator, type StakeholderRole } from './lib/validators'
 import type { Id } from './_generated/dataModel'
-import { queryDynamicTable } from './lib/typedDb'
+import { queryActiveDynamicTable } from './lib/typedDb'
 import { ROLE_TABLE_MAP } from './lib/profileHelpers'
 import { isPersonRole, isEntityRole } from './shared/roleKinds'
 import { isUserRoleComplete, isRoleProfileComplete } from './lib/setRoleProfileComplete'
@@ -67,7 +67,7 @@ async function queryProfileByUser(
   if (!table) return null
   const user = await db.get(userId)
   if (!user?.organizationId) return null
-  const rows = await queryDynamicTable(db, table)
+  const rows = await queryActiveDynamicTable(db, table)
     .withIndex('by_organizationId', (q) => q.eq('organizationId', user.organizationId!))
     .collect() // bounded: small per-org entity count
   return (rows[0] as Record<string, unknown> | undefined) ?? null
@@ -237,11 +237,10 @@ export const listByRole = query({
       const perUserRows = await Promise.all(
         users.map(async (u) => {
           if (!u.organizationId) return [] as Array<{ user: typeof u; row: Record<string, unknown> & { _id: string; slug?: string } }>
-          const rows = await queryDynamicTable(ctx.db, table)
+          const rows = await queryActiveDynamicTable(ctx.db, table)
             .withIndex('by_organizationId', (q) => q.eq('organizationId', u.organizationId!))
             .collect() // bounded: per-org entity-role row count
           return rows
-            .filter((row) => (row as { archivedAt?: number }).archivedAt === undefined)
             .map((row) => ({ user: u, row: row as Record<string, unknown> & { _id: string; slug?: string } }))
         }),
       )
