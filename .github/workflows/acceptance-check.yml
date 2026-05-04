@@ -1,0 +1,33 @@
+name: acceptance-check
+
+on:
+  pull_request:
+    types: [opened, synchronize, edited]
+
+jobs:
+  verify-acceptance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+      - name: Verify acceptance lines for tickets referenced in PR body
+        env:
+          VERIFY_ACCEPTANCE_ADVISORY: '1'
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          set -e
+          printf '%s' "$PR_BODY" > /tmp/pr-body.md
+          ticket_ids=$(grep -oE 'DD-[0-9]+' /tmp/pr-body.md | sort -u || true)
+          if [[ -z "$ticket_ids" ]]; then
+            echo "No DD-* ticket IDs referenced in PR body; skipping."
+            exit 0
+          fi
+          for id in $ticket_ids; do
+            ticket_path=$(find .tickets -name "${id}.md" -print -quit 2>/dev/null || true)
+            if [[ -n "$ticket_path" ]]; then
+              ./scripts/verify-acceptance.sh "$ticket_path"
+            fi
+          done

@@ -1,0 +1,25 @@
+name: claim-verify
+
+on:
+  pull_request:
+    types: [opened, synchronize, edited]
+
+jobs:
+  verify-claims:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify quantified claims in PR body and commit messages
+        env:
+          VERIFY_CLAIMS_ADVISORY: '1'
+          PR_BODY: ${{ github.event.pull_request.body }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -e
+          printf '%s' "$PR_BODY" > /tmp/pr-body.md
+          ./scripts/verify-claims.sh /tmp/pr-body.md
+          git log --format=%B "$BASE_SHA..$HEAD_SHA" > /tmp/commit-messages.md
+          ./scripts/verify-claims.sh /tmp/commit-messages.md
