@@ -1,14 +1,11 @@
 'use client'
 
 import { Plus } from 'lucide-react'
-import { useTranslations } from 'next-intl'
 import { ProfileAgencyInfo } from '@/components/profiles/profile-agency-info'
 import { Button } from '@/components/ui/button'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
-import { BusinessContactSection } from '@/components/profiles/business-contact-section'
 import {
   diveCenterAffiliationsSchema,
-  diveCenterContactMergedSchema,
   makeDefaultDiveCenterAssociation,
   type DiveCenterAssociationItem as CanonicalDiveCenterAssociationItem,
 } from '@/lib/schemas/profile-shared'
@@ -28,19 +25,6 @@ type DiveCenterSectionProps = BaseProfileSectionProps
 
 export type { DiveCenterContactFormState }
 export { INITIAL_CONTACT_FORM, contactFromProfile, contactToPayload }
-
-export function DiveCenterContactSection(props: DiveCenterSectionProps) {
-  const tCommon = useTranslations('common')
-  return (
-    <BusinessContactSection
-      {...props}
-      nameLabel={tCommon('businessName')}
-      schema={diveCenterContactMergedSchema}
-      languageKey="customerLanguages"
-      createOverride={(payload) => props.create({ ...payload, associations: [] })}
-    />
-  )
-}
 
 export type DiveCenterAssociationItem = CanonicalDiveCenterAssociationItem
 

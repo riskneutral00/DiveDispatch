@@ -4,7 +4,6 @@ import { useRef } from 'react'
 import { useTranslations } from 'next-intl'
 import { useQuery } from 'convex/react'
 import { api, type Id } from '@/lib/convex-generated'
-import { BusinessContactSection } from '@/components/profiles/business-contact-section'
 
 import { DayToggleGroup } from '@/components/ui/day-toggle-group'
 import { CheckboxGroup } from '@/components/ui/checkbox-group'
@@ -16,7 +15,6 @@ import { ExpandingCardList, InlineRowList } from '@/components/profiles/collecti
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import { GasMixFields } from '@/components/capabilities/gas-mix-fields'
 import {
-  contactSchema,
   boatFleetSchema,
   makeDefaultBoatFleetEntry,
   makeDefaultBoatRoute,
@@ -72,18 +70,6 @@ export function applyDayToggle(
       }),
     }
   })
-}
-
-export function BoatContactSection(props: BaseProfileSectionProps) {
-  const t = useTranslations('common')
-  return (
-    <BusinessContactSection
-      {...props}
-      nameLabel={t('businessName')}
-      schema={contactSchema}
-      inheritFromOtherRoles="Boat"
-    />
-  )
 }
 
 export type BoatFleetFormState = {

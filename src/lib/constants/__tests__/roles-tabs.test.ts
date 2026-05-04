@@ -1,10 +1,8 @@
 import { describe, it, expect } from 'vitest'
-import { PROFILE_REGISTRY, OVERLAY_ONLY_SECTIONS } from '../profile-registry'
-import { DISPLAY_OPERATOR_ROLES } from '../roles'
-import type { RoleKey } from '../roles'
+import { ROLE_BY_KEY, OVERLAY_ONLY_SECTIONS, DISPLAY_OPERATOR_ROLES, type RoleKey } from '../roles'
 
 function tabIds(role: RoleKey): string[] {
-  return (PROFILE_REGISTRY[role]?.tabs ?? []).map((t) => t.id)
+  return (ROLE_BY_KEY[role]?.profileTabs ?? []).map((t) => t.id)
 }
 
 describe('OVERLAY_ONLY_SECTIONS export', () => {
@@ -109,9 +107,9 @@ describe('Venue role-level tab contract', () => {
     expect(tabIds('venue')).toContain('capabilities')
   })
 
-  it('PROFILE_REGISTRY does not expose "pool" or "dive-site" as role-level entries', () => {
-    expect(PROFILE_REGISTRY['pool']).toBeUndefined()
-    expect(PROFILE_REGISTRY['dive-site']).toBeUndefined()
+  it('ROLE_BY_KEY does not expose "pool" or "dive-site" as role-level entries', () => {
+    expect(ROLE_BY_KEY['pool' as RoleKey]).toBeUndefined()
+    expect(ROLE_BY_KEY['dive-site' as RoleKey]).toBeUndefined()
   })
 })
 

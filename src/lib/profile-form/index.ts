@@ -1,4 +1,4 @@
-export type { BaseProfileSectionProps } from './types'
+export type { BaseProfileSectionProps, MeContext } from './types'
 
 export type { ProfileLocationValue, ContactFormState, PersonalContactFormState, LanguageKey } from './location'
 export {

@@ -1,39 +1,17 @@
 'use client'
 
-import { useMutation, useQuery } from 'convex/react'
-import { api } from '@/lib/convex-generated'
+import { useQuery } from 'convex/react'
+import { useTranslations } from 'next-intl'
 import { useSessionIdentity } from '@/lib/hooks/use-session-identity'
+import { useEntityMutation } from '@/lib/hooks/use-entity-mutation'
+import { BusinessContactSection } from '@/components/profiles/business-contact-section'
+import { composeCreatePayload, needsCreateOverride } from '@/lib/profile-form/composeCreatePayload'
 
 import {
   ROLE_SECTION_REGISTRY,
-  type ProfileSectionComponent,
 } from '@/components/profiles/role-section-registry'
 
-import type { RoleKey, ProfileSectionId } from '@/lib/constants/roles'
-
-function asLooseMut<T>(
-  fn: (args: T) => Promise<unknown>,
-): (payload: Record<string, unknown>) => Promise<unknown> {
-  return (p) => fn(p as T)
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Convex FunctionReference generics are opaque at this abstraction level // comments-ok
-type RoleApiModule = { mine: any; create: any; update: any }
-
-interface RoleApiBinding {
-  apiModule: RoleApiModule
-  entityIdKey: 'entityId' | 'venueId' | 'compressorId' | null
-}
-
-const ROLE_API_BINDINGS: Partial<Record<RoleKey, RoleApiBinding>> = {
-  'dive-center': { apiModule: api.diveCenters, entityIdKey: 'entityId' },
-  instructor:    { apiModule: api.diveStaff,   entityIdKey: null },
-  boat:          { apiModule: api.boats,       entityIdKey: 'entityId' },
-  compressor:    { apiModule: api.compressors, entityIdKey: 'compressorId' },
-  equipment:     { apiModule: api.equipment,   entityIdKey: 'entityId' },
-  venue:         { apiModule: api.venues,      entityIdKey: 'venueId' },
-  agent:         { apiModule: api.agents,      entityIdKey: null },
-}
+import { ROLE_BY_KEY, type RoleKey, type ProfileSectionId } from '@/lib/constants/roles'
 
 function pickEditableRow(
   raw: unknown,
@@ -47,46 +25,72 @@ function pickEditableRow(
 }
 
 function StandardConnectedForm({
-  binding,
-  Section,
+  roleSlug,
+  sectionId,
   onClose,
 }: {
-  binding: RoleApiBinding
-  Section: ProfileSectionComponent
+  roleSlug: RoleKey
+  sectionId: ProfileSectionId
   onClose?: () => void
 }) {
-  const raw = useQuery(binding.apiModule.mine)
+  const config = ROLE_BY_KEY[roleSlug]
+  const { create, update, mine, idArg } = useEntityMutation(roleSlug)
+  const raw = useQuery(mine)
   const { user: me } = useSessionIdentity()
-  const create = useMutation(binding.apiModule.create)
-  const update = useMutation(binding.apiModule.update)
+  const tCommon = useTranslations('common')
 
   const { row, loading } = pickEditableRow(raw)
-  const idKey = binding.entityIdKey
-
-  const looseUpdate = asLooseMut(update)
-  const wrappedUpdate = idKey
+  const wrappedUpdate = idArg
     ? (payload: Record<string, unknown>) => {
         const id = row?._id
         if (!id) {
-          return Promise.reject(new Error(`Cannot update before row exists for ${idKey}`))
+          return Promise.reject(new Error(`Cannot update before row exists for ${idArg}`))
         }
-        return looseUpdate({ [idKey]: id, ...payload })
+        return update({ [idArg]: id, ...payload })
       }
-    : looseUpdate
+    : update
 
-  return (
-    <Section
-      profile={loading ? undefined : row}
-      me={me}
-      create={asLooseMut(create)}
-      update={wrappedUpdate}
-      onClose={onClose}
-    />
-  )
+  const SectionComponent = ROLE_SECTION_REGISTRY[roleSlug]?.[sectionId]
+  if (SectionComponent) {
+    return (
+      <SectionComponent
+        profile={loading ? undefined : row}
+        me={me}
+        create={create}
+        update={wrappedUpdate}
+        onClose={onClose}
+      />
+    )
+  }
+
+  if (sectionId === 'contact' && config.contact) {
+    const createOverride = needsCreateOverride(config)
+      ? (payload: Record<string, unknown>) => create(composeCreatePayload(config, payload))
+      : undefined
+    return (
+      <BusinessContactSection
+        profile={loading ? undefined : row}
+        me={me}
+        create={create}
+        update={wrappedUpdate}
+        onClose={onClose}
+        nameLabel={config.contact.nameLabel ? tCommon(config.contact.nameLabel) : undefined}
+        schema={config.contact.schema}
+        languageKey={config.contact.languageKey}
+        inheritFromOtherRoles={config.contact.inheritFromOtherRoles}
+        createOverride={createOverride}
+      />
+    )
+  }
+
+  return null
 }
 
 export function hasConnectedForm(roleKey: RoleKey): boolean {
-  return roleKey in ROLE_SECTION_REGISTRY && roleKey in ROLE_API_BINDINGS
+  const config = ROLE_BY_KEY[roleKey]
+  if (!config) return false
+  const sections = ROLE_SECTION_REGISTRY[roleKey]
+  return Boolean(sections && Object.keys(sections).length > 0) || Boolean(config.contact)
 }
 
 export function RoleProfileForm({
@@ -98,18 +102,22 @@ export function RoleProfileForm({
   section?: string
   onClose?: () => void
 }) {
-  const binding = ROLE_API_BINDINGS[roleSlug]
-  const sections = ROLE_SECTION_REGISTRY[roleSlug]
-  if (!binding || !sections) return null
+  const config = ROLE_BY_KEY[roleSlug]
+  if (!config) return null
 
-  const sectionKey = (section ?? Object.keys(sections)[0]) as ProfileSectionId
-  const Section = sections[sectionKey]
-  if (!Section) return null
+  const sections = ROLE_SECTION_REGISTRY[roleSlug] ?? {}
+  const firstTab = config.profileTabs[0]?.id
+  const sectionId = (section ?? firstTab) as ProfileSectionId | undefined
+  if (!sectionId) return null
+
+  const hasComponent = sectionId in sections
+  const hasContactConfig = sectionId === 'contact' && Boolean(config.contact)
+  if (!hasComponent && !hasContactConfig) return null
 
   return (
     <StandardConnectedForm
-      binding={binding}
-      Section={Section}
+      roleSlug={roleSlug}
+      sectionId={sectionId}
       onClose={onClose}
     />
   )

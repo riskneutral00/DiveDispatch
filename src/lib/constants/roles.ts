@@ -1,4 +1,6 @@
-import type { ComponentType } from 'react'
+import type { FunctionReference } from 'convex/server'
+import type { ZodType } from 'zod'
+import { api } from '@/lib/convex-generated'
 import {
   DiveCenterIcon,
   AgentIcon,
@@ -9,6 +11,13 @@ import {
   CompressorIcon,
   type RoleIconProps,
 } from '@/lib/icons/role-icons'
+import {
+  agentContactMergedSchema,
+  diveCenterContactMergedSchema,
+  personalContactMergedSchema,
+  contactSchema,
+} from '@/lib/schemas/profile-shared'
+import type { ComponentType } from 'react'
 
 export type RoleKey =
   | 'dive-center'
@@ -49,6 +58,34 @@ export type RoleClass = 'freelance' | 'business'
 
 export type BookingPresence = 'itinerary' | 'resource-step' | 'operator' | 'none'
 
+export const OVERLAY_ONLY_SECTIONS: Set<ProfileSectionId> = new Set(['booking', 'resources', 'gear'])
+
+export type ContactPayloadExtras =
+  | { kind: 'agent'; createDefaults: { associations: [] } }
+  | { kind: 'dive-center'; createDefaults: { associations: [] } }
+  | { kind: 'instructor'; createDefaults: { credential: [] } }
+  | { kind: 'boat'; createDefaults: { fleet: [] } }
+  | { kind: 'equipment' }
+  | { kind: 'compressor' }
+  | { kind: 'venue' }
+
+export interface RoleContactConfig {
+  schema: ZodType
+  nameLabel?: 'businessName'
+  languageKey?: 'customerLanguages' | 'teachingLanguages'
+  inheritFromOtherRoles?: ClerkRole
+  payloadExtras: ContactPayloadExtras
+}
+
+export interface RoleApiConfig {
+  mine: FunctionReference<'query'>
+  create: FunctionReference<'mutation'>
+  update: FunctionReference<'mutation'>
+  idArg: 'entityId' | 'venueId' | 'compressorId' | null
+}
+
+export type RoleSectionComponentRef = ComponentType<unknown>
+
 export interface RoleConfig {
   key: RoleKey
   clerkRole: ClerkRole
@@ -65,6 +102,8 @@ export interface RoleConfig {
   description: string
   bookingPresence: BookingPresence
   profileTabs: ProfileTab[]
+  api: RoleApiConfig
+  contact?: RoleContactConfig
 }
 
 export const ROLES: RoleConfig[] = [
@@ -89,6 +128,18 @@ export const ROLES: RoleConfig[] = [
       { id: 'resources', label: 'Preferences', fields: ['preferredInstructor', 'preferredEquipment', 'preferredVenue', 'preferredBoat', 'preferredCompressor'] },
       { id: 'booking', label: 'Booking' },
     ],
+    api: {
+      mine: api.diveCenters.mine,
+      create: api.diveCenters.create,
+      update: api.diveCenters.update,
+      idArg: 'entityId',
+    },
+    contact: {
+      schema: diveCenterContactMergedSchema,
+      nameLabel: 'businessName',
+      languageKey: 'customerLanguages',
+      payloadExtras: { kind: 'dive-center', createDefaults: { associations: [] } },
+    },
   },
   {
     key: 'agent',
@@ -111,6 +162,18 @@ export const ROLES: RoleConfig[] = [
       { id: 'resources', label: 'Preferences', fields: ['preferredInstructor', 'preferredEquipment', 'preferredVenue', 'preferredBoat', 'preferredCompressor'] },
       { id: 'booking', label: 'Booking' },
     ],
+    api: {
+      mine: api.agents.mine,
+      create: api.agents.create,
+      update: api.agents.update,
+      idArg: null,
+    },
+    contact: {
+      schema: agentContactMergedSchema,
+      nameLabel: 'businessName',
+      languageKey: 'customerLanguages',
+      payloadExtras: { kind: 'agent', createDefaults: { associations: [] } },
+    },
   },
   {
     key: 'instructor',
@@ -132,6 +195,18 @@ export const ROLES: RoleConfig[] = [
       { id: 'credentials', label: 'Credentials', fields: ['credential'] },
       { id: 'booking', label: 'Booking' },
     ],
+    api: {
+      mine: api.diveStaff.mine,
+      create: api.diveStaff.create,
+      update: api.diveStaff.update,
+      idArg: null,
+    },
+    contact: {
+      schema: personalContactMergedSchema,
+      languageKey: 'teachingLanguages',
+      inheritFromOtherRoles: 'Instructor',
+      payloadExtras: { kind: 'instructor', createDefaults: { credential: [] } },
+    },
   },
   {
     key: 'boat',
@@ -153,6 +228,18 @@ export const ROLES: RoleConfig[] = [
       { id: 'fleet', label: 'Fleet', fields: ['fleet', 'routeVenues'] },
       { id: 'booking', label: 'Booking' },
     ],
+    api: {
+      mine: api.boats.mine,
+      create: api.boats.create,
+      update: api.boats.update,
+      idArg: 'entityId',
+    },
+    contact: {
+      schema: contactSchema,
+      nameLabel: 'businessName',
+      inheritFromOtherRoles: 'Boat',
+      payloadExtras: { kind: 'boat', createDefaults: { fleet: [] } },
+    },
   },
   {
     key: 'equipment',
@@ -174,6 +261,18 @@ export const ROLES: RoleConfig[] = [
       { id: 'gear', label: 'Gear', fields: ['gear:wetsuit', 'gear:bcd', 'gear:fins', 'gear:mask', 'gear:regulator'] },
       { id: 'booking', label: 'Booking' },
     ],
+    api: {
+      mine: api.equipment.mine,
+      create: api.equipment.create,
+      update: api.equipment.update,
+      idArg: 'entityId',
+    },
+    contact: {
+      schema: contactSchema,
+      nameLabel: 'businessName',
+      inheritFromOtherRoles: 'Equipment',
+      payloadExtras: { kind: 'equipment' },
+    },
   },
   {
     key: 'compressor',
@@ -195,6 +294,18 @@ export const ROLES: RoleConfig[] = [
       { id: 'gas-mixes', label: 'Gas Mixes', fields: ['location', 'gasMixes'] },
       { id: 'booking', label: 'Booking' },
     ],
+    api: {
+      mine: api.compressors.mine,
+      create: api.compressors.create,
+      update: api.compressors.update,
+      idArg: 'compressorId',
+    },
+    contact: {
+      schema: contactSchema,
+      nameLabel: 'businessName',
+      inheritFromOtherRoles: 'Compressor',
+      payloadExtras: { kind: 'compressor' },
+    },
   },
   {
     key: 'venue',
@@ -215,6 +326,12 @@ export const ROLES: RoleConfig[] = [
       { id: 'capabilities', label: 'Venues', fields: ['name', 'email', 'phone', 'address', 'kind', 'maxDepth', 'maxCapacity', 'confinedCapable'] },
       { id: 'booking', label: 'Booking' },
     ],
+    api: {
+      mine: api.venues.mine,
+      create: api.venues.create,
+      update: api.venues.update,
+      idArg: 'venueId',
+    },
   },
 ]
 

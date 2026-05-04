@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { useMutation, useQuery } from 'convex/react'
+import { useQuery } from 'convex/react'
+import type { FunctionReturnType } from 'convex/server'
 import { useTranslations } from 'next-intl'
 import { api } from '@/lib/convex-generated'
 import { LoadingCard } from '@/components/ui/loading-card'
@@ -10,17 +11,18 @@ import { Input } from '@/components/ui/input'
 import { EmailField } from '@/components/ui/email-field'
 import { PhoneField } from '@/components/ui/phone-field'
 import { FieldRow } from '@/components/ui/field-row'
-import type { ClerkRole } from '@/lib/constants/roles'
+import { ROLE_BY_CLERK_ROLE, type ClerkRole } from '@/lib/constants/roles'
 import { getVenueKindTile } from '@/lib/constants/signup-role-tiles'
 import {
   clearStoredVenueSignupIntent,
   useVenueSignupIntent,
 } from '@/lib/hooks/use-venue-signup-intent'
 import { VENUE_KINDS, type VenueKind } from '../../../convex/shared/venueTypes'
-import { useOrganizerRoleApi } from '@/lib/hooks/use-organizer-role-api'
+import { useEntityMutation } from '@/lib/hooks/use-entity-mutation'
 import { useDashboardSession } from '@/lib/hooks/use-dashboard-session'
 import { getOrganizerRoleFlags } from '@/lib/constants/organizer-wizard-config'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
+import { composeCreatePayload } from '@/lib/profile-form/composeCreatePayload'
 import {
   INITIAL_CONTACT_FORM,
   contactFromProfile,
@@ -33,13 +35,13 @@ import { RoleTile } from '@/components/ui/role-tile'
 
 // query-budget-ok: 4 subscriptions; planned migration to organizer.basicStepContext (Phase 2D of zesty-creek perf plan)
 
-function mergeInheritedDefaults(
-  inheritance: Record<string, unknown> | null,
-): ContactFormState {
+type InheritedDefaults = FunctionReturnType<typeof api.users.inheritedContactDefaults>
+
+function mergeInheritedDefaults(inheritance: InheritedDefaults): ContactFormState {
   if (!inheritance) return INITIAL_CONTACT_FORM
   return {
     ...INITIAL_CONTACT_FORM,
-    ...contactFromProfile(inheritance),
+    ...contactFromProfile(inheritance as unknown as Record<string, unknown>),
   }
 }
 
@@ -123,46 +125,12 @@ interface OrganizerBasicStepProps {
 
 export function OrganizerBasicStep({ role, onSaved, onBack }: OrganizerBasicStepProps) {
   const t = useTranslations('common')
-  const mutations = useOrganizerRoleApi(role)
-
-  if (!mutations) {
-    return (
-      <OrganizerStepCard
-        title={t('basicInformation')}
-        subtitle={t('comingSoonPeriod')}
-        onBack={onBack}
-        onNext={onSaved}
-      >
-        <div />
-      </OrganizerStepCard>
-    )
-  }
-
-  return (
-    <BasicStepInner
-      role={role}
-      mutations={mutations}
-      onSaved={onSaved}
-      onBack={onBack}
-    />
-  )
-}
-
-interface BasicStepInnerProps {
-  role: ClerkRole
-  mutations: NonNullable<ReturnType<typeof useOrganizerRoleApi>>
-  onSaved: () => void
-  onBack?: () => void
-}
-
-function BasicStepInner({ role, mutations, onSaved, onBack }: BasicStepInnerProps) {
-  const t = useTranslations('common')
-  const existing = useQuery(mutations.mine)
+  const { create, update, mine, idArg } = useEntityMutation(role)
+  const existing = useQuery(mine)
   const { user: me } = useDashboardSession()
   const inheritance = useQuery(api.users.inheritedContactDefaults, { excludeRole: role })
-  const createMutation = useMutation(mutations.create)
-  const updateMutation = useMutation(mutations.update)
   const venueSignupIntent = useVenueSignupIntent()
+  const config = ROLE_BY_CLERK_ROLE[role]
 
   const seedKind: VenueKind | null =
     role === 'Venue' && (venueSignupIntent === 'pool' || venueSignupIntent === 'dive_site')
@@ -171,27 +139,7 @@ function BasicStepInner({ role, mutations, onSaved, onBack }: BasicStepInnerProp
   const [pickedKind, setPickedKind] = useState<VenueKind | null>(seedKind)
 
   const createWithRoleExtras = async (payload: Record<string, unknown>) => {
-    const base = {
-      name: payload.name as string,
-      address: payload.address as { street?: string; city: string; state?: string; country: string; postalCode?: string },
-      placeId: payload.placeId as string | undefined,
-      lat: payload.lat as number,
-      lng: payload.lng as number,
-      email: payload.email as string,
-      phone: payload.phone as string,
-    }
-    if (role === 'Venue') {
-      if (!pickedKind) {
-        throw new Error('VENUE_KIND_REQUIRED') // error-ok: developer contract — UI gate prevents reaching this
-      }
-      const venueCreate = createMutation as unknown as (args: Record<string, unknown>) => Promise<unknown>
-      return venueCreate({
-        ...base,
-        kind: pickedKind,
-        features: [],
-      })
-    }
-    return createMutation({ ...base, associations: [] })
+    return create(composeCreatePayload(config, payload, { venueKind: pickedKind ?? undefined }))
   }
 
   const fromMe = (u: Record<string, unknown>, defaults: ContactFormState): ContactFormState => ({
@@ -199,32 +147,17 @@ function BasicStepInner({ role, mutations, onSaved, onBack }: BasicStepInnerProp
     email: defaults.email || (u.email as string) || '',
   })
 
-  const inheritedDefaults = mergeInheritedDefaults(
-    inheritance && inheritance !== undefined
-      ? (inheritance as unknown as Record<string, unknown>)
-      : null,
-  )
+  const inheritedDefaults = mergeInheritedDefaults(inheritance ?? null)
 
   const existingProfile = Array.isArray(existing) ? existing[0] ?? null : existing
 
   const updateForRole = async (payload: Record<string, unknown>) => {
-    if (role === 'DiveCenter') {
-      const dcId = (existingProfile as { _id?: string } | null)?._id
-      if (!dcId) return undefined
-      return (updateMutation as unknown as (args: Record<string, unknown>) => Promise<unknown>)({
-        ...payload,
-        entityId: dcId,
-      })
+    if (!idArg) {
+      return update(payload)
     }
-    if (role === 'Venue') {
-      const venueId = (existingProfile as { _id?: string } | null)?._id
-      if (!venueId) return undefined
-      return (updateMutation as unknown as (args: Record<string, unknown>) => Promise<unknown>)({
-        ...payload,
-        venueId,
-      })
-    }
-    return (updateMutation as unknown as (args: Record<string, unknown>) => Promise<unknown>)(payload)
+    const id = (existingProfile as { _id?: string } | null)?._id
+    if (!id) return undefined
+    return update({ ...payload, [idArg]: id })
   }
 
   const { form, setField, errors, saving, isValid, loading, handleSubmit, validateField } =

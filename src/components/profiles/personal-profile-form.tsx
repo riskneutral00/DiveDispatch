@@ -3,14 +3,12 @@
 import { CredentialFields } from '@/components/profiles/credential-fields'
 import { InlineRowList } from '@/components/profiles/collection-editors'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
-import { BusinessContactSection } from '@/components/profiles/business-contact-section'
 import {
   type PersonalContactFormState,
   buildParentContactDefaults,
   type BaseProfileSectionProps,
 } from '@/lib/profile-form'
 import {
-  personalContactMergedSchema,
   instructorCredentialsSchema,
   instructorCredentialSchema,
   makeDefaultInstructorCredential,
@@ -51,18 +49,6 @@ export function credentialsToPayload(f: PersonalCredentialsFormState): Record<st
       specialtyRatings: c.specialtyRatings ?? [],
     })),
   }
-}
-
-export function PersonalContactSection(props: BaseProfileSectionProps) {
-  return (
-    <BusinessContactSection
-      {...props}
-      schema={personalContactMergedSchema}
-      languageKey="teachingLanguages"
-      inheritFromOtherRoles="Instructor"
-      createOverride={(payload) => props.create({ ...payload, credential: [] })}
-    />
-  )
 }
 
 export function PersonalCredentialsSection({

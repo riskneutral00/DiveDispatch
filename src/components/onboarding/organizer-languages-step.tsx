@@ -1,6 +1,6 @@
 'use client'
 
-import { useMutation, useQuery } from 'convex/react'
+import { useQuery } from 'convex/react'
 import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { useDashboardSession } from '@/lib/hooks/use-dashboard-session'
@@ -14,7 +14,7 @@ import { SpecialtyField } from '@/components/profiles/specialty-field'
 import type { Language } from '@/lib/types/language'
 import { parseNumber } from '@/lib/utils/numbers'
 import type { ClerkRole } from '@/lib/constants/roles'
-import { useOrganizerRoleApi } from '@/lib/hooks/use-organizer-role-api'
+import { useEntityMutation } from '@/lib/hooks/use-entity-mutation'
 import { getOrganizerRoleFlags } from '@/lib/constants/organizer-wizard-config'
 import { OrganizerStepCard } from './organizer-step-card'
 import { FieldRow } from '@/components/ui/field-row'
@@ -26,31 +26,10 @@ interface OrganizerLanguagesStepProps {
 }
 
 export function OrganizerLanguagesStep({ role, onSaved, onBack }: OrganizerLanguagesStepProps) {
-  const roleApi = useOrganizerRoleApi(role)
-
-  if (!roleApi) {
-    return (
-      <OrganizerStepCard title="" subtitle="" onNext={onSaved} autoAdvance>
-        <div />
-      </OrganizerStepCard>
-    )
-  }
-
-  return <LanguagesStepInner role={role} roleApi={roleApi} onSaved={onSaved} onBack={onBack} />
-}
-
-interface LanguagesStepInnerProps {
-  role: ClerkRole
-  roleApi: NonNullable<ReturnType<typeof useOrganizerRoleApi>>
-  onSaved: () => void
-  onBack: () => void
-}
-
-function LanguagesStepInner({ role, roleApi, onSaved, onBack }: LanguagesStepInnerProps) {
   const tCommon = useTranslations('common')
-  const existing = useQuery(roleApi.mine)
+  const { update, mine } = useEntityMutation(role)
+  const existing = useQuery(mine)
   const { user: me } = useDashboardSession()
-  const update = useMutation(roleApi.update)
 
   const { supportsCoursePreferences } = getOrganizerRoleFlags(role)
 

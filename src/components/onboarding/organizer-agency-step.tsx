@@ -1,6 +1,6 @@
 'use client'
 
-import { useMutation, useQuery } from 'convex/react'
+import { useQuery } from 'convex/react'
 import { useState, useEffect } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
 import { Button, Input, InlineError, SimpleSelect } from '@/components/ui'
@@ -9,7 +9,7 @@ import { SectionDivider } from '@/components/ui/section-divider'
 import { DIVE_AGENCIES_EXTENDED } from '@/lib/constants/agencies'
 import { parseConvexError } from '@/lib/utils/convex-error'
 import type { ClerkRole } from '@/lib/constants/roles'
-import { useOrganizerRoleApi } from '@/lib/hooks/use-organizer-role-api'
+import { useEntityMutation } from '@/lib/hooks/use-entity-mutation'
 import { OrganizerStepCard } from './organizer-step-card'
 
 type Association = { agency: string; number: string }
@@ -21,28 +21,8 @@ interface OrganizerAgencyStepProps {
 }
 
 export function OrganizerAgencyStep({ role, onSaved, onBack }: OrganizerAgencyStepProps) {
-  const roleApi = useOrganizerRoleApi(role)
-
-  if (!roleApi) {
-    return (
-      <OrganizerStepCard title="" subtitle="" onNext={onSaved} autoAdvance>
-        <div />
-      </OrganizerStepCard>
-    )
-  }
-
-  return <AgencyStepInner roleApi={roleApi} onSaved={onSaved} onBack={onBack} />
-}
-
-interface AgencyStepInnerProps {
-  roleApi: NonNullable<ReturnType<typeof useOrganizerRoleApi>>
-  onSaved: () => void
-  onBack: () => void
-}
-
-function AgencyStepInner({ roleApi, onSaved, onBack }: AgencyStepInnerProps) {
-  const existing = useQuery(roleApi.mine)
-  const update = useMutation(roleApi.update)
+  const { update, mine } = useEntityMutation(role)
+  const existing = useQuery(mine)
 
   const [associations, setAssociations] = useState<Association[]>([{ agency: '', number: '' }])
   const [saving, setSaving] = useState(false)
