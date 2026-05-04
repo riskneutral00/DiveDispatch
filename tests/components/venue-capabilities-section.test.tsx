@@ -38,28 +38,29 @@ let venues: MinimalVenue[] = []
 let compressors: MinimalCompressor[] = []
 const diveCenters = [{ slug: 'dc-alpha', name: 'Alpha Divers' }]
 
-const { API_REFS } = vi.hoisted(() => ({
-  API_REFS: {
-    venues: {
-      mine: { _tag: 'venues.mine' },
-      create: { _tag: 'venues.create' },
-      update: { _tag: 'venues.update' },
-      remove: { _tag: 'venues.remove' },
+const { API_REFS } = vi.hoisted(() => {
+  const stub = (tag: string) => ({ _tag: tag })
+  const moduleStub = (m: string, fns: string[]) =>
+    Object.fromEntries(fns.map((f) => [f, stub(`${m}.${f}`)]))
+  const roleApi = ['mine', 'create', 'update']
+  return {
+    API_REFS: {
+      diveCenters: moduleStub('diveCenters', roleApi),
+      agents: moduleStub('agents', roleApi),
+      diveStaff: moduleStub('diveStaff', roleApi),
+      boats: moduleStub('boats', roleApi),
+      equipment: moduleStub('equipment', roleApi),
+      compressors: { ...moduleStub('compressors', roleApi), remove: stub('compressors.remove') },
+      venues: { ...moduleStub('venues', roleApi), remove: stub('venues.remove') },
+      directory: {
+        listByRole: stub('directory.listByRole'),
+      },
+      users: {
+        inheritedContactDefaults: stub('users.inheritedContactDefaults'),
+      },
     },
-    compressors: {
-      mine: { _tag: 'compressors.mine' },
-      create: { _tag: 'compressors.create' },
-      update: { _tag: 'compressors.update' },
-      remove: { _tag: 'compressors.remove' },
-    },
-    directory: {
-      listByRole: { _tag: 'directory.listByRole' },
-    },
-    users: {
-      inheritedContactDefaults: { _tag: 'users.inheritedContactDefaults' },
-    },
-  },
-}))
+  }
+})
 
 vi.mock('@/lib/convex-generated', () => ({
   api: API_REFS,

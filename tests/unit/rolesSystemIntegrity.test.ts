@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest'
 import { ROLES, ORGANIZER_ROLES, RESOURCE_ROLES, ROLE_BY_KEY, ROLE_BY_CLERK_ROLE, ORGANIZER_ROLE_KEYS, DISPLAY_OPERATOR_ROLES, DISPLAY_RESOURCE_ROLES } from '../../src/lib/constants/roles'
 import { ORGANIZER_WIZARD_CONFIG, ORGANIZER_WIZARD_ROLES, getOrganizerRoleFlags } from '../../src/lib/constants/organizer-wizard-config'
 import { RESOURCE_OWNER_TYPES } from '../../convex/shared/resourceOwnerTypes'
-import { PROFILE_REGISTRY } from '../../src/lib/constants/profile-registry'
 import { ROLE_PRECEDENCE } from '../../convex/lib/rolePrecedence'
 
 // ── ROLES route uniqueness ──────────────────────────────────────────────────
@@ -173,14 +172,14 @@ describe('ORGANIZER_ROLE_KEYS derived set', () => {
   })
 })
 
-// ── PROFILE_REGISTRY ↔ ROLES reverse coverage ──────────────────────────────
+// ── ROLE_BY_KEY ↔ ROLES reverse coverage ───────────────────────────────────
 
-describe('PROFILE_REGISTRY ↔ ROLES reverse coverage', () => {
-  it('every ROLES key has a PROFILE_REGISTRY entry (derived from profileTabs)', () => {
+describe('ROLE_BY_KEY ↔ ROLES reverse coverage', () => {
+  it('every ROLES key has a ROLE_BY_KEY entry', () => {
     for (const role of ROLES) {
       expect(
-        PROFILE_REGISTRY[role.key],
-        `${role.key} (${role.clerkRole}) missing from PROFILE_REGISTRY`,
+        ROLE_BY_KEY[role.key],
+        `${role.key} (${role.clerkRole}) missing from ROLE_BY_KEY`,
       ).toBeDefined()
     }
   })
@@ -192,12 +191,6 @@ describe('RoleConfig.profileTabs', () => {
   it('every role has a non-empty profileTabs array', () => {
     for (const role of ROLES) {
       expect(role.profileTabs.length, `${role.key} has empty profileTabs`).toBeGreaterThan(0)
-    }
-  })
-
-  it('profileTabs match derived PROFILE_REGISTRY tabs', () => {
-    for (const role of ROLES) {
-      expect(role.profileTabs).toEqual(PROFILE_REGISTRY[role.key].tabs)
     }
   })
 

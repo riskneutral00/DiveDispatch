@@ -19,21 +19,23 @@ const updateCompressor = vi.fn().mockResolvedValue(undefined)
 const removeCompressor = vi.fn().mockResolvedValue(undefined)
 
 // mock-ok: component-level jsdom render. Backend behavior of api.compressors.* is covered by tests/compressors.test.ts (convex-test). This suite asserts UI wiring: per-vessel has-compressor checkbox + post-save compressor reconciliation.
-const { API_REFS } = vi.hoisted(() => ({
-  API_REFS: {
-    boats: { mine: { _tag: 'boats.mine' } },
-    compressors: {
-      mine: { _tag: 'compressors.mine' },
-      create: { _tag: 'compressors.create' },
-      update: { _tag: 'compressors.update' },
-      remove: { _tag: 'compressors.remove' },
+const { API_REFS } = vi.hoisted(() => {
+  const stub = (tag: string) => ({ _tag: tag })
+  const moduleStub = (m: string, fns: string[]) =>
+    Object.fromEntries(fns.map((f) => [f, stub(`${m}.${f}`)]))
+  const roleApi = ['mine', 'create', 'update']
+  return {
+    API_REFS: {
+      diveCenters: moduleStub('diveCenters', roleApi),
+      agents: moduleStub('agents', roleApi),
+      diveStaff: moduleStub('diveStaff', roleApi),
+      boats: moduleStub('boats', roleApi),
+      equipment: moduleStub('equipment', roleApi),
+      compressors: { ...moduleStub('compressors', roleApi), remove: stub('compressors.remove') },
+      venues: { ...moduleStub('venues', roleApi), visibleToMe: stub('venues.visibleToMe') },
     },
-    venues: {
-      mine: { _tag: 'venues.mine' },
-      visibleToMe: { _tag: 'venues.visibleToMe' },
-    },
-  },
-}))
+  }
+})
 
 vi.mock('@/lib/convex-generated', () => ({
   api: API_REFS,

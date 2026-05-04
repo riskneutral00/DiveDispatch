@@ -9,14 +9,10 @@ const update = vi.fn().mockResolvedValue(undefined)
 const baseProps = {
   profile: null as Record<string, unknown> | null,
   me: {
-    firstName: 'Test',
-    lastName: 'User',
     phone: '+12345678901',
     email: 'test@divedispatch.dev',
-    dateOfBirth: '1990-01-01',
     appLanguage: 'en',
-    address: undefined,
-  } as Record<string, unknown>,
+  },
   create,
   update,
   onSaved: vi.fn(),

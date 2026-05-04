@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { ROLES } from '@/lib/constants/roles'
+import { ROLES, OVERLAY_ONLY_SECTIONS } from '@/lib/constants/roles'
 import { ROLE_SECTION_REGISTRY } from '@/components/profiles/role-section-registry'
-import { OVERLAY_ONLY_SECTIONS } from '@/lib/constants/profile-registry'
 import { ROLE_SPECS } from '../../convex/lib/completeness/roleSpecs'
 import { ROLE_TABLE_MAP } from '../../convex/lib/profileHelpers'
 import { api } from '../../src/lib/convex-generated'
@@ -29,13 +28,14 @@ describe('role config completeness — full contract per ROLES entry', () => {
         expect(ROLE_TABLE_MAP[role.clerkRole]).toBe(role.tableName)
       })
 
-      it('has at least one registered section in ROLE_SECTION_REGISTRY', () => {
-        const sections = ROLE_SECTION_REGISTRY[role.key]
-        expect(sections, `${role.key} must register profile sections`).toBeDefined()
+      it('has at least one editable section path (registry component or contact config)', () => {
+        const sections = ROLE_SECTION_REGISTRY[role.key] ?? {}
+        const hasSection = Object.keys(sections).length > 0
+        const hasContactConfig = Boolean(role.contact)
         expect(
-          Object.keys(sections!).length,
-          `${role.key} must register at least one editable section`,
-        ).toBeGreaterThan(0)
+          hasSection || hasContactConfig,
+          `${role.key} must register at least one editable section or contact config`,
+        ).toBe(true)
       })
 
       it('has a backend ROLE_SPECS evaluator entry', () => {
@@ -54,20 +54,16 @@ describe('role config completeness — full contract per ROLES entry', () => {
 })
 
 describe('role config completeness — global invariants', () => {
-  it('every section id in profileTabs is also a key in some ROLE_SECTION_REGISTRY entry', () => {
-    const allRegisteredSections = new Set<string>()
-    for (const role of Object.keys(ROLE_SECTION_REGISTRY)) {
-      const sections = ROLE_SECTION_REGISTRY[role as keyof typeof ROLE_SECTION_REGISTRY]
-      for (const sectionId of Object.keys(sections ?? {})) {
-        allRegisteredSections.add(sectionId)
-      }
-    }
+  it('every non-overlay profileTabs id has a UI source (registry component or contact config)', () => {
     for (const role of ROLES) {
+      const sections = ROLE_SECTION_REGISTRY[role.key] ?? {}
       for (const tab of role.profileTabs) {
         if (OVERLAY_ONLY_SECTIONS.has(tab.id)) continue
+        const hasComponent = tab.id in sections
+        const hasContactConfig = tab.id === 'contact' && Boolean(role.contact)
         expect(
-          allRegisteredSections.has(tab.id),
-          `Profile tab "${tab.id}" on role "${role.key}" has no registered section component anywhere`,
+          hasComponent || hasContactConfig,
+          `Role "${role.key}" tab "${tab.id}" has no UI source (no section component, no contact config)`,
         ).toBe(true)
       }
     }

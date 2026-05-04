@@ -31,17 +31,6 @@ vi.mock('convex/react', async (importOriginal) => {
   }
 })
 
-vi.mock('@/lib/hooks/use-organizer-role-api', () => ({
-  useOrganizerRoleApi: (role: string) => {
-    if (!role || role === 'Instructor') return null
-    return {
-      mine: `${role}.mine`,
-      update: `${role}.update`,
-      create: `${role}.create`,
-    }
-  },
-}))
-
 // Stub LanguageField — clicking it adds English to the selection
 vi.mock('@/components/profiles/language-field', () => ({
   LanguageField: ({ onChange }: { onChange: (langs: unknown[]) => void }) => (
@@ -133,9 +122,4 @@ describe('OrganizerLanguagesStep', () => {
     })
   })
 
-  it('auto-advances for unsupported roles (no roleApi)', async () => {
-    const onSaved = vi.fn()
-    render(<OrganizerLanguagesStep role="Instructor" onSaved={onSaved} onBack={vi.fn()} />)
-    await waitFor(() => expect(onSaved).toHaveBeenCalled())
-  })
 })

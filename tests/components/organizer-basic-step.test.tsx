@@ -42,17 +42,6 @@ vi.mock('convex/react', async (importOriginal) => {
   }
 })
 
-vi.mock('@/lib/hooks/use-organizer-role-api', () => ({
-  useOrganizerRoleApi: (role: string) => {
-    if (!role || role === 'Instructor') return null
-    return {
-      mine: `${role}.mine`,
-      update: `${role}.update`,
-      create: `${role}.create`,
-    }
-  },
-}))
-
 vi.mock('@/components/profiles/location-picker', () => ({
   LocationPicker: ({ onChange, label }: { onChange: (v: unknown) => void; label?: string }) => (
     <button

@@ -21,18 +21,6 @@ vi.mock('convex/react', async (importOriginal) => {
   }
 })
 
-// useOrganizerRoleApi returns api refs — stub so they resolve to plain strings
-vi.mock('@/lib/hooks/use-organizer-role-api', () => ({
-  useOrganizerRoleApi: (role: string) => {
-    if (!role || role === 'Instructor') return null
-    return {
-      mine: `${role}.mine`,
-      update: `${role}.update`,
-      create: `${role}.create`,
-    }
-  },
-}))
-
 vi.mock('@/components/profiles/location-picker', () => ({
   LocationPicker: ({ onChange }: { onChange: (v: unknown) => void }) => (
     <button data-testid="location-picker" onClick={() => onChange({ placeName: 'Phuket', country: 'TH', lat: 7.88, lng: 98.39 })}>
@@ -122,10 +110,4 @@ describe('OrganizerAgencyStep', () => {
     })
   })
 
-  it('auto-advances (calls onSaved) for unsupported roles with no api', async () => {
-    // Instructor has no roleApi → autoAdvance renders null and calls onNext immediately
-    const onSaved = vi.fn()
-    render(<OrganizerAgencyStep role="Instructor" onSaved={onSaved} onBack={vi.fn()} />)
-    await waitFor(() => expect(onSaved).toHaveBeenCalled())
-  })
 })

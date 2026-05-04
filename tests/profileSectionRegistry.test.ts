@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { ROLE_SECTION_REGISTRY } from '../src/components/profiles/role-section-registry'
 import { ROLE_BY_KEY, type RoleKey, type ProfileSectionId } from '../src/lib/constants/roles'
-import { OVERLAY_ONLY_SECTIONS } from '../src/lib/constants/profile-registry'
+import { OVERLAY_ONLY_SECTIONS } from '../src/lib/constants/roles'
 
 describe('ROLE_SECTION_REGISTRY', () => {
   it('has an entry for every RoleKey', () => {
@@ -10,14 +10,16 @@ describe('ROLE_SECTION_REGISTRY', () => {
     }
   })
 
-  it('covers every non-overlay profileTab for every role', () => {
+  it('covers every non-overlay profileTab for every role (registry component or contact config)', () => {
     const missing: string[] = []
     for (const roleKey of Object.keys(ROLE_BY_KEY) as RoleKey[]) {
       const role = ROLE_BY_KEY[roleKey]
       const sections = ROLE_SECTION_REGISTRY[roleKey] ?? {}
       for (const tab of role.profileTabs) {
         if (OVERLAY_ONLY_SECTIONS.has(tab.id)) continue
-        if (!sections[tab.id]) {
+        const hasComponent = Boolean(sections[tab.id])
+        const hasContactConfig = tab.id === 'contact' && Boolean(role.contact)
+        if (!hasComponent && !hasContactConfig) {
           missing.push(`${roleKey}.${tab.id}`)
         }
       }

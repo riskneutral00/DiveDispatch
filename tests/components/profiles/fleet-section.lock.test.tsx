@@ -7,13 +7,49 @@ type MinimalVenue = Pick<Doc<'venues'>, '_id' | 'name' | 'kind'>
 
 let venues: MinimalVenue[] = []
 
-const { API_REFS } = vi.hoisted(() => ({
-  API_REFS: {
-    venues: {
-      visibleToMe: { _tag: 'venues.visibleToMe' },
+const { API_REFS } = vi.hoisted(() => {
+  const stub = (tag: string) => ({ _tag: tag })
+  return {
+    API_REFS: {
+      venues: {
+        visibleToMe: stub('venues.visibleToMe'),
+        mine: stub('venues.mine'),
+        create: stub('venues.create'),
+        update: stub('venues.update'),
+      },
+      diveCenters: {
+        mine: stub('diveCenters.mine'),
+        create: stub('diveCenters.create'),
+        update: stub('diveCenters.update'),
+      },
+      agents: {
+        mine: stub('agents.mine'),
+        create: stub('agents.create'),
+        update: stub('agents.update'),
+      },
+      diveStaff: {
+        mine: stub('diveStaff.mine'),
+        create: stub('diveStaff.create'),
+        update: stub('diveStaff.update'),
+      },
+      boats: {
+        mine: stub('boats.mine'),
+        create: stub('boats.create'),
+        update: stub('boats.update'),
+      },
+      equipment: {
+        mine: stub('equipment.mine'),
+        create: stub('equipment.create'),
+        update: stub('equipment.update'),
+      },
+      compressors: {
+        mine: stub('compressors.mine'),
+        create: stub('compressors.create'),
+        update: stub('compressors.update'),
+      },
     },
-  },
-}))
+  }
+})
 
 vi.mock('@/lib/convex-generated', () => ({
   api: API_REFS,
@@ -44,12 +80,10 @@ const update = vi.fn().mockResolvedValue(undefined)
 const baseProps = {
   profile: null as Record<string, unknown> | null,
   me: {
-    firstName: 'Owner',
-    lastName: 'Test',
     phone: '+12345678901',
     email: 'owner@divedispatch.dev',
-    address: undefined,
-  } as Record<string, unknown>,
+    appLanguage: 'en',
+  },
   create,
   update,
   onSaved: vi.fn(),

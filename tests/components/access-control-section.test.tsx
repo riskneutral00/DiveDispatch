@@ -7,13 +7,26 @@ const diveCenters = [
   { slug: 'dc-bravo', name: 'Bravo Divers' },
 ]
 
-const { API_REFS } = vi.hoisted(() => ({
-  API_REFS: {
-    directory: {
-      listByRole: { _tag: 'directory.listByRole' },
+const { API_REFS } = vi.hoisted(() => {
+  const stub = (tag: string) => ({ _tag: tag })
+  const moduleStub = (m: string, fns: string[]) =>
+    Object.fromEntries(fns.map((f) => [f, stub(`${m}.${f}`)]))
+  const roleApi = ['mine', 'create', 'update']
+  return {
+    API_REFS: {
+      diveCenters: moduleStub('diveCenters', roleApi),
+      agents: moduleStub('agents', roleApi),
+      diveStaff: moduleStub('diveStaff', roleApi),
+      boats: moduleStub('boats', roleApi),
+      equipment: moduleStub('equipment', roleApi),
+      compressors: moduleStub('compressors', roleApi),
+      venues: moduleStub('venues', [...roleApi, 'visibleToMe']),
+      directory: {
+        listByRole: stub('directory.listByRole'),
+      },
     },
-  },
-}))
+  }
+})
 
 vi.mock('@/lib/convex-generated', () => ({
   api: API_REFS,

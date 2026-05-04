@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { ROLES, ORGANIZER_ROLES, RESOURCE_ROLES, ROLE_BY_KEY, ROLE_BY_CLERK_ROLE } from '../src/lib/constants/roles'
 import { ROLE_PRECEDENCE } from '../convex/lib/rolePrecedence'
-import { PROFILE_REGISTRY } from '../src/lib/constants/profile-registry'
 import { DEFAULT_LEGEND_STATUSES } from '../src/lib/constants/dashboard-config'
 import { BOOKING_STATUS } from '../convex/shared/statuses'
 import { STATUS_OPACITY, STATUS_COLORS, LOCKING_STATUSES, ACTIVE_STATUSES, TERMINAL_STATUSES } from '../src/lib/constants/status-colors'
@@ -24,24 +23,6 @@ describe('roles ↔ rolePrecedence', () => {
     const clerkRoles: Set<string> = new Set(ROLES.map((r) => r.clerkRole))
     for (const key of Object.keys(ROLE_PRECEDENCE)) {
       expect(clerkRoles.has(key)).toBe(true)
-    }
-  })
-})
-
-describe('roles ↔ PROFILE_REGISTRY', () => {
-  it('every PROFILE_REGISTRY key maps to a valid ROLES key (kebab-case)', () => {
-    const roleKeys: Set<string> = new Set(ROLES.map((r) => r.key))
-    for (const key of Object.keys(PROFILE_REGISTRY)) {
-      expect(roleKeys.has(key), `PROFILE_REGISTRY key "${key}" not in ROLES`).toBe(true)
-    }
-  })
-
-  it('every ROLES key exists in PROFILE_REGISTRY', () => {
-    for (const role of ROLES) {
-      expect(
-        PROFILE_REGISTRY[role.key],
-        `ROLES key "${role.key}" missing from PROFILE_REGISTRY`,
-      ).toBeDefined()
     }
   })
 })
